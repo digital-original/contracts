@@ -8,7 +8,7 @@ const INFURA_API_KEY = process.env.INFURA_API_KEY!;
 const DEPLOYER_PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY!;
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY!;
 
-const config: HardhatUserConfig = {
+const developmentConfig: HardhatUserConfig = {
     networks: {
         sepolia: {
             url: `https://sepolia.infura.io/v3/${INFURA_API_KEY}`,
@@ -22,6 +22,12 @@ const config: HardhatUserConfig = {
     etherscan: {
         apiKey: ETHERSCAN_API_KEY,
     },
+};
+
+const testConfig: HardhatUserConfig = {};
+
+const config: HardhatUserConfig = {
+    ...(process.env.NODE_ENV === 'test' ? testConfig : developmentConfig),
     solidity: {
         compilers: [
             {
