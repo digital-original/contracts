@@ -1,22 +1,50 @@
-# Sample Hardhat Project
+# DO Smart Contracts
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a script that deploys that contract.
 
-Try running some of the following tasks:
+## Sepolia Network
+- Faucet - https://sepolia-faucet.pk910.de/
+- DOProxyAdmin - https://sepolia.etherscan.io/address/0x77d3e2FAF8afEB827Db827116F1bF7dd14260D15#code
 
-```shell
-npx hardhat help
-npx hardhat test
-REPORT_GAS=true npx hardhat test
-npx hardhat node
-npx hardhat run scripts/deploy.ts
+## Contracts
+- WhiteList — upgradable-contract for storing verified accounts, a contract owner can add and remove accounts, anyone can check the whitelist.
+
+
+## Get Started
+
+### Install dependencies
+```
+$ yarn install
 ```
 
-<!--
-  TODO:
-    add linter for solidity and javascript
-    add fuzz test
-    add slither
-    add github actions
-    add scripts for deploy and upgrade
--->
+### Run local node
+```
+$ yarn run node
+```
+
+### Run test
+```
+$ yarn run test
+```
+
+### Run test on local node
+```
+$ yarn run test --network local
+```
+
+### Run scripts
+```
+$ yarn hardhat <path-to-script>
+```
+
+### Run scripts on testnet
+```
+$ yarn hardhat <path-to-script> --network sepolia
+```
+
+### Deploy upgradable-contract to testnet
+
+_Set CONTRACT_NAME and INITIALIZE_ARGS at the top of deploy/upgradable.ts file_
+
+```
+$ yarn hardhat deploy/upgradable.ts --network sepolia
+```
