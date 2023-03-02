@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.9;
 
-interface Auction {
+interface IAuction {
     struct Lot {
         address seller;
         address buyer;
@@ -23,7 +23,7 @@ interface Auction {
     event Placed();
     event Raised();
     event Finished();
-    event Canceled();
+    event Cancelled();
 
     /**
      * Transfer NFT to Auction contract

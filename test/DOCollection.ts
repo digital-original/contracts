@@ -1,25 +1,25 @@
 import { ethers } from 'hardhat';
-import chai, { expect, assert } from 'chai';
-import chaiAsPromised from 'chai-as-promised';
+import { expect } from 'chai';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { deployUpgradeable } from '../scripts/deploy-upgradable';
 import { DOCollection, WhiteList } from '../typechain-types';
 import { deployClassic } from '../scripts/deploy-classic';
 
-chai.use(chaiAsPromised);
-
 describe('DOCollection', function () {
     let collection: DOCollection;
     let whiteList: WhiteList;
     let owner: SignerWithAddress;
-    let randomAccount1: SignerWithAddress;
-    let randomAccount2: SignerWithAddress;
+    let tokenOwner: SignerWithAddress;
+    let randomAccount: SignerWithAddress;
+    let tokenReceiver: SignerWithAddress;
 
     const collectionName = 'Digital Original';
     const collectionSymbol = 'Digital Original';
 
     before(async () => {
-        [owner, randomAccount1, randomAccount2] = <SignerWithAddress[]>await ethers.getSigners();
+        [owner, tokenOwner, tokenReceiver, randomAccount] = <SignerWithAddress[]>(
+            await ethers.getSigners()
+        );
     });
 
     beforeEach(async () => {
@@ -44,40 +44,36 @@ describe('DOCollection', function () {
     });
 
     it(`should have right name and symbol`, async () => {
-        const [name, symbol] = await Promise.all([collection.name(), collection.symbol()]);
-
-        expect(name).equal(collectionName);
-        expect(symbol).equal(collectionSymbol);
+        await Promise.all([
+            expect(collection.name()).to.eventually.equal(collectionName),
+            expect(collection.symbol()).to.eventually.equal(collectionSymbol),
+        ]);
     });
 
     it(`should have right whitelist`, async () => {
-        const _whiteList = await collection['whiteList()']();
-
-        expect(_whiteList).equal(whiteList.address);
+        await expect(collection['whiteList()']()).to.eventually.equal(whiteList.address);
     });
 
     it(`owner can change whitelist`, async () => {
-        const { proxyWithImpl: _whiteList } = await deployUpgradeable({
+        const _whiteList = await deployClassic({
             contractName: 'WhiteList',
-            proxyAdminAddress: '0x0000000000000000000000000000000000000001',
-            initializeArgs: [],
+            constructorArgs: [],
             signer: owner,
         });
 
         await collection['whiteList(address)'](_whiteList.address);
 
-        expect(collection['whiteList()']()).to.eventually.equal(_whiteList.address);
+        await expect(collection['whiteList()']()).to.eventually.equal(_whiteList.address);
     });
 
     it(`random account can't change whitelist`, async () => {
-        const { proxyWithImpl: _whiteList } = await deployUpgradeable({
+        const _whiteList = await deployClassic({
             contractName: 'WhiteList',
-            proxyAdminAddress: '0x0000000000000000000000000000000000000001',
-            initializeArgs: [],
-            signer: randomAccount1,
+            constructorArgs: [],
+            signer: randomAccount,
         });
 
-        collection = collection.connect(randomAccount1);
+        collection = collection.connect(randomAccount);
 
         await expect(collection['whiteList(address)'](_whiteList.address)).to.be.rejectedWith(
             'Ownable: caller is not the owner'
@@ -85,47 +81,40 @@ describe('DOCollection', function () {
     });
 
     it(`random account can't mint token`, async () => {
-        const to = randomAccount1.address;
         const tokenId = 123;
         const tokenUri = 'some-uri';
 
-        collection = collection.connect(randomAccount1);
+        collection = collection.connect(randomAccount);
 
-        expect(collection.mint(to, tokenId, tokenUri)).to.be.rejectedWith(
+        await expect(collection.mint(randomAccount.address, tokenId, tokenUri)).to.be.rejectedWith(
             'Ownable: caller is not the owner'
         );
     });
 
     it(`owner can't mint token if account isn't whitelisted`, async () => {
-        const to = randomAccount1.address;
         const tokenId = 123;
         const tokenUri = 'some-uri';
 
-        assert(!(await whiteList.includes(to)));
-
-        expect(collection.mint(to, tokenId, tokenUri)).to.be.rejectedWith(
-            'DOCollection: Invalid receiver'
+        await expect(collection.mint(tokenReceiver.address, tokenId, tokenUri)).to.be.rejectedWith(
+            'DOCollection: invalid receiver'
         );
     });
 
     it(`owner can mint token if account is whitelisted`, async () => {
-        const to = randomAccount1.address;
         const tokenId = 123;
         const tokenUri = 'some-uri';
 
-        await whiteList.add(to);
-        await collection.mint(to, tokenId, tokenUri);
+        await whiteList.add(tokenReceiver.address);
+        await collection.mint(tokenReceiver.address, tokenId, tokenUri);
 
         await Promise.all([
-            expect(collection.ownerOf(tokenId)).to.eventually.equal(to),
+            expect(collection.ownerOf(tokenId)).to.eventually.equal(tokenReceiver.address),
             expect(collection.tokenURI(tokenId)).to.eventually.equal(tokenUri),
-            expect(collection.balanceOf(to)).to.eventually.equal(1),
+            expect(collection.balanceOf(tokenReceiver.address)).to.eventually.equal(1),
         ]);
     });
 
     it(`token owner can't transfer token if receiver isn't whitelisted`, async () => {
-        const tokenOwner = randomAccount1;
-        const tokenReceiver = randomAccount2;
         const tokenId = 123;
         const tokenUri = 'some-uri';
 
@@ -134,16 +123,12 @@ describe('DOCollection', function () {
 
         collection = collection.connect(tokenOwner);
 
-        assert(!(await whiteList.includes(tokenReceiver.address)));
-
         await expect(
             collection.transferFrom(tokenOwner.address, tokenReceiver.address, tokenId)
-        ).to.be.rejectedWith('DOCollection: Invalid receiver');
+        ).to.be.rejectedWith('DOCollection: invalid receiver');
     });
 
     it(`token owner can transfer token if receiver is whitelisted`, async () => {
-        const tokenOwner = randomAccount1;
-        const tokenReceiver = randomAccount2;
         const tokenId = 123;
         const tokenUri = 'some-uri';
 

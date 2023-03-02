@@ -38,6 +38,13 @@ const config: HardhatUserConfig = {
             },
         ],
     },
+    gasReporter: {
+        enabled: true,
+        currency: 'none',
+        gasPrice: 1,
+        src: 'contracts',
+        excludeContracts: ['contracts/test'],
+    },
 };
 
 export default config;

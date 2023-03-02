@@ -8,7 +8,7 @@ import {IWhiteList} from "./interfaces/IWhiteList.sol";
 contract WhiteList is IWhiteList, Initializable, OwnableUpgradeable {
     mapping(address => bool) private _list;
 
-    function initialize() public initializer {
+    function initialize() external initializer {
         __Ownable_init();
     }
 

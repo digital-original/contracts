@@ -1,12 +1,9 @@
 import { ethers } from 'hardhat';
 import { FormatTypes } from 'ethers/lib/utils';
-import chai, { expect } from 'chai';
-import chaiAsPromised from 'chai-as-promised';
+import { expect } from 'chai';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { ImplV1Mock, TransparentUpgradeableProxy } from '../typechain-types';
 import { deployClassic } from '../scripts/deploy-classic';
-
-chai.use(chaiAsPromised);
 
 describe('TransparentUpgradeableProxy', function () {
     let proxy: TransparentUpgradeableProxy & ImplV1Mock;

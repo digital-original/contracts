@@ -1,11 +1,8 @@
 import { ethers } from 'hardhat';
-import chai, { expect } from 'chai';
-import chaiAsPromised from 'chai-as-promised';
+import { expect } from 'chai';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { deployUpgradeable } from '../scripts/deploy-upgradable';
 import { WhiteList } from '../typechain-types';
-
-chai.use(chaiAsPromised);
 
 describe('WhiteList', function () {
     let whiteList: WhiteList;
@@ -31,9 +28,7 @@ describe('WhiteList', function () {
     it(`owner can add account to whitelist`, async () => {
         await whiteList.add(randomAccount.address);
 
-        const isIncluded = await whiteList.includes(randomAccount.address);
-
-        expect(isIncluded).equal(true);
+        await expect(whiteList.includes(randomAccount.address)).to.eventually.equal(true);
     });
 
     it(`owner can't add account to whitelist if account already included`, async () => {
@@ -48,9 +43,7 @@ describe('WhiteList', function () {
         await whiteList.add(randomAccount.address);
         await whiteList.remove(randomAccount.address);
 
-        const isIncluded = await whiteList.includes(randomAccount.address);
-
-        expect(isIncluded).equal(false);
+        await expect(whiteList.includes(randomAccount.address)).to.eventually.equal(false);
     });
 
     it(`owner can't remove account from whitelist if account not included`, async () => {
@@ -60,16 +53,20 @@ describe('WhiteList', function () {
     });
 
     it(`random account can't add account to whitelist`, async () => {
-        await expect(
-            whiteList.connect(randomAccount).add(randomAccount.address)
-        ).to.be.rejectedWith('Ownable: caller is not the owner');
+        whiteList = whiteList.connect(randomAccount);
+
+        await expect(whiteList.add(randomAccount.address)).to.be.rejectedWith(
+            'Ownable: caller is not the owner'
+        );
     });
 
     it(`random account can't remove account from whitelist`, async () => {
         await whiteList.add(randomAccount.address);
 
-        await expect(
-            whiteList.connect(randomAccount).remove(randomAccount.address)
-        ).to.be.rejectedWith('Ownable: caller is not the owner');
+        whiteList = whiteList.connect(randomAccount);
+
+        await expect(whiteList.remove(randomAccount.address)).to.be.rejectedWith(
+            'Ownable: caller is not the owner'
+        );
     });
 });
