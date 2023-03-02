@@ -1,38 +1,48 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.9;
 
-interface Market {
-    struct Item {
+interface IMarket {
+    struct Order {
         address seller;
         uint256 tokenId;
         uint256 price;
-        ItemStatus status;
-        address[] rewardReceivers;
-        uint8[] rewardRatios;
+        address[] participants;
+        uint256[] shares;
     }
 
-    enum ItemStatus {
-        Active,
-        Sold,
+    enum OrderStatus {
+        Placed,
+        Bought,
         Cancelled
     }
 
+    event Placed(uint256 indexed tokenId, address indexed seller, uint256 price);
+    event Bought(uint256 indexed tokenId, address indexed seller, address indexed buyer, uint256 price);
+    event Cancelled(uint256 indexed tokenId, address indexed seller);
+
     /**
      * Transfer NFT to Market contract
-     * Place new Item
+     * Place new Order
      */
-    function place(Item calldata item) external;
+    function place(
+        address seller,
+        uint256 tokenId,
+        uint256 price,
+        address[] memory participants,
+        uint256[] memory shares,
+        bytes memory signature
+    ) external;
 
     /**
      * Receive ETH
-     * Distribute ETH between rewardReceivers according to rewardRatios
+     * Distribute ETH between participants according to shares
      * Transfer NFT to buyer
      */
-    function buy() external;
+    function buy(uint256 orderId) external payable;
 
     /**
-     * Cancel Item
+     * Cancel Order
      * Transfer NFT back to seller
      */
-    function cancel() external;
+    function cancel(uint256 orderId) external;
 }
