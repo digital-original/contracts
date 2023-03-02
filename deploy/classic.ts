@@ -2,8 +2,9 @@ import { ethers, network } from 'hardhat';
 import { deployClassic } from '../scripts/deploy-classic';
 import { verify } from '../scripts/verify';
 
-const CONTRACT_NAME = 'DOProxyAdmin';
-const CONSTRUCTOR_ARGS: any = [];
+const CONTRACT_NAME = 'DOCollection';
+const CONSTRUCTOR_ARGS: any = ['Digital Original', 'DO', '0xc192D054535C1308E410389A4020dCC4C9721a42'];
+const PATH_TO_CONTRACT = `contracts/${CONTRACT_NAME}.sol:${CONTRACT_NAME}`;
 
 async function main() {
     const [deployer] = await ethers.getSigners();
@@ -29,7 +30,7 @@ async function main() {
         console.log('Waiting confirmations...');
         await contract.deployTransaction.wait(3);
 
-        await verify(contract.address, CONSTRUCTOR_ARGS);
+        await verify(PATH_TO_CONTRACT, contract.address, CONSTRUCTOR_ARGS);
     }
 }
 

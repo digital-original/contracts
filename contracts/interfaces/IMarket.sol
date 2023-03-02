@@ -1,12 +1,9 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
-
-interface ERC721 {}
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.9;
 
 interface Market {
     struct Item {
         address seller;
-        ERC721 collection;
         uint256 tokenId;
         uint256 price;
         ItemStatus status;

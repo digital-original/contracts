@@ -3,32 +3,32 @@ pragma solidity ^0.8.9;
 
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {IWhiteList} from "./interfaces/IWhiteList.sol";
 
-contract WhiteList is Initializable, OwnableUpgradeable {
+contract WhiteList is IWhiteList, Initializable, OwnableUpgradeable {
     mapping(address => bool) private _list;
-
-    event AddedWhiteList(address account);
-    event RemovedWhiteList(address account);
 
     function initialize() public initializer {
         __Ownable_init();
     }
 
-    function add(address _account) external onlyOwner {
-        require(!includes(_account), "WhiteList: account already included");
+    function add(address account) external onlyOwner {
+        require(!_list[account], "WhiteList: account already included");
 
-        _list[_account] = true;
-        emit AddedWhiteList(_account);
+        _list[account] = true;
+
+        emit AddedWhiteList(account);
     }
 
-    function remove(address _account) external onlyOwner {
-        require(includes(_account), "WhiteList: account not included");
+    function remove(address account) external onlyOwner {
+        require(_list[account], "WhiteList: account not included");
 
-        _list[_account] = false;
-        emit RemovedWhiteList(_account);
+        _list[account] = false;
+
+        emit RemovedWhiteList(account);
     }
 
-    function includes(address _account) public view returns (bool) {
-        return _list[_account];
+    function includes(address account) external view returns (bool) {
+        return _list[account];
     }
 }

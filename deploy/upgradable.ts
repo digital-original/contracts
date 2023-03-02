@@ -4,6 +4,7 @@ import { verify } from '../scripts/verify';
 
 const CONTRACT_NAME = 'WhiteList';
 const INITIALIZE_ARGS: any = [];
+const PATH_TO_CONTRACT = `contracts/${CONTRACT_NAME}.sol:${CONTRACT_NAME}`;
 
 const PROXY_ADMIN_ADDRESS = process.env.PROXY_ADMIN_ADDRESS!;
 
@@ -34,10 +35,11 @@ async function main() {
 
     if (!['hardhat', 'local'].includes(network.name)) {
         // need to wait several block while etherscan process deploy transaction
+        console.log('Waiting confirmations...');
         await proxy.deployTransaction.wait(3);
 
-        await verify(impl.address, []);
-        await verify(proxy.address, proxyArgs);
+        await verify(PATH_TO_CONTRACT, impl.address, []);
+        await verify(`contracts/proxy/${CONTRACT_NAME}.sol:${proxyName}`, proxy.address, proxyArgs);
     }
 }
 
