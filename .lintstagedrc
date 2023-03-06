@@ -1,0 +1,9 @@
+{
+    "*.{js,json,yml,yaml}": [
+        "prettier --write"
+    ],
+    "*.sol": [
+        "prettier --write",
+        "solhint --max-warnings 0"
+    ]
+}

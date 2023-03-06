@@ -26,7 +26,7 @@ contract DOCollection is ERC721Enumerable, ERC721URIStorage, Ownable {
 
     function whiteList(address whiteList_) external onlyOwner {
         require(whiteList_ != address(0), "DOCollection: address zero is not valid WiteList");
-        require(whiteList_.code.length > 0, "DOCollection: EOA is not valid WiteList");
+        require(whiteList_.code.length != 0, "DOCollection: EOA is not valid WiteList");
 
         _whiteList = IWhiteList(whiteList_);
     }

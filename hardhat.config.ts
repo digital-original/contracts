@@ -7,6 +7,7 @@ dotenv.config();
 const INFURA_API_KEY = process.env.INFURA_API_KEY!;
 const DEPLOYER_PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY!;
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY!;
+const GAS_REPORTER = process.env.GAS_REPORTER!;
 
 const developmentConfig: HardhatUserConfig = {
     networks: {
@@ -45,11 +46,17 @@ const config: HardhatUserConfig = {
         ],
     },
     gasReporter: {
-        enabled: true,
+        enabled: !!GAS_REPORTER,
         currency: 'none',
         gasPrice: 1,
         src: 'contracts',
         excludeContracts: ['contracts/test'],
+    },
+    paths: {
+        sources: './contracts',
+        tests: './test',
+        cache: './cache',
+        artifacts: './artifacts',
     },
 };
 

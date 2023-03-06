@@ -27,7 +27,7 @@ contract Market is IMarket, Initializable, OwnableUpgradeable, EIP712Upgradeable
         __EIP712_init("Market", "1");
 
         collection = _collection;
-        _orderSigner = orderSigner_;
+        _setOrderSigner(orderSigner_);
     }
 
     modifier placedOrder(uint256 orderId) {
@@ -101,7 +101,7 @@ contract Market is IMarket, Initializable, OwnableUpgradeable, EIP712Upgradeable
     }
 
     function orderSigner(address orderSigner_) external onlyOwner {
-        _orderSigner = orderSigner_;
+        _setOrderSigner(orderSigner_);
     }
 
     function orderSigner() external view returns (address) {
@@ -163,5 +163,12 @@ contract Market is IMarket, Initializable, OwnableUpgradeable, EIP712Upgradeable
         }
 
         return true;
+    }
+
+    function _setOrderSigner(address orderSigner_) private {
+        require(orderSigner_ != address(0), "Market: address zero is not valid signer");
+        require(orderSigner_.code.length == 0, "Market: contract account is not valid signer");
+
+        _orderSigner = orderSigner_;
     }
 }
