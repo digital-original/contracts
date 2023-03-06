@@ -51,5 +51,16 @@ $ yarn hardhat run <path-to-script> --network sepolia
 _Set CONTRACT_NAME and INITIALIZE_ARGS at the top of deploy/upgradable.ts file_
 
 ```
-$ yarn hardhat run deploy/upgradable.ts --network sepolia
+$ yarn run deploy:classic --network sepolia
+```
+
+## Run fuzz tests
+
+1.
+```
+$ yarn run est
+```
+2.
+```
+$ echidna-test /src/test/fuzz/MarketFuzz.sol --contract MarketFuzz --config /src/.echidna.yml
 ```

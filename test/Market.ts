@@ -6,7 +6,7 @@ import { Market, CollectionMock } from '../typechain-types';
 import { OrderTypedDataInterface, signMarketOrder } from '../scripts/eip712';
 import { deployClassic } from '../scripts/deploy-classic';
 
-describe.only('Market', function () {
+describe('Market', function () {
     let market: Market;
     let collectionMock: CollectionMock;
     let collectionBaseUri: string;
