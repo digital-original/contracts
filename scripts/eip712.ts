@@ -11,8 +11,6 @@ async function createEip712Signature(
     return signer._signTypedData(domain, types, value);
 }
 
-const MARKET_DOMAIN_NAME = 'Market';
-const MARKET_DOMAIN_VERSION = '1';
 const ORDER_TYPES = {
     Order: [
         { name: 'seller', type: 'address' },
@@ -20,30 +18,66 @@ const ORDER_TYPES = {
         { name: 'price', type: 'uint256' },
         { name: 'participants', type: 'address[]' },
         { name: 'shares', type: 'uint256[]' },
-        { name: 'nonce', type: 'uint256' },
+        { name: 'expiredBlock', type: 'uint256' },
     ],
 };
 
 export interface OrderTypedDataInterface {
     seller: string;
     tokenId: string;
-    price: string;
+    price: string | number;
     participants: string[];
-    shares: string[];
-    nonce: string;
+    shares: string[] | number[];
+    expiredBlock: number;
 }
 
-export async function signMarketOrder(
+export async function createEip712MarketSignature(
+    name: string,
+    version: string,
     signer: SignerWithAddress,
     verifyingContract: string,
     value: OrderTypedDataInterface
 ) {
     const domain: TypedDataDomain = {
-        name: MARKET_DOMAIN_NAME,
-        version: MARKET_DOMAIN_VERSION,
+        name,
+        version,
         chainId: (await ethers.provider.getNetwork()).chainId,
         verifyingContract,
     };
 
     return createEip712Signature(signer, domain, ORDER_TYPES, value);
+}
+
+const MARKET_DOMAIN_NAME = 'Market';
+const MARKET_DOMAIN_VERSION = '1';
+
+export function signMarketOrder(
+    signer: SignerWithAddress,
+    verifyingContract: string,
+    value: OrderTypedDataInterface
+) {
+    return createEip712MarketSignature(
+        MARKET_DOMAIN_NAME,
+        MARKET_DOMAIN_VERSION,
+        signer,
+        verifyingContract,
+        value,
+    );
+}
+
+const AUCTION_DOMAIN_NAME = 'Auction';
+const AUCTION_DOMAIN_VERSION = '1';
+
+export function signAuctionOrder(
+    signer: SignerWithAddress,
+    verifyingContract: string,
+    value: OrderTypedDataInterface
+) {
+    return createEip712MarketSignature(
+        AUCTION_DOMAIN_NAME,
+        AUCTION_DOMAIN_VERSION,
+        signer,
+        verifyingContract,
+        value,
+    );
 }

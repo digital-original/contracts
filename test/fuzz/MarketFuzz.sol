@@ -22,6 +22,6 @@ contract MarketFuzz is Market {
     }
 
     function echidna_check_order_signer() public returns (bool) {
-        return this.orderSigner() == address(0);
+        return this.marketSigner() == address(0);
     }
 }

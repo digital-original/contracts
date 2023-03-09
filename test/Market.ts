@@ -1,10 +1,12 @@
 import { ethers } from 'hardhat';
-import { expect } from 'chai';
+import { ContractTransaction } from 'ethers';
+import { mineUpTo } from '@nomicfoundation/hardhat-network-helpers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { deployUpgradeable } from '../scripts/deploy-upgradable';
-import { Market, CollectionMock } from '../typechain-types';
-import { OrderTypedDataInterface, signMarketOrder } from '../scripts/eip712';
+import { expect } from 'chai';
 import { deployClassic } from '../scripts/deploy-classic';
+import { deployUpgradeable } from '../scripts/deploy-upgradable';
+import { OrderTypedDataInterface, signMarketOrder } from '../scripts/eip712';
+import { Market, CollectionMock } from '../typechain-types';
 
 describe('Market', function () {
     let market: Market;
@@ -12,45 +14,51 @@ describe('Market', function () {
     let collectionBaseUri: string;
 
     let owner: SignerWithAddress;
-    let orderSigner: SignerWithAddress;
+    let marketSigner: SignerWithAddress;
     let tokenOwner: SignerWithAddress;
     let buyer: SignerWithAddress;
     let randomAccount: SignerWithAddress;
 
     enum OrderStatus {
-        Placed = 0,
-        Bought = 1,
-        Cancelled = 2,
+        NotExists,
+        Placed,
+        Bought,
+        Cancelled,
     }
 
     before(async () => {
-        [owner, orderSigner, tokenOwner, buyer, randomAccount] = <SignerWithAddress[]>(
+        [owner, marketSigner, tokenOwner, buyer, randomAccount] = <SignerWithAddress[]>(
             await ethers.getSigners()
         );
-    });
 
-    beforeEach(async () => {
         collectionBaseUri = 'https://base-uri-mock/';
         collectionMock = <CollectionMock>await deployClassic({
             contractName: 'CollectionMock',
             constructorArgs: [collectionBaseUri],
             signer: owner,
         });
-        collectionMock = collectionMock.connect(owner);
+    });
 
+    beforeEach(async () => {
         const { proxyWithImpl } = await deployUpgradeable({
             contractName: 'Market',
             proxyAdminAddress: '0x0000000000000000000000000000000000000001',
-            initializeArgs: [collectionMock.address, orderSigner.address],
+            initializeArgs: [
+                collectionMock.address,
+                marketSigner.address,
+                '0x0000000000000000000000000000000000000001',
+            ],
             signer: owner,
         });
 
         market = <Market>proxyWithImpl;
+
+        collectionMock = collectionMock.connect(owner);
         market = market.connect(owner);
     });
 
-    it(`should have correct order signer`, async () => {
-        await expect(market['orderSigner()']()).to.eventually.equal(orderSigner.address);
+    it(`should have correct market signer`, async () => {
+        await expect(market['marketSigner()']()).to.eventually.equal(marketSigner.address);
     });
 
     it(`should have correct collection`, async () => {
@@ -63,16 +71,16 @@ describe('Market', function () {
         expect(orderCount.toString()).equal('0');
     });
 
-    it(`owner can change order signer`, async () => {
-        await market['orderSigner(address)'](randomAccount.address);
+    it(`owner can change market signer`, async () => {
+        await market['marketSigner(address)'](randomAccount.address);
 
-        await expect(market['orderSigner()']()).to.eventually.equal(randomAccount.address);
+        await expect(market['marketSigner()']()).to.eventually.equal(randomAccount.address);
     });
 
-    it(`random account can't change orderSigner`, async () => {
+    it(`random account can't change marketSigner`, async () => {
         market = market.connect(randomAccount);
 
-        await expect(market['orderSigner(address)'](randomAccount.address)).to.be.rejectedWith(
+        await expect(market['marketSigner(address)'](randomAccount.address)).to.be.rejectedWith(
             'Ownable: caller is not the owner'
         );
     });
@@ -81,7 +89,7 @@ describe('Market', function () {
         let tokenId: string;
 
         beforeEach(async () => {
-            tokenId = '11';
+            tokenId = (await collectionMock.totalSupply()).toString();
 
             market = market.connect(tokenOwner);
             collectionMock = collectionMock.connect(tokenOwner);
@@ -99,17 +107,17 @@ describe('Market', function () {
                 shares: ['50000', '50000'],
             };
 
-            const orderTypedData: OrderTypedDataInterface = {
-                ...order,
-                nonce: '0',
-            };
+            const blockNumber = await ethers.provider.getBlockNumber();
+            const expiredBlock = blockNumber + 10;
 
-            const signature = await signMarketOrder(orderSigner, market.address, orderTypedData);
+            const orderTypedData: OrderTypedDataInterface = { ...order, expiredBlock };
+
+            const signature = await signMarketOrder(marketSigner, market.address, orderTypedData);
 
             await market.place(
-                order.seller,
                 order.tokenId,
                 order.price,
+                expiredBlock,
                 order.participants,
                 order.shares,
                 signature
@@ -124,6 +132,8 @@ describe('Market', function () {
         });
 
         it(`should emit Placed event`, async () => {
+            const orderId = '0';
+
             const order = {
                 seller: tokenOwner.address,
                 tokenId,
@@ -132,55 +142,25 @@ describe('Market', function () {
                 shares: ['50000', '50000'],
             };
 
-            const orderTypedData: OrderTypedDataInterface = {
-                ...order,
-                nonce: '0',
-            };
+            const blockNumber = await ethers.provider.getBlockNumber();
+            const expiredBlock = blockNumber + 10;
 
-            const signature = await signMarketOrder(orderSigner, market.address, orderTypedData);
+            const orderTypedData: OrderTypedDataInterface = { ...order, expiredBlock };
+
+            const signature = await signMarketOrder(marketSigner, market.address, orderTypedData);
 
             await expect(
                 market.place(
-                    order.seller,
                     order.tokenId,
                     order.price,
+                    expiredBlock,
                     order.participants,
                     order.shares,
                     signature
                 )
             )
                 .to.emit(market, 'Placed')
-                .withArgs(tokenId, tokenOwner.address, order.price);
-        });
-
-        it(`should increase nonce for token for sale`, async () => {
-            const order = {
-                seller: tokenOwner.address,
-                tokenId,
-                price: '100000',
-                participants: [owner.address, tokenOwner.address],
-                shares: ['50000', '50000'],
-            };
-
-            const nonce = await market.nonces(tokenId);
-
-            const orderTypedData: OrderTypedDataInterface = {
-                ...order,
-                nonce: nonce.toString(),
-            };
-
-            const signature = await signMarketOrder(orderSigner, market.address, orderTypedData);
-
-            await market.place(
-                order.seller,
-                order.tokenId,
-                order.price,
-                order.participants,
-                order.shares,
-                signature
-            );
-
-            await expect(market.nonces(tokenId)).to.eventually.equal(nonce.add(1));
+                .withArgs(orderId, tokenId, tokenOwner.address, order.price);
         });
 
         it(`should increase order count`, async () => {
@@ -192,17 +172,17 @@ describe('Market', function () {
                 shares: ['50000', '50000'],
             };
 
-            const orderTypedData: OrderTypedDataInterface = {
-                ...order,
-                nonce: '0',
-            };
+            const blockNumber = await ethers.provider.getBlockNumber();
+            const expiredBlock = blockNumber + 10;
 
-            const signature = await signMarketOrder(orderSigner, market.address, orderTypedData);
+            const orderTypedData: OrderTypedDataInterface = { ...order, expiredBlock };
+
+            const signature = await signMarketOrder(marketSigner, market.address, orderTypedData);
 
             await market.place(
-                order.seller,
                 order.tokenId,
                 order.price,
+                expiredBlock,
                 order.participants,
                 order.shares,
                 signature
@@ -222,18 +202,18 @@ describe('Market', function () {
                 shares: ['50000', '50000'],
             };
 
-            const orderTypedData: OrderTypedDataInterface = {
-                ...order,
-                nonce: '0',
-            };
+            const blockNumber = await ethers.provider.getBlockNumber();
+            const expiredBlock = blockNumber + 10;
 
-            const signature = await signMarketOrder(orderSigner, market.address, orderTypedData);
+            const orderTypedData: OrderTypedDataInterface = { ...order, expiredBlock };
+
+            const signature = await signMarketOrder(marketSigner, market.address, orderTypedData);
 
             await expect(
                 market.place(
-                    order.seller,
                     order.tokenId,
                     order.price,
+                    expiredBlock,
                     order.participants,
                     order.shares,
                     signature
@@ -244,7 +224,7 @@ describe('Market', function () {
             await expect(collectionMock.ownerOf(tokenId)).to.eventually.equal(market.address);
         });
 
-        it(`should should fail if nonce is incorrect`, async () => {
+        it(`should fail if expired block number less than current`, async () => {
             const order = {
                 seller: tokenOwner.address,
                 tokenId,
@@ -253,26 +233,28 @@ describe('Market', function () {
                 shares: ['50000', '50000'],
             };
 
-            const orderTypedData: OrderTypedDataInterface = {
-                ...order,
-                nonce: '1',
-            };
+            const blockNumber = await ethers.provider.getBlockNumber();
+            const expiredBlock = blockNumber + 10;
 
-            const signature = await signMarketOrder(orderSigner, market.address, orderTypedData);
+            const orderTypedData: OrderTypedDataInterface = { ...order, expiredBlock };
+
+            const signature = await signMarketOrder(marketSigner, market.address, orderTypedData);
+
+            await mineUpTo(expiredBlock + 1);
 
             await expect(
                 market.place(
-                    order.seller,
                     order.tokenId,
                     order.price,
+                    expiredBlock,
                     order.participants,
                     order.shares,
                     signature
                 )
-            ).to.be.rejectedWith('Market: invalid signature');
+            ).to.be.rejectedWith('Market: unauthorized');
         });
 
-        it(`should should fail if number of participants isn't equal number of shares`, async () => {
+        it(`should fail if number of participants isn't equal number of shares`, async () => {
             const order = {
                 seller: tokenOwner.address,
                 tokenId,
@@ -281,18 +263,18 @@ describe('Market', function () {
                 shares: ['100000'],
             };
 
-            const orderTypedData: OrderTypedDataInterface = {
-                ...order,
-                nonce: '0',
-            };
+            const blockNumber = await ethers.provider.getBlockNumber();
+            const expiredBlock = blockNumber + 10;
 
-            const signature = await signMarketOrder(orderSigner, market.address, orderTypedData);
+            const orderTypedData: OrderTypedDataInterface = { ...order, expiredBlock };
+
+            const signature = await signMarketOrder(marketSigner, market.address, orderTypedData);
 
             await expect(
                 market.place(
-                    order.seller,
                     order.tokenId,
                     order.price,
+                    expiredBlock,
                     order.participants,
                     order.shares,
                     signature
@@ -300,7 +282,7 @@ describe('Market', function () {
             ).to.be.rejectedWith('Market: invalid order');
         });
 
-        it(`should should fail if total shares isn't equal price`, async () => {
+        it(`should fail if total shares isn't equal price`, async () => {
             const order = {
                 seller: tokenOwner.address,
                 tokenId,
@@ -309,18 +291,18 @@ describe('Market', function () {
                 shares: ['50000', '40000'],
             };
 
-            const orderTypedData: OrderTypedDataInterface = {
-                ...order,
-                nonce: '0',
-            };
+            const blockNumber = await ethers.provider.getBlockNumber();
+            const expiredBlock = blockNumber + 10;
 
-            const signature = await signMarketOrder(orderSigner, market.address, orderTypedData);
+            const orderTypedData: OrderTypedDataInterface = { ...order, expiredBlock };
+
+            const signature = await signMarketOrder(marketSigner, market.address, orderTypedData);
 
             await expect(
                 market.place(
-                    order.seller,
                     order.tokenId,
                     order.price,
+                    expiredBlock,
                     order.participants,
                     order.shares,
                     signature
@@ -328,7 +310,7 @@ describe('Market', function () {
             ).to.be.rejectedWith('Market: invalid order');
         });
 
-        it(`should should fail if order signer is invalid`, async () => {
+        it(`should fail if market signer is invalid`, async () => {
             const order = {
                 seller: tokenOwner.address,
                 tokenId,
@@ -337,26 +319,26 @@ describe('Market', function () {
                 shares: ['50000', '40000'],
             };
 
-            const orderTypedData: OrderTypedDataInterface = {
-                ...order,
-                nonce: '0',
-            };
+            const blockNumber = await ethers.provider.getBlockNumber();
+            const expiredBlock = blockNumber + 10;
+
+            const orderTypedData: OrderTypedDataInterface = { ...order, expiredBlock };
 
             const signature = await signMarketOrder(randomAccount, market.address, orderTypedData);
 
             await expect(
                 market.place(
-                    order.seller,
                     order.tokenId,
                     order.price,
+                    expiredBlock,
                     order.participants,
                     order.shares,
                     signature
                 )
-            ).to.be.rejectedWith('Market: invalid signature');
+            ).to.be.rejectedWith('Market: unauthorized');
         });
 
-        it(`should should fail if token owner is incorrect`, async () => {
+        it(`should fail if token owner is incorrect`, async () => {
             const order = {
                 seller: randomAccount.address,
                 tokenId,
@@ -365,20 +347,20 @@ describe('Market', function () {
                 shares: ['50000', '50000'],
             };
 
-            const orderTypedData: OrderTypedDataInterface = {
-                ...order,
-                nonce: '0',
-            };
+            const blockNumber = await ethers.provider.getBlockNumber();
+            const expiredBlock = blockNumber + 10;
 
-            const signature = await signMarketOrder(orderSigner, market.address, orderTypedData);
+            const orderTypedData: OrderTypedDataInterface = { ...order, expiredBlock };
+
+            const signature = await signMarketOrder(marketSigner, market.address, orderTypedData);
 
             market = market.connect(randomAccount);
 
             await expect(
                 market.place(
-                    order.seller,
                     order.tokenId,
                     order.price,
+                    expiredBlock,
                     order.participants,
                     order.shares,
                     signature
@@ -386,7 +368,7 @@ describe('Market', function () {
             ).to.be.rejectedWith('ERC721: transfer from incorrect owner');
         });
 
-        it(`should should fail if token doesn't exist`, async () => {
+        it(`should fail if token doesn't exist`, async () => {
             const order = {
                 seller: tokenOwner.address,
                 tokenId: '1234',
@@ -395,18 +377,18 @@ describe('Market', function () {
                 shares: ['50000', '50000'],
             };
 
-            const orderTypedData: OrderTypedDataInterface = {
-                ...order,
-                nonce: '0',
-            };
+            const blockNumber = await ethers.provider.getBlockNumber();
+            const expiredBlock = blockNumber + 10;
 
-            const signature = await signMarketOrder(orderSigner, market.address, orderTypedData);
+            const orderTypedData: OrderTypedDataInterface = { ...order, expiredBlock };
+
+            const signature = await signMarketOrder(marketSigner, market.address, orderTypedData);
 
             await expect(
                 market.place(
-                    order.seller,
                     order.tokenId,
                     order.price,
+                    expiredBlock,
                     order.participants,
                     order.shares,
                     signature
@@ -414,7 +396,7 @@ describe('Market', function () {
             ).to.be.rejectedWith('ERC721: invalid token ID');
         });
 
-        it(`should should fail if token owner didn't approve for market contract`, async () => {
+        it(`should fail if token owner didn't approve token transfer for market contract`, async () => {
             await collectionMock.transferFrom(tokenOwner.address, randomAccount.address, tokenId);
 
             [tokenOwner, randomAccount] = [randomAccount, tokenOwner];
@@ -430,23 +412,25 @@ describe('Market', function () {
                 shares: ['50000', '50000'],
             };
 
-            const orderTypedData: OrderTypedDataInterface = {
-                ...order,
-                nonce: '0',
-            };
+            const blockNumber = await ethers.provider.getBlockNumber();
+            const expiredBlock = blockNumber + 10;
 
-            const signature = await signMarketOrder(orderSigner, market.address, orderTypedData);
+            const orderTypedData: OrderTypedDataInterface = { ...order, expiredBlock };
+
+            const signature = await signMarketOrder(marketSigner, market.address, orderTypedData);
 
             await expect(
                 market.place(
-                    order.seller,
                     order.tokenId,
                     order.price,
+                    expiredBlock,
                     order.participants,
                     order.shares,
                     signature
                 )
             ).to.be.rejectedWith('ERC721: caller is not token owner or approved');
+
+            [tokenOwner, randomAccount] = [randomAccount, tokenOwner];
         });
     });
 
@@ -458,7 +442,7 @@ describe('Market', function () {
         let orderId: string;
 
         beforeEach(async () => {
-            tokenId = '11';
+            tokenId = (await collectionMock.totalSupply()).toString();
             price = '100000';
             participants = [owner.address, tokenOwner.address, randomAccount.address];
             shares = ['40000', '35000', '25000'];
@@ -478,15 +462,17 @@ describe('Market', function () {
                 shares,
             };
 
-            const signature = await signMarketOrder(orderSigner, market.address, {
-                ...order,
-                nonce: '0',
-            });
+            const blockNumber = await ethers.provider.getBlockNumber();
+            const expiredBlock = blockNumber + 10;
+
+            const orderTypedData: OrderTypedDataInterface = { ...order, expiredBlock };
+
+            const signature = await signMarketOrder(marketSigner, market.address, orderTypedData);
 
             await market.place(
-                order.seller,
                 order.tokenId,
                 order.price,
+                expiredBlock,
                 order.participants,
                 order.shares,
                 signature
@@ -513,13 +499,15 @@ describe('Market', function () {
         it(`should change order status to bought`, async () => {
             await market.buy(orderId, { value: price });
 
-            await expect(market.statuses(orderId)).to.be.eventually.equal(OrderStatus.Bought);
+            const order = await market.order(orderId);
+
+            expect(order.status).equal(OrderStatus.Bought);
         });
 
         it(`should emit Bought event`, async () => {
             await expect(market.buy(orderId, { value: price }))
                 .to.be.emit(market, 'Bought')
-                .withArgs(tokenId, tokenOwner.address, buyer.address, price);
+                .withArgs(orderId, tokenId, buyer.address, tokenOwner.address, price);
         });
 
         it(`should fail if invalid ether amount`, async () => {
@@ -546,18 +534,18 @@ describe('Market', function () {
 
         it(`should fail if order doesn't exist`, async () => {
             await expect(market.buy('1', { value: '123' })).to.be.rejectedWith(
-                'Market: order does not exist'
+                'BaseMarket: order is not placed'
             );
         });
     });
 
-    describe(`method 'cancel'`, () => {
+    describe('order cancel', () => {
         let tokenId: string;
         let price: string;
         let orderId: string;
 
         beforeEach(async () => {
-            tokenId = '13';
+            tokenId = (await collectionMock.totalSupply()).toString();
             price = '110000';
             orderId = '0';
 
@@ -575,82 +563,108 @@ describe('Market', function () {
                 shares: ['65000', '45000'],
             };
 
-            const signature = await signMarketOrder(orderSigner, market.address, {
-                ...order,
-                nonce: '0',
-            });
+            const blockNumber = await ethers.provider.getBlockNumber();
+            const expiredBlock = blockNumber + 10;
+
+            const orderTypedData: OrderTypedDataInterface = { ...order, expiredBlock };
+
+            const signature = await signMarketOrder(marketSigner, market.address, orderTypedData);
 
             await market.place(
-                order.seller,
                 order.tokenId,
                 order.price,
+                expiredBlock,
                 order.participants,
                 order.shares,
                 signature
             );
         });
 
-        it(`should transfer token back to seller`, async () => {
-            await expect(market.cancel(orderId))
-                .to.be.emit(collectionMock, 'Transfer')
-                .withArgs(market.address, tokenOwner.address, tokenId);
-            await expect(collectionMock.ownerOf(tokenId)).to.be.eventually.equal(
-                tokenOwner.address
+        describe(`method 'cancel'`, () => {
+            shouldBehaveLikeCancel((orderId: string, from: SignerWithAddress) =>
+                market.cancel(orderId)
             );
+
+            it(`should fail if caller is random account`, async () => {
+                market = market.connect(randomAccount);
+
+                await expect(market.cancel(orderId)).to.be.rejectedWith('Market: incorrect seller');
+            });
         });
 
-        it(`should emit Cancelled event`, async () => {
-            await expect(market.cancel(orderId))
-                .to.be.emit(market, 'Cancelled')
-                .withArgs(tokenId, tokenOwner.address);
+        describe(`method 'reject'`, () => {
+            beforeEach(() => {
+                market = market.connect(owner);
+            });
+
+            shouldBehaveLikeCancel((orderId: string, from: SignerWithAddress) =>
+                market.reject(orderId)
+            );
+
+            it('should cancel order if caller is owner', async () => {
+                await market.reject(orderId);
+
+                const order = await market.order(orderId);
+
+                expect(order.status).equal(OrderStatus.Cancelled);
+            });
+
+            it(`should fail if caller is random account`, async () => {
+                market = market.connect(randomAccount);
+
+                await expect(market.reject(orderId)).to.be.rejectedWith(
+                    'Ownable: caller is not the owner'
+                );
+            });
         });
 
-        it(`should change order status to Cancelled`, async () => {
-            await market.cancel(orderId);
+        function shouldBehaveLikeCancel(
+            method: (orderId: string, from: SignerWithAddress) => Promise<ContractTransaction>
+        ) {
+            it(`should transfer token back to seller`, async () => {
+                await expect(method(orderId, tokenOwner))
+                    .to.be.emit(collectionMock, 'Transfer')
+                    .withArgs(market.address, tokenOwner.address, tokenId);
+                await expect(collectionMock.ownerOf(tokenId)).to.be.eventually.equal(
+                    tokenOwner.address
+                );
+            });
 
-            await expect(market.statuses(orderId)).to.be.eventually.equal(OrderStatus.Cancelled);
-        });
+            it(`should emit Cancelled event`, async () => {
+                await expect(method(orderId, tokenOwner))
+                    .to.be.emit(market, 'Cancelled')
+                    .withArgs(orderId, tokenId, tokenOwner.address);
+            });
 
-        it(`should change order status to Cancelled`, async () => {
-            await market.cancel(orderId);
+            it(`should change order status to Cancelled`, async () => {
+                await method(orderId, tokenOwner);
 
-            await expect(market.statuses(orderId)).to.be.eventually.equal(OrderStatus.Cancelled);
-        });
+                const order = await market.order(orderId);
 
-        it(`should cancel and transfer token to token owner if caller is contract owner`, async () => {
-            market = market.connect(owner);
+                expect(order.status).equal(OrderStatus.Cancelled);
+            });
 
-            await expect(market.cancel(orderId))
-                .to.be.emit(collectionMock, 'Transfer')
-                .withArgs(market.address, tokenOwner.address, tokenId);
+            it(`should fail if order doesn't exist`, async () => {
+                await expect(method('1111', tokenOwner)).to.be.rejectedWith(
+                    'BaseMarket: order is not placed'
+                );
+            });
 
-            await expect(market.statuses(orderId)).to.be.eventually.equal(OrderStatus.Cancelled);
-        });
+            it(`should fail if order is already cancelled`, async () => {
+                await method(orderId, tokenOwner);
 
-        it(`should fail if caller is random account`, async () => {
-            market = market.connect(randomAccount);
+                await expect(method(orderId, tokenOwner)).to.be.rejectedWith(
+                    'BaseMarket: order is not placed'
+                );
+            });
 
-            await expect(market.cancel(orderId)).to.be.rejectedWith('Market: invalid caller');
-        });
+            it(`should fail if order is bought`, async () => {
+                await market.connect(buyer).buy(orderId, { value: price });
 
-        it(`should fail if order doesn't exist`, async () => {
-            await expect(market.cancel('1111')).to.be.rejectedWith('Market: order does not exist');
-        });
-
-        it(`should fail if order is already cancelled`, async () => {
-            await market.cancel(orderId);
-
-            await expect(market.cancel(orderId)).to.be.rejectedWith('Market: order is not placed');
-        });
-
-        it(`should fail if order is bought`, async () => {
-            market = market.connect(randomAccount);
-
-            await market.connect(randomAccount).buy(orderId, { value: price });
-
-            market = market.connect(tokenOwner);
-
-            await expect(market.cancel(orderId)).to.be.rejectedWith('Market: order is not placed');
-        });
+                await expect(method(orderId, tokenOwner)).to.be.rejectedWith(
+                    'Market: order is not placed'
+                );
+            });
+        }
     });
 });

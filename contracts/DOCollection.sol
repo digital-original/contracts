@@ -19,14 +19,13 @@ contract DOCollection is ERC721Enumerable, ERC721URIStorage, Ownable {
         _setTokenURI(tokenId, _tokenURI);
     }
 
-    function safeMint(address to, uint256 tokenId, bytes memory data, string memory _tokenURI) external {
+    function safeMint(address to, uint256 tokenId, bytes memory data, string memory _tokenURI) external onlyOwner {
         _safeMint(to, tokenId, data);
         _setTokenURI(tokenId, _tokenURI);
     }
 
     function whiteList(address whiteList_) external onlyOwner {
-        require(whiteList_ != address(0), "DOCollection: address zero is not valid WiteList");
-        require(whiteList_.code.length != 0, "DOCollection: EOA is not valid WiteList");
+        require(whiteList_ != address(0), "DOCollection: invalid whitelist address");
 
         _whiteList = IWhiteList(whiteList_);
     }

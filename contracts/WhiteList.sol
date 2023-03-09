@@ -17,7 +17,7 @@ contract WhiteList is IWhiteList, Initializable, OwnableUpgradeable {
 
         _list[account] = true;
 
-        emit AddedWhiteList(account);
+        emit Added(account);
     }
 
     function remove(address account) external onlyOwner {
@@ -25,10 +25,12 @@ contract WhiteList is IWhiteList, Initializable, OwnableUpgradeable {
 
         _list[account] = false;
 
-        emit RemovedWhiteList(account);
+        emit Removed(account);
     }
 
     function includes(address account) external view returns (bool) {
         return _list[account];
     }
+
+    uint256[49] private __gap;
 }

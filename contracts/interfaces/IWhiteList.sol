@@ -2,8 +2,8 @@
 pragma solidity ^0.8.9;
 
 interface IWhiteList {
-    event AddedWhiteList(address indexed account);
-    event RemovedWhiteList(address indexed account);
+    event Added(address indexed account);
+    event Removed(address indexed account);
 
     function add(address account) external;
 
