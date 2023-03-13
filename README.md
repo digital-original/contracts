@@ -64,3 +64,22 @@ $ yarn run est
 ```
 $ echidna-test /src/test/fuzz/MarketFuzz.sol --contract MarketFuzz --config /src/.echidna.yml
 ```
+
+## Run Slither-Analyzer
+
+1. Create Python virtual environment
+```
+$ python3 -m venv venv
+```
+2. Run Python virtual environment
+```
+$ source ./venv/bin/activate
+```
+3. Instal Python packages
+```
+$ pip install -r requirements.txt
+```
+4. Run Slither
+```
+$ yarn run slither
+```

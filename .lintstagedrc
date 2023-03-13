@@ -1,5 +1,5 @@
 {
-    "*.{js,json,yml,yaml}": [
+    "*.{ts,js,json,yml,yaml}": [
         "prettier --write"
     ],
     "*.sol": [
