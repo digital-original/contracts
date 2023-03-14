@@ -11,12 +11,13 @@
                 "ignoreConstructors": true
             }
         ],
-        "no-empty-blocks": "off",
         "reason-string": [
             "warn",
             {
                 "maxLength": 48
             }
-        ]
+        ],
+        "no-empty-blocks": "off",
+        "func-name-mixedcase": "off"
     }
 }

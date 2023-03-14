@@ -14,15 +14,13 @@ describe('DOCollection', function () {
     let tokenReceiver: SignerWithAddress;
 
     const collectionName = 'Digital Original';
-    const collectionSymbol = 'Digital Original';
+    const collectionSymbol = 'DO';
 
     before(async () => {
         [owner, tokenOwner, tokenReceiver, randomAccount] = <SignerWithAddress[]>(
             await ethers.getSigners()
         );
-    });
 
-    beforeEach(async () => {
         const { proxyWithImpl: _whiteList } = await deployUpgradeable({
             contractName: 'WhiteList',
             proxyAdminAddress: '0x0000000000000000000000000000000000000001',
@@ -31,15 +29,21 @@ describe('DOCollection', function () {
         });
 
         whiteList = <WhiteList>_whiteList;
-        whiteList = whiteList.connect(owner);
 
+        await whiteList.add(tokenReceiver.address);
+        await whiteList.add(tokenOwner.address);
+    });
+
+    beforeEach(async () => {
         const _collection = await deployClassic({
             contractName: 'DOCollection',
-            constructorArgs: [collectionName, collectionSymbol, _whiteList.address],
+            constructorArgs: [collectionName, collectionSymbol, whiteList.address],
             signer: owner,
         });
 
         collection = <DOCollection>_collection;
+
+        whiteList = whiteList.connect(owner);
         collection = collection.connect(owner);
     });
 
@@ -55,11 +59,9 @@ describe('DOCollection', function () {
     });
 
     it(`owner can change whitelist`, async () => {
-        const _whiteList = await deployClassic({
-            contractName: 'WhiteList',
-            constructorArgs: [],
-            signer: owner,
-        });
+        const _whiteList = {
+            address: '0x0000000000000000000000000000000000000001',
+        };
 
         await collection['whiteList(address)'](_whiteList.address);
 
@@ -67,11 +69,9 @@ describe('DOCollection', function () {
     });
 
     it(`random account can't change whitelist`, async () => {
-        const _whiteList = await deployClassic({
-            contractName: 'WhiteList',
-            constructorArgs: [],
-            signer: randomAccount,
-        });
+        const _whiteList = {
+            address: '0x0000000000000000000000000000000000000001',
+        };
 
         collection = collection.connect(randomAccount);
 
@@ -95,7 +95,7 @@ describe('DOCollection', function () {
         const tokenId = 123;
         const tokenUri = 'some-uri';
 
-        await expect(collection.mint(tokenReceiver.address, tokenId, tokenUri)).to.be.rejectedWith(
+        await expect(collection.mint(randomAccount.address, tokenId, tokenUri)).to.be.rejectedWith(
             'DOCollection: invalid receiver'
         );
     });
@@ -104,7 +104,6 @@ describe('DOCollection', function () {
         const tokenId = 123;
         const tokenUri = 'some-uri';
 
-        await whiteList.add(tokenReceiver.address);
         await collection.mint(tokenReceiver.address, tokenId, tokenUri);
 
         await Promise.all([
@@ -118,13 +117,12 @@ describe('DOCollection', function () {
         const tokenId = 123;
         const tokenUri = 'some-uri';
 
-        await whiteList.add(tokenOwner.address);
         await collection.mint(tokenOwner.address, tokenId, tokenUri);
 
         collection = collection.connect(tokenOwner);
 
         await expect(
-            collection.transferFrom(tokenOwner.address, tokenReceiver.address, tokenId)
+            collection.transferFrom(tokenOwner.address, randomAccount.address, tokenId)
         ).to.be.rejectedWith('DOCollection: invalid receiver');
     });
 
@@ -132,8 +130,6 @@ describe('DOCollection', function () {
         const tokenId = 123;
         const tokenUri = 'some-uri';
 
-        await whiteList.add(tokenOwner.address);
-        await whiteList.add(tokenReceiver.address);
         await collection.mint(tokenOwner.address, tokenId, tokenUri);
 
         collection = collection.connect(tokenOwner);

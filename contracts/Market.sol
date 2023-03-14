@@ -1,174 +1,104 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.9;
 
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import {EIP712Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
-import {ECDSAUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol";
-import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {BaseMarketOwnable} from "./utils/BaseMarketOwnable.sol";
 import {IMarket} from "./interfaces/IMarket.sol";
 
-contract Market is IMarket, Initializable, OwnableUpgradeable, EIP712Upgradeable {
-    bytes32 public constant ORDER_TYPE =
-        keccak256(
-            "Order(address seller,uint256 tokenId,uint256 price,address[] participants,uint256[] shares,uint256 nonce)"
-        );
-
-    uint256 public orderCount;
-    IERC721 public collection;
-    address private _orderSigner;
-
-    mapping(uint256 => uint256) public nonces;
-    mapping(uint256 => OrderStatus) public statuses;
+contract Market is Initializable, BaseMarketOwnable, IMarket {
     mapping(uint256 => Order) private _orders;
 
-    function initialize(IERC721 _collection, address orderSigner_) external initializer {
-        __Ownable_init();
-        __EIP712_init("Market", "1");
-
-        collection = _collection;
-        _setOrderSigner(orderSigner_);
-    }
-
-    modifier placedOrder(uint256 orderId) {
-        require(orderId < orderCount, "Market: order does not exist");
-        require(statuses[orderId] == OrderStatus.Placed, "Market: order is not placed");
-        _;
+    function initialize(address collection, address marketSigner, address whiteList) external initializer {
+        __BaseMarketOwnable_init(collection, marketSigner, whiteList, "Market", "1");
     }
 
     function place(
-        address seller,
         uint256 tokenId,
         uint256 price,
+        uint256 expiredBlock,
         address[] memory participants,
         uint256[] memory shares,
         bytes memory signature
     ) external {
-        require(seller == msg.sender, "Market: caller is not the seller");
-        require(seller.code.length == 0, "Market: seller is not an EOA");
-
-        uint256 nonce = nonces[tokenId]++;
-
         require(
-            _validateSignature(seller, tokenId, price, participants, shares, nonce, signature),
-            "Market: invalid signature"
+            _validateSignature(msg.sender, tokenId, price, expiredBlock, participants, shares, signature),
+            "Market: unauthorized"
         );
 
-        require(_validateOrder(price, participants, shares), "Market: invalid order");
+        require(_validatePrice(price, participants, shares), "Market: invalid order");
 
-        uint256 orderId = orderCount++;
+        uint256 orderId = _orderId();
 
-        _orders[orderId] = Order(seller, tokenId, price, participants, shares);
+        _orders[orderId] = Order({
+            seller: msg.sender,
+            tokenId: tokenId,
+            price: price,
+            status: OrderStatus.Placed,
+            participants: participants,
+            shares: shares
+        });
 
-        emit Placed(tokenId, seller, price);
+        emit Placed(orderId, tokenId, msg.sender, price);
 
-        collection.transferFrom(seller, address(this), tokenId);
+        _transferToken(msg.sender, address(this), tokenId);
     }
 
     function buy(uint256 orderId) external payable placedOrder(orderId) {
         address seller = _orders[orderId].seller;
+
+        require(msg.sender != seller, "Market: seller can not be buyer");
+        require(msg.value == _orders[orderId].price, "Market: invalid ether amount");
+
         uint256 tokenId = _orders[orderId].tokenId;
-        uint256 price = _orders[orderId].price;
+
+        _orders[orderId].status = OrderStatus.Bought;
+
+        emit Bought(orderId, tokenId, msg.sender, seller, msg.value);
+
+        _transferToken(address(this), msg.sender, tokenId);
+
         address[] memory participants = _orders[orderId].participants;
         uint256[] memory shares = _orders[orderId].shares;
 
-        require(msg.sender != seller, "Market: buyer is seller");
-        require(msg.value == price, "Market: invalid ether amount");
-
         for (uint256 i = 0; i < shares.length; i++) {
-            (bool success, ) = participants[i].call{value: shares[i]}("");
-            require(success, "Market: unable to send value");
+            _sendValue(participants[i], shares[i]);
         }
-
-        statuses[orderId] = OrderStatus.Bought;
-
-        emit Bought(tokenId, seller, msg.sender, price);
-
-        collection.transferFrom(address(this), msg.sender, tokenId);
     }
 
-    function cancel(uint256 orderId) external placedOrder(orderId) {
-        address seller = _orders[orderId].seller;
-        uint256 tokenId = _orders[orderId].tokenId;
-
-        require(seller == msg.sender || msg.sender == owner(), "Market: invalid caller");
-
-        statuses[orderId] = OrderStatus.Cancelled;
-
-        emit Cancelled(tokenId, seller);
-
-        collection.transferFrom(address(this), seller, tokenId);
-    }
-
-    function orderSigner(address orderSigner_) external onlyOwner {
-        _setOrderSigner(orderSigner_);
-    }
-
-    function orderSigner() external view returns (address) {
-        return _orderSigner;
+    function cancel(uint256 orderId) external {
+        _cancel(orderId, msg.sender);
     }
 
     function order(
         uint256 orderId
     ) external view returns (address seller, uint256 tokenId, uint256 price, OrderStatus status) {
+        require(_orders[orderId].status != OrderStatus.NotExists, "Market: order does not exist");
+
         seller = _orders[orderId].seller;
         tokenId = _orders[orderId].tokenId;
         price = _orders[orderId].price;
-        status = statuses[orderId];
+        status = _orders[orderId].status;
     }
 
-    function _validateSignature(
-        address seller,
-        uint256 tokenId,
-        uint256 price,
-        address[] memory participants,
-        uint256[] memory shares,
-        uint256 nonce,
-        bytes memory signature
-    ) private view returns (bool) {
-        bytes32 hash = _hashTypedDataV4(
-            keccak256(
-                abi.encode(
-                    ORDER_TYPE,
-                    seller,
-                    tokenId,
-                    price,
-                    keccak256(abi.encodePacked(participants)),
-                    keccak256(abi.encodePacked(shares)),
-                    nonce
-                )
-            )
-        );
+    function _cancel(uint256 orderId, address seller) internal override placedOrder(orderId) {
+        require(_orders[orderId].seller == seller, "Market: incorrect seller");
 
-        return _orderSigner == ECDSAUpgradeable.recover(hash, signature);
+        uint256 tokenId = _orders[orderId].tokenId;
+
+        _orders[orderId].status = OrderStatus.Cancelled;
+
+        emit Cancelled(orderId, tokenId, seller);
+
+        _transferToken(address(this), seller, tokenId);
     }
 
-    function _validateOrder(
-        uint256 price,
-        address[] memory participants,
-        uint256[] memory shares
-    ) private pure returns (bool) {
-        if (participants.length != shares.length) {
-            return false;
-        }
-
-        uint256 totalShares;
-
-        for (uint256 i = 0; i < shares.length; i++) {
-            totalShares += shares[i];
-        }
-
-        if (totalShares != price) {
-            return false;
-        }
-
-        return true;
+    function _orderPlaced(uint256 orderId) internal view override returns (bool) {
+        return _orders[orderId].status == OrderStatus.Placed;
     }
 
-    function _setOrderSigner(address orderSigner_) private {
-        require(orderSigner_ != address(0), "Market: address zero is not valid signer");
-        require(orderSigner_.code.length == 0, "Market: contract account is not valid signer");
-
-        _orderSigner = orderSigner_;
+    function _orderSeller(uint256 orderId) internal virtual override returns (address) {
+        return _orders[orderId].seller;
     }
+
+    uint256[49] private __gap;
 }
