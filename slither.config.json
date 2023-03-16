@@ -1,0 +1,4 @@
+{
+    "filter_paths": "(mocks/|test/|node_modules/)",
+    "hardhat_ignore_compile": true
+}
