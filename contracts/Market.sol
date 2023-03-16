@@ -2,16 +2,32 @@
 pragma solidity ^0.8.9;
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {BaseMarket} from "./utils/BaseMarket.sol";
 import {BaseMarketOwnable} from "./utils/BaseMarketOwnable.sol";
 import {IMarket} from "./interfaces/IMarket.sol";
 
+/**
+ * @title Market
+ * @notice Market contract provides logic for selling and buying ERC-721 tokens.
+ * @notice Upgradeable Contract based on [OpenZeppelin](https://docs.openzeppelin.com/) library.
+ */
 contract Market is Initializable, BaseMarketOwnable, IMarket {
+    /// @dev Stores orders by order id.
     mapping(uint256 => Order) private _orders;
 
-    function initialize(address collection, address marketSigner, address whiteList) external initializer {
-        __BaseMarketOwnable_init(collection, marketSigner, whiteList, "Market", "1");
+    /**
+     * @notice Initializes contract.
+     * @param collection_ ERC-721 contract address.
+     * @param marketSigner_ Data signer address.
+     * @param whiteList_ WhiteList contract address.
+     * @dev Method should be invoked on proxy contract via `delegatecall`.
+     *   See <https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable#initializers>.
+     */
+    function initialize(address collection_, address marketSigner_, address whiteList_) external initializer {
+        __BaseMarketOwnable_init(collection_, marketSigner_, whiteList_, "Market", "1");
     }
 
+    /// @inheritdoc IMarket
     function place(
         uint256 tokenId,
         uint256 price,
@@ -43,6 +59,11 @@ contract Market is Initializable, BaseMarketOwnable, IMarket {
         _transferToken(msg.sender, address(this), tokenId);
     }
 
+    /**
+     * @inheritdoc IMarket
+     * @dev To invoke method order must have `Placed` status,
+     *   seller can't realize their own order.
+     */
     function buy(uint256 orderId) external payable placedOrder(orderId) {
         address seller = _orders[orderId].seller;
 
@@ -65,10 +86,22 @@ contract Market is Initializable, BaseMarketOwnable, IMarket {
         }
     }
 
+    /**
+     * @inheritdoc IMarket
+     * @dev Only seller can invoke `cancel` for their own order,
+     *   to invoke method order must have `Placed` status.
+     */
     function cancel(uint256 orderId) external {
         _cancel(orderId, msg.sender);
     }
 
+    /**
+     * @param orderId Order id.
+     * @return seller Token seller address.
+     * @return tokenId Token id.
+     * @return price Token Price.
+     * @return status Order status.
+     */
     function order(
         uint256 orderId
     ) external view returns (address seller, uint256 tokenId, uint256 price, OrderStatus status) {
@@ -80,6 +113,13 @@ contract Market is Initializable, BaseMarketOwnable, IMarket {
         status = _orders[orderId].status;
     }
 
+    /**
+     * @inheritdoc BaseMarketOwnable
+     * @param seller Token seller address, must be order owner.
+     * @dev Cancels token sale order, transfers token back to seller,
+     *   to invoke method order must have `Placed` status.
+     *   Method overrides `BaseMarketOwnable._cancel`.
+     */
     function _cancel(uint256 orderId, address seller) internal override placedOrder(orderId) {
         require(_orders[orderId].seller == seller, "Market: incorrect seller");
 
@@ -92,13 +132,27 @@ contract Market is Initializable, BaseMarketOwnable, IMarket {
         _transferToken(address(this), seller, tokenId);
     }
 
+    /**
+     * @inheritdoc BaseMarket
+     * @dev Method overrides `BaseMarket._orderPlaced.`
+     */
     function _orderPlaced(uint256 orderId) internal view override returns (bool) {
         return _orders[orderId].status == OrderStatus.Placed;
     }
 
-    function _orderSeller(uint256 orderId) internal virtual override returns (address) {
+    /**
+     * @inheritdoc BaseMarketOwnable
+     * @dev Method overrides `BaseMarketOwnable._tokenSeller.`
+     */
+    function _tokenSeller(uint256 orderId) internal view override returns (address) {
+        // TODO: method can return address(0)
         return _orders[orderId].seller;
     }
 
+    /**
+     * @dev This empty reserved space is put in place to allow future versions to add new
+     *   variables without shifting down storage in the inheritance chain.
+     *   See <https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps>.
+     */
     uint256[49] private __gap;
 }

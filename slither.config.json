@@ -1,4 +1,6 @@
 {
     "filter_paths": "(mocks/|test/|node_modules/)",
-    "hardhat_ignore_compile": true
+    "compile_force_framework": "hardhat",
+    "hardhat_ignore_compile": true,
+    "detectors_to_exclude": "conformance-to-solidity-naming-conventions,variable-names-too-similar"
 }
