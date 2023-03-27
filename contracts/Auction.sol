@@ -2,16 +2,32 @@
 pragma solidity ^0.8.9;
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {BaseMarket} from "./utils/BaseMarket.sol";
 import {BaseMarketOwnable} from "./utils/BaseMarketOwnable.sol";
 import {IAuction} from "./interfaces/IAuction.sol";
 
+/**
+ * @title Auction
+ * @notice Auction contract provides logic for creating auction with ERC-721 tokens.
+ * @notice Upgradeable Contract based on [OpenZeppelin](https://docs.openzeppelin.com/) library.
+ */
 contract Auction is Initializable, BaseMarketOwnable, IAuction {
+    /// @dev Stores auction orders by order id.
     mapping(uint256 => Order) private _orders;
 
-    function initialize(address collection, address marketSigner, address whiteList) external initializer {
-        __BaseMarketOwnable_init(collection, marketSigner, whiteList, "Auction", "1");
+    /**
+     * @notice Initializes contract.
+     * @param collection_ ERC-721 contract address.
+     * @param marketSigner_ Data signer address.
+     * @param whiteList_ WhiteList contract address.
+     * @dev Method should be invoked on proxy contract via `delegatecall`.
+     *   See <https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable#initializers>.
+     */
+    function initialize(address collection_, address marketSigner_, address whiteList_) external initializer {
+        __BaseMarketOwnable_init(collection_, marketSigner_, whiteList_, "Auction", "1");
     }
 
+    /// @inheritdoc IAuction
     function place(
         uint256 tokenId,
         uint256 price,
@@ -22,7 +38,7 @@ contract Auction is Initializable, BaseMarketOwnable, IAuction {
         uint256[] memory shares,
         bytes memory signature
     ) external {
-        require(endBlock > block.number, "Auction: end block is not more than current");
+        require(endBlock > block.number, "Auction: end block is less than current");
 
         require(
             _validateSignature(msg.sender, tokenId, price, expiredBlock, participants, shares, signature),
@@ -50,6 +66,12 @@ contract Auction is Initializable, BaseMarketOwnable, IAuction {
         _transferToken(msg.sender, address(this), tokenId);
     }
 
+    /**
+     * @inheritdoc IAuction
+     * @dev To invoke method order must have `Placed` status and auction must be ongoing,
+     *   seller can't raise price in their own order,
+     *   caller address must be whitelisted.
+     */
     function raise(uint256 orderId) external payable placedOrder(orderId) onlyWhitelisted {
         require(_orders[orderId].endBlock >= block.number, "Auction: auction is ended");
 
@@ -69,10 +91,17 @@ contract Auction is Initializable, BaseMarketOwnable, IAuction {
         emit Raised(orderId, _orders[orderId].tokenId, msg.sender, seller, msg.value);
 
         if (prevBuyer != address(0)) {
+            // TODO: Think about handling call result
             prevBuyer.call{value: prevPrice}("");
         }
     }
 
+    /**
+     * @inheritdoc IAuction
+     * @dev To invoke method order must have `Placed` status and auction must not be ongoing,
+     *   seller can't raise price in their own order,
+     *   caller address must be whitelisted.
+     */
     function end(uint256 orderId) external placedOrder(orderId) {
         require(_orders[orderId].endBlock < block.number, "Auction: auction is still going");
 
@@ -102,12 +131,24 @@ contract Auction is Initializable, BaseMarketOwnable, IAuction {
                 _sendValue(participants[i], value);
             }
 
+            // TODO: explain this place
+
             _sendValue(participants[lastShareIndex], price - released);
         } else {
             _transferToken(address(this), seller, tokenId);
         }
     }
 
+    /**
+     * @param orderId Auction order id.
+     * @return seller Token seller address.
+     * @return buyer Last buyer address.
+     * @return tokenId Token id.
+     * @return price Last price.
+     * @return endBlock Block number until which the auction continues.
+     * @return priceStep Minimum price raise step.
+     * @return status Auction order status.
+     */
     function order(
         uint256 orderId
     )
@@ -134,7 +175,14 @@ contract Auction is Initializable, BaseMarketOwnable, IAuction {
         status = _orders[orderId].status;
     }
 
-    function _cancel(uint256 orderId, address from) internal override placedOrder(orderId) {
+    /**
+     * @param orderId Auction order id.
+     * @dev Cancels auction order, transfers token back to seller,
+     *   returns locked Ether back to buyer if buyer exists.
+     *   To invoke method order must have `Placed` status.
+     *   Method overrides `BaseMarketOwnable._cancel`.
+     */
+    function _cancel(uint256 orderId, address) internal override placedOrder(orderId) {
         address seller = _orders[orderId].seller;
         address buyer = _orders[orderId].buyer;
         uint256 tokenId = _orders[orderId].tokenId;
@@ -146,15 +194,27 @@ contract Auction is Initializable, BaseMarketOwnable, IAuction {
         _transferToken(address(this), seller, tokenId);
 
         if (buyer != address(0)) {
+            // TODO: Think about handling call result
             buyer.call{value: _orders[orderId].price}("");
         }
     }
 
+    /**
+     * @inheritdoc BaseMarket
+     * @param orderId Auction order id.
+     * @dev Method overrides `BaseMarket._orderPlaced.`
+     */
     function _orderPlaced(uint256 orderId) internal view override returns (bool) {
         return _orders[orderId].status == OrderStatus.Placed;
     }
 
-    function _orderSeller(uint256 orderId) internal virtual override returns (address) {}
+    /// @dev Method overrides `BaseMarketOwnable._tokenSeller`.
+    function _tokenSeller(uint256) internal override returns (address) {}
 
+    /**
+     * @dev This empty reserved space is put in place to allow future versions to add new
+     *   variables without shifting down storage in the inheritance chain.
+     *   See <https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps>.
+     */
     uint256[49] private __gap;
 }

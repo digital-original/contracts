@@ -538,7 +538,7 @@ describe('Auction', function () {
                     order.shares,
                     signature
                 )
-            ).to.be.rejectedWith('Auction: end block is not more than current');
+            ).to.be.rejectedWith('Auction: end block is less than current');
         });
     });
 

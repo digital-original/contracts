@@ -1,0 +1,5 @@
+[doc]
+out = 'docs'
+title = 'DO-Contracts'
+book = 'book.toml'
+ignore = ['contracts/test/*', 'contracts/proxy/*']

@@ -1,8 +1,7 @@
 {
-  "name": "contracts-hardhat-npm",
+  "name": "do-contracts",
   "version": "1.0.0",
-  "main": "index.js",
-  "license": "MIT",
+  "license": "UNLICENSED",
   "scripts": {
     "test": "NODE_ENV=test hardhat test",
     "compile": "NODE_ENV=test hardhat compile",
