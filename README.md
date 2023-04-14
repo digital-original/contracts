@@ -47,7 +47,7 @@ $ yarn hardhat run <path-to-script> --network sepolia
 _Set CONTRACT_NAME and INITIALIZE_ARGS at the top of deploy/upgradable.ts file_
 
 ```
-$ yarn run deploy:classic --network sepolia
+$ yarn run deploy:upgradable --network sepolia
 ```
 
 ## Run fuzz tests

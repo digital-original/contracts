@@ -8,17 +8,18 @@ interface Options {
     contractName: string;
     proxyAddress: string;
     proxyAdminAddress: string;
+    constructorArgs: any[];
     signer?: any;
 }
 
 export async function deployUpgrade(options: Options) {
-    const { contractName, proxyAddress, proxyAdminAddress, signer } = options;
+    const { contractName, proxyAddress, proxyAdminAddress, constructorArgs, signer } = options;
 
     const implName = contractName;
 
     const impl = await deployClassic({
         contractName: implName,
-        constructorArgs: [],
+        constructorArgs,
         signer,
     });
 

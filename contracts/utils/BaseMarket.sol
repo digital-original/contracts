@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.16;
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
@@ -12,57 +12,79 @@ import {IWhiteList} from "../interfaces/IWhiteList.sol";
  * @notice Upgradeable Contract based on [OpenZeppelin](https://docs.openzeppelin.com/) library.
  */
 abstract contract BaseMarket is Initializable {
-    /// @dev Number of orders.
-    uint256 private _orderCount;
-    /// @dev Collection contract address.
-    IERC721 private _collection;
-    /// @dev WhiteList contract address.
-    IWhiteList private _whiteList;
+    /**
+     * @dev Collection contract address.
+     */
+    IERC721 private immutable COLLECTION;
 
-    /// @dev Passes only placed orders.
+    /**
+     * @dev WhiteList contract address.
+     */
+    IWhiteList private immutable WHITE_LIST;
+
+    /**
+     * @dev Number of orders.
+     */
+    uint256 private _orderCount;
+
+    /**
+     * @param _collection ERC-721 contract address.
+     * @param _whiteList WhiteList contract address.
+     */
+    constructor(address _collection, address _whiteList) {
+        COLLECTION = IERC721(_collection);
+        WHITE_LIST = IWhiteList(_whiteList);
+    }
+
+    /**
+     * @dev Passes only placed orders.
+     */
     modifier placedOrder(uint256 orderId) {
         require(_orderPlaced(orderId), "BaseMarket: order is not placed");
         _;
     }
 
-    /// @dev Passes only whitelisted callers.
+    /**
+     * @dev Passes only whitelisted callers.
+     */
     modifier onlyWhitelisted() {
         require(_whitelisted(msg.sender), "BaseMarket: invalid caller");
         _;
     }
 
     /**
-     * @param collection_ ERC-721 contract address.
-     * @param whiteList_ WhiteList contract address.
      * @dev Initializes contract.
      *   See <https://docs.openzeppelin.com/contracts/4.x/upgradeable#multiple-inheritance>.
      */
-    function __BaseMarket_init(address collection_, address whiteList_) internal onlyInitializing {
-        __BaseMarket_init_unchained(collection_, whiteList_);
+    function __BaseMarket_init() internal onlyInitializing {
+        __BaseMarket_init_unchained();
     }
 
     /**
      * @dev Initializes contract.
      *   See <https://docs.openzeppelin.com/contracts/4.x/upgradeable#multiple-inheritance>.
      */
-    function __BaseMarket_init_unchained(address collection_, address whiteList_) internal onlyInitializing {
-        _setCollection(collection_);
-        _setWhiteList(whiteList_);
-    }
+    function __BaseMarket_init_unchained() internal onlyInitializing {}
 
-    /// @return uint Number of orders.
+    /**
+     * @return uint Number of orders.
+     */
     function orderCount() external view returns (uint256) {
         return _orderCount;
     }
 
-    /// @return address Collection address.
+    /**
+     * @return address Collection address.
+     */
     function collection() external view returns (IERC721) {
-        return _collection;
+        return COLLECTION;
     }
 
-    /// @return address WhiteList address.
+    /**
+     * @return address WhiteList address.
+     */
     function whiteList() external view returns (IWhiteList) {
-        return _whiteList;
+        return WHITE_LIST;
     }
 
     /**
@@ -74,39 +96,13 @@ abstract contract BaseMarket is Initializable {
     }
 
     /**
-     * @param collection_ Collection address.
-     * @dev Changes whitelist.
-     */
-    function _setCollection(address collection_) internal {
-        require(
-            IERC165(collection_).supportsInterface(type(IERC721).interfaceId),
-            "BaseMarket: invalid collection address"
-        );
-
-        _collection = IERC721(collection_);
-    }
-
-    /**
-     * @param whiteList_ WhiteList contract address.
-     * @dev Changes WhiteList contract address.
-     */
-    function _setWhiteList(address whiteList_) internal {
-        require(
-            IERC165(whiteList_).supportsInterface(type(IWhiteList).interfaceId),
-            "BaseMarket: invalid whitelist address"
-        );
-
-        _whiteList = IWhiteList(whiteList_);
-    }
-
-    /**
      * @param from Address from.
      * @param to Address to.
      * @param tokenId Token Id, token must be owned by `from`.
      * @dev Transfers collection `tokenId` token from `from` to `to`.
      */
     function _transferToken(address from, address to, uint256 tokenId) internal {
-        _collection.transferFrom(from, to, tokenId);
+        COLLECTION.transferFrom(from, to, tokenId);
     }
 
     /**
@@ -125,7 +121,7 @@ abstract contract BaseMarket is Initializable {
      * @dev Checks whitelist.
      */
     function _whitelisted(address account) internal view returns (bool) {
-        return _whiteList.includes(account);
+        return WHITE_LIST.includes(account);
     }
 
     /**
@@ -173,5 +169,5 @@ abstract contract BaseMarket is Initializable {
      *   variables without shifting down storage in the inheritance chain.
      *   See <https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps>.
      */
-    uint256[47] private __gap;
+    uint256[49] private __gap;
 }

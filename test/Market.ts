@@ -1,5 +1,4 @@
 import { ethers } from 'hardhat';
-import { ContractTransaction } from 'ethers';
 import { mineUpTo } from '@nomicfoundation/hardhat-network-helpers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
@@ -23,7 +22,7 @@ describe('Market', function () {
     enum OrderStatus {
         NotExists,
         Placed,
-        Bought,
+        Realized,
         Cancelled,
     }
 
@@ -43,6 +42,7 @@ describe('Market', function () {
             contractName: 'WhiteList',
             proxyAdminAddress: '0x0000000000000000000000000000000000000001',
             initializeArgs: [],
+            constructorArgs: [],
             signer: owner,
         });
 
@@ -53,7 +53,8 @@ describe('Market', function () {
         const { proxyWithImpl } = await deployUpgradeable({
             contractName: 'Market',
             proxyAdminAddress: '0x0000000000000000000000000000000000000001',
-            initializeArgs: [collectionMock.address, marketSigner.address, whiteList.address],
+            constructorArgs: [collectionMock.address, whiteList.address, marketSigner.address],
+            initializeArgs: [],
             signer: owner,
         });
 
@@ -63,32 +64,22 @@ describe('Market', function () {
         market = market.connect(owner);
     });
 
-    it(`should have correct market signer`, async () => {
-        await expect(market['marketSigner()']()).to.eventually.equal(marketSigner.address);
-    });
-
     it(`should have correct collection`, async () => {
         await expect(market.collection()).to.eventually.equal(collectionMock.address);
+    });
+
+    it(`should have correct white list`, async () => {
+        await expect(market.whiteList()).to.eventually.equal(whiteList.address);
+    });
+
+    it(`should have correct market signer`, async () => {
+        await expect(market.marketSigner()).to.eventually.equal(marketSigner.address);
     });
 
     it(`should have correct order count`, async () => {
         const orderCount = await market.orderCount();
 
         expect(orderCount.toString()).equal('0');
-    });
-
-    it(`owner can change market signer`, async () => {
-        await market['marketSigner(address)'](randomAccount.address);
-
-        await expect(market['marketSigner()']()).to.eventually.equal(randomAccount.address);
-    });
-
-    it(`random account can't change marketSigner`, async () => {
-        market = market.connect(randomAccount);
-
-        await expect(market['marketSigner(address)'](randomAccount.address)).to.be.rejectedWith(
-            'Ownable: caller is not the owner'
-        );
     });
 
     describe(`method 'place'`, () => {
@@ -440,7 +431,7 @@ describe('Market', function () {
         });
     });
 
-    describe(`method 'buy'`, () => {
+    describe(`method 'realize'`, () => {
         let tokenId: string;
         let price: string;
         let participants: string[];
@@ -489,43 +480,43 @@ describe('Market', function () {
         });
 
         it(`should transfer token to buyer`, async () => {
-            await expect(market.buy(orderId, { value: price }))
+            await expect(market.realize(orderId, { value: price }))
                 .to.be.emit(collectionMock, 'Transfer')
                 .withArgs(market.address, buyer.address, tokenId);
             await expect(collectionMock.ownerOf(tokenId)).to.be.eventually.equal(buyer.address);
         });
 
         it(`should distribute ETH between participants according to shares`, async () => {
-            await expect(() => market.buy(orderId, { value: price })).to.be.changeEtherBalances(
+            await expect(() => market.realize(orderId, { value: price })).to.be.changeEtherBalances(
                 [buyer, ...participants],
                 [Number(price) * -1, ...shares]
             );
         });
 
-        it(`should change order status to bought`, async () => {
-            await market.buy(orderId, { value: price });
+        it(`should change order status to Realized`, async () => {
+            await market.realize(orderId, { value: price });
 
             const order = await market.order(orderId);
 
-            expect(order.status).equal(OrderStatus.Bought);
+            expect(order.status).equal(OrderStatus.Realized);
         });
 
-        it(`should emit Bought event`, async () => {
-            await expect(market.buy(orderId, { value: price }))
-                .to.be.emit(market, 'Bought')
+        it(`should emit Realized event`, async () => {
+            await expect(market.realize(orderId, { value: price }))
+                .to.be.emit(market, 'Realized')
                 .withArgs(orderId, tokenId, buyer.address, tokenOwner.address, price);
         });
 
         it(`should fail if invalid ether amount`, async () => {
-            await expect(market.buy(orderId, { value: Number(price) - 1 })).to.be.rejectedWith(
+            await expect(market.realize(orderId, { value: Number(price) - 1 })).to.be.rejectedWith(
                 'Market: invalid ether amount'
             );
         });
 
-        it(`should fail if order is already bought`, async () => {
-            await market.buy(orderId, { value: price });
+        it(`should fail if order is already Realized`, async () => {
+            await market.realize(orderId, { value: price });
 
-            await expect(market.buy(orderId, { value: price })).to.be.rejectedWith(
+            await expect(market.realize(orderId, { value: price })).to.be.rejectedWith(
                 'Market: order is not placed'
             );
         });
@@ -533,19 +524,19 @@ describe('Market', function () {
         it(`should fail if order is cancelled`, async () => {
             await market.connect(tokenOwner).cancel(orderId);
 
-            await expect(market.buy(orderId, { value: price })).to.be.rejectedWith(
+            await expect(market.realize(orderId, { value: price })).to.be.rejectedWith(
                 'Market: order is not placed'
             );
         });
 
         it(`should fail if order doesn't exist`, async () => {
-            await expect(market.buy('1', { value: '123' })).to.be.rejectedWith(
+            await expect(market.realize('1', { value: '123' })).to.be.rejectedWith(
                 'BaseMarket: order is not placed'
             );
         });
     });
 
-    describe('order cancel', () => {
+    describe(`method 'cancel'`, () => {
         let tokenId: string;
         let price: string;
         let orderId: string;
@@ -586,91 +577,53 @@ describe('Market', function () {
             );
         });
 
-        describe(`method 'cancel'`, () => {
-            shouldBehaveLikeCancel((orderId: string, from: SignerWithAddress) =>
-                market.cancel(orderId)
+        it(`should transfer token back to seller`, async () => {
+            await expect(market.cancel(orderId))
+                .to.be.emit(collectionMock, 'Transfer')
+                .withArgs(market.address, tokenOwner.address, tokenId);
+            await expect(collectionMock.ownerOf(tokenId)).to.be.eventually.equal(
+                tokenOwner.address
             );
-
-            it(`should fail if caller is random account`, async () => {
-                market = market.connect(randomAccount);
-
-                await expect(market.cancel(orderId)).to.be.rejectedWith('Market: incorrect seller');
-            });
         });
 
-        describe(`method 'reject'`, () => {
-            beforeEach(() => {
-                market = market.connect(owner);
-            });
-
-            shouldBehaveLikeCancel((orderId: string, from: SignerWithAddress) =>
-                market.reject(orderId)
-            );
-
-            it('should cancel order if caller is owner', async () => {
-                await market.reject(orderId);
-
-                const order = await market.order(orderId);
-
-                expect(order.status).equal(OrderStatus.Cancelled);
-            });
-
-            it(`should fail if caller is random account`, async () => {
-                market = market.connect(randomAccount);
-
-                await expect(market.reject(orderId)).to.be.rejectedWith(
-                    'Ownable: caller is not the owner'
-                );
-            });
+        it(`should emit Cancelled event`, async () => {
+            await expect(market.cancel(orderId))
+                .to.be.emit(market, 'Cancelled')
+                .withArgs(orderId, tokenId, tokenOwner.address);
         });
 
-        function shouldBehaveLikeCancel(
-            method: (orderId: string, from: SignerWithAddress) => Promise<ContractTransaction>
-        ) {
-            it(`should transfer token back to seller`, async () => {
-                await expect(method(orderId, tokenOwner))
-                    .to.be.emit(collectionMock, 'Transfer')
-                    .withArgs(market.address, tokenOwner.address, tokenId);
-                await expect(collectionMock.ownerOf(tokenId)).to.be.eventually.equal(
-                    tokenOwner.address
-                );
-            });
+        it(`should change order status to Cancelled`, async () => {
+            await market.cancel(orderId);
 
-            it(`should emit Cancelled event`, async () => {
-                await expect(method(orderId, tokenOwner))
-                    .to.be.emit(market, 'Cancelled')
-                    .withArgs(orderId, tokenId, tokenOwner.address);
-            });
+            const order = await market.order(orderId);
 
-            it(`should change order status to Cancelled`, async () => {
-                await method(orderId, tokenOwner);
+            expect(order.status).equal(OrderStatus.Cancelled);
+        });
 
-                const order = await market.order(orderId);
+        it(`should fail if order doesn't exist`, async () => {
+            await expect(market.cancel('11111')).to.be.rejectedWith(
+                'BaseMarket: order is not placed'
+            );
+        });
 
-                expect(order.status).equal(OrderStatus.Cancelled);
-            });
+        it(`should fail if order is already cancelled`, async () => {
+            await market.cancel(orderId);
 
-            it(`should fail if order doesn't exist`, async () => {
-                await expect(method('1111', tokenOwner)).to.be.rejectedWith(
-                    'BaseMarket: order is not placed'
-                );
-            });
+            await expect(market.cancel(orderId)).to.be.rejectedWith(
+                'BaseMarket: order is not placed'
+            );
+        });
 
-            it(`should fail if order is already cancelled`, async () => {
-                await method(orderId, tokenOwner);
+        it(`should fail if order is Realized`, async () => {
+            await market.connect(buyer).realize(orderId, { value: price });
 
-                await expect(method(orderId, tokenOwner)).to.be.rejectedWith(
-                    'BaseMarket: order is not placed'
-                );
-            });
+            await expect(market.cancel(orderId)).to.be.rejectedWith('Market: order is not placed');
+        });
 
-            it(`should fail if order is bought`, async () => {
-                await market.connect(buyer).buy(orderId, { value: price });
+        it(`should fail if caller is random account`, async () => {
+            market = market.connect(randomAccount);
 
-                await expect(method(orderId, tokenOwner)).to.be.rejectedWith(
-                    'Market: order is not placed'
-                );
-            });
-        }
+            await expect(market.cancel(orderId)).to.be.rejectedWith('Market: invalid caller');
+        });
     });
 });

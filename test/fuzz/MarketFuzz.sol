@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.16;
 
 import {Market} from "../../contracts/Market.sol";
 import {CollectionMock} from "../../contracts/test/CollectionMock.sol";

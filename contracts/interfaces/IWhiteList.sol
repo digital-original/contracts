@@ -1,15 +1,19 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.16;
 
 /**
  * @title IWhiteList.
  * @notice WhiteList contract interface.
  */
 interface IWhiteList {
-    /// @dev Triggered when new address was added to whitelist.
+    /**
+     * @dev Triggered when new address was added to whitelist.
+     */
     event Added(address indexed account);
 
-    /// @dev Triggered when an address was removed from whitelist.
+    /**
+     *  @dev Triggered when an address was removed from whitelist.
+     */
     event Removed(address indexed account);
 
     /**

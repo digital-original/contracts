@@ -25,7 +25,6 @@ describe('Auction', function () {
         NotExists,
         Placed,
         Ended,
-        Cancelled,
     }
 
     before(async () => {
@@ -43,6 +42,7 @@ describe('Auction', function () {
         const { proxyWithImpl: _whiteList } = await deployUpgradeable({
             contractName: 'WhiteList',
             proxyAdminAddress: '0x0000000000000000000000000000000000000001',
+            constructorArgs: [],
             initializeArgs: [],
             signer: owner,
         });
@@ -58,7 +58,8 @@ describe('Auction', function () {
         const { proxyWithImpl } = await deployUpgradeable({
             contractName: 'Auction',
             proxyAdminAddress: '0x0000000000000000000000000000000000000001',
-            initializeArgs: [collectionMock.address, marketSigner.address, whiteList.address],
+            constructorArgs: [collectionMock.address, whiteList.address, marketSigner.address],
+            initializeArgs: [],
             signer: owner,
         });
 
@@ -69,32 +70,22 @@ describe('Auction', function () {
         auction = auction.connect(owner);
     });
 
-    it(`should have correct market signer`, async () => {
-        await expect(auction['marketSigner()']()).to.eventually.equal(marketSigner.address);
-    });
-
     it(`should have correct collection`, async () => {
         await expect(auction.collection()).to.eventually.equal(collectionMock.address);
+    });
+
+    it(`should have correct white list`, async () => {
+        await expect(auction.whiteList()).to.eventually.equal(whiteList.address);
+    });
+
+    it(`should have correct market signer`, async () => {
+        await expect(auction.marketSigner()).to.eventually.equal(marketSigner.address);
     });
 
     it(`should have correct order count`, async () => {
         const orderCount = await auction.orderCount();
 
         expect(orderCount.toString()).equal('0');
-    });
-
-    it(`owner can change market signer`, async () => {
-        await auction['marketSigner(address)'](randomAccount.address);
-
-        await expect(auction['marketSigner()']()).to.eventually.equal(randomAccount.address);
-    });
-
-    it(`random account can't change market signer`, async () => {
-        auction = auction.connect(randomAccount);
-
-        await expect(auction['marketSigner(address)'](randomAccount.address)).to.be.rejectedWith(
-            'Ownable: caller is not the owner'
-        );
     });
 
     describe(`method 'place'`, () => {
@@ -865,142 +856,6 @@ describe('Auction', function () {
                     [price * -1, ...shares]
                 );
             });
-        });
-    });
-
-    describe(`method 'reject'`, () => {
-        let tokenId: string;
-        let price: number;
-        let priceStep: number;
-        let endBlock: number;
-        let participants: string[];
-        let shares: string[];
-        let orderId: string;
-
-        beforeEach(async () => {
-            const blockNumber = await ethers.provider.getBlockNumber();
-
-            tokenId = (await collectionMock.totalSupply()).toString();
-            price = 100000;
-            priceStep = 100;
-            endBlock = blockNumber + 100;
-            participants = [owner.address, tokenOwner.address];
-            shares = ['50000', '50000'];
-            orderId = '0';
-
-            auction = auction.connect(tokenOwner);
-            collectionMock = collectionMock.connect(tokenOwner);
-
-            await collectionMock.mint(tokenOwner.address, tokenId);
-            await collectionMock.approve(auction.address, tokenId);
-
-            const order = {
-                seller: tokenOwner.address,
-                tokenId,
-                endBlock,
-                priceStep: '100',
-                price: '100000',
-                participants: [owner.address, tokenOwner.address],
-                shares: ['50000', '50000'],
-            };
-
-            const expiredBlock = blockNumber + 10;
-
-            const orderTypedData: OrderTypedDataInterface = { ...order, expiredBlock };
-
-            const signature = await signAuctionOrder(marketSigner, auction.address, orderTypedData);
-
-            await auction.place(
-                order.tokenId,
-                order.price,
-                order.endBlock,
-                order.priceStep,
-                expiredBlock,
-                order.participants,
-                order.shares,
-                signature
-            );
-
-            auction = auction.connect(owner);
-            collectionMock = collectionMock.connect(owner);
-        });
-
-        it('should cancel order if caller is owner', async () => {
-            await auction.reject(orderId);
-
-            const order = await auction.order(orderId);
-
-            expect(order.status).equal(OrderStatus.Cancelled);
-        });
-
-        it(`should fail if caller is random account`, async () => {
-            auction = auction.connect(randomAccount);
-
-            await expect(auction.reject(orderId)).to.be.rejectedWith(
-                'Ownable: caller is not the owner'
-            );
-        });
-
-        it(`should transfer token back to seller`, async () => {
-            await expect(auction.reject(orderId))
-                .to.be.emit(collectionMock, 'Transfer')
-                .withArgs(auction.address, tokenOwner.address, tokenId);
-            await expect(collectionMock.ownerOf(tokenId)).to.be.eventually.equal(
-                tokenOwner.address
-            );
-        });
-
-        it(`should emit Cancelled event`, async () => {
-            await expect(auction.reject(orderId))
-                .to.be.emit(auction, 'Cancelled')
-                .withArgs(orderId, tokenId, tokenOwner.address);
-        });
-
-        it(`should change order status to Cancelled`, async () => {
-            await auction.reject(orderId);
-
-            const order = await auction.order(orderId);
-
-            expect(order.status).equal(OrderStatus.Cancelled);
-        });
-
-        it(`should fail if order doesn't exist`, async () => {
-            await expect(auction.reject('1111')).to.be.rejectedWith(
-                'BaseMarket: order is not placed'
-            );
-        });
-
-        it(`should fail if order is already cancelled`, async () => {
-            await auction.reject(orderId);
-
-            await expect(auction.reject(orderId)).to.be.rejectedWith(
-                'BaseMarket: order is not placed'
-            );
-        });
-
-        it(`should fail if auction is already ended`, async () => {
-            price = price + priceStep;
-
-            await auction.connect(buyer1).raise(orderId, { value: price });
-
-            await mineUpTo(endBlock);
-
-            await auction.end(orderId);
-
-            await expect(auction.reject(orderId)).to.be.rejectedWith(
-                'BaseMarket: order is not placed'
-            );
-        });
-
-        it(`should send ether back to buyer if buyer exits`, async () => {
-            price = price + priceStep;
-
-            await auction.connect(buyer1).raise(orderId, { value: price });
-
-            await expect(() => auction.reject(orderId)).to.be.changeEtherBalances(
-                [auction.address, buyer1.address],
-                [price * -1, price]
-            );
         });
     });
 });

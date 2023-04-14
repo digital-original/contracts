@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.16;
 
 /**
  * @title IMarket.
@@ -7,7 +7,6 @@ pragma solidity ^0.8.9;
  */
 interface IMarket {
     struct Order {
-        // TODO: does it make any sense to rename seller to owner?
         address seller;
         uint256 tokenId;
         uint256 price;
@@ -19,15 +18,19 @@ interface IMarket {
     enum OrderStatus {
         NotExists,
         Placed,
-        Bought,
+        Realized,
         Cancelled
     }
 
-    /// @dev Triggered when order was placed.
+    /**
+     * @dev Triggered when order was placed.
+     */
     event Placed(uint256 indexed orderId, uint256 indexed tokenId, address indexed seller, uint256 price);
 
-    /// @dev Triggered when token was bought.
-    event Bought(
+    /**
+     * @dev Triggered when token was realize.
+     */
+    event Realized(
         uint256 indexed orderId,
         uint256 indexed tokenId,
         address indexed buyer,
@@ -35,7 +38,9 @@ interface IMarket {
         uint256 price
     );
 
-    /// @dev Triggered when order was cancelled.
+    /**
+     * @dev Triggered when order was cancelled.
+     */
     event Cancelled(uint256 indexed orderId, uint256 indexed tokenId, address indexed seller);
 
     /**
@@ -63,11 +68,18 @@ interface IMarket {
      * @notice Distributes rewards and transfers token to buyer, close sale order.
      * @param orderId Order id.
      */
-    function buy(uint256 orderId) external payable;
+    function realize(uint256 orderId) external payable;
 
     /**
      * @notice Cancels token sale order, transfers token back to seller.
      * @param orderId Order id.
      */
     function cancel(uint256 orderId) external;
+
+    /**
+     * @notice Returns order by orderId.
+     * @param orderId Order id.
+     * @return order Order.
+     */
+    function order(uint256 orderId) external view returns (Order memory);
 }

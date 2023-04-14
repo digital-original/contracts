@@ -12,7 +12,7 @@
     "est": "docker run -it --rm -v $PWD:/src trailofbits/eth-security-toolbox",
     "deploy:classic": "hardhat clean && yarn test && hardhat run deploy/classic.ts",
     "deploy:upgradable": "hardhat clean && yarn test && hardhat run deploy/upgradable.ts",
-    "deploy:upgrade": "hardhat clean && test && hardhat run deploy/upgrade.ts",
+    "deploy:upgrade": "hardhat clean && yarn test && hardhat run deploy/upgrade.ts",
     "slither": "NODE_ENV=test slither ./ --config-file ./slither.config.json"
   },
   "dependencies": {
