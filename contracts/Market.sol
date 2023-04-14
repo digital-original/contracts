@@ -20,7 +20,6 @@ contract Market is Initializable, BaseMarket, MarketSigner, IMarket {
     mapping(uint256 => Order) private _orders;
 
     /**
-     *
      * @param _collection ERC-721 contract address, immutable.
      * @param _whiteList WhiteList contract address, immutable.
      * @param _marketSigner Data signer address, immutable.

@@ -20,7 +20,6 @@ contract Auction is Initializable, BaseMarket, MarketSigner, IAuction {
     mapping(uint256 => Order) private _orders;
 
     /**
-     *
      * @param _collection ERC-721 contract address, immutable.
      * @param _whiteList WhiteList contract address, immutable.
      * @param _marketSigner Data signer address, immutable.
@@ -91,7 +90,7 @@ contract Auction is Initializable, BaseMarket, MarketSigner, IAuction {
      *   caller address must be whitelisted.
      */
     function raise(uint256 orderId) external payable placedOrder(orderId) onlyWhitelisted {
-        // TODO: how should work first raise?
+        // TODO: how should work a first raise?
         require(_orders[orderId].endBlock >= block.number, "Auction: auction is ended");
 
         address seller = _orders[orderId].seller;
