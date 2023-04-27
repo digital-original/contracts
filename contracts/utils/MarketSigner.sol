@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.16;
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {EIP712Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
@@ -14,52 +14,49 @@ import {IWhiteList} from "../interfaces/IWhiteList.sol";
  *   and [EIP-712](https://eips.ethereum.org/EIPS/eip-712) standard.
  */
 abstract contract MarketSigner is Initializable, EIP712Upgradeable {
-    /// @dev Data type according to EIP-712
+    /**
+     * @dev Data type according to EIP-712.
+     */
     bytes32 public constant ORDER_TYPE =
         keccak256(
             "Order(address seller,uint256 tokenId,uint256 price,address[] participants,uint256[] shares,uint256 expiredBlock)"
         );
 
-    /// @dev Data signer address
-    address private _marketSigner;
+    /**
+     * @dev Order signer address.
+     */
+    address private immutable MARKET_SIGNER;
 
     /**
-     * @param marketSigner_ Data signer address.
+     * @param _marketSigner Order signer address.
+     */
+    constructor(address _marketSigner) {
+        MARKET_SIGNER = _marketSigner;
+    }
+
+    /**
      * @param name Domain name according to EIP-712
      * @param version Domain version according to EIP-712
      * @dev Initializes contract.
      *   See <https://docs.openzeppelin.com/contracts/4.x/upgradeable#multiple-inheritance>.
      */
-    function __MarketSigner_init(
-        address marketSigner_,
-        string memory name,
-        string memory version
-    ) internal onlyInitializing {
+    function __MarketSigner_init(string memory name, string memory version) internal onlyInitializing {
+        // TODO: we can use classic EIP712 contract to save gas
         __EIP712_init_unchained(name, version);
-        __MarketSigner_init_unchained(marketSigner_);
+        __MarketSigner_init_unchained();
     }
 
     /**
      * @dev Initializes contract.
      *   See <https://docs.openzeppelin.com/contracts/4.x/upgradeable#multiple-inheritance>.
      */
-    function __MarketSigner_init_unchained(address marketSigner_) internal onlyInitializing {
-        _setMarketSigner(marketSigner_);
-    }
-
-    /// @return address Data signer address.
-    function marketSigner() external view returns (address) {
-        return _marketSigner;
-    }
+    function __MarketSigner_init_unchained() internal onlyInitializing {}
 
     /**
-     * @param marketSigner_ Data signer address.
-     * @dev Change market signer.
+     * @return address Order signer address.
      */
-    function _setMarketSigner(address marketSigner_) internal {
-        require(marketSigner_ != address(0), "MarketSigner: invalid signer address");
-
-        _marketSigner = marketSigner_;
+    function marketSigner() external view returns (address) {
+        return MARKET_SIGNER;
     }
 
     /**
@@ -101,7 +98,7 @@ abstract contract MarketSigner is Initializable, EIP712Upgradeable {
             )
         );
 
-        return _marketSigner == ECDSAUpgradeable.recover(hash, signature);
+        return MARKET_SIGNER == ECDSAUpgradeable.recover(hash, signature);
     }
 
     /**
@@ -109,5 +106,5 @@ abstract contract MarketSigner is Initializable, EIP712Upgradeable {
      *   variables without shifting down storage in the inheritance chain.
      *   See <https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps>.
      */
-    uint256[49] private __gap;
+    uint256[50] private __gap;
 }

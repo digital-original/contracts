@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.16;
 
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -12,7 +12,9 @@ import {IWhiteList} from "./interfaces/IWhiteList.sol";
  * @notice Upgradeable Contract based on [OpenZeppelin](https://docs.openzeppelin.com/) library.
  */
 contract WhiteList is IWhiteList, Initializable, OwnableUpgradeable, ERC165Upgradeable {
-    /// @dev Stores whitelisted accounts.
+    /**
+     * @dev Stores whitelisted accounts.
+     */
     mapping(address => bool) private _list;
 
     /**
@@ -21,6 +23,7 @@ contract WhiteList is IWhiteList, Initializable, OwnableUpgradeable, ERC165Upgra
      *   See <https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable#initializers>.
      */
     function initialize() external initializer {
+        // TODO: maybe it makes sense to write owner to immutable variable to save gas
         __Ownable_init();
     }
 
@@ -48,12 +51,16 @@ contract WhiteList is IWhiteList, Initializable, OwnableUpgradeable, ERC165Upgra
         emit Removed(account);
     }
 
-    /// @inheritdoc IWhiteList
+    /**
+     * @inheritdoc IWhiteList
+     */
     function includes(address account) external view returns (bool) {
         return _list[account];
     }
 
-    /// @dev See <https://eips.ethereum.org/EIPS/eip-165>
+    /**
+     * @dev See <https://eips.ethereum.org/EIPS/eip-165>
+     */
     function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
         return interfaceId == type(IWhiteList).interfaceId || super.supportsInterface(interfaceId);
     }

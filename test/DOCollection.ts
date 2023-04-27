@@ -24,6 +24,7 @@ describe('DOCollection', function () {
         const { proxyWithImpl: _whiteList } = await deployUpgradeable({
             contractName: 'WhiteList',
             proxyAdminAddress: '0x0000000000000000000000000000000000000001',
+            constructorArgs: [],
             initializeArgs: [],
             signer: owner,
         });

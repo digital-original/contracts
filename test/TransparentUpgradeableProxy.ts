@@ -2,11 +2,13 @@ import { ethers } from 'hardhat';
 import { FormatTypes } from 'ethers/lib/utils';
 import { expect } from 'chai';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { ImplV1Mock, TransparentUpgradeableProxy } from '../typechain-types';
+import { ImplV1Mock, ITransparentUpgradeableProxy } from '../typechain-types';
 import { deployClassic } from '../scripts/deploy-classic';
+import ITransparentUpgradeableProxyJSON from '../artifacts/@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol/ITransparentUpgradeableProxy.json';
+import ImplV1MockJSON from '../artifacts/contracts/test/ImplV1Mock.sol/ImplV1Mock.json';
 
 describe('TransparentUpgradeableProxy', function () {
-    let proxy: TransparentUpgradeableProxy & ImplV1Mock;
+    let proxy: ITransparentUpgradeableProxy & ImplV1Mock;
     let owner: SignerWithAddress;
     let proxyAdmin: SignerWithAddress;
     let randomAccount: SignerWithAddress;
@@ -30,15 +32,12 @@ describe('TransparentUpgradeableProxy', function () {
         });
 
         const proxyWithImpl = await ethers.getContractAt(
-            [
-                ...proxyContract.interface.format(FormatTypes.full),
-                ...implV1.interface.format(FormatTypes.full),
-            ],
+            [...ITransparentUpgradeableProxyJSON.abi, ...ImplV1MockJSON.abi],
             proxyContract.address
         );
 
         implV1Address = implV1.address;
-        proxy = <TransparentUpgradeableProxy & ImplV1Mock>proxyWithImpl;
+        proxy = <ITransparentUpgradeableProxy & ImplV1Mock>proxyWithImpl;
         proxy = proxy.connect(proxyAdmin);
     });
 

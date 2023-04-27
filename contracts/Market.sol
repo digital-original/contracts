@@ -1,33 +1,48 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.16;
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {BaseMarket} from "./utils/BaseMarket.sol";
-import {BaseMarketOwnable} from "./utils/BaseMarketOwnable.sol";
+import {MarketSigner} from "./utils/MarketSigner.sol";
 import {IMarket} from "./interfaces/IMarket.sol";
+
+// TODO: review error msg
 
 /**
  * @title Market
  * @notice Market contract provides logic for selling and buying ERC-721 tokens.
  * @notice Upgradeable Contract based on [OpenZeppelin](https://docs.openzeppelin.com/) library.
  */
-contract Market is Initializable, BaseMarketOwnable, IMarket {
-    /// @dev Stores orders by order id.
+contract Market is Initializable, BaseMarket, MarketSigner, IMarket {
+    /**
+     * @dev Stores orders by order id.
+     */
     mapping(uint256 => Order) private _orders;
 
     /**
+     * @param _collection ERC-721 contract address, immutable.
+     * @param _whiteList WhiteList contract address, immutable.
+     * @param _marketSigner Data signer address, immutable.
+     */
+    constructor(
+        address _collection,
+        address _whiteList,
+        address _marketSigner
+    ) BaseMarket(_collection, _whiteList) MarketSigner(_marketSigner) {}
+
+    /**
      * @notice Initializes contract.
-     * @param collection_ ERC-721 contract address.
-     * @param marketSigner_ Data signer address.
-     * @param whiteList_ WhiteList contract address.
      * @dev Method should be invoked on proxy contract via `delegatecall`.
      *   See <https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable#initializers>.
      */
-    function initialize(address collection_, address marketSigner_, address whiteList_) external initializer {
-        __BaseMarketOwnable_init(collection_, marketSigner_, whiteList_, "Market", "1");
+    function initialize() external initializer {
+        __BaseMarket_init();
+        __MarketSigner_init("Market", "1");
     }
 
-    /// @inheritdoc IMarket
+    /**
+     * @inheritdoc IMarket
+     */
     function place(
         uint256 tokenId,
         uint256 price,
@@ -64,7 +79,7 @@ contract Market is Initializable, BaseMarketOwnable, IMarket {
      * @dev To invoke method order must have `Placed` status,
      *   seller can't realize their own order.
      */
-    function buy(uint256 orderId) external payable placedOrder(orderId) {
+    function realize(uint256 orderId) external payable placedOrder(orderId) {
         address seller = _orders[orderId].seller;
 
         require(msg.sender != seller, "Market: seller can not be buyer");
@@ -72,9 +87,9 @@ contract Market is Initializable, BaseMarketOwnable, IMarket {
 
         uint256 tokenId = _orders[orderId].tokenId;
 
-        _orders[orderId].status = OrderStatus.Bought;
+        _orders[orderId].status = OrderStatus.Realized;
 
-        emit Bought(orderId, tokenId, msg.sender, seller, msg.value);
+        emit Realized(orderId, tokenId, msg.sender, seller, msg.value);
 
         _transferToken(address(this), msg.sender, tokenId);
 
@@ -91,45 +106,24 @@ contract Market is Initializable, BaseMarketOwnable, IMarket {
      * @dev Only seller can invoke `cancel` for their own order,
      *   to invoke method order must have `Placed` status.
      */
-    function cancel(uint256 orderId) external {
-        _cancel(orderId, msg.sender);
-    }
-
-    /**
-     * @param orderId Order id.
-     * @return seller Token seller address.
-     * @return tokenId Token id.
-     * @return price Token Price.
-     * @return status Order status.
-     */
-    function order(
-        uint256 orderId
-    ) external view returns (address seller, uint256 tokenId, uint256 price, OrderStatus status) {
-        require(_orders[orderId].status != OrderStatus.NotExists, "Market: order does not exist");
-
-        seller = _orders[orderId].seller;
-        tokenId = _orders[orderId].tokenId;
-        price = _orders[orderId].price;
-        status = _orders[orderId].status;
-    }
-
-    /**
-     * @inheritdoc BaseMarketOwnable
-     * @param seller Token seller address, must be order owner.
-     * @dev Cancels token sale order, transfers token back to seller,
-     *   to invoke method order must have `Placed` status.
-     *   Method overrides `BaseMarketOwnable._cancel`.
-     */
-    function _cancel(uint256 orderId, address seller) internal override placedOrder(orderId) {
-        require(_orders[orderId].seller == seller, "Market: incorrect seller");
+    function cancel(uint256 orderId) external placedOrder(orderId) {
+        require(_orders[orderId].seller == msg.sender, "Market: invalid caller");
 
         uint256 tokenId = _orders[orderId].tokenId;
 
         _orders[orderId].status = OrderStatus.Cancelled;
 
-        emit Cancelled(orderId, tokenId, seller);
+        emit Cancelled(orderId, tokenId, msg.sender);
 
-        _transferToken(address(this), seller, tokenId);
+        _transferToken(address(this), msg.sender, tokenId);
+    }
+
+    /**
+     * @inheritdoc IMarket
+     */
+    function order(uint256 orderId) external view returns (Order memory) {
+        require(_orders[orderId].status != OrderStatus.NotExists, "Market: order does not exist");
+        return _orders[orderId];
     }
 
     /**
@@ -138,15 +132,6 @@ contract Market is Initializable, BaseMarketOwnable, IMarket {
      */
     function _orderPlaced(uint256 orderId) internal view override returns (bool) {
         return _orders[orderId].status == OrderStatus.Placed;
-    }
-
-    /**
-     * @inheritdoc BaseMarketOwnable
-     * @dev Method overrides `BaseMarketOwnable._tokenSeller.`
-     */
-    function _tokenSeller(uint256 orderId) internal view override returns (address) {
-        // TODO: method can return address(0)
-        return _orders[orderId].seller;
     }
 
     /**

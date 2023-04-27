@@ -27,7 +27,7 @@ async function main() {
         constructorArgs: CONSTRUCTOR_ARGS,
         contractAddress: contract.address,
     }, null, 2));
-    console.log(`\n${CONTRACT_NAME} Upgradeable Contract Deployed\n`);
+    console.log(`\n${CONTRACT_NAME} Contract Deployed\n`);
 
     if (!['hardhat', 'local'].includes(network.name)) {
         // need to wait several confirmations while etherscan process deploy transaction

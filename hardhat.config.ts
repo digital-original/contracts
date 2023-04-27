@@ -7,7 +7,7 @@ dotenv.config();
 const INFURA_API_KEY = process.env.INFURA_API_KEY!;
 const DEPLOYER_PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY!;
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY!;
-const GAS_REPORTER = process.env.GAS_REPORTER!;
+const REPORT_GAS = process.env.REPORT_GAS!;
 
 const developmentConfig: HardhatUserConfig = {
     networks: {
@@ -32,21 +32,18 @@ const config: HardhatUserConfig = {
     solidity: {
         compilers: [
             {
-                version: '0.8.9',
+                version: '0.8.16',
                 settings: {
                     optimizer: {
                         enabled: true,
                         runs: 1000000,
-                    },
-                    metadata: {
-                        bytecodeHash: 'none',
                     },
                 },
             },
         ],
     },
     gasReporter: {
-        enabled: !!GAS_REPORTER,
+        enabled: !!REPORT_GAS,
         currency: 'none',
         gasPrice: 1,
         src: 'contracts',

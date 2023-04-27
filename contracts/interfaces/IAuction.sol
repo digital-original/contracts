@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.16;
 
 /**
  * @title IAuction.
  * @notice Auction contract interface.
  */
 interface IAuction {
-    /// @dev Auction order struct
+    /**
+     * @dev Auction order struct
+     */
     struct Order {
         address seller;
         address buyer;
@@ -19,18 +21,23 @@ interface IAuction {
         uint256[] shares;
     }
 
-    /// @dev Auction order statuses
+    /**
+     * @dev Auction order statuses
+     */
     enum OrderStatus {
         NotExists,
         Placed,
-        Ended,
-        Cancelled
+        Ended
     }
 
-    /// @dev Triggered when order was placed.
+    /**
+     * @dev Triggered when order was placed.
+     */
     event Placed(uint256 indexed orderId, uint256 indexed tokenId, address indexed seller, uint256 price);
 
-    /// @dev Triggered when order price was raised.
+    /**
+     * @dev Triggered when order price was raised.
+     */
     event Raised(
         uint256 indexed orderId,
         uint256 indexed tokenId,
@@ -39,10 +46,14 @@ interface IAuction {
         uint256 price
     );
 
-    /// @dev Triggered when auction was ended.
+    /**
+     * @dev Triggered when auction was ended.
+     */
     event Ended(uint256 indexed orderId, uint256 indexed tokenId, address indexed buyer, address seller, uint256 price);
 
-    /// @dev Triggered when order was cancelled.
+    /**
+     * @dev Triggered when order was cancelled.
+     */
     event Cancelled(uint256 indexed orderId, uint256 indexed tokenId, address indexed seller);
 
     /**
@@ -83,4 +94,11 @@ interface IAuction {
      * @param orderId Auction order id.
      */
     function end(uint256 orderId) external;
+
+    /**
+     * @notice Returns auction order by orderId.
+     * @param orderId Order id.
+     * @return order Auction order.
+     */
+    function order(uint256 orderId) external view returns (Order memory);
 }

@@ -4,9 +4,9 @@ import { verify } from '../scripts/verify';
 
 const CONTRACT_NAME = 'WhiteList';
 const PROXY_ADDRESS = '0x0000000000000000000000000000000000000001';
+const PROXY_ADMIN_ADDRESS = '0x77d3e2FAF8afEB827Db827116F1bF7dd14260D15';
+const CONSTRUCTOR_ARGS: any[] = [];
 const PATH_TO_CONTRACT = `contracts/${CONTRACT_NAME}.sol:${CONTRACT_NAME}`;
-
-const PROXY_ADMIN_ADDRESS = process.env.PROXY_ADMIN_ADDRESS!;
 
 async function main() {
     const [deployer] = await ethers.getSigners();
@@ -17,6 +17,7 @@ async function main() {
         contractName: CONTRACT_NAME,
         proxyAddress: PROXY_ADDRESS,
         proxyAdminAddress: PROXY_ADMIN_ADDRESS,
+        constructorArgs: CONSTRUCTOR_ARGS,
         signer: deployer,
     });
 

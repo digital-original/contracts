@@ -5,18 +5,20 @@ import { deployClassic } from './deploy-classic';
 interface Options {
     contractName: string;
     proxyAdminAddress: string;
+    constructorArgs: any[];
     initializeArgs: any[];
     signer?: any;
 }
 
 export async function deployUpgradeable(options: Options) {
-    const { contractName, initializeArgs, signer, proxyAdminAddress } = options;
+    const { contractName, constructorArgs, initializeArgs, signer, proxyAdminAddress } = options;
 
     const implName = contractName;
+    const implAgs = constructorArgs;
 
     const impl = await deployClassic({
         contractName: implName,
-        constructorArgs: [],
+        constructorArgs: implAgs,
         signer,
     });
 
