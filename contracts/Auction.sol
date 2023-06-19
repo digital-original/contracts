@@ -6,7 +6,7 @@ import {BaseMarket} from "./utils/BaseMarket.sol";
 import {MarketSigner} from "./utils/MarketSigner.sol";
 import {IAuction} from "./interfaces/IAuction.sol";
 
-// TODO: review error msg
+// TODO: Review error msg
 
 /**
  * @title Auction
@@ -60,8 +60,6 @@ contract Auction is Initializable, BaseMarket, MarketSigner, IAuction {
             "Auction: unauthorized"
         );
 
-        // TODO: add priceStep validation
-
         require(_validatePrice(price, participants, shares), "Auction: invalid price");
 
         uint256 orderId = _orderId();
@@ -90,7 +88,7 @@ contract Auction is Initializable, BaseMarket, MarketSigner, IAuction {
      *   caller address must be whitelisted.
      */
     function raise(uint256 orderId) external payable placedOrder(orderId) onlyWhitelisted {
-        // TODO: how should work a first raise?
+        // TODO: How should work a first raise?
         require(_orders[orderId].endBlock >= block.number, "Auction: auction is ended");
 
         address seller = _orders[orderId].seller;

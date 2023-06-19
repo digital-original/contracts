@@ -98,7 +98,7 @@ interface IAuction {
     /**
      * @notice Returns auction order by orderId.
      * @param orderId Order id.
-     * @return order Auction order.
+     * @return Auction order.
      */
     function order(uint256 orderId) external view returns (Order memory);
 }

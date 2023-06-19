@@ -37,10 +37,18 @@ abstract contract BaseMarket is Initializable {
     }
 
     /**
-     * @dev Passes only placed orders.
+     * @dev Throws if the order is not placed.
      */
     modifier placedOrder(uint256 orderId) {
         require(_orderPlaced(orderId), "BaseMarket: order is not placed");
+        _;
+    }
+
+    /**
+     * @dev Throws if called by any account other than the collection.
+     */
+    modifier onlyCollection() {
+        require(msg.sender == address(COLLECTION), "BaseMarket: caller is not the collection");
         _;
     }
 
@@ -67,28 +75,28 @@ abstract contract BaseMarket is Initializable {
     function __BaseMarket_init_unchained() internal onlyInitializing {}
 
     /**
-     * @return uint Number of orders.
+     * @return Number of orders.
      */
     function orderCount() external view returns (uint256) {
         return _orderCount;
     }
 
     /**
-     * @return address Collection address.
+     * @return Collection address.
      */
     function collection() external view returns (IERC721) {
         return COLLECTION;
     }
 
     /**
-     * @return address WhiteList address.
+     * @return WhiteList address.
      */
     function whiteList() external view returns (IWhiteList) {
         return WHITE_LIST;
     }
 
     /**
-     * @return uint New order id.
+     * @return New order id.
      * @dev Increments counter.
      */
     function _orderId() internal returns (uint256) {
@@ -117,7 +125,7 @@ abstract contract BaseMarket is Initializable {
 
     /**
      * @param account Any address.
-     * @return bool Returns true if address is whitelisted.
+     * @return Returns true if address is whitelisted.
      * @dev Checks whitelist.
      */
     function _whitelisted(address account) internal view returns (bool) {
@@ -128,7 +136,7 @@ abstract contract BaseMarket is Initializable {
      * @param price Price amount.
      * @param participants Array with participants address.
      * @param shares Array with shares amounts.
-     * @return bool Returns true if data is valid.
+     * @return Returns true if data is valid.
      * @dev Checks that number of participants is equal number of shares,
      *   and sum of shares is equal price
      */
@@ -160,7 +168,7 @@ abstract contract BaseMarket is Initializable {
 
     /**
      * @param orderId Order id.
-     * @return bool Returns true if order is placed.
+     * @return Returns true if order is placed.
      */
     function _orderPlaced(uint256 orderId) internal view virtual returns (bool);
 
