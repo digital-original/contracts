@@ -2,6 +2,7 @@
 pragma solidity ^0.8.19;
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {BaseMarket} from "./utils/BaseMarket.sol";
 import {MarketSigner} from "./utils/MarketSigner.sol";
 import {IAuction} from "./interfaces/IAuction.sol";
@@ -13,7 +14,7 @@ import {IAuction} from "./interfaces/IAuction.sol";
  * @notice Auction contract provides logic for creating auction with ERC-721 tokens.
  * @notice Upgradeable Contract based on [OpenZeppelin](https://docs.openzeppelin.com/) library.
  */
-contract Auction is Initializable, BaseMarket, MarketSigner, IAuction {
+contract Auction is Initializable, BaseMarket, MarketSigner, IAuction, IERC721Receiver {
     /**
      * @dev Stores auction orders by order id.
      */
@@ -42,21 +43,40 @@ contract Auction is Initializable, BaseMarket, MarketSigner, IAuction {
 
     /**
      * @inheritdoc IAuction
+     * @param data Should includes:
+     *   1. `uint256 price` - token price.
+     *   2. `uint256 endBlock` - block number until which the auction continues.
+     *   3. `uint256 priceStep` - minimum price raise step.
+     *   4. `uint256 expiredBlock` - block number until which `signature` is valid.
+     *   5. `address[] participants` - array with addresses between which reward will be distributed.
+     *   6. `uint256[] shares` - array with rewards amounts,
+     *     order of `shares` corresponds to order of `participants`,
+     *     total shares must be equal to `price`.
+     *   7. `bytes signature` - [EIP-712](https://eips.ethereum.org/EIPS/eip-712) signature.
+     *     Signature must include `expiredBlock` and can include other data for validation.
+     *     See `MarketSigner::ORDER_TYPEHASH`.
      */
-    function place(
+    function onERC721Received(
+        address,
+        address from,
         uint256 tokenId,
-        uint256 price,
-        uint256 endBlock,
-        uint256 priceStep,
-        uint256 expiredBlock,
-        address[] memory participants,
-        uint256[] memory shares,
-        bytes memory signature
-    ) external {
+        bytes calldata data
+    ) external override(IAuction, IERC721Receiver) onlyCollection returns (bytes4) {
+        // TODO: What happen if priceStep = 0?
+        (
+            uint256 price,
+            uint256 endBlock,
+            uint256 priceStep,
+            uint256 expiredBlock,
+            address[] memory participants,
+            uint256[] memory shares,
+            bytes memory signature
+        ) = abi.decode(data, (uint256, uint256, uint256, uint256, address[], uint256[], bytes));
+
         require(endBlock > block.number, "Auction: end block is less than current");
 
         require(
-            _validateSignature(msg.sender, tokenId, price, expiredBlock, participants, shares, signature),
+            _validateSignature(from, tokenId, price, expiredBlock, participants, shares, signature),
             "Auction: unauthorized"
         );
 
@@ -65,7 +85,7 @@ contract Auction is Initializable, BaseMarket, MarketSigner, IAuction {
         uint256 orderId = _orderId();
 
         _orders[orderId] = Order({
-            seller: msg.sender,
+            seller: from,
             buyer: address(0),
             tokenId: tokenId,
             price: price,
@@ -76,9 +96,9 @@ contract Auction is Initializable, BaseMarket, MarketSigner, IAuction {
             shares: shares
         });
 
-        emit Placed(orderId, tokenId, msg.sender, price);
+        emit Placed(orderId, tokenId, from, price);
 
-        _transferToken(msg.sender, address(this), tokenId);
+        return IERC721Receiver.onERC721Received.selector;
     }
 
     /**

@@ -7,21 +7,6 @@ import { deployUpgradeable } from '../scripts/deploy-upgradable';
 import { OrderTypedDataInterface, signMarketOrder } from '../scripts/eip712';
 import { Market, CollectionMock, WhiteList } from '../typechain-types';
 
-/**
- * TODO:
- *  Think about how to hide this piece of code
- *
- *   await collectionMock['safeTransferFrom(address,address,uint256,bytes)'](
- *       tokenOwner.address,
- *       market.address,
- *       tokenId,
- *       ethers.utils.defaultAbiCoder.encode(
- *           ['uint256', 'uint256', 'address[]', 'uint256[]', 'bytes'],
- *           [order.price, order.expiredBlock, order.participants, order.shares, signature]
- *       )
- *   );
- */
-
 describe('Market', function () {
     let market: Market;
     let whiteList: WhiteList;
@@ -97,13 +82,32 @@ describe('Market', function () {
         expect(orderCount.toString()).equal('0');
     });
 
+    function safeTransferFrom(
+        from: string,
+        tokenId: string,
+        price: string | number,
+        expiredBlock: string | number,
+        participants: string[],
+        shares: (string | number)[],
+        signature: string
+    ) {
+        return collectionMock['safeTransferFrom(address,address,uint256,bytes)'](
+            from,
+            market.address,
+            tokenId,
+            ethers.utils.defaultAbiCoder.encode(
+                ['uint256', 'uint256', 'address[]', 'uint256[]', 'bytes'],
+                [price, expiredBlock, participants, shares, signature]
+            )
+        );
+    }
+
     describe(`method 'onERC721Received'`, () => {
         let tokenId: string;
 
         beforeEach(async () => {
             tokenId = (await collectionMock.totalSupply()).toString();
 
-            market = market.connect(tokenOwner);
             collectionMock = collectionMock.connect(tokenOwner);
 
             await collectionMock.mint(tokenOwner.address, tokenId);
@@ -124,14 +128,14 @@ describe('Market', function () {
 
             const signature = await signMarketOrder(marketSigner, market.address, order);
 
-            await collectionMock['safeTransferFrom(address,address,uint256,bytes)'](
+            await safeTransferFrom(
                 tokenOwner.address,
-                market.address,
                 tokenId,
-                ethers.utils.defaultAbiCoder.encode(
-                    ['uint256', 'uint256', 'address[]', 'uint256[]', 'bytes'],
-                    [order.price, order.expiredBlock, order.participants, order.shares, signature]
-                )
+                order.price,
+                order.expiredBlock,
+                order.participants,
+                order.shares,
+                signature
             );
 
             const placedOrder = await market.order(0);
@@ -160,20 +164,14 @@ describe('Market', function () {
             const signature = await signMarketOrder(marketSigner, market.address, order);
 
             await expect(
-                await collectionMock['safeTransferFrom(address,address,uint256,bytes)'](
+                safeTransferFrom(
                     tokenOwner.address,
-                    market.address,
                     tokenId,
-                    ethers.utils.defaultAbiCoder.encode(
-                        ['uint256', 'uint256', 'address[]', 'uint256[]', 'bytes'],
-                        [
-                            order.price,
-                            order.expiredBlock,
-                            order.participants,
-                            order.shares,
-                            signature,
-                        ]
-                    )
+                    order.price,
+                    order.expiredBlock,
+                    order.participants,
+                    order.shares,
+                    signature
                 )
             )
                 .to.emit(market, 'Placed')
@@ -195,14 +193,14 @@ describe('Market', function () {
 
             const signature = await signMarketOrder(marketSigner, market.address, order);
 
-            await collectionMock['safeTransferFrom(address,address,uint256,bytes)'](
+            await safeTransferFrom(
                 tokenOwner.address,
-                market.address,
                 tokenId,
-                ethers.utils.defaultAbiCoder.encode(
-                    ['uint256', 'uint256', 'address[]', 'uint256[]', 'bytes'],
-                    [order.price, order.expiredBlock, order.participants, order.shares, signature]
-                )
+                order.price,
+                order.expiredBlock,
+                order.participants,
+                order.shares,
+                signature
             );
 
             const orderCount = await market.orderCount();
@@ -224,8 +222,6 @@ describe('Market', function () {
             };
 
             const signature = await signMarketOrder(marketSigner, market.address, order);
-
-            await mineUpTo(order.expiredBlock + 1);
 
             await expect(
                 market.onERC721Received(
@@ -264,20 +260,14 @@ describe('Market', function () {
             await mineUpTo(order.expiredBlock + 1);
 
             await expect(
-                collectionMock['safeTransferFrom(address,address,uint256,bytes)'](
+                safeTransferFrom(
                     tokenOwner.address,
-                    market.address,
                     tokenId,
-                    ethers.utils.defaultAbiCoder.encode(
-                        ['uint256', 'uint256', 'address[]', 'uint256[]', 'bytes'],
-                        [
-                            order.price,
-                            order.expiredBlock,
-                            order.participants,
-                            order.shares,
-                            signature,
-                        ]
-                    )
+                    order.price,
+                    order.expiredBlock,
+                    order.participants,
+                    order.shares,
+                    signature
                 )
             ).to.be.rejectedWith('Market: unauthorized');
         });
@@ -298,20 +288,14 @@ describe('Market', function () {
             const signature = await signMarketOrder(marketSigner, market.address, order);
 
             await expect(
-                collectionMock['safeTransferFrom(address,address,uint256,bytes)'](
+                safeTransferFrom(
                     tokenOwner.address,
-                    market.address,
                     tokenId,
-                    ethers.utils.defaultAbiCoder.encode(
-                        ['uint256', 'uint256', 'address[]', 'uint256[]', 'bytes'],
-                        [
-                            order.price,
-                            order.expiredBlock,
-                            order.participants,
-                            order.shares,
-                            signature,
-                        ]
-                    )
+                    order.price,
+                    order.expiredBlock,
+                    order.participants,
+                    order.shares,
+                    signature
                 )
             ).to.be.rejectedWith('Market: invalid order');
         });
@@ -332,20 +316,14 @@ describe('Market', function () {
             const signature = await signMarketOrder(marketSigner, market.address, order);
 
             await expect(
-                collectionMock['safeTransferFrom(address,address,uint256,bytes)'](
+                safeTransferFrom(
                     tokenOwner.address,
-                    market.address,
                     tokenId,
-                    ethers.utils.defaultAbiCoder.encode(
-                        ['uint256', 'uint256', 'address[]', 'uint256[]', 'bytes'],
-                        [
-                            order.price,
-                            order.expiredBlock,
-                            order.participants,
-                            order.shares,
-                            signature,
-                        ]
-                    )
+                    order.price,
+                    order.expiredBlock,
+                    order.participants,
+                    order.shares,
+                    signature
                 )
             ).to.be.rejectedWith('Market: invalid order');
         });
@@ -366,20 +344,14 @@ describe('Market', function () {
             const signature = await signMarketOrder(randomAccount, market.address, order);
 
             await expect(
-                collectionMock['safeTransferFrom(address,address,uint256,bytes)'](
+                safeTransferFrom(
                     tokenOwner.address,
-                    market.address,
                     tokenId,
-                    ethers.utils.defaultAbiCoder.encode(
-                        ['uint256', 'uint256', 'address[]', 'uint256[]', 'bytes'],
-                        [
-                            order.price,
-                            order.expiredBlock,
-                            order.participants,
-                            order.shares,
-                            signature,
-                        ]
-                    )
+                    order.price,
+                    order.expiredBlock,
+                    order.participants,
+                    order.shares,
+                    signature
                 )
             ).to.be.rejectedWith('Market: unauthorized');
         });
@@ -417,14 +389,14 @@ describe('Market', function () {
 
             const signature = await signMarketOrder(marketSigner, market.address, order);
 
-            await collectionMock['safeTransferFrom(address,address,uint256,bytes)'](
+            await safeTransferFrom(
                 tokenOwner.address,
-                market.address,
                 tokenId,
-                ethers.utils.defaultAbiCoder.encode(
-                    ['uint256', 'uint256', 'address[]', 'uint256[]', 'bytes'],
-                    [order.price, order.expiredBlock, order.participants, order.shares, signature]
-                )
+                order.price,
+                order.expiredBlock,
+                order.participants,
+                order.shares,
+                signature
             );
 
             market = market.connect(buyer);
@@ -517,14 +489,14 @@ describe('Market', function () {
 
             const signature = await signMarketOrder(marketSigner, market.address, order);
 
-            await collectionMock['safeTransferFrom(address,address,uint256,bytes)'](
+            await safeTransferFrom(
                 tokenOwner.address,
-                market.address,
                 tokenId,
-                ethers.utils.defaultAbiCoder.encode(
-                    ['uint256', 'uint256', 'address[]', 'uint256[]', 'bytes'],
-                    [order.price, order.expiredBlock, order.participants, order.shares, signature]
-                )
+                order.price,
+                order.expiredBlock,
+                order.participants,
+                order.shares,
+                signature
             );
         });
 

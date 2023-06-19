@@ -14,7 +14,7 @@ import {IMarket} from "./interfaces/IMarket.sol";
  * @notice Market contract provides logic for selling and buying ERC-721 tokens.
  * @notice Upgradeable Contract based on [OpenZeppelin](https://docs.openzeppelin.com/) library.
  */
-contract Market is Initializable, IERC721Receiver, BaseMarket, MarketSigner, IMarket {
+contract Market is Initializable, BaseMarket, MarketSigner, IMarket, IERC721Receiver {
     /**
      * @dev Stores orders by order id.
      */
@@ -44,22 +44,22 @@ contract Market is Initializable, IERC721Receiver, BaseMarket, MarketSigner, IMa
     /**
      * @inheritdoc IMarket
      * @param data Should includes:
-     *   `uint256 price` Token price;
-     *   `uint256 expiredBlock` Block number until which `signature` is valid;
-     *   `address[] participants` Array with addresses between which reward will be distributed;
-     *   `uint256[] shares` Array with rewards amounts,
+     *   1. `uint256 price` - token price.
+     *   2. `uint256 expiredBlock` - block number until which `signature` is valid.
+     *   3. `address[] participants` - array with addresses between which reward will be distributed.
+     *   4. `uint256[] shares` - array with rewards amounts,
      *     order of `shares` corresponds to order of `participants`,
-     *     total shares must be equal to `price`;
-     *   `bytes signature` [EIP-712](https://eips.ethereum.org/EIPS/eip-712) signature.
+     *     total shares must be equal to `price`.
+     *   5. `bytes signature` - [EIP-712](https://eips.ethereum.org/EIPS/eip-712) signature.
      *     Signature must include `expiredBlock` and can include other data for validation.
-     *     See `MarketSigner`.
+     *     See `MarketSigner::ORDER_TYPEHASH`.
      */
     function onERC721Received(
         address,
         address from,
         uint256 tokenId,
         bytes calldata data
-    ) external override(IERC721Receiver, IMarket) onlyCollection returns (bytes4) {
+    ) external override(IMarket, IERC721Receiver) onlyCollection returns (bytes4) {
         (
             uint256 price,
             uint256 expiredBlock,

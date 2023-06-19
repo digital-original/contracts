@@ -44,7 +44,7 @@ interface IMarket {
     event Cancelled(uint256 indexed orderId, uint256 indexed tokenId, address indexed seller);
 
     /**
-     * @notice Places token sale order and locks token on contract.
+     * @notice Places token sale order and locks token on the contract.
      * @param operator Collection caller.
      * @param from Token owner.
      * @param tokenId Token for sale.
