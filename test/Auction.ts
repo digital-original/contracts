@@ -315,7 +315,7 @@ describe('Auction', function () {
                     order.shares,
                     signature
                 )
-            ).to.be.rejectedWith('Auction: unauthorized');
+            ).to.be.rejectedWith('MarketSigner: signature is expired');
         });
 
         it(`should fail if number of participants isn't equal number of shares`, async () => {
@@ -349,7 +349,7 @@ describe('Auction', function () {
                     order.shares,
                     signature
                 )
-            ).to.be.rejectedWith('Auction: invalid price');
+            ).to.be.rejectedWith('BaseMarket: number of shares is wrong');
         });
 
         it(`should fail if total shares isn't equal price`, async () => {
@@ -383,7 +383,7 @@ describe('Auction', function () {
                     order.shares,
                     signature
                 )
-            ).to.be.rejectedWith('Auction: invalid price');
+            ).to.be.rejectedWith('BaseMarket: price is not equal sum of shares');
         });
 
         it(`should fail if market signer is invalid`, async () => {
@@ -421,7 +421,7 @@ describe('Auction', function () {
                     order.shares,
                     signature
                 )
-            ).to.be.rejectedWith('Auction: unauthorized');
+            ).to.be.rejectedWith('MarketSigner: unauthorized');
         });
 
         it(`should fail if end block isn't more than current`, async () => {

@@ -269,7 +269,7 @@ describe('Market', function () {
                     order.shares,
                     signature
                 )
-            ).to.be.rejectedWith('Market: unauthorized');
+            ).to.be.rejectedWith('MarketSigner: signature is expired');
         });
 
         it(`should fail if number of participants isn't equal number of shares`, async () => {
@@ -297,7 +297,7 @@ describe('Market', function () {
                     order.shares,
                     signature
                 )
-            ).to.be.rejectedWith('Market: invalid order');
+            ).to.be.rejectedWith('BaseMarket: number of shares is wrong');
         });
 
         it(`should fail if total shares isn't equal price`, async () => {
@@ -325,7 +325,7 @@ describe('Market', function () {
                     order.shares,
                     signature
                 )
-            ).to.be.rejectedWith('Market: invalid order');
+            ).to.be.rejectedWith('BaseMarket: price is not equal sum of shares');
         });
 
         it(`should fail if market signer is invalid`, async () => {
@@ -353,7 +353,7 @@ describe('Market', function () {
                     order.shares,
                     signature
                 )
-            ).to.be.rejectedWith('Market: unauthorized');
+            ).to.be.rejectedWith('MarketSigner: unauthorized');
         });
     });
 

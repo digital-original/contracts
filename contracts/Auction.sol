@@ -7,8 +7,6 @@ import {BaseMarket} from "./utils/BaseMarket.sol";
 import {MarketSigner} from "./utils/MarketSigner.sol";
 import {IAuction} from "./interfaces/IAuction.sol";
 
-// TODO: Review error msg
-
 /**
  * @title Auction
  * @notice Auction contract provides logic for creating auction with ERC-721 tokens.
@@ -22,14 +20,16 @@ contract Auction is Initializable, BaseMarket, MarketSigner, IAuction, IERC721Re
 
     /**
      * @param _collection ERC-721 contract address, immutable.
+     * // TODO: remove this logic
      * @param _whiteList WhiteList contract address, immutable.
      * @param _marketSigner Data signer address, immutable.
      */
     constructor(
         address _collection,
+        // TODO: remove this logic
         address _whiteList,
         address _marketSigner
-    ) BaseMarket(_collection, _whiteList) MarketSigner(_marketSigner) {}
+    ) BaseMarket(_collection, _whiteList) MarketSigner(_marketSigner, "Auction", "1") {}
 
     /**
      * @notice Initializes contract.
@@ -38,7 +38,6 @@ contract Auction is Initializable, BaseMarket, MarketSigner, IAuction, IERC721Re
      */
     function initialize() external initializer {
         __BaseMarket_init();
-        __MarketSigner_init("Auction", "1");
     }
 
     /**
@@ -73,14 +72,11 @@ contract Auction is Initializable, BaseMarket, MarketSigner, IAuction, IERC721Re
             bytes memory signature
         ) = abi.decode(data, (uint256, uint256, uint256, uint256, address[], uint256[], bytes));
 
+        // TODO: create private `_place` method
         require(endBlock > block.number, "Auction: end block is less than current");
 
-        require(
-            _validateSignature(from, tokenId, price, expiredBlock, participants, shares, signature),
-            "Auction: unauthorized"
-        );
-
-        require(_validatePrice(price, participants, shares), "Auction: invalid price");
+        _validateSignature(from, tokenId, price, expiredBlock, participants, shares, signature);
+        _validatePrice(price, participants, shares);
 
         uint256 orderId = _orderId();
 

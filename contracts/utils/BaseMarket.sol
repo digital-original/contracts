@@ -8,19 +8,20 @@ import {IWhiteList} from "../interfaces/IWhiteList.sol";
 
 /**
  * @title BaseMarket
- * @notice Abstract contract BaseMarket provides market basic logic for inheritance.
+ * @notice Abstract contract BaseMarket provides market basic logic.
  * @notice Upgradeable Contract based on [OpenZeppelin](https://docs.openzeppelin.com/) library.
  */
 abstract contract BaseMarket is Initializable {
     /**
      * @dev Collection contract address.
      */
-    IERC721 private immutable COLLECTION;
+    IERC721 private immutable _collection;
 
     /**
      * @dev WhiteList contract address.
      */
-    IWhiteList private immutable WHITE_LIST;
+    // TODO: remove this logic
+    IWhiteList private immutable _whiteList;
 
     /**
      * @dev Number of orders.
@@ -28,12 +29,13 @@ abstract contract BaseMarket is Initializable {
     uint256 private _orderCount;
 
     /**
-     * @param _collection ERC-721 contract address.
-     * @param _whiteList WhiteList contract address.
+     * @param collection_ ERC-721 contract address.
+     * @param whiteList_ WhiteList contract address.
      */
-    constructor(address _collection, address _whiteList) {
-        COLLECTION = IERC721(_collection);
-        WHITE_LIST = IWhiteList(_whiteList);
+    constructor(address collection_, address whiteList_) {
+        _collection = IERC721(collection_);
+        // TODO: remove this logic
+        _whiteList = IWhiteList(whiteList_);
     }
 
     /**
@@ -48,13 +50,14 @@ abstract contract BaseMarket is Initializable {
      * @dev Throws if called by any account other than the collection.
      */
     modifier onlyCollection() {
-        require(msg.sender == address(COLLECTION), "BaseMarket: caller is not the collection");
+        require(msg.sender == address(_collection), "BaseMarket: caller is not the collection");
         _;
     }
 
     /**
      * @dev Passes only whitelisted callers.
      */
+    // TODO: remove this logic
     modifier onlyWhitelisted() {
         require(_whitelisted(msg.sender), "BaseMarket: invalid caller");
         _;
@@ -85,14 +88,15 @@ abstract contract BaseMarket is Initializable {
      * @return Collection address.
      */
     function collection() external view returns (IERC721) {
-        return COLLECTION;
+        return _collection;
     }
 
     /**
      * @return WhiteList address.
      */
+    // TODO: remove this logic
     function whiteList() external view returns (IWhiteList) {
-        return WHITE_LIST;
+        return _whiteList;
     }
 
     /**
@@ -107,10 +111,10 @@ abstract contract BaseMarket is Initializable {
      * @param from Address from.
      * @param to Address to.
      * @param tokenId Token Id, token must be owned by `from`.
-     * @dev Transfers collection `tokenId` token from `from` to `to`.
+     * @dev Transfers collection token `tokenId` from `from` to `to`.
      */
     function _transferToken(address from, address to, uint256 tokenId) internal {
-        COLLECTION.transferFrom(from, to, tokenId);
+        _collection.transferFrom(from, to, tokenId);
     }
 
     /**
@@ -128,32 +132,21 @@ abstract contract BaseMarket is Initializable {
      * @return Returns true if address is whitelisted.
      * @dev Checks whitelist.
      */
+    // TODO: remove this logic
     function _whitelisted(address account) internal view returns (bool) {
-        return WHITE_LIST.includes(account);
+        return _whiteList.includes(account);
     }
 
     /**
      * @param price Price amount.
      * @param participants Array with participants address.
      * @param shares Array with shares amounts.
-     * @return Returns true if data is valid.
      * @dev Checks that number of participants is equal number of shares,
-     *   and sum of shares is equal price
+     *   and sum of shares is equal price. Throws if data is valid.
      */
-    function _validatePrice(
-        uint256 price,
-        address[] memory participants,
-        uint256[] memory shares
-    ) internal pure returns (bool) {
-        if (participants.length != shares.length) {
-            return false;
-        }
-
-        if (price != _sumShares(shares)) {
-            return false;
-        }
-
-        return true;
+    function _validatePrice(uint256 price, address[] memory participants, uint256[] memory shares) internal pure {
+        require(participants.length == shares.length, "BaseMarket: number of shares is wrong");
+        require(price == _sumShares(shares), "BaseMarket: price is not equal sum of shares");
     }
 
     /**

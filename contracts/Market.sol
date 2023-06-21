@@ -7,7 +7,7 @@ import {BaseMarket} from "./utils/BaseMarket.sol";
 import {MarketSigner} from "./utils/MarketSigner.sol";
 import {IMarket} from "./interfaces/IMarket.sol";
 
-// TODO: Review error msg
+// TODO: Think about unification `onERC721Received` from Market and Auction
 
 /**
  * @title Market
@@ -22,6 +22,7 @@ contract Market is Initializable, BaseMarket, MarketSigner, IMarket, IERC721Rece
 
     /**
      * @param _collection ERC-721 contract address, immutable.
+     * // TODO: remove this logic
      * @param _whiteList WhiteList contract address, immutable.
      * @param _marketSigner Data signer address, immutable.
      */
@@ -29,7 +30,7 @@ contract Market is Initializable, BaseMarket, MarketSigner, IMarket, IERC721Rece
         address _collection,
         address _whiteList,
         address _marketSigner
-    ) BaseMarket(_collection, _whiteList) MarketSigner(_marketSigner) {}
+    ) BaseMarket(_collection, _whiteList) MarketSigner(_marketSigner, "Market", "1") {}
 
     /**
      * @notice Initializes contract.
@@ -38,7 +39,6 @@ contract Market is Initializable, BaseMarket, MarketSigner, IMarket, IERC721Rece
      */
     function initialize() external initializer {
         __BaseMarket_init();
-        __MarketSigner_init("Market", "1");
     }
 
     /**
@@ -68,12 +68,10 @@ contract Market is Initializable, BaseMarket, MarketSigner, IMarket, IERC721Rece
             bytes memory signature
         ) = abi.decode(data, (uint256, uint256, address[], uint256[], bytes));
 
-        require(
-            _validateSignature(from, tokenId, price, expiredBlock, participants, shares, signature),
-            "Market: unauthorized"
-        );
+        // TODO: create private `_place` method
 
-        require(_validatePrice(price, participants, shares), "Market: invalid order");
+        _validateSignature(from, tokenId, price, expiredBlock, participants, shares, signature);
+        _validatePrice(price, participants, shares);
 
         uint256 orderId = _orderId();
 
