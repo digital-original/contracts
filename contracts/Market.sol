@@ -22,15 +22,12 @@ contract Market is Initializable, BaseMarket, MarketSigner, IMarket, IERC721Rece
 
     /**
      * @param _collection ERC-721 contract address, immutable.
-     * // TODO: remove this logic
-     * @param _whiteList WhiteList contract address, immutable.
      * @param _marketSigner Data signer address, immutable.
      */
     constructor(
         address _collection,
-        address _whiteList,
         address _marketSigner
-    ) BaseMarket(_collection, _whiteList) MarketSigner(_marketSigner, "Market", "1") {}
+    ) BaseMarket(_collection) MarketSigner(_marketSigner, "Market", "1") {}
 
     /**
      * @notice Initializes contract.
@@ -68,7 +65,7 @@ contract Market is Initializable, BaseMarket, MarketSigner, IMarket, IERC721Rece
             bytes memory signature
         ) = abi.decode(data, (uint256, uint256, address[], uint256[], bytes));
 
-        // TODO: create private `_place` method
+        // TODO: Create private `_place` method
 
         _validateSignature(from, tokenId, price, expiredBlock, participants, shares, signature);
         _validatePrice(price, participants, shares);

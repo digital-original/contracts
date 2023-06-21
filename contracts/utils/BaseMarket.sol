@@ -4,7 +4,6 @@ pragma solidity ^0.8.19;
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import {IWhiteList} from "../interfaces/IWhiteList.sol";
 
 /**
  * @title BaseMarket
@@ -18,24 +17,15 @@ abstract contract BaseMarket is Initializable {
     IERC721 private immutable _collection;
 
     /**
-     * @dev WhiteList contract address.
-     */
-    // TODO: remove this logic
-    IWhiteList private immutable _whiteList;
-
-    /**
      * @dev Number of orders.
      */
     uint256 private _orderCount;
 
     /**
      * @param collection_ ERC-721 contract address.
-     * @param whiteList_ WhiteList contract address.
      */
-    constructor(address collection_, address whiteList_) {
+    constructor(address collection_) {
         _collection = IERC721(collection_);
-        // TODO: remove this logic
-        _whiteList = IWhiteList(whiteList_);
     }
 
     /**
@@ -51,15 +41,6 @@ abstract contract BaseMarket is Initializable {
      */
     modifier onlyCollection() {
         require(msg.sender == address(_collection), "BaseMarket: caller is not the collection");
-        _;
-    }
-
-    /**
-     * @dev Passes only whitelisted callers.
-     */
-    // TODO: remove this logic
-    modifier onlyWhitelisted() {
-        require(_whitelisted(msg.sender), "BaseMarket: invalid caller");
         _;
     }
 
@@ -92,14 +73,6 @@ abstract contract BaseMarket is Initializable {
     }
 
     /**
-     * @return WhiteList address.
-     */
-    // TODO: remove this logic
-    function whiteList() external view returns (IWhiteList) {
-        return _whiteList;
-    }
-
-    /**
      * @return New order id.
      * @dev Increments counter.
      */
@@ -125,16 +98,6 @@ abstract contract BaseMarket is Initializable {
     function _sendValue(address recipient, uint256 amount) internal {
         (bool success, ) = recipient.call{value: amount}("");
         require(success, "BaseMarket: unable to send value");
-    }
-
-    /**
-     * @param account Any address.
-     * @return Returns true if address is whitelisted.
-     * @dev Checks whitelist.
-     */
-    // TODO: remove this logic
-    function _whitelisted(address account) internal view returns (bool) {
-        return _whiteList.includes(account);
     }
 
     /**

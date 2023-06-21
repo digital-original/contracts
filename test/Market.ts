@@ -5,11 +5,10 @@ import { expect } from 'chai';
 import { deployClassic } from '../scripts/deploy-classic';
 import { deployUpgradeable } from '../scripts/deploy-upgradable';
 import { OrderTypedDataInterface, signMarketOrder } from '../scripts/eip712';
-import { Market, CollectionMock, WhiteList } from '../typechain-types';
+import { Market, CollectionMock } from '../typechain-types';
 
 describe('Market', function () {
     let market: Market;
-    let whiteList: WhiteList;
     let collectionMock: CollectionMock;
     let collectionBaseUri: string;
 
@@ -37,23 +36,13 @@ describe('Market', function () {
             constructorArgs: [collectionBaseUri],
             signer: owner,
         });
-
-        const { proxyWithImpl: _whiteList } = await deployUpgradeable({
-            contractName: 'WhiteList',
-            proxyAdminAddress: '0x0000000000000000000000000000000000000001',
-            initializeArgs: [],
-            constructorArgs: [],
-            signer: owner,
-        });
-
-        whiteList = <WhiteList>_whiteList;
     });
 
     beforeEach(async () => {
         const { proxyWithImpl } = await deployUpgradeable({
             contractName: 'Market',
             proxyAdminAddress: '0x0000000000000000000000000000000000000001',
-            constructorArgs: [collectionMock.address, whiteList.address, marketSigner.address],
+            constructorArgs: [collectionMock.address, marketSigner.address],
             initializeArgs: [],
             signer: owner,
         });
@@ -66,10 +55,6 @@ describe('Market', function () {
 
     it(`should have correct collection`, async () => {
         await expect(market.collection()).to.eventually.equal(collectionMock.address);
-    });
-
-    it(`should have correct white list`, async () => {
-        await expect(market.whiteList()).to.eventually.equal(whiteList.address);
     });
 
     it(`should have correct market signer`, async () => {

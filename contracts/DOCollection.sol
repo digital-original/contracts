@@ -66,7 +66,6 @@ contract DOCollection is ERC721Enumerable, ERC721URIStorage, Ownable {
     /**
      * @return WhiteList address.
      */
-    // TODO: remove this logic
     function whiteList() external view returns (IWhiteList) {
         return _whiteList;
     }

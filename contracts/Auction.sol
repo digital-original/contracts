@@ -20,16 +20,12 @@ contract Auction is Initializable, BaseMarket, MarketSigner, IAuction, IERC721Re
 
     /**
      * @param _collection ERC-721 contract address, immutable.
-     * // TODO: remove this logic
-     * @param _whiteList WhiteList contract address, immutable.
      * @param _marketSigner Data signer address, immutable.
      */
     constructor(
         address _collection,
-        // TODO: remove this logic
-        address _whiteList,
         address _marketSigner
-    ) BaseMarket(_collection, _whiteList) MarketSigner(_marketSigner, "Auction", "1") {}
+    ) BaseMarket(_collection) MarketSigner(_marketSigner, "Auction", "1") {}
 
     /**
      * @notice Initializes contract.
@@ -72,7 +68,7 @@ contract Auction is Initializable, BaseMarket, MarketSigner, IAuction, IERC721Re
             bytes memory signature
         ) = abi.decode(data, (uint256, uint256, uint256, uint256, address[], uint256[], bytes));
 
-        // TODO: create private `_place` method
+        // TODO: Create private `_place` method
         require(endBlock > block.number, "Auction: end block is less than current");
 
         _validateSignature(from, tokenId, price, expiredBlock, participants, shares, signature);
@@ -100,10 +96,9 @@ contract Auction is Initializable, BaseMarket, MarketSigner, IAuction, IERC721Re
     /**
      * @inheritdoc IAuction
      * @dev To invoke method order must have `Placed` status and auction must be ongoing,
-     *   seller can't raise price in their own order,
-     *   caller address must be whitelisted.
+     *   seller can't raise price in their own order.
      */
-    function raise(uint256 orderId) external payable placedOrder(orderId) onlyWhitelisted {
+    function raise(uint256 orderId) external payable placedOrder(orderId) {
         // TODO: How should work a first raise?
         require(_orders[orderId].endBlock >= block.number, "Auction: auction is ended");
 
@@ -130,8 +125,7 @@ contract Auction is Initializable, BaseMarket, MarketSigner, IAuction, IERC721Re
     /**
      * @inheritdoc IAuction
      * @dev To invoke method order must have `Placed` status and auction must not be ongoing,
-     *   seller can't raise price in their own order,
-     *   caller address must be whitelisted.
+     *   seller can't raise price in their own order.
      */
     function end(uint256 orderId) external placedOrder(orderId) {
         require(_orders[orderId].endBlock < block.number, "Auction: auction is still going");
