@@ -23,13 +23,13 @@ contract Market is Initializable, BaseMarket, MarketSigner, IMarket, IERC721Rece
     mapping(uint256 => Order) private _orders;
 
     /**
-     * @param _collection ERC-721 contract address, immutable.
-     * @param _marketSigner Data signer address, immutable.
+     * @param collection_ ERC-721 contract address, immutable.
+     * @param marketSigner_ Data signer address, immutable.
      */
     constructor(
-        address _collection,
-        address _marketSigner
-    ) BaseMarket(_collection) MarketSigner(_marketSigner, "Market", "1") {}
+        address collection_,
+        address marketSigner_
+    ) BaseMarket(collection_) MarketSigner(marketSigner_, "Market", "1") {}
 
     /**
      * @notice Initializes contract.
@@ -39,6 +39,7 @@ contract Market is Initializable, BaseMarket, MarketSigner, IMarket, IERC721Rece
      */
     function initialize() external initializer {
         __BaseMarket_init();
+        __MarketSigner_init();
     }
 
     /**

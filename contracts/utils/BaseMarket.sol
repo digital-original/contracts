@@ -113,7 +113,7 @@ abstract contract BaseMarket is Initializable {
      * @param shares Array with shares amounts.
      */
     function _validatePrice(uint256 price, address[] memory participants, uint256[] memory shares) internal pure {
-        require(participants.length == shares.length, "BaseMarket: number of shares is wrong");
+        require(shares.length == participants.length, "BaseMarket: number of shares is wrong");
         require(price == _sumShares(shares), "BaseMarket: price is not equal sum of shares");
     }
 

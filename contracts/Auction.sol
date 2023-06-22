@@ -20,13 +20,13 @@ contract Auction is Initializable, BaseMarket, MarketSigner, IAuction, IERC721Re
     mapping(uint256 => Order) private _orders;
 
     /**
-     * @param _collection ERC-721 contract address, immutable.
-     * @param _marketSigner Data signer address, immutable.
+     * @param collection_ ERC-721 contract address, immutable.
+     * @param marketSigner_ Data signer address, immutable.
      */
     constructor(
-        address _collection,
-        address _marketSigner
-    ) BaseMarket(_collection) MarketSigner(_marketSigner, "Auction", "1") {}
+        address collection_,
+        address marketSigner_
+    ) BaseMarket(collection_) MarketSigner(marketSigner_, "Auction", "1") {}
 
     /**
      * @notice Initializes contract.
@@ -36,6 +36,7 @@ contract Auction is Initializable, BaseMarket, MarketSigner, IAuction, IERC721Re
      */
     function initialize() external initializer {
         __BaseMarket_init();
+        __MarketSigner_init();
     }
 
     /**
@@ -100,7 +101,7 @@ contract Auction is Initializable, BaseMarket, MarketSigner, IAuction, IERC721Re
      * @inheritdoc IAuction
      *
      * @dev To invoke method order must have `Placed` status and auction must be ongoing,
-     *   seller can't raise price in their own order.
+     *   seller can't raise price for their own order.
      */
     function raise(uint256 orderId) external payable placedOrder(orderId) {
         // TODO: How should work a first raise?
