@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.16;
+pragma solidity ^0.8.19;
 
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -23,7 +23,7 @@ contract WhiteList is IWhiteList, Initializable, OwnableUpgradeable, ERC165Upgra
      *   See <https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable#initializers>.
      */
     function initialize() external initializer {
-        // TODO: maybe it makes sense to write owner to immutable variable to save gas
+        // TODO: Maybe it makes sense to write owner to immutable variable to save gas
         __Ownable_init();
     }
 

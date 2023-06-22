@@ -1,19 +1,20 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.16;
+pragma solidity ^0.8.19;
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {BaseMarket} from "./utils/BaseMarket.sol";
 import {MarketSigner} from "./utils/MarketSigner.sol";
 import {IMarket} from "./interfaces/IMarket.sol";
 
-// TODO: review error msg
+// TODO: Review error msg
 
 /**
  * @title Market
  * @notice Market contract provides logic for selling and buying ERC-721 tokens.
  * @notice Upgradeable Contract based on [OpenZeppelin](https://docs.openzeppelin.com/) library.
  */
-contract Market is Initializable, BaseMarket, MarketSigner, IMarket {
+contract Market is Initializable, BaseMarket, MarketSigner, IMarket, IERC721Receiver {
     /**
      * @dev Stores orders by order id.
      */
@@ -42,17 +43,33 @@ contract Market is Initializable, BaseMarket, MarketSigner, IMarket {
 
     /**
      * @inheritdoc IMarket
+     * @param data Should includes:
+     *   1. `uint256 price` - token price.
+     *   2. `uint256 expiredBlock` - block number until which `signature` is valid.
+     *   3. `address[] participants` - array with addresses between which reward will be distributed.
+     *   4. `uint256[] shares` - array with rewards amounts,
+     *     order of `shares` corresponds to order of `participants`,
+     *     total shares must be equal to `price`.
+     *   5. `bytes signature` - [EIP-712](https://eips.ethereum.org/EIPS/eip-712) signature.
+     *     Signature must include `expiredBlock` and can include other data for validation.
+     *     See `MarketSigner::ORDER_TYPEHASH`.
      */
-    function place(
+    function onERC721Received(
+        address,
+        address from,
         uint256 tokenId,
-        uint256 price,
-        uint256 expiredBlock,
-        address[] memory participants,
-        uint256[] memory shares,
-        bytes memory signature
-    ) external {
+        bytes calldata data
+    ) external override(IMarket, IERC721Receiver) onlyCollection returns (bytes4) {
+        (
+            uint256 price,
+            uint256 expiredBlock,
+            address[] memory participants,
+            uint256[] memory shares,
+            bytes memory signature
+        ) = abi.decode(data, (uint256, uint256, address[], uint256[], bytes));
+
         require(
-            _validateSignature(msg.sender, tokenId, price, expiredBlock, participants, shares, signature),
+            _validateSignature(from, tokenId, price, expiredBlock, participants, shares, signature),
             "Market: unauthorized"
         );
 
@@ -61,7 +78,7 @@ contract Market is Initializable, BaseMarket, MarketSigner, IMarket {
         uint256 orderId = _orderId();
 
         _orders[orderId] = Order({
-            seller: msg.sender,
+            seller: from,
             tokenId: tokenId,
             price: price,
             status: OrderStatus.Placed,
@@ -69,9 +86,9 @@ contract Market is Initializable, BaseMarket, MarketSigner, IMarket {
             shares: shares
         });
 
-        emit Placed(orderId, tokenId, msg.sender, price);
+        emit Placed(orderId, tokenId, from, price);
 
-        _transferToken(msg.sender, address(this), tokenId);
+        return IERC721Receiver.onERC721Received.selector;
     }
 
     /**

@@ -88,21 +88,42 @@ describe('Auction', function () {
         expect(orderCount.toString()).equal('0');
     });
 
-    describe(`method 'place'`, () => {
+    function safeTransferFrom(
+        from: string,
+        tokenId: string,
+        price: string | number,
+        endBlock: string | number,
+        priceStep: string | number,
+        expiredBlock: string | number,
+        participants: string[],
+        shares: (string | number)[],
+        signature: string
+    ) {
+        return collectionMock['safeTransferFrom(address,address,uint256,bytes)'](
+            from,
+            auction.address,
+            tokenId,
+            ethers.utils.defaultAbiCoder.encode(
+                ['uint256', 'uint256', 'uint256', 'uint256', 'address[]', 'uint256[]', 'bytes'],
+                [price, endBlock, priceStep, expiredBlock, participants, shares, signature]
+            )
+        );
+    }
+
+    describe(`method 'onERC721Received'`, () => {
         let tokenId: string;
 
         beforeEach(async () => {
             tokenId = (await collectionMock.totalSupply()).toString();
 
-            auction = auction.connect(tokenOwner);
             collectionMock = collectionMock.connect(tokenOwner);
 
             await collectionMock.mint(tokenOwner.address, tokenId);
-            await collectionMock.approve(auction.address, tokenId);
         });
 
         it(`should place order if data and signature are valid`, async () => {
             const blockNumber = await ethers.provider.getBlockNumber();
+            const expiredBlock = blockNumber + 10;
 
             const order = {
                 seller: tokenOwner.address,
@@ -112,20 +133,20 @@ describe('Auction', function () {
                 price: '100000',
                 participants: [owner.address, tokenOwner.address],
                 shares: ['50000', '50000'],
+                expiredBlock,
             };
 
-            const expiredBlock = blockNumber + 10;
-
-            const orderTypedData: OrderTypedDataInterface = { ...order, expiredBlock };
+            const orderTypedData: OrderTypedDataInterface = { ...order };
 
             const signature = await signAuctionOrder(marketSigner, auction.address, orderTypedData);
 
-            await auction.place(
-                order.tokenId,
+            await safeTransferFrom(
+                tokenOwner.address,
+                tokenId,
                 order.price,
                 order.endBlock,
                 order.priceStep,
-                expiredBlock,
+                order.expiredBlock,
                 order.participants,
                 order.shares,
                 signature
@@ -143,6 +164,7 @@ describe('Auction', function () {
             const orderId = '0';
 
             const blockNumber = await ethers.provider.getBlockNumber();
+            const expiredBlock = blockNumber + 10;
 
             const order = {
                 seller: tokenOwner.address,
@@ -152,21 +174,21 @@ describe('Auction', function () {
                 price: '100000',
                 participants: [owner.address, tokenOwner.address],
                 shares: ['50000', '50000'],
+                expiredBlock,
             };
 
-            const expiredBlock = blockNumber + 10;
-
-            const orderTypedData: OrderTypedDataInterface = { ...order, expiredBlock };
+            const orderTypedData: OrderTypedDataInterface = { ...order };
 
             const signature = await signAuctionOrder(marketSigner, auction.address, orderTypedData);
 
             await expect(
-                auction.place(
-                    order.tokenId,
+                safeTransferFrom(
+                    tokenOwner.address,
+                    tokenId,
                     order.price,
                     order.endBlock,
                     order.priceStep,
-                    expiredBlock,
+                    order.expiredBlock,
                     order.participants,
                     order.shares,
                     signature
@@ -178,6 +200,7 @@ describe('Auction', function () {
 
         it(`should increase order count`, async () => {
             const blockNumber = await ethers.provider.getBlockNumber();
+            const expiredBlock = blockNumber + 10;
 
             const order = {
                 seller: tokenOwner.address,
@@ -187,20 +210,20 @@ describe('Auction', function () {
                 price: '100000',
                 participants: [owner.address, tokenOwner.address],
                 shares: ['50000', '50000'],
+                expiredBlock,
             };
 
-            const expiredBlock = blockNumber + 10;
-
-            const orderTypedData: OrderTypedDataInterface = { ...order, expiredBlock };
+            const orderTypedData: OrderTypedDataInterface = { ...order };
 
             const signature = await signAuctionOrder(marketSigner, auction.address, orderTypedData);
 
-            await auction.place(
-                order.tokenId,
+            await safeTransferFrom(
+                tokenOwner.address,
+                tokenId,
                 order.price,
                 order.endBlock,
                 order.priceStep,
-                expiredBlock,
+                order.expiredBlock,
                 order.participants,
                 order.shares,
                 signature
@@ -211,8 +234,9 @@ describe('Auction', function () {
             expect(orderCount.toString()).equal('1');
         });
 
-        it(`should transfer token to Auction`, async () => {
+        it(`should fail if caller isn't collection contract`, async () => {
             const blockNumber = await ethers.provider.getBlockNumber();
+            const expiredBlock = blockNumber + 10;
 
             const order = {
                 seller: tokenOwner.address,
@@ -222,33 +246,45 @@ describe('Auction', function () {
                 price: '100000',
                 participants: [owner.address, tokenOwner.address],
                 shares: ['50000', '50000'],
+                expiredBlock,
             };
 
-            const expiredBlock = blockNumber + 10;
-
-            const orderTypedData: OrderTypedDataInterface = { ...order, expiredBlock };
+            const orderTypedData: OrderTypedDataInterface = { ...order };
 
             const signature = await signAuctionOrder(marketSigner, auction.address, orderTypedData);
 
             await expect(
-                auction.place(
-                    order.tokenId,
-                    order.price,
-                    order.endBlock,
-                    order.priceStep,
-                    expiredBlock,
-                    order.participants,
-                    order.shares,
-                    signature
+                auction.onERC721Received(
+                    tokenOwner.address,
+                    tokenOwner.address,
+                    tokenId,
+                    ethers.utils.defaultAbiCoder.encode(
+                        [
+                            'uint256',
+                            'uint256',
+                            'uint256',
+                            'uint256',
+                            'address[]',
+                            'uint256[]',
+                            'bytes',
+                        ],
+                        [
+                            order.price,
+                            order.endBlock,
+                            order.priceStep,
+                            order.expiredBlock,
+                            order.participants,
+                            order.shares,
+                            signature,
+                        ]
+                    )
                 )
-            )
-                .to.be.emit(collectionMock, 'Transfer')
-                .withArgs(tokenOwner.address, auction.address, tokenId);
-            await expect(collectionMock.ownerOf(tokenId)).to.eventually.equal(auction.address);
+            ).to.be.rejectedWith('BaseMarket: caller is not the collection');
         });
 
         it(`should fail if expired block number less than current`, async () => {
             const blockNumber = await ethers.provider.getBlockNumber();
+            const expiredBlock = blockNumber + 10;
 
             const order = {
                 seller: tokenOwner.address,
@@ -258,23 +294,23 @@ describe('Auction', function () {
                 price: '100000',
                 participants: [owner.address, tokenOwner.address],
                 shares: ['50000', '50000'],
+                expiredBlock,
             };
 
-            const expiredBlock = blockNumber + 10;
-
-            const orderTypedData: OrderTypedDataInterface = { ...order, expiredBlock };
+            const orderTypedData: OrderTypedDataInterface = { ...order };
 
             const signature = await signAuctionOrder(marketSigner, auction.address, orderTypedData);
 
             await mineUpTo(expiredBlock + 1);
 
             await expect(
-                auction.place(
-                    order.tokenId,
+                safeTransferFrom(
+                    tokenOwner.address,
+                    tokenId,
                     order.price,
                     order.endBlock,
                     order.priceStep,
-                    expiredBlock,
+                    order.expiredBlock,
                     order.participants,
                     order.shares,
                     signature
@@ -284,6 +320,7 @@ describe('Auction', function () {
 
         it(`should fail if number of participants isn't equal number of shares`, async () => {
             const blockNumber = await ethers.provider.getBlockNumber();
+            const expiredBlock = blockNumber + 10;
 
             const order = {
                 seller: tokenOwner.address,
@@ -293,21 +330,21 @@ describe('Auction', function () {
                 price: '100000',
                 participants: [owner.address, tokenOwner.address],
                 shares: ['100000'],
+                expiredBlock,
             };
 
-            const expiredBlock = blockNumber + 10;
-
-            const orderTypedData: OrderTypedDataInterface = { ...order, expiredBlock };
+            const orderTypedData: OrderTypedDataInterface = { ...order };
 
             const signature = await signAuctionOrder(marketSigner, auction.address, orderTypedData);
 
             await expect(
-                auction.place(
-                    order.tokenId,
+                safeTransferFrom(
+                    tokenOwner.address,
+                    tokenId,
                     order.price,
                     order.endBlock,
                     order.priceStep,
-                    expiredBlock,
+                    order.expiredBlock,
                     order.participants,
                     order.shares,
                     signature
@@ -317,6 +354,7 @@ describe('Auction', function () {
 
         it(`should fail if total shares isn't equal price`, async () => {
             const blockNumber = await ethers.provider.getBlockNumber();
+            const expiredBlock = blockNumber + 10;
 
             const order = {
                 seller: tokenOwner.address,
@@ -326,21 +364,21 @@ describe('Auction', function () {
                 price: '100000',
                 participants: [owner.address, tokenOwner.address],
                 shares: ['50000', '40000'],
+                expiredBlock,
             };
 
-            const expiredBlock = blockNumber + 10;
-
-            const orderTypedData: OrderTypedDataInterface = { ...order, expiredBlock };
+            const orderTypedData: OrderTypedDataInterface = { ...order };
 
             const signature = await signAuctionOrder(marketSigner, auction.address, orderTypedData);
 
             await expect(
-                auction.place(
-                    order.tokenId,
+                safeTransferFrom(
+                    tokenOwner.address,
+                    tokenId,
                     order.price,
                     order.endBlock,
                     order.priceStep,
-                    expiredBlock,
+                    order.expiredBlock,
                     order.participants,
                     order.shares,
                     signature
@@ -350,6 +388,7 @@ describe('Auction', function () {
 
         it(`should fail if market signer is invalid`, async () => {
             const blockNumber = await ethers.provider.getBlockNumber();
+            const expiredBlock = blockNumber + 10;
 
             const order = {
                 seller: tokenOwner.address,
@@ -359,11 +398,10 @@ describe('Auction', function () {
                 price: '100000',
                 participants: [owner.address, tokenOwner.address],
                 shares: ['50000', '50000'],
+                expiredBlock,
             };
 
-            const expiredBlock = blockNumber + 10;
-
-            const orderTypedData: OrderTypedDataInterface = { ...order, expiredBlock };
+            const orderTypedData: OrderTypedDataInterface = { ...order };
 
             const signature = await signAuctionOrder(
                 randomAccount,
@@ -372,12 +410,13 @@ describe('Auction', function () {
             );
 
             await expect(
-                auction.place(
-                    order.tokenId,
+                safeTransferFrom(
+                    tokenOwner.address,
+                    tokenId,
                     order.price,
                     order.endBlock,
                     order.priceStep,
-                    expiredBlock,
+                    order.expiredBlock,
                     order.participants,
                     order.shares,
                     signature
@@ -385,119 +424,9 @@ describe('Auction', function () {
             ).to.be.rejectedWith('Auction: unauthorized');
         });
 
-        it(`should fail if token owner is incorrect`, async () => {
-            const blockNumber = await ethers.provider.getBlockNumber();
-
-            const order = {
-                seller: randomAccount.address,
-                tokenId,
-                endBlock: blockNumber + 100,
-                priceStep: 100,
-                price: '100000',
-                participants: [owner.address, tokenOwner.address],
-                shares: ['50000', '50000'],
-            };
-
-            const expiredBlock = blockNumber + 10;
-
-            const orderTypedData: OrderTypedDataInterface = { ...order, expiredBlock };
-
-            const signature = await signAuctionOrder(marketSigner, auction.address, orderTypedData);
-
-            auction = auction.connect(randomAccount);
-
-            await expect(
-                auction.place(
-                    order.tokenId,
-                    order.price,
-                    order.endBlock,
-                    order.priceStep,
-                    expiredBlock,
-                    order.participants,
-                    order.shares,
-                    signature
-                )
-            ).to.be.rejectedWith('ERC721: transfer from incorrect owner');
-        });
-
-        it(`should fail if token doesn't exist`, async () => {
-            const blockNumber = await ethers.provider.getBlockNumber();
-
-            const order = {
-                seller: tokenOwner.address,
-                tokenId: '1234',
-                endBlock: blockNumber + 100,
-                priceStep: 100,
-                price: '100000',
-                participants: [owner.address, tokenOwner.address],
-                shares: ['50000', '50000'],
-            };
-
-            const expiredBlock = blockNumber + 10;
-
-            const orderTypedData: OrderTypedDataInterface = { ...order, expiredBlock };
-
-            const signature = await signAuctionOrder(marketSigner, auction.address, orderTypedData);
-
-            await expect(
-                auction.place(
-                    order.tokenId,
-                    order.price,
-                    order.endBlock,
-                    order.priceStep,
-                    expiredBlock,
-                    order.participants,
-                    order.shares,
-                    signature
-                )
-            ).to.be.rejectedWith('ERC721: invalid token ID');
-        });
-
-        it(`should fail if token owner didn't approve token transfer for auction contract`, async () => {
-            await collectionMock.transferFrom(tokenOwner.address, randomAccount.address, tokenId);
-
-            [tokenOwner, randomAccount] = [randomAccount, tokenOwner];
-
-            auction = auction.connect(tokenOwner);
-            collectionMock = collectionMock.connect(tokenOwner);
-
-            const blockNumber = await ethers.provider.getBlockNumber();
-
-            const order = {
-                seller: tokenOwner.address,
-                tokenId,
-                endBlock: blockNumber + 100,
-                priceStep: 100,
-                price: '100000',
-                participants: [owner.address, tokenOwner.address],
-                shares: ['50000', '50000'],
-            };
-
-            const expiredBlock = blockNumber + 10;
-
-            const orderTypedData: OrderTypedDataInterface = { ...order, expiredBlock };
-
-            const signature = await signAuctionOrder(marketSigner, auction.address, orderTypedData);
-
-            await expect(
-                auction.place(
-                    order.tokenId,
-                    order.price,
-                    order.endBlock,
-                    order.priceStep,
-                    expiredBlock,
-                    order.participants,
-                    order.shares,
-                    signature
-                )
-            ).to.be.rejectedWith('ERC721: caller is not token owner or approved');
-
-            [tokenOwner, randomAccount] = [randomAccount, tokenOwner];
-        });
-
         it(`should fail if end block isn't more than current`, async () => {
             const blockNumber = await ethers.provider.getBlockNumber();
-
+            const expiredBlock = blockNumber + 10;
             const endBlock = blockNumber + 5;
 
             const order = {
@@ -508,23 +437,23 @@ describe('Auction', function () {
                 price: '100000',
                 participants: [owner.address, tokenOwner.address],
                 shares: ['50000', '50000'],
+                expiredBlock,
             };
 
-            const expiredBlock = blockNumber + 10;
-
-            const orderTypedData: OrderTypedDataInterface = { ...order, expiredBlock };
+            const orderTypedData: OrderTypedDataInterface = { ...order };
 
             const signature = await signAuctionOrder(marketSigner, auction.address, orderTypedData);
 
             await mineUpTo(endBlock);
 
             await expect(
-                auction.place(
-                    order.tokenId,
+                safeTransferFrom(
+                    tokenOwner.address,
+                    tokenId,
                     order.price,
                     order.endBlock,
                     order.priceStep,
-                    expiredBlock,
+                    order.expiredBlock,
                     order.participants,
                     order.shares,
                     signature
@@ -544,6 +473,7 @@ describe('Auction', function () {
 
         beforeEach(async () => {
             const blockNumber = await ethers.provider.getBlockNumber();
+            const expiredBlock = blockNumber + 10;
 
             tokenId = (await collectionMock.totalSupply()).toString();
             price = 100000;
@@ -557,7 +487,6 @@ describe('Auction', function () {
             collectionMock = collectionMock.connect(tokenOwner);
 
             await collectionMock.mint(tokenOwner.address, tokenId);
-            await collectionMock.approve(auction.address, tokenId);
 
             const order = {
                 seller: tokenOwner.address,
@@ -567,20 +496,20 @@ describe('Auction', function () {
                 price: '100000',
                 participants: [owner.address, tokenOwner.address],
                 shares: ['50000', '50000'],
+                expiredBlock,
             };
 
-            const expiredBlock = blockNumber + 10;
-
-            const orderTypedData: OrderTypedDataInterface = { ...order, expiredBlock };
+            const orderTypedData: OrderTypedDataInterface = { ...order };
 
             const signature = await signAuctionOrder(marketSigner, auction.address, orderTypedData);
 
-            await auction.place(
-                order.tokenId,
+            await safeTransferFrom(
+                tokenOwner.address,
+                tokenId,
                 order.price,
                 order.endBlock,
                 order.priceStep,
-                expiredBlock,
+                order.expiredBlock,
                 order.participants,
                 order.shares,
                 signature
@@ -739,6 +668,7 @@ describe('Auction', function () {
 
         beforeEach(async () => {
             const blockNumber = await ethers.provider.getBlockNumber();
+            const expiredBlock = blockNumber + 10;
 
             tokenId = (await collectionMock.totalSupply()).toString();
             price = 91738;
@@ -762,20 +692,20 @@ describe('Auction', function () {
                 price,
                 participants,
                 shares,
+                expiredBlock,
             };
 
-            const expiredBlock = blockNumber + 10;
-
-            const orderTypedData: OrderTypedDataInterface = { ...order, expiredBlock };
+            const orderTypedData: OrderTypedDataInterface = { ...order };
 
             const signature = await signAuctionOrder(marketSigner, auction.address, orderTypedData);
 
-            await auction.place(
-                order.tokenId,
+            await safeTransferFrom(
+                tokenOwner.address,
+                tokenId,
                 order.price,
                 order.endBlock,
                 order.priceStep,
-                expiredBlock,
+                order.expiredBlock,
                 order.participants,
                 order.shares,
                 signature

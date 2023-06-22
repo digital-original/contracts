@@ -50,7 +50,7 @@ _Set CONTRACT_NAME and INITIALIZE_ARGS at the top of deploy/upgradable.ts file_
 $ yarn run deploy:upgradable --network sepolia
 ```
 
-## Run fuzz tests
+### Run fuzz tests
 
 1.
 ```
@@ -61,7 +61,7 @@ $ yarn run est
 $ echidna-test /src/test/fuzz/MarketFuzz.sol --contract MarketFuzz --config /src/.echidna.yml
 ```
 
-## Run Slither-Analyzer
+### Run Slither-Analyzer
 
 1. Create Python virtual environment
 ```
@@ -78,4 +78,9 @@ $ pip install -r requirements.txt
 4. Run Slither
 ```
 $ yarn run slither
+```
+### Generate Documentation
+
+```
+$ forge doc -b
 ```

@@ -32,7 +32,7 @@ const config: HardhatUserConfig = {
     solidity: {
         compilers: [
             {
-                version: '0.8.16',
+                version: '0.8.19',
                 settings: {
                     optimizer: {
                         enabled: true,
@@ -52,3 +52,13 @@ const config: HardhatUserConfig = {
 };
 
 export default config;
+
+(function () {
+    // update console.log to exclude "duplicate definition" log during testing
+    const consoleLogOrigin = console.log;
+    const log = (...args: any[]) => {
+        if (/duplicate definition/.test(args[0])) return;
+        consoleLogOrigin(...args);
+    };
+    console.log = log;
+})();

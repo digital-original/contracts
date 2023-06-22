@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.16;
+pragma solidity ^0.8.19;
+
+// TODO: Think about moving `onERC721Received` to IBaseMarket
 
 /**
  * @title IAuction.
@@ -52,34 +54,21 @@ interface IAuction {
     event Ended(uint256 indexed orderId, uint256 indexed tokenId, address indexed buyer, address seller, uint256 price);
 
     /**
-     * @dev Triggered when order was cancelled.
-     */
-    event Cancelled(uint256 indexed orderId, uint256 indexed tokenId, address indexed seller);
-
-    /**
-     * @notice Transfers token to Auction and places token sale auction order.
+     * @notice Places token sale auction order and locks token on the contract.
+     * @param operator Collection caller.
+     * @param from Token owner.
      * @param tokenId Token for sale.
-     * @param price Initial token price.
-     * @param endBlock Block number until which the auction continues.
-     * @param priceStep Minimum price raise step.
-     * @param expiredBlock Block number until which `signature` is valid.
-     * @param participants Array with addresses between which reward will be distributed.
-     * @param shares Array with rewards amounts,
-     *   order of `shares` corresponds to order of `participants`,
-     *   total shares must be equal to `price`.
-     * @param signature [EIP-712](https://eips.ethereum.org/EIPS/eip-712) signature.
-     *   Signature must include `expiredBlock` and can include other data for validation.
+     * @param data Data needed for auction order placing.
+     * @dev This method is the callback according to
+     *   [IERC721Receiver](https://docs.openzeppelin.com/contracts/4.x/api/token/erc721#IERC721Receiver).
+     * @dev This method can trigger only the collection contract during `safeTransfer`.
      */
-    function place(
+    function onERC721Received(
+        address operator,
+        address from,
         uint256 tokenId,
-        uint256 price,
-        uint256 endBlock,
-        uint256 priceStep,
-        uint256 expiredBlock,
-        address[] memory participants,
-        uint256[] memory shares,
-        bytes memory signature
-    ) external;
+        bytes calldata data
+    ) external returns (bytes4);
 
     /**
      * @notice Raises auction order price, sets new buyer and locks Ether,
@@ -98,7 +87,7 @@ interface IAuction {
     /**
      * @notice Returns auction order by orderId.
      * @param orderId Order id.
-     * @return order Auction order.
+     * @return Auction order.
      */
     function order(uint256 orderId) external view returns (Order memory);
 }

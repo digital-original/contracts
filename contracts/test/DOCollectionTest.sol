@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.16;
+pragma solidity ^0.8.19;
 
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
@@ -44,7 +44,9 @@ contract DOCollectionTest is ERC721Enumerable, ERC721URIStorage, Ownable {
     }
 
     /// @dev An override required by Solidity.
-    function supportsInterface(bytes4 interfaceId) public view override(ERC721, ERC721Enumerable) returns (bool) {
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view override(ERC721Enumerable, ERC721URIStorage) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 

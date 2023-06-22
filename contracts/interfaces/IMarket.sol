@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.16;
+pragma solidity ^0.8.19;
 
 /**
  * @title IMarket.
@@ -44,25 +44,21 @@ interface IMarket {
     event Cancelled(uint256 indexed orderId, uint256 indexed tokenId, address indexed seller);
 
     /**
-     * @notice Transfers token to Market and places token sale order.
+     * @notice Places token sale order and locks token on the contract.
+     * @param operator Collection caller.
+     * @param from Token owner.
      * @param tokenId Token for sale.
-     * @param price Token price.
-     * @param expiredBlock Block number until which `signature` is valid.
-     * @param participants Array with addresses between which reward will be distributed.
-     * @param shares Array with rewards amounts,
-     *   order of `shares` corresponds to order of `participants`,
-     *   total shares must be equal to `price`.
-     * @param signature [EIP-712](https://eips.ethereum.org/EIPS/eip-712) signature.
-     *   Signature must include `expiredBlock` and can include other data for validation.
+     * @param data Data needed for order placing.
+     * @dev This method is the callback according to
+     *   [IERC721Receiver](https://docs.openzeppelin.com/contracts/4.x/api/token/erc721#IERC721Receiver).
+     * @dev This method can trigger only the collection contract during `safeTransfer`.
      */
-    function place(
+    function onERC721Received(
+        address operator,
+        address from,
         uint256 tokenId,
-        uint256 price,
-        uint256 expiredBlock,
-        address[] memory participants,
-        uint256[] memory shares,
-        bytes memory signature
-    ) external;
+        bytes calldata data
+    ) external returns (bytes4);
 
     /**
      * @notice Distributes rewards and transfers token to buyer, close sale order.
@@ -79,7 +75,7 @@ interface IMarket {
     /**
      * @notice Returns order by orderId.
      * @param orderId Order id.
-     * @return order Order.
+     * @return Order.
      */
     function order(uint256 orderId) external view returns (Order memory);
 }
