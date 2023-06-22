@@ -8,6 +8,7 @@ const INFURA_API_KEY = process.env.INFURA_API_KEY!;
 const DEPLOYER_PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY!;
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY!;
 const REPORT_GAS = process.env.REPORT_GAS!;
+const COINMARKETCAP_API_KEY = process.env.COINMARKETCAP_API_KEY!;
 
 const developmentConfig: HardhatUserConfig = {
     networks: {
@@ -44,10 +45,12 @@ const config: HardhatUserConfig = {
     },
     gasReporter: {
         enabled: !!REPORT_GAS,
-        currency: 'none',
-        gasPrice: 1,
+        token: 'eth',
+        currency: 'usd',
+        gasPrice: 26,
         src: 'contracts',
         excludeContracts: ['contracts/test'],
+        coinmarketcap: COINMARKETCAP_API_KEY,
     },
 };
 

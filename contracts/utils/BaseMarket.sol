@@ -7,6 +7,7 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 /**
  * @title BaseMarket
+ *
  * @notice Abstract contract BaseMarket provides market basic logic.
  * @notice Upgradeable Contract based on [OpenZeppelin](https://docs.openzeppelin.com/) library.
  */
@@ -73,27 +74,30 @@ abstract contract BaseMarket is Initializable {
     }
 
     /**
-     * @return New order id.
      * @dev Increments counter.
+     *
+     * @return New order id.
      */
     function _orderId() internal returns (uint256) {
         return _orderCount++;
     }
 
     /**
+     * @dev Transfers collection token `tokenId` from `from` to `to`.
+     *
      * @param from Address from.
      * @param to Address to.
      * @param tokenId Token Id, token must be owned by `from`.
-     * @dev Transfers collection token `tokenId` from `from` to `to`.
      */
     function _transferToken(address from, address to, uint256 tokenId) internal {
         _collection.transferFrom(from, to, tokenId);
     }
 
     /**
+     * @dev Sends Ether to recipient and checks sending result.
+     *
      * @param recipient Ether recipient address.
      * @param amount Ether amount.
-     * @dev Sends Ether to recipient and checks sending result.
      */
     function _sendValue(address recipient, uint256 amount) internal {
         (bool success, ) = recipient.call{value: amount}("");
@@ -101,11 +105,12 @@ abstract contract BaseMarket is Initializable {
     }
 
     /**
+     * @dev Checks that number of participants is equal number of shares,
+     *   and sum of shares is equal price. Throws if data is valid.
+     *
      * @param price Price amount.
      * @param participants Array with participants address.
      * @param shares Array with shares amounts.
-     * @dev Checks that number of participants is equal number of shares,
-     *   and sum of shares is equal price. Throws if data is valid.
      */
     function _validatePrice(uint256 price, address[] memory participants, uint256[] memory shares) internal pure {
         require(participants.length == shares.length, "BaseMarket: number of shares is wrong");
@@ -114,6 +119,7 @@ abstract contract BaseMarket is Initializable {
 
     /**
      * @param shares Array with shares amounts.
+     *
      * @return totalShares Sum of shares.
      */
     function _sumShares(uint256[] memory shares) internal pure returns (uint256 totalShares) {
@@ -124,6 +130,7 @@ abstract contract BaseMarket is Initializable {
 
     /**
      * @param orderId Order id.
+     *
      * @return Returns true if order is placed.
      */
     function _orderPlaced(uint256 orderId) internal view virtual returns (bool);

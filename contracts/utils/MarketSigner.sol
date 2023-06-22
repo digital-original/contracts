@@ -6,14 +6,15 @@ import {EIP712Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/crypt
 import {ECDSAUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol";
 import {ShortStrings, ShortString} from "@openzeppelin/contracts/utils/ShortStrings.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import {IWhiteList} from "../interfaces/IWhiteList.sol";
 
 /**
  * @title MarketSigner
+ *
  * @notice Abstract contract MarketSigner provides signature validation logic.
  * @notice Upgradeable Contract based on [OpenZeppelin](https://docs.openzeppelin.com/) library
  *   and [EIP-712](https://eips.ethereum.org/EIPS/eip-712) standard.
  */
+// TODO: Think about using not upgradable EIP712 contract
 abstract contract MarketSigner is Initializable, EIP712Upgradeable {
     /**
      * @dev Data type hash according to EIP-712.
@@ -22,7 +23,6 @@ abstract contract MarketSigner is Initializable, EIP712Upgradeable {
     bytes32 public constant ORDER_TYPE_HASH =
         keccak256(
             "Order("
-                // TODO: Do we really need to have seller in signature?
                 "address seller,"
                 "uint256 tokenId,"
                 "uint256 price,"
@@ -80,6 +80,9 @@ abstract contract MarketSigner is Initializable, EIP712Upgradeable {
     }
 
     /**
+     * @dev Checks `expiredBlock`, hashes data and recovers signature's signer,
+     *   compares signer with market signer. Throws if data is valid.
+     *
      * @param seller Seller address.
      * @param tokenId Token id.
      * @param price Token price.
@@ -87,8 +90,6 @@ abstract contract MarketSigner is Initializable, EIP712Upgradeable {
      * @param participants Array with participants addresses.
      * @param shares Array with shares amounts.
      * @param signature Signature according to EIP-712.
-     * @dev Checks `expiredBlock`, hashes data and recovers signature's signer,
-     *   compares signer with market signer. Throws if data is valid.
      */
     function _validateSignature(
         address seller,

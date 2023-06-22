@@ -9,6 +9,7 @@ import {IAuction} from "./interfaces/IAuction.sol";
 
 /**
  * @title Auction
+ *
  * @notice Auction contract provides logic for creating auction with ERC-721 tokens.
  * @notice Upgradeable Contract based on [OpenZeppelin](https://docs.openzeppelin.com/) library.
  */
@@ -29,6 +30,7 @@ contract Auction is Initializable, BaseMarket, MarketSigner, IAuction, IERC721Re
 
     /**
      * @notice Initializes contract.
+     *
      * @dev Method should be invoked on proxy contract via `delegatecall`.
      *   See <https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable#initializers>.
      */
@@ -38,6 +40,7 @@ contract Auction is Initializable, BaseMarket, MarketSigner, IAuction, IERC721Re
 
     /**
      * @inheritdoc IAuction
+     *
      * @param data Should includes:
      *   1. `uint256 price` - token price.
      *   2. `uint256 endBlock` - block number until which the auction continues.
@@ -95,6 +98,7 @@ contract Auction is Initializable, BaseMarket, MarketSigner, IAuction, IERC721Re
 
     /**
      * @inheritdoc IAuction
+     *
      * @dev To invoke method order must have `Placed` status and auction must be ongoing,
      *   seller can't raise price in their own order.
      */
@@ -124,6 +128,7 @@ contract Auction is Initializable, BaseMarket, MarketSigner, IAuction, IERC721Re
 
     /**
      * @inheritdoc IAuction
+     *
      * @dev To invoke method order must have `Placed` status and auction must not be ongoing,
      *   seller can't raise price in their own order.
      */
@@ -173,8 +178,10 @@ contract Auction is Initializable, BaseMarket, MarketSigner, IAuction, IERC721Re
 
     /**
      * @inheritdoc BaseMarket
-     * @param orderId Auction order id.
+     *
      * @dev Method overrides `BaseMarket._orderPlaced.`
+     *
+     * @param orderId Auction order id.
      */
     function _orderPlaced(uint256 orderId) internal view override returns (bool) {
         return _orders[orderId].status == OrderStatus.Placed;

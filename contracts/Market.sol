@@ -8,9 +8,11 @@ import {MarketSigner} from "./utils/MarketSigner.sol";
 import {IMarket} from "./interfaces/IMarket.sol";
 
 // TODO: Think about unification `onERC721Received` from Market and Auction
+// TODO: Think about optimization with `unchecked {}`
 
 /**
  * @title Market
+ *
  * @notice Market contract provides logic for selling and buying ERC-721 tokens.
  * @notice Upgradeable Contract based on [OpenZeppelin](https://docs.openzeppelin.com/) library.
  */
@@ -31,6 +33,7 @@ contract Market is Initializable, BaseMarket, MarketSigner, IMarket, IERC721Rece
 
     /**
      * @notice Initializes contract.
+     *
      * @dev Method should be invoked on proxy contract via `delegatecall`.
      *   See <https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable#initializers>.
      */
@@ -40,6 +43,7 @@ contract Market is Initializable, BaseMarket, MarketSigner, IMarket, IERC721Rece
 
     /**
      * @inheritdoc IMarket
+     *
      * @param data Should includes:
      *   1. `uint256 price` - token price.
      *   2. `uint256 expiredBlock` - block number until which `signature` is valid.
@@ -88,6 +92,7 @@ contract Market is Initializable, BaseMarket, MarketSigner, IMarket, IERC721Rece
 
     /**
      * @inheritdoc IMarket
+     *
      * @dev To invoke method order must have `Placed` status,
      *   seller can't realize their own order.
      */
@@ -115,6 +120,7 @@ contract Market is Initializable, BaseMarket, MarketSigner, IMarket, IERC721Rece
 
     /**
      * @inheritdoc IMarket
+     *
      * @dev Only seller can invoke `cancel` for their own order,
      *   to invoke method order must have `Placed` status.
      */
@@ -140,6 +146,7 @@ contract Market is Initializable, BaseMarket, MarketSigner, IMarket, IERC721Rece
 
     /**
      * @inheritdoc BaseMarket
+     *
      * @dev Method overrides `BaseMarket._orderPlaced.`
      */
     function _orderPlaced(uint256 orderId) internal view override returns (bool) {

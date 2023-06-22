@@ -3,7 +3,9 @@ pragma solidity ^0.8.19;
 
 /**
  * @title IMarket.
+ *
  * @notice Market contract interface.
+ * @notice Market contract provides logic for selling and buying ERC-721 tokens.
  */
 interface IMarket {
     struct Order {
@@ -45,13 +47,15 @@ interface IMarket {
 
     /**
      * @notice Places token sale order and locks token on the contract.
+     *
+     * @dev This method is the callback according to
+     *   [IERC721Receiver](https://docs.openzeppelin.com/contracts/4.x/api/token/erc721#IERC721Receiver).
+     * @dev This method can trigger only the collection contract during `safeTransfer`.
+     *
      * @param operator Collection caller.
      * @param from Token owner.
      * @param tokenId Token for sale.
      * @param data Data needed for order placing.
-     * @dev This method is the callback according to
-     *   [IERC721Receiver](https://docs.openzeppelin.com/contracts/4.x/api/token/erc721#IERC721Receiver).
-     * @dev This method can trigger only the collection contract during `safeTransfer`.
      */
     function onERC721Received(
         address operator,
@@ -62,19 +66,23 @@ interface IMarket {
 
     /**
      * @notice Distributes rewards and transfers token to buyer, close sale order.
+     *
      * @param orderId Order id.
      */
     function realize(uint256 orderId) external payable;
 
     /**
      * @notice Cancels token sale order, transfers token back to seller.
+     *
      * @param orderId Order id.
      */
     function cancel(uint256 orderId) external;
 
     /**
      * @notice Returns order by orderId.
+     *
      * @param orderId Order id.
+     *
      * @return Order.
      */
     function order(uint256 orderId) external view returns (Order memory);
