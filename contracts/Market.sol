@@ -7,9 +7,6 @@ import {BaseMarket} from "./utils/BaseMarket.sol";
 import {MarketSigner} from "./utils/MarketSigner.sol";
 import {IMarket} from "./interfaces/IMarket.sol";
 
-// TODO: Think about unification `onERC721Received` from Market and Auction
-// TODO: Think about optimization with `unchecked {}`
-
 /**
  * @title Market
  *
@@ -45,16 +42,8 @@ contract Market is Initializable, BaseMarket, MarketSigner, IMarket, IERC721Rece
     /**
      * @inheritdoc IMarket
      *
-     * @param data Should includes:
-     *   1. `uint256 price` - token price.
-     *   2. `uint256 expiredBlock` - block number until which `signature` is valid.
-     *   3. `address[] participants` - array with addresses between which reward will be distributed.
-     *   4. `uint256[] shares` - array with rewards amounts,
-     *     order of `shares` corresponds to order of `participants`,
-     *     total shares must be equal to `price`.
-     *   5. `bytes signature` - [EIP-712](https://eips.ethereum.org/EIPS/eip-712) signature.
-     *     Signature must include `expiredBlock` and can include other data for validation.
-     *     See `MarketSigner::ORDER_TYPEHASH`.
+     * @param data abi.encode(`price`, `expiredBlock`, `participants`, `shares`, `signature`).
+     *   See `_place` method.
      */
     function onERC721Received(
         address,
@@ -70,23 +59,7 @@ contract Market is Initializable, BaseMarket, MarketSigner, IMarket, IERC721Rece
             bytes memory signature
         ) = abi.decode(data, (uint256, uint256, address[], uint256[], bytes));
 
-        // TODO: Create private `_place` method
-
-        _validateSignature(from, tokenId, price, expiredBlock, participants, shares, signature);
-        _validatePrice(price, participants, shares);
-
-        uint256 orderId = _orderId();
-
-        _orders[orderId] = Order({
-            seller: from,
-            tokenId: tokenId,
-            price: price,
-            status: OrderStatus.Placed,
-            participants: participants,
-            shares: shares
-        });
-
-        emit Placed(orderId, tokenId, from, price);
+        _place(from, tokenId, price, expiredBlock, participants, shares, signature);
 
         return IERC721Receiver.onERC721Received.selector;
     }
@@ -146,11 +119,52 @@ contract Market is Initializable, BaseMarket, MarketSigner, IMarket, IERC721Rece
     }
 
     /**
+     * @dev Places token sale order.
+     *
+     * @param from Token owner.
+     * @param tokenId Token for sale.
+     * @param price Token price.
+     * @param expiredBlock Block number until which `signature` is valid.
+     * @param participants Array with addresses between which reward will be distributed.
+     * @param shares Array with rewards amounts,
+     *   order of `shares` corresponds to order of `participants`,
+     *   total shares must be equal to `price`.
+     * @param signature [EIP-712](https://eips.ethereum.org/EIPS/eip-712) signature.
+     *   Signature must include `expiredBlock` and can include other data for validation.
+     *   See `MarketSigner::ORDER_TYPEHASH`.
+     */
+    function _place(
+        address from,
+        uint256 tokenId,
+        uint256 price,
+        uint256 expiredBlock,
+        address[] memory participants,
+        uint256[] memory shares,
+        bytes memory signature
+    ) internal {
+        _validateSignature(from, tokenId, price, expiredBlock, participants, shares, signature);
+        _validatePrice(price, participants, shares);
+
+        uint256 orderId = _orderId();
+
+        _orders[orderId] = Order({
+            seller: from,
+            tokenId: tokenId,
+            price: price,
+            status: OrderStatus.Placed,
+            participants: participants,
+            shares: shares
+        });
+
+        emit Placed(orderId, tokenId, from, price);
+    }
+
+    /**
      * @inheritdoc BaseMarket
      *
      * @dev Method overrides `BaseMarket._orderPlaced.`
      */
-    function _orderPlaced(uint256 orderId) internal view override returns (bool) {
+    function _orderPlaced(uint256 orderId) internal view override(BaseMarket) returns (bool) {
         return _orders[orderId].status == OrderStatus.Placed;
     }
 

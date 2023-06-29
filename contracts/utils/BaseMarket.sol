@@ -123,8 +123,12 @@ abstract contract BaseMarket is Initializable {
      * @return totalShares Sum of shares.
      */
     function _sumShares(uint256[] memory shares) internal pure returns (uint256 totalShares) {
-        for (uint256 i = 0; i < shares.length; i++) {
+        for (uint256 i = 0; i < shares.length; ) {
             totalShares += shares[i];
+
+            unchecked {
+                i++;
+            }
         }
     }
 

@@ -42,18 +42,8 @@ contract Auction is Initializable, BaseMarket, MarketSigner, IAuction, IERC721Re
     /**
      * @inheritdoc IAuction
      *
-     * @param data Should includes:
-     *   1. `uint256 price` - token price.
-     *   2. `uint256 endBlock` - block number until which the auction continues.
-     *   3. `uint256 priceStep` - minimum price raise step.
-     *   4. `uint256 expiredBlock` - block number until which `signature` is valid.
-     *   5. `address[] participants` - array with addresses between which reward will be distributed.
-     *   6. `uint256[] shares` - array with rewards amounts,
-     *     order of `shares` corresponds to order of `participants`,
-     *     total shares must be equal to `price`.
-     *   7. `bytes signature` - [EIP-712](https://eips.ethereum.org/EIPS/eip-712) signature.
-     *     Signature must include `expiredBlock` and can include other data for validation.
-     *     See `MarketSigner::ORDER_TYPEHASH`.
+     * @param data abi.encode(`price`, `endBlock`, `priceStep`, `expiredBlock`, `participants`, `shares`, `signature`).
+     *   See `_place` method.
      */
     function onERC721Received(
         address,
@@ -61,7 +51,6 @@ contract Auction is Initializable, BaseMarket, MarketSigner, IAuction, IERC721Re
         uint256 tokenId,
         bytes calldata data
     ) external override(IAuction, IERC721Receiver) onlyCollection returns (bytes4) {
-        // TODO: What happen if priceStep = 0?
         (
             uint256 price,
             uint256 endBlock,
@@ -72,27 +61,7 @@ contract Auction is Initializable, BaseMarket, MarketSigner, IAuction, IERC721Re
             bytes memory signature
         ) = abi.decode(data, (uint256, uint256, uint256, uint256, address[], uint256[], bytes));
 
-        // TODO: Create private `_place` method
-        require(endBlock > block.number, "Auction: end block is less than current");
-
-        _validateSignature(from, tokenId, price, expiredBlock, participants, shares, signature);
-        _validatePrice(price, participants, shares);
-
-        uint256 orderId = _orderId();
-
-        _orders[orderId] = Order({
-            seller: from,
-            buyer: address(0),
-            tokenId: tokenId,
-            price: price,
-            endBlock: endBlock,
-            priceStep: priceStep,
-            status: OrderStatus.Placed,
-            participants: participants,
-            shares: shares
-        });
-
-        emit Placed(orderId, tokenId, from, price);
+        _place(from, tokenId, price, endBlock, priceStep, expiredBlock, participants, shares, signature);
 
         return IERC721Receiver.onERC721Received.selector;
     }
@@ -104,7 +73,7 @@ contract Auction is Initializable, BaseMarket, MarketSigner, IAuction, IERC721Re
      *   seller can't raise price for their own order.
      */
     function raise(uint256 orderId) external payable placedOrder(orderId) {
-        // TODO: How should work a first raise?
+        // TODO: How should work a first raise, should first bid eq prevPrice + _orders[orderId].priceStep or initial price?
         require(_orders[orderId].endBlock >= block.number, "Auction: auction is ended");
 
         address seller = _orders[orderId].seller;
@@ -178,13 +147,65 @@ contract Auction is Initializable, BaseMarket, MarketSigner, IAuction, IERC721Re
     }
 
     /**
+     * @dev Places auction order.
+     *
+     * @param from Token owner.
+     * @param tokenId Token for sale.
+     * @param price Token price.
+     * @param endBlock Block number until which the auction continues.
+     * @param priceStep Minimum price raise step.
+     * @param expiredBlock Block number until which `signature` is valid.
+     * @param participants Array with addresses between which reward will be distributed.
+     * @param shares Array with rewards amounts,
+     *   order of `shares` corresponds to order of `participants`,
+     *   total shares must be equal to `price`.
+     * @param signature [EIP-712](https://eips.ethereum.org/EIPS/eip-712) signature.
+     *   Signature must include `expiredBlock` and can include other data for validation.
+     *   See `MarketSigner::ORDER_TYPEHASH`.
+     */
+    function _place(
+        address from,
+        uint256 tokenId,
+        uint256 price,
+        uint256 endBlock,
+        uint256 priceStep,
+        uint256 expiredBlock,
+        address[] memory participants,
+        uint256[] memory shares,
+        bytes memory signature
+    ) internal {
+        // TODO: What happen if priceStep = 0?
+
+        require(endBlock > block.number, "Auction: end block is less than current");
+
+        _validateSignature(from, tokenId, price, expiredBlock, participants, shares, signature);
+        _validatePrice(price, participants, shares);
+
+        uint256 orderId = _orderId();
+
+        _orders[orderId] = Order({
+            seller: from,
+            buyer: address(0),
+            tokenId: tokenId,
+            price: price,
+            endBlock: endBlock,
+            priceStep: priceStep,
+            status: OrderStatus.Placed,
+            participants: participants,
+            shares: shares
+        });
+
+        emit Placed(orderId, tokenId, from, price);
+    }
+
+    /**
      * @inheritdoc BaseMarket
      *
      * @dev Method overrides `BaseMarket._orderPlaced.`
      *
      * @param orderId Auction order id.
      */
-    function _orderPlaced(uint256 orderId) internal view override returns (bool) {
+    function _orderPlaced(uint256 orderId) internal view override(BaseMarket) returns (bool) {
         return _orders[orderId].status == OrderStatus.Placed;
     }
 

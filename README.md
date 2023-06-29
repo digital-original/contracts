@@ -6,10 +6,6 @@
 <!-- TOTO: Upload new contracts -->
 - Faucet - <https://sepolia-faucet.pk910.de/>
 - DOProxyAdmin - <https://sepolia.etherscan.io/address/0x77d3e2FAF8afEB827Db827116F1bF7dd14260D15>
-- WhiteList
-    - Proxy - <https://sepolia.etherscan.io/address/0xc192D054535C1308E410389A4020dCC4C9721a42>
-    - Impl - <https://sepolia.etherscan.io/address/0x017af7846dc328E5148905C74182c24218e6f150>
-- DOCollection - <https://sepolia.etherscan.io/address/0x282eB0B11C5771B991e2acf4fFA38bE678C7baD6>
 
 ## Get Started
 

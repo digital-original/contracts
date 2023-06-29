@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import {ERC721URIStorage} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {ITransferChecker} from "./interfaces/ITransferChecker.sol";
 
 /**
@@ -13,8 +13,8 @@ import {ITransferChecker} from "./interfaces/ITransferChecker.sol";
  * @notice DOCollection is ERC721(Enumerable, URIStorage) contract.
  * @notice Contract based on [OpenZeppelin](https://docs.openzeppelin.com/) library.
  */
-// TODO: change Ownable to OwnableTwoSteps
-contract DOCollection is ERC721Enumerable, ERC721URIStorage, Ownable {
+
+contract DOCollection is ERC721Enumerable, ERC721URIStorage, Ownable2Step {
     /**
      * @dev TransferChecker contract address.
      */

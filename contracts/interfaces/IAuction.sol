@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.19;
 
-// TODO: Think about moving `onERC721Received` to IBaseMarket
-
 /**
  * @title IAuction.
  *
@@ -56,7 +54,7 @@ interface IAuction {
     event Ended(uint256 indexed orderId, uint256 indexed tokenId, address indexed buyer, address seller, uint256 price);
 
     /**
-     * @notice Places token sale auction order and locks token on the contract.
+     * @notice Places auction order and locks token on the contract.
      *
      * @dev This method is the callback according to
      *   [IERC721Receiver](https://docs.openzeppelin.com/contracts/4.x/api/token/erc721#IERC721Receiver).
@@ -65,7 +63,7 @@ interface IAuction {
      * @param operator Collection caller.
      * @param from Token owner.
      * @param tokenId Token for sale.
-     * @param data Data needed for auction order placing.
+     * @param data Data needed for auction order placing. See `Auction` Contract.
      */
     function onERC721Received(
         address operator,

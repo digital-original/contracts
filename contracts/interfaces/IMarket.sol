@@ -55,7 +55,7 @@ interface IMarket {
      * @param operator Collection caller.
      * @param from Token owner.
      * @param tokenId Token for sale.
-     * @param data Data needed for order placing.
+     * @param data Data needed for order placing. See `Market` Contract.
      */
     function onERC721Received(
         address operator,
