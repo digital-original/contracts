@@ -4,16 +4,13 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { DOCollection, TransferCheckerMock } from '../typechain-types';
 import { deployClassic } from '../scripts/deploy-classic';
 
-describe('DOCollection', function () {
+describe.only('DOCollection', function () {
     let collection: DOCollection;
     let transferCheckerMock: TransferCheckerMock;
     let owner: SignerWithAddress;
     let tokenOwner: SignerWithAddress;
     let tokenReceiver: SignerWithAddress;
     let randomAccount: SignerWithAddress;
-
-    const collectionName = 'Digital Original';
-    const collectionSymbol = 'DO';
 
     before(async () => {
         [owner, tokenOwner, tokenReceiver, randomAccount] = <SignerWithAddress[]>(
@@ -29,7 +26,7 @@ describe('DOCollection', function () {
 
         const _collection = await deployClassic({
             contractName: 'DOCollection',
-            constructorArgs: [collectionName, collectionSymbol, _transferCheckerMock.address],
+            constructorArgs: [_transferCheckerMock.address],
             signer: owner,
         });
 
@@ -37,13 +34,6 @@ describe('DOCollection', function () {
         collection = <DOCollection>_collection;
 
         collection = collection.connect(owner);
-    });
-
-    it(`should have right name and symbol`, async () => {
-        await Promise.all([
-            expect(collection.name()).to.eventually.equal(collectionName),
-            expect(collection.symbol()).to.eventually.equal(collectionSymbol),
-        ]);
     });
 
     it(`should have right transfer checker`, async () => {

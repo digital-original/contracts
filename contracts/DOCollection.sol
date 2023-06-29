@@ -16,33 +16,54 @@ import {ITransferChecker} from "./interfaces/ITransferChecker.sol";
 
 contract DOCollection is ERC721Enumerable, ERC721URIStorage, Ownable2Step {
     /**
+     * @dev Minter address. Minter can invoke `mint` and `safeMint`.
+     */
+    address private _minter;
+
+    /**
      * @dev TransferChecker contract address.
      */
     ITransferChecker private _transferChecker;
 
     /**
-     * @param name Collection name
-     * @param symbol Collection symbol
+     * @dev Mapping token id to token creation date.
+     */
+    mapping(uint256 => uint256) private _tokenToCreationDate;
+
+    /**
+     * @dev Throws if called by any account other than the minter.
+     */
+    modifier onlyMinter() {
+        require(msg.sender == _minter, "DOCollection: caller is not minter");
+        _;
+    }
+
+    /**
      * @param transferChecker_ TransferChecker contract address.
      */
-    constructor(string memory name, string memory symbol, ITransferChecker transferChecker_) ERC721(name, symbol) {
+    constructor(address minter_, ITransferChecker transferChecker_) ERC721("DOCollection", "DO") {
+        _minter = minter_;
         _transferChecker = transferChecker_;
     }
 
     /**
-     * @dev Only owner can invoke method.
+     * @notice Mints new token.
+     *
+     * @dev Only minter can invoke the method.
      *
      * @param to Mint to address.
      * @param tokenId Token id.
      * @param _tokenURI Token metadata uri.
      */
-    function mint(address to, uint256 tokenId, string memory _tokenURI) external onlyOwner {
+    function mint(address to, uint256 tokenId, string memory _tokenURI) external onlyMinter {
         _mint(to, tokenId);
         _setTokenURI(tokenId, _tokenURI);
     }
 
     /**
-     * @dev Only owner can invoke method.
+     * @notice Mints new token.
+     *
+     * @dev Only minter can invoke the method.
      * @dev Method invokes `onERC721Received` if `to` is contract.
      *   See <https://docs.openzeppelin.com/contracts/2.x/api/token/erc721#IERC721Receiver>.
      *
@@ -51,20 +72,53 @@ contract DOCollection is ERC721Enumerable, ERC721URIStorage, Ownable2Step {
      * @param _tokenURI Token metadata uri.
      * @param data Bytes optional data to send along with the call.
      */
-    function safeMint(address to, uint256 tokenId, string memory _tokenURI, bytes memory data) external onlyOwner {
+    function safeMint(address to, uint256 tokenId, string memory _tokenURI, bytes memory data) external onlyMinter {
         _safeMint(to, tokenId, data);
         _setTokenURI(tokenId, _tokenURI);
     }
 
     /**
+     * @notice Burn a token.
+     *
+     * @dev Only owner can invoke the method.
+     * @dev This method provides the ability to burn a token during 7 days after the token creation.
+     *
+     * @param tokenId Token id.
+     */
+    function burn(uint256 tokenId) external onlyOwner {
+        require(block.timestamp - _tokenToCreationDate[tokenId] <= 7 days, "DOCollection: token can not be burned");
+        _burn(tokenId);
+    }
+
+    /**
+     * @notice Changes minter address.
+     *
+     * @dev Only owner can invoke the method.
+     *
+     * @param minter_ New minter address.
+     */
+    function minter(address minter_) external onlyOwner {
+        require(minter_ != address(0));
+        _minter = minter_;
+    }
+
+    /**
      * @notice Changes TransferChecker contract address.
      *
-     * @dev Only owner can invoke method.
+     * @dev Only owner can invoke the method.
      *
-     * @param transferChecker_ TransferChecker contract address.
+     * @param transferChecker_ New TransferChecker contract address.
      */
-    function transferChecker(ITransferChecker transferChecker_) external onlyOwner {
-        _transferChecker = transferChecker_;
+    function transferChecker(address transferChecker_) external onlyOwner {
+        require(transferChecker_ != address(0));
+        _transferChecker = ITransferChecker(transferChecker_);
+    }
+
+    /**
+     * @return Minter address.
+     */
+    function minter() external view returns (address) {
+        return _minter;
     }
 
     /**
@@ -72,6 +126,14 @@ contract DOCollection is ERC721Enumerable, ERC721URIStorage, Ownable2Step {
      */
     function transferChecker() external view returns (ITransferChecker) {
         return _transferChecker;
+    }
+
+    /**
+     * @dev The method overrides `ERC721::_mint` to include logic with a token creation date
+     */
+    function _mint(address to, uint256 tokenId) internal override(ERC721) {
+        super._mint(to, tokenId);
+        _tokenToCreationDate[tokenId] = block.timestamp;
     }
 
     /**
@@ -92,17 +154,17 @@ contract DOCollection is ERC721Enumerable, ERC721URIStorage, Ownable2Step {
     /**
      * @dev An override required by Solidity.
      */
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view override(ERC721Enumerable, ERC721URIStorage) returns (bool) {
-        return super.supportsInterface(interfaceId);
+    function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory) {
+        return super.tokenURI(tokenId);
     }
 
     /**
      * @dev An override required by Solidity.
      */
-    function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory) {
-        return super.tokenURI(tokenId);
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view override(ERC721Enumerable, ERC721URIStorage) returns (bool) {
+        return super.supportsInterface(interfaceId);
     }
 
     /**

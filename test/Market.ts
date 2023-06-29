@@ -224,7 +224,7 @@ describe('Market', function () {
                         ]
                     )
                 )
-            ).to.be.rejectedWith('BaseMarket: caller is not the collection');
+            ).to.be.rejectedWith('BaseMarket: caller is not collection');
         });
 
         it(`should fail if expired block number less than current`, async () => {

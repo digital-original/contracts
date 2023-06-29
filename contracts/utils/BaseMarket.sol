@@ -41,7 +41,7 @@ abstract contract BaseMarket is Initializable {
      * @dev Throws if called by any account other than the collection.
      */
     modifier onlyCollection() {
-        require(msg.sender == address(_collection), "BaseMarket: caller is not the collection");
+        require(msg.sender == address(_collection), "BaseMarket: caller is not collection");
         _;
     }
 
