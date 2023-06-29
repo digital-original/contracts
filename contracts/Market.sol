@@ -15,7 +15,7 @@ import {IMarket} from "./interfaces/IMarket.sol";
  */
 contract Market is Initializable, BaseMarket, MarketSigner, IMarket, IERC721Receiver {
     /**
-     * @dev Stores orders by order id.
+     * @dev Stores orders by order ID.
      */
     mapping(uint256 => Order) private _orders;
 
@@ -131,7 +131,7 @@ contract Market is Initializable, BaseMarket, MarketSigner, IMarket, IERC721Rece
      *   total shares must be equal to `price`.
      * @param signature [EIP-712](https://eips.ethereum.org/EIPS/eip-712) signature.
      *   Signature must include `expiredBlock` and can include other data for validation.
-     *   See `MarketSigner::ORDER_TYPEHASH`.
+     *   See `MarketSigner::ORDER_TYPE_HASH`.
      */
     function _place(
         address from,
@@ -162,7 +162,7 @@ contract Market is Initializable, BaseMarket, MarketSigner, IMarket, IERC721Rece
     /**
      * @inheritdoc BaseMarket
      *
-     * @dev Method overrides `BaseMarket._orderPlaced.`
+     * @dev Method overrides `BaseMarket::_orderPlaced.`
      */
     function _orderPlaced(uint256 orderId) internal view override(BaseMarket) returns (bool) {
         return _orders[orderId].status == OrderStatus.Placed;

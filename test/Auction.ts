@@ -259,7 +259,7 @@ describe('Auction', function () {
                         ]
                     )
                 )
-            ).to.be.rejectedWith('BaseMarket: caller is not collection');
+            ).to.be.rejectedWith('BaseMarket: caller is not the collection');
         });
 
         it(`should fail if expired block number less than current`, async () => {

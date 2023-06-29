@@ -67,21 +67,21 @@ interface IMarket {
     /**
      * @notice Distributes rewards and transfers token to buyer, close sale order.
      *
-     * @param orderId Order id.
+     * @param orderId Order ID.
      */
     function realize(uint256 orderId) external payable;
 
     /**
      * @notice Cancels token sale order, transfers token back to seller.
      *
-     * @param orderId Order id.
+     * @param orderId Order ID.
      */
     function cancel(uint256 orderId) external;
 
     /**
      * @notice Returns order by orderId.
      *
-     * @param orderId Order id.
+     * @param orderId Order ID.
      *
      * @return Order.
      */

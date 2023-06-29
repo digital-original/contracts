@@ -41,7 +41,7 @@ abstract contract BaseMarket is Initializable {
      * @dev Throws if called by any account other than the collection.
      */
     modifier onlyCollection() {
-        require(msg.sender == address(_collection), "BaseMarket: caller is not collection");
+        require(msg.sender == address(_collection), "BaseMarket: caller is not the collection");
         _;
     }
 
@@ -76,7 +76,7 @@ abstract contract BaseMarket is Initializable {
     /**
      * @dev Increments counter.
      *
-     * @return New order id.
+     * @return New order ID.
      */
     function _orderId() internal returns (uint256) {
         return _orderCount++;
@@ -133,7 +133,7 @@ abstract contract BaseMarket is Initializable {
     }
 
     /**
-     * @param orderId Order id.
+     * @param orderId Order ID.
      *
      * @return Returns true if order is placed.
      */

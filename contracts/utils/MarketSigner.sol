@@ -84,7 +84,7 @@ abstract contract MarketSigner is Initializable, EIP712Upgradeable {
      *   compares signer with market signer. Throws if data is valid.
      *
      * @param seller Seller address.
-     * @param tokenId Token id.
+     * @param tokenId Token ID.
      * @param price Token price.
      * @param expiredBlock Block number until which `signature` is valid.
      * @param participants Array with participants addresses.

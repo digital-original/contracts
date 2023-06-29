@@ -76,7 +76,7 @@ interface IAuction {
      * @notice Raises auction order price, sets new buyer and locks Ether,
      *   return previous locked Ether to previous buyer if order already has buyer.
      *
-     * @param orderId Auction order id.
+     * @param orderId Auction order ID.
      */
     function raise(uint256 orderId) external payable;
 
@@ -84,14 +84,14 @@ interface IAuction {
      * @notice Ends auction and closes order. Distributes rewards and transfers
      *   token to buyer if order has buyer, in another case transfers token back to seller.
      *
-     * @param orderId Auction order id.
+     * @param orderId Auction order ID.
      */
     function end(uint256 orderId) external;
 
     /**
      * @notice Returns auction order by orderId.
      *
-     * @param orderId Order id.
+     * @param orderId Order ID.
      *
      * @return Auction order.
      */

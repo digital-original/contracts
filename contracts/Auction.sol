@@ -15,7 +15,7 @@ import {IAuction} from "./interfaces/IAuction.sol";
  */
 contract Auction is Initializable, BaseMarket, MarketSigner, IAuction, IERC721Receiver {
     /**
-     * @dev Stores auction orders by order id.
+     * @dev Stores auction orders by order ID.
      */
     mapping(uint256 => Order) private _orders;
 
@@ -161,7 +161,7 @@ contract Auction is Initializable, BaseMarket, MarketSigner, IAuction, IERC721Re
      *   total shares must be equal to `price`.
      * @param signature [EIP-712](https://eips.ethereum.org/EIPS/eip-712) signature.
      *   Signature must include `expiredBlock` and can include other data for validation.
-     *   See `MarketSigner::ORDER_TYPEHASH`.
+     *   See `MarketSigner::ORDER_TYPE_HASH`.
      */
     function _place(
         address from,
@@ -201,9 +201,9 @@ contract Auction is Initializable, BaseMarket, MarketSigner, IAuction, IERC721Re
     /**
      * @inheritdoc BaseMarket
      *
-     * @dev Method overrides `BaseMarket._orderPlaced.`
+     * @dev Method overrides `BaseMarket::_orderPlaced.`
      *
-     * @param orderId Auction order id.
+     * @param orderId Auction order ID.
      */
     function _orderPlaced(uint256 orderId) internal view override(BaseMarket) returns (bool) {
         return _orders[orderId].status == OrderStatus.Placed;
