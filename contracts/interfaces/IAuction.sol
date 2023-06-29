@@ -5,7 +5,9 @@ pragma solidity ^0.8.19;
 
 /**
  * @title IAuction.
+ *
  * @notice Auction contract interface.
+ * @notice Auction contract provides logic for creating auction with ERC-721 tokens.
  */
 interface IAuction {
     /**
@@ -55,13 +57,15 @@ interface IAuction {
 
     /**
      * @notice Places token sale auction order and locks token on the contract.
+     *
+     * @dev This method is the callback according to
+     *   [IERC721Receiver](https://docs.openzeppelin.com/contracts/4.x/api/token/erc721#IERC721Receiver).
+     * @dev This method can trigger only the collection contract during `safeTransfer`.
+     *
      * @param operator Collection caller.
      * @param from Token owner.
      * @param tokenId Token for sale.
      * @param data Data needed for auction order placing.
-     * @dev This method is the callback according to
-     *   [IERC721Receiver](https://docs.openzeppelin.com/contracts/4.x/api/token/erc721#IERC721Receiver).
-     * @dev This method can trigger only the collection contract during `safeTransfer`.
      */
     function onERC721Received(
         address operator,
@@ -73,6 +77,7 @@ interface IAuction {
     /**
      * @notice Raises auction order price, sets new buyer and locks Ether,
      *   return previous locked Ether to previous buyer if order already has buyer.
+     *
      * @param orderId Auction order id.
      */
     function raise(uint256 orderId) external payable;
@@ -80,13 +85,16 @@ interface IAuction {
     /**
      * @notice Ends auction and closes order. Distributes rewards and transfers
      *   token to buyer if order has buyer, in another case transfers token back to seller.
+     *
      * @param orderId Auction order id.
      */
     function end(uint256 orderId) external;
 
     /**
      * @notice Returns auction order by orderId.
+     *
      * @param orderId Order id.
+     *
      * @return Auction order.
      */
     function order(uint256 orderId) external view returns (Order memory);

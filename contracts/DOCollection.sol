@@ -5,33 +5,36 @@ import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import {ERC721URIStorage} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {IWhiteList} from "./interfaces/IWhiteList.sol";
+import {ITransferChecker} from "./interfaces/ITransferChecker.sol";
 
 /**
  * @title DOCollection
+ *
  * @notice DOCollection is ERC721(Enumerable, URIStorage) contract.
  * @notice Contract based on [OpenZeppelin](https://docs.openzeppelin.com/) library.
  */
+// TODO: change Ownable to OwnableTwoSteps
 contract DOCollection is ERC721Enumerable, ERC721URIStorage, Ownable {
     /**
-     * @dev WhiteList contract address.
+     * @dev TransferChecker contract address.
      */
-    IWhiteList private _whiteList;
+    ITransferChecker private _transferChecker;
 
     /**
      * @param name Collection name
      * @param symbol Collection symbol
-     * @param whiteList_ WhiteList contract address.
+     * @param transferChecker_ TransferChecker contract address.
      */
-    constructor(string memory name, string memory symbol, IWhiteList whiteList_) ERC721(name, symbol) {
-        _whiteList = whiteList_;
+    constructor(string memory name, string memory symbol, ITransferChecker transferChecker_) ERC721(name, symbol) {
+        _transferChecker = transferChecker_;
     }
 
     /**
+     * @dev Only owner can invoke method.
+     *
      * @param to Mint to address.
      * @param tokenId Token id.
      * @param _tokenURI Token metadata uri.
-     * @dev Only owner can invoke method.
      */
     function mint(address to, uint256 tokenId, string memory _tokenURI) external onlyOwner {
         _mint(to, tokenId);
@@ -39,13 +42,14 @@ contract DOCollection is ERC721Enumerable, ERC721URIStorage, Ownable {
     }
 
     /**
+     * @dev Only owner can invoke method.
+     * @dev Method invokes `onERC721Received` if `to` is contract.
+     *   See <https://docs.openzeppelin.com/contracts/2.x/api/token/erc721#IERC721Receiver>.
+     *
      * @param to Mint to address.
      * @param tokenId Token id.
      * @param _tokenURI Token metadata uri.
      * @param data Bytes optional data to send along with the call.
-     * @dev Only owner can invoke method.
-     * @dev Method invokes `onERC721Received` if `to` is contract.
-     *   See <https://docs.openzeppelin.com/contracts/2.x/api/token/erc721#IERC721Receiver>.
      */
     function safeMint(address to, uint256 tokenId, string memory _tokenURI, bytes memory data) external onlyOwner {
         _safeMint(to, tokenId, data);
@@ -53,25 +57,26 @@ contract DOCollection is ERC721Enumerable, ERC721URIStorage, Ownable {
     }
 
     /**
-     * @notice Changes WhiteList contract address.
-     * @param whiteList_ WhiteList contract address.
+     * @notice Changes TransferChecker contract address.
+     *
      * @dev Only owner can invoke method.
+     *
+     * @param transferChecker_ TransferChecker contract address.
      */
-    function whiteList(address whiteList_) external onlyOwner {
-        require(whiteList_ != address(0), "DOCollection: invalid whitelist address");
-
-        _whiteList = IWhiteList(whiteList_);
+    function transferChecker(ITransferChecker transferChecker_) external onlyOwner {
+        _transferChecker = transferChecker_;
     }
 
     /**
-     * @return WhiteList address.
+     * @return TransferChecker address.
      */
-    function whiteList() external view returns (IWhiteList) {
-        return _whiteList;
+    function transferChecker() external view returns (ITransferChecker) {
+        return _transferChecker;
     }
 
     /**
      * @dev Hook that is called before any token transfer.
+     * @dev The method invokes `TransferChecker::check`.
      */
     function _beforeTokenTransfer(
         address from,
@@ -79,9 +84,9 @@ contract DOCollection is ERC721Enumerable, ERC721URIStorage, Ownable {
         uint256 firstTokenId,
         uint256 batchSize
     ) internal override(ERC721, ERC721Enumerable) {
-        require(_whiteList.includes(to), "DOCollection: invalid receiver");
+        _transferChecker.check(from, to, firstTokenId);
 
-        return super._beforeTokenTransfer(from, to, firstTokenId, batchSize);
+        super._beforeTokenTransfer(from, to, firstTokenId, batchSize);
     }
 
     /**

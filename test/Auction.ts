@@ -6,11 +6,10 @@ import { expect } from 'chai';
 import { deployClassic } from '../scripts/deploy-classic';
 import { deployUpgradeable } from '../scripts/deploy-upgradable';
 import { OrderTypedDataInterface, signAuctionOrder } from '../scripts/eip712';
-import { Auction, CollectionMock, WhiteList } from '../typechain-types';
+import { Auction, CollectionMock } from '../typechain-types';
 
 describe('Auction', function () {
     let auction: Auction;
-    let whiteList: WhiteList;
     let collectionMock: CollectionMock;
     let collectionBaseUri: string;
 
@@ -38,27 +37,13 @@ describe('Auction', function () {
             constructorArgs: [collectionBaseUri],
             signer: owner,
         });
-
-        const { proxyWithImpl: _whiteList } = await deployUpgradeable({
-            contractName: 'WhiteList',
-            proxyAdminAddress: '0x0000000000000000000000000000000000000001',
-            constructorArgs: [],
-            initializeArgs: [],
-            signer: owner,
-        });
-
-        whiteList = <WhiteList>_whiteList;
-
-        await whiteList.add(buyer1.address);
-        await whiteList.add(buyer2.address);
-        await whiteList.add(tokenOwner.address);
     });
 
     beforeEach(async () => {
         const { proxyWithImpl } = await deployUpgradeable({
             contractName: 'Auction',
             proxyAdminAddress: '0x0000000000000000000000000000000000000001',
-            constructorArgs: [collectionMock.address, whiteList.address, marketSigner.address],
+            constructorArgs: [collectionMock.address, marketSigner.address],
             initializeArgs: [],
             signer: owner,
         });
@@ -66,16 +51,11 @@ describe('Auction', function () {
         auction = <Auction>proxyWithImpl;
 
         collectionMock = collectionMock.connect(owner);
-        whiteList = whiteList.connect(owner);
         auction = auction.connect(owner);
     });
 
     it(`should have correct collection`, async () => {
         await expect(auction.collection()).to.eventually.equal(collectionMock.address);
-    });
-
-    it(`should have correct white list`, async () => {
-        await expect(auction.whiteList()).to.eventually.equal(whiteList.address);
     });
 
     it(`should have correct market signer`, async () => {
@@ -315,7 +295,7 @@ describe('Auction', function () {
                     order.shares,
                     signature
                 )
-            ).to.be.rejectedWith('Auction: unauthorized');
+            ).to.be.rejectedWith('MarketSigner: signature is expired');
         });
 
         it(`should fail if number of participants isn't equal number of shares`, async () => {
@@ -349,7 +329,7 @@ describe('Auction', function () {
                     order.shares,
                     signature
                 )
-            ).to.be.rejectedWith('Auction: invalid price');
+            ).to.be.rejectedWith('BaseMarket: number of shares is wrong');
         });
 
         it(`should fail if total shares isn't equal price`, async () => {
@@ -383,7 +363,7 @@ describe('Auction', function () {
                     order.shares,
                     signature
                 )
-            ).to.be.rejectedWith('Auction: invalid price');
+            ).to.be.rejectedWith('BaseMarket: price is not equal sum of shares');
         });
 
         it(`should fail if market signer is invalid`, async () => {
@@ -421,7 +401,7 @@ describe('Auction', function () {
                     order.shares,
                     signature
                 )
-            ).to.be.rejectedWith('Auction: unauthorized');
+            ).to.be.rejectedWith('MarketSigner: unauthorized');
         });
 
         it(`should fail if end block isn't more than current`, async () => {
@@ -608,16 +588,6 @@ describe('Auction', function () {
             await expect(auction.raise(orderId, { value: price }))
                 .to.be.emit(auction, 'Raised')
                 .withArgs(orderId, tokenId, buyer1.address, tokenOwner.address, price);
-        });
-
-        it(`should fail if buyer isn't whitelisted`, async () => {
-            price = price + priceStep;
-
-            auction = auction.connect(randomAccount);
-
-            await expect(auction.raise(orderId, { value: price })).to.be.rejectedWith(
-                'BaseMarket: invalid caller'
-            );
         });
 
         it(`should fail if order doesn't exist`, async () => {

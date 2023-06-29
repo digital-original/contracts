@@ -7,10 +7,12 @@ import {BaseMarket} from "./utils/BaseMarket.sol";
 import {MarketSigner} from "./utils/MarketSigner.sol";
 import {IMarket} from "./interfaces/IMarket.sol";
 
-// TODO: Review error msg
+// TODO: Think about unification `onERC721Received` from Market and Auction
+// TODO: Think about optimization with `unchecked {}`
 
 /**
  * @title Market
+ *
  * @notice Market contract provides logic for selling and buying ERC-721 tokens.
  * @notice Upgradeable Contract based on [OpenZeppelin](https://docs.openzeppelin.com/) library.
  */
@@ -21,28 +23,28 @@ contract Market is Initializable, BaseMarket, MarketSigner, IMarket, IERC721Rece
     mapping(uint256 => Order) private _orders;
 
     /**
-     * @param _collection ERC-721 contract address, immutable.
-     * @param _whiteList WhiteList contract address, immutable.
-     * @param _marketSigner Data signer address, immutable.
+     * @param collection_ ERC-721 contract address, immutable.
+     * @param marketSigner_ Data signer address, immutable.
      */
     constructor(
-        address _collection,
-        address _whiteList,
-        address _marketSigner
-    ) BaseMarket(_collection, _whiteList) MarketSigner(_marketSigner) {}
+        address collection_,
+        address marketSigner_
+    ) BaseMarket(collection_) MarketSigner(marketSigner_, "Market", "1") {}
 
     /**
      * @notice Initializes contract.
+     *
      * @dev Method should be invoked on proxy contract via `delegatecall`.
      *   See <https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable#initializers>.
      */
     function initialize() external initializer {
         __BaseMarket_init();
-        __MarketSigner_init("Market", "1");
+        __MarketSigner_init();
     }
 
     /**
      * @inheritdoc IMarket
+     *
      * @param data Should includes:
      *   1. `uint256 price` - token price.
      *   2. `uint256 expiredBlock` - block number until which `signature` is valid.
@@ -68,12 +70,10 @@ contract Market is Initializable, BaseMarket, MarketSigner, IMarket, IERC721Rece
             bytes memory signature
         ) = abi.decode(data, (uint256, uint256, address[], uint256[], bytes));
 
-        require(
-            _validateSignature(from, tokenId, price, expiredBlock, participants, shares, signature),
-            "Market: unauthorized"
-        );
+        // TODO: Create private `_place` method
 
-        require(_validatePrice(price, participants, shares), "Market: invalid order");
+        _validateSignature(from, tokenId, price, expiredBlock, participants, shares, signature);
+        _validatePrice(price, participants, shares);
 
         uint256 orderId = _orderId();
 
@@ -93,6 +93,7 @@ contract Market is Initializable, BaseMarket, MarketSigner, IMarket, IERC721Rece
 
     /**
      * @inheritdoc IMarket
+     *
      * @dev To invoke method order must have `Placed` status,
      *   seller can't realize their own order.
      */
@@ -120,6 +121,7 @@ contract Market is Initializable, BaseMarket, MarketSigner, IMarket, IERC721Rece
 
     /**
      * @inheritdoc IMarket
+     *
      * @dev Only seller can invoke `cancel` for their own order,
      *   to invoke method order must have `Placed` status.
      */
@@ -145,6 +147,7 @@ contract Market is Initializable, BaseMarket, MarketSigner, IMarket, IERC721Rece
 
     /**
      * @inheritdoc BaseMarket
+     *
      * @dev Method overrides `BaseMarket._orderPlaced.`
      */
     function _orderPlaced(uint256 orderId) internal view override returns (bool) {

@@ -1,17 +1,16 @@
 import { ethers } from 'hardhat';
 import { expect } from 'chai';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { deployUpgradeable } from '../scripts/deploy-upgradable';
-import { DOCollection, WhiteList } from '../typechain-types';
+import { DOCollection, TransferCheckerMock } from '../typechain-types';
 import { deployClassic } from '../scripts/deploy-classic';
 
 describe('DOCollection', function () {
     let collection: DOCollection;
-    let whiteList: WhiteList;
+    let transferCheckerMock: TransferCheckerMock;
     let owner: SignerWithAddress;
     let tokenOwner: SignerWithAddress;
-    let randomAccount: SignerWithAddress;
     let tokenReceiver: SignerWithAddress;
+    let randomAccount: SignerWithAddress;
 
     const collectionName = 'Digital Original';
     const collectionSymbol = 'DO';
@@ -20,31 +19,23 @@ describe('DOCollection', function () {
         [owner, tokenOwner, tokenReceiver, randomAccount] = <SignerWithAddress[]>(
             await ethers.getSigners()
         );
-
-        const { proxyWithImpl: _whiteList } = await deployUpgradeable({
-            contractName: 'WhiteList',
-            proxyAdminAddress: '0x0000000000000000000000000000000000000001',
-            constructorArgs: [],
-            initializeArgs: [],
-            signer: owner,
-        });
-
-        whiteList = <WhiteList>_whiteList;
-
-        await whiteList.add(tokenReceiver.address);
-        await whiteList.add(tokenOwner.address);
     });
 
     beforeEach(async () => {
+        const _transferCheckerMock = await deployClassic({
+            contractName: 'TransferCheckerMock',
+            constructorArgs: [],
+        });
+
         const _collection = await deployClassic({
             contractName: 'DOCollection',
-            constructorArgs: [collectionName, collectionSymbol, whiteList.address],
+            constructorArgs: [collectionName, collectionSymbol, _transferCheckerMock.address],
             signer: owner,
         });
 
+        transferCheckerMock = <TransferCheckerMock>_transferCheckerMock;
         collection = <DOCollection>_collection;
 
-        whiteList = whiteList.connect(owner);
         collection = collection.connect(owner);
     });
 
@@ -55,88 +46,126 @@ describe('DOCollection', function () {
         ]);
     });
 
-    it(`should have right whitelist`, async () => {
-        await expect(collection['whiteList()']()).to.eventually.equal(whiteList.address);
+    it(`should have right transfer checker`, async () => {
+        await expect(collection['transferChecker()']()).to.eventually.equal(
+            transferCheckerMock.address
+        );
     });
 
-    it(`owner can change whitelist`, async () => {
-        const _whiteList = {
+    it(`owner can change transfer checker`, async () => {
+        const _transferChecker = {
             address: '0x0000000000000000000000000000000000000001',
         };
 
-        await collection['whiteList(address)'](_whiteList.address);
+        await collection['transferChecker(address)'](_transferChecker.address);
 
-        await expect(collection['whiteList()']()).to.eventually.equal(_whiteList.address);
+        await expect(collection['transferChecker()']()).to.eventually.equal(
+            _transferChecker.address
+        );
     });
 
-    it(`random account can't change whitelist`, async () => {
-        const _whiteList = {
+    it(`random account can't change transfer checker`, async () => {
+        const _transferChecker = {
             address: '0x0000000000000000000000000000000000000001',
         };
 
         collection = collection.connect(randomAccount);
-
-        await expect(collection['whiteList(address)'](_whiteList.address)).to.be.rejectedWith(
-            'Ownable: caller is not the owner'
-        );
-    });
-
-    it(`random account can't mint token`, async () => {
-        const tokenId = 123;
-        const tokenUri = 'some-uri';
-
-        collection = collection.connect(randomAccount);
-
-        await expect(collection.mint(randomAccount.address, tokenId, tokenUri)).to.be.rejectedWith(
-            'Ownable: caller is not the owner'
-        );
-    });
-
-    it(`owner can't mint token if account isn't whitelisted`, async () => {
-        const tokenId = 123;
-        const tokenUri = 'some-uri';
-
-        await expect(collection.mint(randomAccount.address, tokenId, tokenUri)).to.be.rejectedWith(
-            'DOCollection: invalid receiver'
-        );
-    });
-
-    it(`owner can mint token if account is whitelisted`, async () => {
-        const tokenId = 123;
-        const tokenUri = 'some-uri';
-
-        await collection.mint(tokenReceiver.address, tokenId, tokenUri);
-
-        await Promise.all([
-            expect(collection.ownerOf(tokenId)).to.eventually.equal(tokenReceiver.address),
-            expect(collection.tokenURI(tokenId)).to.eventually.equal(tokenUri),
-            expect(collection.balanceOf(tokenReceiver.address)).to.eventually.equal(1),
-        ]);
-    });
-
-    it(`token owner can't transfer token if receiver isn't whitelisted`, async () => {
-        const tokenId = 123;
-        const tokenUri = 'some-uri';
-
-        await collection.mint(tokenOwner.address, tokenId, tokenUri);
-
-        collection = collection.connect(tokenOwner);
 
         await expect(
-            collection.transferFrom(tokenOwner.address, randomAccount.address, tokenId)
-        ).to.be.rejectedWith('DOCollection: invalid receiver');
+            collection['transferChecker(address)'](_transferChecker.address)
+        ).to.be.rejectedWith('Ownable: caller is not the owner');
     });
 
-    it(`token owner can transfer token if receiver is whitelisted`, async () => {
+    describe(`method 'mint'`, () => {
         const tokenId = 123;
         const tokenUri = 'some-uri';
 
-        await collection.mint(tokenOwner.address, tokenId, tokenUri);
+        it(`should mint token if caller is owner and transfer checking passes`, async () => {
+            await transferCheckerMock['shouldPass(bool)'](true);
 
-        collection = collection.connect(tokenOwner);
+            await collection.mint(tokenOwner.address, tokenId, tokenUri);
 
-        await collection.transferFrom(tokenOwner.address, tokenReceiver.address, tokenId);
+            await Promise.all([
+                expect(collection.ownerOf(tokenId)).to.eventually.equal(tokenOwner.address),
+                expect(collection.tokenURI(tokenId)).to.eventually.equal(tokenUri),
+                expect(collection.balanceOf(tokenOwner.address)).to.eventually.equal(1),
+            ]);
+        });
 
-        await expect(collection.ownerOf(tokenId)).to.eventually.equal(tokenReceiver.address);
+        it(`should fail if caller isn't owner`, async () => {
+            collection = collection.connect(randomAccount);
+
+            await expect(
+                collection.mint(randomAccount.address, tokenId, tokenUri)
+            ).to.be.rejectedWith('Ownable: caller is not the owner');
+        });
+
+        it(`should fail if transfer checking fails`, async () => {
+            await transferCheckerMock['shouldPass(bool)'](false);
+
+            await expect(collection.mint(tokenOwner.address, tokenId, tokenUri)).to.be.rejectedWith(
+                'TransferCheckerMock: failed'
+            );
+        });
+    });
+
+    describe(`method 'safeMint'`, () => {
+        const tokenId = 123;
+        const tokenUri = 'some-uri';
+
+        it(`should mint token if caller is owner and transfer checking passes`, async () => {
+            await transferCheckerMock['shouldPass(bool)'](true);
+
+            await collection.safeMint(tokenOwner.address, tokenId, tokenUri, []);
+
+            await Promise.all([
+                expect(collection.ownerOf(tokenId)).to.eventually.equal(tokenOwner.address),
+                expect(collection.tokenURI(tokenId)).to.eventually.equal(tokenUri),
+                expect(collection.balanceOf(tokenOwner.address)).to.eventually.equal(1),
+            ]);
+        });
+
+        it(`should fail if caller isn't owner`, async () => {
+            collection = collection.connect(randomAccount);
+
+            await expect(
+                collection.safeMint(randomAccount.address, tokenId, tokenUri, [])
+            ).to.be.rejectedWith('Ownable: caller is not the owner');
+        });
+
+        it(`should fail if transfer checking fails`, async () => {
+            await transferCheckerMock['shouldPass(bool)'](false);
+
+            await expect(
+                collection.safeMint(tokenOwner.address, tokenId, tokenUri, [])
+            ).to.be.rejectedWith('TransferCheckerMock: failed');
+        });
+    });
+
+    describe('method `transferFrom`', () => {
+        const tokenId = 123;
+        const tokenUri = 'some-uri';
+
+        beforeEach(async () => {
+            await collection.mint(tokenOwner.address, tokenId, tokenUri);
+
+            collection = collection.connect(tokenOwner);
+        });
+
+        it(`should transfer if transfer checking passes`, async () => {
+            await transferCheckerMock['shouldPass(bool)'](true);
+
+            await collection.transferFrom(tokenOwner.address, tokenReceiver.address, tokenId);
+
+            await expect(collection.ownerOf(tokenId)).to.eventually.equal(tokenReceiver.address);
+        });
+
+        it(`should fail if transfer checking fails`, async () => {
+            await transferCheckerMock['shouldPass(bool)'](false);
+
+            await expect(
+                collection.transferFrom(tokenOwner.address, tokenReceiver.address, tokenId)
+            ).to.be.rejectedWith('TransferCheckerMock: failed');
+        });
     });
 });

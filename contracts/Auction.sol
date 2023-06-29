@@ -7,10 +7,9 @@ import {BaseMarket} from "./utils/BaseMarket.sol";
 import {MarketSigner} from "./utils/MarketSigner.sol";
 import {IAuction} from "./interfaces/IAuction.sol";
 
-// TODO: Review error msg
-
 /**
  * @title Auction
+ *
  * @notice Auction contract provides logic for creating auction with ERC-721 tokens.
  * @notice Upgradeable Contract based on [OpenZeppelin](https://docs.openzeppelin.com/) library.
  */
@@ -21,28 +20,28 @@ contract Auction is Initializable, BaseMarket, MarketSigner, IAuction, IERC721Re
     mapping(uint256 => Order) private _orders;
 
     /**
-     * @param _collection ERC-721 contract address, immutable.
-     * @param _whiteList WhiteList contract address, immutable.
-     * @param _marketSigner Data signer address, immutable.
+     * @param collection_ ERC-721 contract address, immutable.
+     * @param marketSigner_ Data signer address, immutable.
      */
     constructor(
-        address _collection,
-        address _whiteList,
-        address _marketSigner
-    ) BaseMarket(_collection, _whiteList) MarketSigner(_marketSigner) {}
+        address collection_,
+        address marketSigner_
+    ) BaseMarket(collection_) MarketSigner(marketSigner_, "Auction", "1") {}
 
     /**
      * @notice Initializes contract.
+     *
      * @dev Method should be invoked on proxy contract via `delegatecall`.
      *   See <https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable#initializers>.
      */
     function initialize() external initializer {
         __BaseMarket_init();
-        __MarketSigner_init("Auction", "1");
+        __MarketSigner_init();
     }
 
     /**
      * @inheritdoc IAuction
+     *
      * @param data Should includes:
      *   1. `uint256 price` - token price.
      *   2. `uint256 endBlock` - block number until which the auction continues.
@@ -73,14 +72,11 @@ contract Auction is Initializable, BaseMarket, MarketSigner, IAuction, IERC721Re
             bytes memory signature
         ) = abi.decode(data, (uint256, uint256, uint256, uint256, address[], uint256[], bytes));
 
+        // TODO: Create private `_place` method
         require(endBlock > block.number, "Auction: end block is less than current");
 
-        require(
-            _validateSignature(from, tokenId, price, expiredBlock, participants, shares, signature),
-            "Auction: unauthorized"
-        );
-
-        require(_validatePrice(price, participants, shares), "Auction: invalid price");
+        _validateSignature(from, tokenId, price, expiredBlock, participants, shares, signature);
+        _validatePrice(price, participants, shares);
 
         uint256 orderId = _orderId();
 
@@ -103,11 +99,11 @@ contract Auction is Initializable, BaseMarket, MarketSigner, IAuction, IERC721Re
 
     /**
      * @inheritdoc IAuction
+     *
      * @dev To invoke method order must have `Placed` status and auction must be ongoing,
-     *   seller can't raise price in their own order,
-     *   caller address must be whitelisted.
+     *   seller can't raise price for their own order.
      */
-    function raise(uint256 orderId) external payable placedOrder(orderId) onlyWhitelisted {
+    function raise(uint256 orderId) external payable placedOrder(orderId) {
         // TODO: How should work a first raise?
         require(_orders[orderId].endBlock >= block.number, "Auction: auction is ended");
 
@@ -133,9 +129,9 @@ contract Auction is Initializable, BaseMarket, MarketSigner, IAuction, IERC721Re
 
     /**
      * @inheritdoc IAuction
+     *
      * @dev To invoke method order must have `Placed` status and auction must not be ongoing,
-     *   seller can't raise price in their own order,
-     *   caller address must be whitelisted.
+     *   seller can't raise price in their own order.
      */
     function end(uint256 orderId) external placedOrder(orderId) {
         require(_orders[orderId].endBlock < block.number, "Auction: auction is still going");
@@ -183,8 +179,10 @@ contract Auction is Initializable, BaseMarket, MarketSigner, IAuction, IERC721Re
 
     /**
      * @inheritdoc BaseMarket
-     * @param orderId Auction order id.
+     *
      * @dev Method overrides `BaseMarket._orderPlaced.`
+     *
+     * @param orderId Auction order id.
      */
     function _orderPlaced(uint256 orderId) internal view override returns (bool) {
         return _orders[orderId].status == OrderStatus.Placed;

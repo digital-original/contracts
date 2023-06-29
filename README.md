@@ -3,6 +3,7 @@
 # [Docs](https://do-contracts-docs.netlify.app/)
 
 ## Sepolia Network
+<!-- TOTO: Upload new contracts -->
 - Faucet - <https://sepolia-faucet.pk910.de/>
 - DOProxyAdmin - <https://sepolia.etherscan.io/address/0x77d3e2FAF8afEB827Db827116F1bF7dd14260D15>
 - WhiteList

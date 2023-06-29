@@ -4,23 +4,18 @@ pragma solidity ^0.8.19;
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import {IWhiteList} from "../interfaces/IWhiteList.sol";
 
 /**
  * @title BaseMarket
- * @notice Abstract contract BaseMarket provides market basic logic for inheritance.
+ *
+ * @notice Abstract contract BaseMarket provides market basic logic.
  * @notice Upgradeable Contract based on [OpenZeppelin](https://docs.openzeppelin.com/) library.
  */
 abstract contract BaseMarket is Initializable {
     /**
      * @dev Collection contract address.
      */
-    IERC721 private immutable COLLECTION;
-
-    /**
-     * @dev WhiteList contract address.
-     */
-    IWhiteList private immutable WHITE_LIST;
+    IERC721 private immutable _collection;
 
     /**
      * @dev Number of orders.
@@ -28,12 +23,10 @@ abstract contract BaseMarket is Initializable {
     uint256 private _orderCount;
 
     /**
-     * @param _collection ERC-721 contract address.
-     * @param _whiteList WhiteList contract address.
+     * @param collection_ ERC-721 contract address.
      */
-    constructor(address _collection, address _whiteList) {
-        COLLECTION = IERC721(_collection);
-        WHITE_LIST = IWhiteList(_whiteList);
+    constructor(address collection_) {
+        _collection = IERC721(collection_);
     }
 
     /**
@@ -48,15 +41,7 @@ abstract contract BaseMarket is Initializable {
      * @dev Throws if called by any account other than the collection.
      */
     modifier onlyCollection() {
-        require(msg.sender == address(COLLECTION), "BaseMarket: caller is not the collection");
-        _;
-    }
-
-    /**
-     * @dev Passes only whitelisted callers.
-     */
-    modifier onlyWhitelisted() {
-        require(_whitelisted(msg.sender), "BaseMarket: invalid caller");
+        require(msg.sender == address(_collection), "BaseMarket: caller is not the collection");
         _;
     }
 
@@ -85,38 +70,34 @@ abstract contract BaseMarket is Initializable {
      * @return Collection address.
      */
     function collection() external view returns (IERC721) {
-        return COLLECTION;
+        return _collection;
     }
 
     /**
-     * @return WhiteList address.
-     */
-    function whiteList() external view returns (IWhiteList) {
-        return WHITE_LIST;
-    }
-
-    /**
-     * @return New order id.
      * @dev Increments counter.
+     *
+     * @return New order id.
      */
     function _orderId() internal returns (uint256) {
         return _orderCount++;
     }
 
     /**
+     * @dev Transfers collection token `tokenId` from `from` to `to`.
+     *
      * @param from Address from.
      * @param to Address to.
      * @param tokenId Token Id, token must be owned by `from`.
-     * @dev Transfers collection `tokenId` token from `from` to `to`.
      */
     function _transferToken(address from, address to, uint256 tokenId) internal {
-        COLLECTION.transferFrom(from, to, tokenId);
+        _collection.transferFrom(from, to, tokenId);
     }
 
     /**
+     * @dev Sends Ether to recipient and checks sending result.
+     *
      * @param recipient Ether recipient address.
      * @param amount Ether amount.
-     * @dev Sends Ether to recipient and checks sending result.
      */
     function _sendValue(address recipient, uint256 amount) internal {
         (bool success, ) = recipient.call{value: amount}("");
@@ -124,40 +105,21 @@ abstract contract BaseMarket is Initializable {
     }
 
     /**
-     * @param account Any address.
-     * @return Returns true if address is whitelisted.
-     * @dev Checks whitelist.
-     */
-    function _whitelisted(address account) internal view returns (bool) {
-        return WHITE_LIST.includes(account);
-    }
-
-    /**
+     * @dev Checks that number of participants is equal number of shares,
+     *   and sum of shares is equal price. Throws if data is valid.
+     *
      * @param price Price amount.
      * @param participants Array with participants address.
      * @param shares Array with shares amounts.
-     * @return Returns true if data is valid.
-     * @dev Checks that number of participants is equal number of shares,
-     *   and sum of shares is equal price
      */
-    function _validatePrice(
-        uint256 price,
-        address[] memory participants,
-        uint256[] memory shares
-    ) internal pure returns (bool) {
-        if (participants.length != shares.length) {
-            return false;
-        }
-
-        if (price != _sumShares(shares)) {
-            return false;
-        }
-
-        return true;
+    function _validatePrice(uint256 price, address[] memory participants, uint256[] memory shares) internal pure {
+        require(shares.length == participants.length, "BaseMarket: number of shares is wrong");
+        require(price == _sumShares(shares), "BaseMarket: price is not equal sum of shares");
     }
 
     /**
      * @param shares Array with shares amounts.
+     *
      * @return totalShares Sum of shares.
      */
     function _sumShares(uint256[] memory shares) internal pure returns (uint256 totalShares) {
@@ -168,6 +130,7 @@ abstract contract BaseMarket is Initializable {
 
     /**
      * @param orderId Order id.
+     *
      * @return Returns true if order is placed.
      */
     function _orderPlaced(uint256 orderId) internal view virtual returns (bool);
