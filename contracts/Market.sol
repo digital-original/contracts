@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.19;
 
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import {Upgradeable} from "./utils/Upgradeable.sol";
 import {BaseMarket} from "./utils/BaseMarket.sol";
 import {MarketSigner} from "./utils/MarketSigner.sol";
 import {IMarket} from "./interfaces/IMarket.sol";
@@ -11,9 +10,8 @@ import {IMarket} from "./interfaces/IMarket.sol";
  * @title Market
  *
  * @notice Market contract provides logic for selling and buying ERC-721 tokens.
- * @notice Upgradeable Contract based on [OpenZeppelin](https://docs.openzeppelin.com/) library.
  */
-contract Market is Initializable, BaseMarket, MarketSigner, IMarket, IERC721Receiver {
+contract Market is Upgradeable, BaseMarket, MarketSigner, IMarket {
     /**
      * @dev Stores orders by order ID.
      */
@@ -29,39 +27,11 @@ contract Market is Initializable, BaseMarket, MarketSigner, IMarket, IERC721Rece
     ) BaseMarket(collection_) MarketSigner(marketSigner_, "Market", "1") {}
 
     /**
-     * @notice Initializes contract.
-     *
-     * @dev Method should be invoked on proxy contract via `delegatecall`.
-     *   See <https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable#initializers>.
+     * @inheritdoc Upgradeable
      */
-    function initialize() external initializer {
+    function initialize() external override initializer {
         __BaseMarket_init();
         __MarketSigner_init();
-    }
-
-    /**
-     * @inheritdoc IMarket
-     *
-     * @param data abi.encode(`price`, `expiredBlock`, `participants`, `shares`, `signature`).
-     *   See `_place` method.
-     */
-    function onERC721Received(
-        address,
-        address from,
-        uint256 tokenId,
-        bytes calldata data
-    ) external override(IMarket, IERC721Receiver) onlyCollection returns (bytes4) {
-        (
-            uint256 price,
-            uint256 expiredBlock,
-            address[] memory participants,
-            uint256[] memory shares,
-            bytes memory signature
-        ) = abi.decode(data, (uint256, uint256, address[], uint256[], bytes));
-
-        _place(from, tokenId, price, expiredBlock, participants, shares, signature);
-
-        return IERC721Receiver.onERC721Received.selector;
     }
 
     /**
@@ -145,7 +115,7 @@ contract Market is Initializable, BaseMarket, MarketSigner, IMarket, IERC721Rece
         _validateSignature(from, tokenId, price, expiredBlock, participants, shares, signature);
         _validatePrice(price, participants, shares);
 
-        uint256 orderId = _orderId();
+        uint256 orderId = _useOrderId();
 
         _orders[orderId] = Order({
             seller: from,
@@ -162,6 +132,26 @@ contract Market is Initializable, BaseMarket, MarketSigner, IMarket, IERC721Rece
     /**
      * @inheritdoc BaseMarket
      *
+     * @dev Method overrides `BaseMarket::_onReceived.`
+     *
+     * @param data abi.encode(`price`, `expiredBlock`, `participants`, `shares`, `signature`).
+     *   See `_place` method.
+     */
+    function _onReceived(address from, uint256 tokenId, bytes calldata data) internal override(BaseMarket) {
+        (
+            uint256 price,
+            uint256 expiredBlock,
+            address[] memory participants,
+            uint256[] memory shares,
+            bytes memory signature
+        ) = abi.decode(data, (uint256, uint256, address[], uint256[], bytes));
+
+        _place(from, tokenId, price, expiredBlock, participants, shares, signature);
+    }
+
+    /**
+     * @inheritdoc BaseMarket
+     *
      * @dev Method overrides `BaseMarket::_orderPlaced.`
      */
     function _orderPlaced(uint256 orderId) internal view override(BaseMarket) returns (bool) {
@@ -173,5 +163,5 @@ contract Market is Initializable, BaseMarket, MarketSigner, IMarket, IERC721Rece
      *   variables without shifting down storage in the inheritance chain.
      *   See <https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps>.
      */
-    uint256[49] private __gap;
+    uint256[50] private __gap;
 }

@@ -39,6 +39,7 @@ contract DOCollection is ERC721Enumerable, ERC721URIStorage, Ownable2Step {
     }
 
     /**
+     * @param minter_ Minter address.
      * @param transferChecker_ TransferChecker contract address.
      */
     constructor(address minter_, address transferChecker_) ERC721("DOCollection", "DO") {
@@ -110,7 +111,7 @@ contract DOCollection is ERC721Enumerable, ERC721URIStorage, Ownable2Step {
      */
     function minter(address minter_) external onlyOwner {
         require(minter_ != address(0));
-        // TODO: should emit an event
+        // TODO: Should emit an event
         _minter = minter_;
     }
 
@@ -123,7 +124,7 @@ contract DOCollection is ERC721Enumerable, ERC721URIStorage, Ownable2Step {
      */
     function transferChecker(address transferChecker_) external onlyOwner {
         require(transferChecker_ != address(0));
-        // TODO: should emit an event
+        // TODO: Should emit an event
         _transferChecker = ITransferChecker(transferChecker_);
     }
 

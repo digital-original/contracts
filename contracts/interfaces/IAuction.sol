@@ -54,25 +54,6 @@ interface IAuction {
     event Ended(uint256 indexed orderId, uint256 indexed tokenId, address indexed buyer, address seller, uint256 price);
 
     /**
-     * @notice Places auction order and locks token on the contract.
-     *
-     * @dev This method is the callback according to
-     *   [IERC721Receiver](https://docs.openzeppelin.com/contracts/4.x/api/token/erc721#IERC721Receiver).
-     * @dev This method can trigger only the collection contract during `safeTransfer`.
-     *
-     * @param operator Collection caller.
-     * @param from Token owner.
-     * @param tokenId Token for sale.
-     * @param data Data needed for auction order placing. See `Auction` Contract.
-     */
-    function onERC721Received(
-        address operator,
-        address from,
-        uint256 tokenId,
-        bytes calldata data
-    ) external returns (bytes4);
-
-    /**
      * @notice Raises auction order price, sets new buyer and locks Ether,
      *   return previous locked Ether to previous buyer if order already has buyer.
      *
@@ -89,7 +70,7 @@ interface IAuction {
     function end(uint256 orderId) external;
 
     /**
-     * @notice Returns auction order by orderId.
+     * @notice Returns auction order by order ID.
      *
      * @param orderId Order ID.
      *
