@@ -446,7 +446,7 @@
         "elements": [
             {
                 "type": "function",
-                "name": "burn",
+                "name": "rollback",
                 "source_mapping": {
                     "start": 2998,
                     "length": 410,
@@ -488,7 +488,7 @@
                             "ending_column": 2
                         }
                     },
-                    "signature": "burn(uint256)"
+                    "signature": "rollback(uint256)"
                 }
             },
             {
@@ -508,7 +508,7 @@
                 "type_specific_fields": {
                     "parent": {
                         "type": "function",
-                        "name": "burn",
+                        "name": "rollback",
                         "source_mapping": {
                             "start": 2998,
                             "length": 410,
@@ -552,14 +552,14 @@
                                     "ending_column": 2
                                 }
                             },
-                            "signature": "burn(uint256)"
+                            "signature": "rollback(uint256)"
                         }
                     }
                 }
             }
         ],
-        "description": "DOCollection.burn(uint256) (contracts/DOCollection.sol#91-103) uses timestamp for comparisons\n\tDangerous comparisons:\n\t- require(bool,string)(block.timestamp - _tokenCreationDate[tokenId] <= 604800,DOCollection: token can not be burned) (contracts/DOCollection.sol#94)\n",
-        "markdown": "[DOCollection.burn(uint256)](contracts/DOCollection.sol#L91-L103) uses timestamp for comparisons\n\tDangerous comparisons:\n\t- [require(bool,string)(block.timestamp - _tokenCreationDate[tokenId] <= 604800,DOCollection: token can not be burned)](contracts/DOCollection.sol#L94)\n",
+        "description": "DOCollection.rollback(uint256) (contracts/DOCollection.sol#91-103) uses timestamp for comparisons\n\tDangerous comparisons:\n\t- require(bool,string)(block.timestamp - _tokenCreationDate[tokenId] <= 604800,DOCollection: token can not be burned) (contracts/DOCollection.sol#94)\n",
+        "markdown": "[DOCollection.rollback(uint256)](contracts/DOCollection.sol#L91-L103) uses timestamp for comparisons\n\tDangerous comparisons:\n\t- [require(bool,string)(block.timestamp - _tokenCreationDate[tokenId] <= 604800,DOCollection: token can not be burned)](contracts/DOCollection.sol#L94)\n",
         "first_markdown_element": "contracts/DOCollection.sol#L91-L103",
         "id": "aa464b0099eba983ec20c7ac9fa5783a00426397a6138d69f33edb667a161e51",
         "check": "timestamp",

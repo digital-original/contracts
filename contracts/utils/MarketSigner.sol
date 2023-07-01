@@ -32,12 +32,12 @@ abstract contract MarketSigner is Upgradeable, EIP712Upgradeable {
         );
 
     /**
-     * @dev Sores a name for `EIP712Upgradeable`.
+     * @dev Stores a name for `EIP712Upgradeable`.
      */
     ShortString private immutable _eip712Name;
 
     /**
-     * @dev Sores a version for `EIP712Upgradeable`.
+     * @dev Stores a version for `EIP712Upgradeable`.
      */
     ShortString private immutable _eip712Version;
 

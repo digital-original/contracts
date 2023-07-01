@@ -201,7 +201,7 @@ describe('DOCollection', function () {
         });
     });
 
-    describe(`method 'burn'`, () => {
+    describe(`method 'rollback'`, () => {
         const tokenId = 123;
         const tokenUri = 'some-uri';
 
@@ -216,7 +216,7 @@ describe('DOCollection', function () {
 
             setNextBlockTimestamp(block.timestamp + lessThan7days);
 
-            await collection.burn(tokenId);
+            await collection.rollback(tokenId);
 
             await expect(collection.ownerOf(tokenId)).to.rejectedWith('ERC721: invalid token ID');
         });
@@ -228,13 +228,13 @@ describe('DOCollection', function () {
 
             setNextBlockTimestamp(block.timestamp + moreThan7days);
 
-            await expect(collection.burn(tokenId)).to.rejectedWith(
+            await expect(collection.rollback(tokenId)).to.rejectedWith(
                 'DOCollection: token can not be burned'
             );
         });
 
         it(`should fail caller isn't owner`, async () => {
-            await expect(collection.connect(randomAccount).burn(tokenId)).to.rejectedWith(
+            await expect(collection.connect(randomAccount).rollback(tokenId)).to.rejectedWith(
                 'Ownable: caller is not the owner'
             );
         });

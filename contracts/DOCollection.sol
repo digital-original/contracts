@@ -88,7 +88,7 @@ contract DOCollection is ERC721Enumerable, ERC721URIStorage, Ownable2Step {
      *
      * @param tokenId Token ID.
      */
-    function burn(uint256 tokenId) external onlyOwner {
+    function rollback(uint256 tokenId) external onlyOwner {
         // `ERC721::_burn` checks if a token exists.
 
         require(block.timestamp - _tokenCreationDate[tokenId] <= 7 days, "DOCollection: token can not be burned");
