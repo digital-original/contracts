@@ -1,22 +1,22 @@
 import { ethers } from 'hardhat';
 import { expect } from 'chai';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { setNextBlockTimestamp } from '@nomicfoundation/hardhat-network-helpers/dist/src/helpers/time';
 import { DOCollection, TransferCheckerMock } from '../typechain-types';
 import { deployClassic } from '../scripts/deploy-classic';
 
 describe('DOCollection', function () {
     let collection: DOCollection;
     let transferCheckerMock: TransferCheckerMock;
+
     let owner: SignerWithAddress;
+    let minter: SignerWithAddress;
     let tokenOwner: SignerWithAddress;
     let tokenReceiver: SignerWithAddress;
     let randomAccount: SignerWithAddress;
 
-    const collectionName = 'Digital Original';
-    const collectionSymbol = 'DO';
-
     before(async () => {
-        [owner, tokenOwner, tokenReceiver, randomAccount] = <SignerWithAddress[]>(
+        [owner, minter, tokenOwner, tokenReceiver, randomAccount] = <SignerWithAddress[]>(
             await ethers.getSigners()
         );
     });
@@ -29,7 +29,7 @@ describe('DOCollection', function () {
 
         const _collection = await deployClassic({
             contractName: 'DOCollection',
-            constructorArgs: [collectionName, collectionSymbol, _transferCheckerMock.address],
+            constructorArgs: [minter.address, _transferCheckerMock.address],
             signer: owner,
         });
 
@@ -39,17 +39,22 @@ describe('DOCollection', function () {
         collection = collection.connect(owner);
     });
 
-    it(`should have right name and symbol`, async () => {
-        await Promise.all([
-            expect(collection.name()).to.eventually.equal(collectionName),
-            expect(collection.symbol()).to.eventually.equal(collectionSymbol),
-        ]);
+    it(`should have right minter`, async () => {
+        await expect(collection['minter()']()).to.eventually.equal(minter.address);
     });
 
     it(`should have right transfer checker`, async () => {
         await expect(collection['transferChecker()']()).to.eventually.equal(
             transferCheckerMock.address
         );
+    });
+
+    it(`owner can change minter`, async () => {
+        const _minter = '0x0000000000000000000000000000000000000001';
+
+        await collection['minter(address)'](_minter);
+
+        await expect(collection['minter()']()).to.eventually.equal(_minter);
     });
 
     it(`owner can change transfer checker`, async () => {
@@ -61,6 +66,16 @@ describe('DOCollection', function () {
 
         await expect(collection['transferChecker()']()).to.eventually.equal(
             _transferChecker.address
+        );
+    });
+
+    it(`random account can't change minter`, async () => {
+        const _minter = '0x0000000000000000000000000000000000000001';
+
+        collection = collection.connect(randomAccount);
+
+        await expect(collection['minter(address)'](_minter)).to.be.rejectedWith(
+            'Ownable: caller is not the owner'
         );
     });
 
@@ -80,7 +95,11 @@ describe('DOCollection', function () {
         const tokenId = 123;
         const tokenUri = 'some-uri';
 
-        it(`should mint token if caller is owner and transfer checking passes`, async () => {
+        beforeEach(async () => {
+            collection = collection.connect(minter);
+        });
+
+        it(`should mint token if caller is minter and transfer checking passes`, async () => {
             await transferCheckerMock['shouldPass(bool)'](true);
 
             await collection.mint(tokenOwner.address, tokenId, tokenUri);
@@ -92,12 +111,21 @@ describe('DOCollection', function () {
             ]);
         });
 
-        it(`should fail if caller isn't owner`, async () => {
+        it(`should set token creation date`, async () => {
+            const tx = await collection.mint(tokenOwner.address, tokenId, tokenUri);
+            const block = await ethers.provider.getBlock(tx.blockNumber!);
+
+            await expect(collection.tokenCreationDate(tokenId)).to.eventually.equal(
+                block.timestamp
+            );
+        });
+
+        it(`should fail if caller isn't minter`, async () => {
             collection = collection.connect(randomAccount);
 
             await expect(
                 collection.mint(randomAccount.address, tokenId, tokenUri)
-            ).to.be.rejectedWith('Ownable: caller is not the owner');
+            ).to.be.rejectedWith('DOCollection: caller is not the minter');
         });
 
         it(`should fail if transfer checking fails`, async () => {
@@ -113,7 +141,11 @@ describe('DOCollection', function () {
         const tokenId = 123;
         const tokenUri = 'some-uri';
 
-        it(`should mint token if caller is owner and transfer checking passes`, async () => {
+        beforeEach(async () => {
+            collection = collection.connect(minter);
+        });
+
+        it(`should mint token if caller is minter and transfer checking passes`, async () => {
             await transferCheckerMock['shouldPass(bool)'](true);
 
             await collection.safeMint(tokenOwner.address, tokenId, tokenUri, []);
@@ -125,12 +157,12 @@ describe('DOCollection', function () {
             ]);
         });
 
-        it(`should fail if caller isn't owner`, async () => {
+        it(`should fail if caller isn't minter`, async () => {
             collection = collection.connect(randomAccount);
 
             await expect(
                 collection.safeMint(randomAccount.address, tokenId, tokenUri, [])
-            ).to.be.rejectedWith('Ownable: caller is not the owner');
+            ).to.be.rejectedWith('DOCollection: caller is not the minter');
         });
 
         it(`should fail if transfer checking fails`, async () => {
@@ -142,12 +174,12 @@ describe('DOCollection', function () {
         });
     });
 
-    describe('method `transferFrom`', () => {
+    describe(`method 'transferFrom'`, () => {
         const tokenId = 123;
         const tokenUri = 'some-uri';
 
         beforeEach(async () => {
-            await collection.mint(tokenOwner.address, tokenId, tokenUri);
+            await collection.connect(minter).mint(tokenOwner.address, tokenId, tokenUri);
 
             collection = collection.connect(tokenOwner);
         });
@@ -166,6 +198,45 @@ describe('DOCollection', function () {
             await expect(
                 collection.transferFrom(tokenOwner.address, tokenReceiver.address, tokenId)
             ).to.be.rejectedWith('TransferCheckerMock: failed');
+        });
+    });
+
+    describe(`method 'rollback'`, () => {
+        const tokenId = 123;
+        const tokenUri = 'some-uri';
+
+        beforeEach(async () => {
+            await collection.connect(minter).mint(tokenOwner.address, tokenId, tokenUri);
+        });
+
+        it(`should burn if caller is owner & token was created less than 7 days ago`, async () => {
+            const block = await ethers.provider.getBlock('latest');
+
+            const lessThan7days = 60 * 60 * 24 * 6; // 6 days in seconds
+
+            setNextBlockTimestamp(block.timestamp + lessThan7days);
+
+            await collection.rollback(tokenId);
+
+            await expect(collection.ownerOf(tokenId)).to.rejectedWith('ERC721: invalid token ID');
+        });
+
+        it(`should fail if token was created more than 7 days ago`, async () => {
+            const block = await ethers.provider.getBlock('latest');
+
+            const moreThan7days = 60 * 60 * 24 * 8; // 8 days in seconds
+
+            setNextBlockTimestamp(block.timestamp + moreThan7days);
+
+            await expect(collection.rollback(tokenId)).to.rejectedWith(
+                'DOCollection: token can not be burned'
+            );
+        });
+
+        it(`should fail caller isn't owner`, async () => {
+            await expect(collection.connect(randomAccount).rollback(tokenId)).to.rejectedWith(
+                'Ownable: caller is not the owner'
+            );
         });
     });
 });

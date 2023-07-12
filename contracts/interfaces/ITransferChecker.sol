@@ -12,6 +12,10 @@ interface ITransferChecker {
      * @notice Checks token transferring.
      *
      * @dev Throws if transferring is not valid.
+     *
+     * @param from Token owner.
+     * @param to Token receiver.
+     * @param tokenId Token ID.
      */
     function check(address from, address to, uint256 tokenId) external view;
 }

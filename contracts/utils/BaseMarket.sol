@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.19;
 
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import {Upgradeable} from "./Upgradeable.sol";
+import {IBaseMarket} from "../interfaces/IBaseMarket.sol";
 
 /**
  * @title BaseMarket
  *
  * @notice Abstract contract BaseMarket provides market basic logic.
- * @notice Upgradeable Contract based on [OpenZeppelin](https://docs.openzeppelin.com/) library.
  */
-abstract contract BaseMarket is Initializable {
+abstract contract BaseMarket is Upgradeable, IBaseMarket, IERC721Receiver {
     /**
      * @dev Collection contract address.
      */
@@ -38,14 +38,6 @@ abstract contract BaseMarket is Initializable {
     }
 
     /**
-     * @dev Throws if called by any account other than the collection.
-     */
-    modifier onlyCollection() {
-        require(msg.sender == address(_collection), "BaseMarket: caller is not the collection");
-        _;
-    }
-
-    /**
      * @dev Initializes contract.
      *   See <https://docs.openzeppelin.com/contracts/4.x/upgradeable#multiple-inheritance>.
      */
@@ -58,6 +50,24 @@ abstract contract BaseMarket is Initializable {
      *   See <https://docs.openzeppelin.com/contracts/4.x/upgradeable#multiple-inheritance>.
      */
     function __BaseMarket_init_unchained() internal onlyInitializing {}
+
+    /**
+     * @inheritdoc IBaseMarket
+     *
+     * @param data See `_onReceived` method implementation.
+     */
+    function onERC721Received(
+        address,
+        address from,
+        uint256 tokenId,
+        bytes calldata data
+    ) external override(IBaseMarket, IERC721Receiver) returns (bytes4) {
+        require(msg.sender == address(_collection), "BaseMarket: caller is not the collection");
+
+        _onReceived(from, tokenId, data);
+
+        return IERC721Receiver.onERC721Received.selector;
+    }
 
     /**
      * @return Number of orders.
@@ -76,9 +86,9 @@ abstract contract BaseMarket is Initializable {
     /**
      * @dev Increments counter.
      *
-     * @return New order id.
+     * @return New order ID.
      */
-    function _orderId() internal returns (uint256) {
+    function _useOrderId() internal returns (uint256) {
         return _orderCount++;
     }
 
@@ -87,7 +97,7 @@ abstract contract BaseMarket is Initializable {
      *
      * @param from Address from.
      * @param to Address to.
-     * @param tokenId Token Id, token must be owned by `from`.
+     * @param tokenId Token ID, token must be owned by `from`.
      */
     function _transferToken(address from, address to, uint256 tokenId) internal {
         _collection.transferFrom(from, to, tokenId);
@@ -106,7 +116,7 @@ abstract contract BaseMarket is Initializable {
 
     /**
      * @dev Checks that number of participants is equal number of shares,
-     *   and sum of shares is equal price. Throws if data is valid.
+     *   and sum of shares is equal price. Throws if data is not valid.
      *
      * @param price Price amount.
      * @param participants Array with participants address.
@@ -123,13 +133,26 @@ abstract contract BaseMarket is Initializable {
      * @return totalShares Sum of shares.
      */
     function _sumShares(uint256[] memory shares) internal pure returns (uint256 totalShares) {
-        for (uint256 i = 0; i < shares.length; i++) {
+        for (uint256 i = 0; i < shares.length; ) {
             totalShares += shares[i];
+
+            unchecked {
+                i++;
+            }
         }
     }
 
     /**
-     * @param orderId Order id.
+     * @dev Method is invoked by `onERC721Received`.
+     *
+     * @param from Token owner
+     * @param tokenId Token ID.
+     * @param data Depends on implementation.
+     */
+    function _onReceived(address from, uint256 tokenId, bytes calldata data) internal virtual;
+
+    /**
+     * @param orderId Order ID.
      *
      * @return Returns true if order is placed.
      */

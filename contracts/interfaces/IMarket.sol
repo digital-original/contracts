@@ -46,42 +46,23 @@ interface IMarket {
     event Cancelled(uint256 indexed orderId, uint256 indexed tokenId, address indexed seller);
 
     /**
-     * @notice Places token sale order and locks token on the contract.
+     * @notice Distributes rewards and transfers token to buyer, closes sale order.
      *
-     * @dev This method is the callback according to
-     *   [IERC721Receiver](https://docs.openzeppelin.com/contracts/4.x/api/token/erc721#IERC721Receiver).
-     * @dev This method can trigger only the collection contract during `safeTransfer`.
-     *
-     * @param operator Collection caller.
-     * @param from Token owner.
-     * @param tokenId Token for sale.
-     * @param data Data needed for order placing.
-     */
-    function onERC721Received(
-        address operator,
-        address from,
-        uint256 tokenId,
-        bytes calldata data
-    ) external returns (bytes4);
-
-    /**
-     * @notice Distributes rewards and transfers token to buyer, close sale order.
-     *
-     * @param orderId Order id.
+     * @param orderId Order ID.
      */
     function realize(uint256 orderId) external payable;
 
     /**
      * @notice Cancels token sale order, transfers token back to seller.
      *
-     * @param orderId Order id.
+     * @param orderId Order ID.
      */
     function cancel(uint256 orderId) external;
 
     /**
-     * @notice Returns order by orderId.
+     * @notice Returns order by order ID.
      *
-     * @param orderId Order id.
+     * @param orderId Order ID.
      *
      * @return Order.
      */

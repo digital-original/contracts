@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.19;
 
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import {Upgradeable} from "./utils/Upgradeable.sol";
 import {BaseMarket} from "./utils/BaseMarket.sol";
 import {MarketSigner} from "./utils/MarketSigner.sol";
 import {IAuction} from "./interfaces/IAuction.sol";
@@ -11,11 +10,10 @@ import {IAuction} from "./interfaces/IAuction.sol";
  * @title Auction
  *
  * @notice Auction contract provides logic for creating auction with ERC-721 tokens.
- * @notice Upgradeable Contract based on [OpenZeppelin](https://docs.openzeppelin.com/) library.
  */
-contract Auction is Initializable, BaseMarket, MarketSigner, IAuction, IERC721Receiver {
+contract Auction is Upgradeable, BaseMarket, MarketSigner, IAuction {
     /**
-     * @dev Stores auction orders by order id.
+     * @dev Stores auction orders by order ID.
      */
     mapping(uint256 => Order) private _orders;
 
@@ -29,72 +27,11 @@ contract Auction is Initializable, BaseMarket, MarketSigner, IAuction, IERC721Re
     ) BaseMarket(collection_) MarketSigner(marketSigner_, "Auction", "1") {}
 
     /**
-     * @notice Initializes contract.
-     *
-     * @dev Method should be invoked on proxy contract via `delegatecall`.
-     *   See <https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable#initializers>.
+     * @inheritdoc Upgradeable
      */
-    function initialize() external initializer {
+    function initialize() external override initializer {
         __BaseMarket_init();
         __MarketSigner_init();
-    }
-
-    /**
-     * @inheritdoc IAuction
-     *
-     * @param data Should includes:
-     *   1. `uint256 price` - token price.
-     *   2. `uint256 endBlock` - block number until which the auction continues.
-     *   3. `uint256 priceStep` - minimum price raise step.
-     *   4. `uint256 expiredBlock` - block number until which `signature` is valid.
-     *   5. `address[] participants` - array with addresses between which reward will be distributed.
-     *   6. `uint256[] shares` - array with rewards amounts,
-     *     order of `shares` corresponds to order of `participants`,
-     *     total shares must be equal to `price`.
-     *   7. `bytes signature` - [EIP-712](https://eips.ethereum.org/EIPS/eip-712) signature.
-     *     Signature must include `expiredBlock` and can include other data for validation.
-     *     See `MarketSigner::ORDER_TYPEHASH`.
-     */
-    function onERC721Received(
-        address,
-        address from,
-        uint256 tokenId,
-        bytes calldata data
-    ) external override(IAuction, IERC721Receiver) onlyCollection returns (bytes4) {
-        // TODO: What happen if priceStep = 0?
-        (
-            uint256 price,
-            uint256 endBlock,
-            uint256 priceStep,
-            uint256 expiredBlock,
-            address[] memory participants,
-            uint256[] memory shares,
-            bytes memory signature
-        ) = abi.decode(data, (uint256, uint256, uint256, uint256, address[], uint256[], bytes));
-
-        // TODO: Create private `_place` method
-        require(endBlock > block.number, "Auction: end block is less than current");
-
-        _validateSignature(from, tokenId, price, expiredBlock, participants, shares, signature);
-        _validatePrice(price, participants, shares);
-
-        uint256 orderId = _orderId();
-
-        _orders[orderId] = Order({
-            seller: from,
-            buyer: address(0),
-            tokenId: tokenId,
-            price: price,
-            endBlock: endBlock,
-            priceStep: priceStep,
-            status: OrderStatus.Placed,
-            participants: participants,
-            shares: shares
-        });
-
-        emit Placed(orderId, tokenId, from, price);
-
-        return IERC721Receiver.onERC721Received.selector;
     }
 
     /**
@@ -104,7 +41,7 @@ contract Auction is Initializable, BaseMarket, MarketSigner, IAuction, IERC721Re
      *   seller can't raise price for their own order.
      */
     function raise(uint256 orderId) external payable placedOrder(orderId) {
-        // TODO: How should work a first raise?
+        // TODO: How should work a first raise, should first bid eq prevPrice + _orders[orderId].priceStep or initial price?
         require(_orders[orderId].endBlock >= block.number, "Auction: auction is ended");
 
         address seller = _orders[orderId].seller;
@@ -178,13 +115,87 @@ contract Auction is Initializable, BaseMarket, MarketSigner, IAuction, IERC721Re
     }
 
     /**
+     * @dev Places auction order.
+     *
+     * @param from Token owner.
+     * @param tokenId Token for sale.
+     * @param price Token price.
+     * @param endBlock Block number until which the auction continues.
+     * @param priceStep Minimum price raise step.
+     * @param expiredBlock Block number until which `signature` is valid.
+     * @param participants Array with addresses between which reward will be distributed.
+     * @param shares Array with rewards amounts,
+     *   order of `shares` corresponds to order of `participants`,
+     *   total shares must be equal to `price`.
+     * @param signature [EIP-712](https://eips.ethereum.org/EIPS/eip-712) signature.
+     *   Signature must include `expiredBlock` and can include other data for validation.
+     *   See `MarketSigner::ORDER_TYPE_HASH`.
+     */
+    function _place(
+        address from,
+        uint256 tokenId,
+        uint256 price,
+        uint256 endBlock,
+        uint256 priceStep,
+        uint256 expiredBlock,
+        address[] memory participants,
+        uint256[] memory shares,
+        bytes memory signature
+    ) internal {
+        // TODO: What happen if priceStep = 0?
+
+        require(endBlock > block.number, "Auction: end block is less than current");
+
+        _validateSignature(from, tokenId, price, expiredBlock, participants, shares, signature);
+        _validatePrice(price, participants, shares);
+
+        uint256 orderId = _useOrderId();
+
+        _orders[orderId] = Order({
+            seller: from,
+            buyer: address(0),
+            tokenId: tokenId,
+            price: price,
+            endBlock: endBlock,
+            priceStep: priceStep,
+            status: OrderStatus.Placed,
+            participants: participants,
+            shares: shares
+        });
+
+        emit Placed(orderId, tokenId, from, price);
+    }
+
+    /**
      * @inheritdoc BaseMarket
      *
-     * @dev Method overrides `BaseMarket._orderPlaced.`
+     * @dev Method overrides `BaseMarket::_onReceived.`
      *
-     * @param orderId Auction order id.
+     * @param data abi.encode(`price`, `endBlock`, `priceStep`, `expiredBlock`, `participants`, `shares`, `signature`).
+     *   See `_place` method.
      */
-    function _orderPlaced(uint256 orderId) internal view override returns (bool) {
+    function _onReceived(address from, uint256 tokenId, bytes calldata data) internal override(BaseMarket) {
+        (
+            uint256 price,
+            uint256 endBlock,
+            uint256 priceStep,
+            uint256 expiredBlock,
+            address[] memory participants,
+            uint256[] memory shares,
+            bytes memory signature
+        ) = abi.decode(data, (uint256, uint256, uint256, uint256, address[], uint256[], bytes));
+
+        _place(from, tokenId, price, endBlock, priceStep, expiredBlock, participants, shares, signature);
+    }
+
+    /**
+     * @inheritdoc BaseMarket
+     *
+     * @dev Method overrides `BaseMarket::_orderPlaced.`
+     *
+     * @param orderId Auction order ID.
+     */
+    function _orderPlaced(uint256 orderId) internal view override(BaseMarket) returns (bool) {
         return _orders[orderId].status == OrderStatus.Placed;
     }
 
@@ -193,5 +204,5 @@ contract Auction is Initializable, BaseMarket, MarketSigner, IAuction, IERC721Re
      *   variables without shifting down storage in the inheritance chain.
      *   See <https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps>.
      */
-    uint256[49] private __gap;
+    uint256[50] private __gap;
 }

@@ -26,6 +26,8 @@ contract TransferChecker is ITransferChecker {
      * @param _auction Auction contract address.
      */
     constructor(address _market, address _auction) {
+        require(_market != address(0));
+        require(_auction != address(0));
         market = _market;
         auction = _auction;
     }

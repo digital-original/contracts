@@ -1,21 +1,20 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.19;
 
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {EIP712Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
-import {ECDSAUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol";
+import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {ShortStrings, ShortString} from "@openzeppelin/contracts/utils/ShortStrings.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {Upgradeable} from "./Upgradeable.sol";
 
 /**
  * @title MarketSigner
  *
  * @notice Abstract contract MarketSigner provides signature validation logic.
- * @notice Upgradeable Contract based on [OpenZeppelin](https://docs.openzeppelin.com/) library
- *   and [EIP-712](https://eips.ethereum.org/EIPS/eip-712) standard.
+ * @notice Contract based on [EIP-712](https://eips.ethereum.org/EIPS/eip-712) standard.
  */
 // TODO: Think about using not upgradable EIP712 contract
-abstract contract MarketSigner is Initializable, EIP712Upgradeable {
+abstract contract MarketSigner is Upgradeable, EIP712Upgradeable {
     /**
      * @dev Data type hash according to EIP-712.
      */
@@ -33,12 +32,12 @@ abstract contract MarketSigner is Initializable, EIP712Upgradeable {
         );
 
     /**
-     * @dev This variable store a name for `EIP712Upgradeable`.
+     * @dev Stores a name for `EIP712Upgradeable`.
      */
     ShortString private immutable _eip712Name;
 
     /**
-     * @dev This variable store a version for `EIP712Upgradeable`.
+     * @dev Stores a version for `EIP712Upgradeable`.
      */
     ShortString private immutable _eip712Version;
 
@@ -84,7 +83,7 @@ abstract contract MarketSigner is Initializable, EIP712Upgradeable {
      *   compares signer with market signer. Throws if data is valid.
      *
      * @param seller Seller address.
-     * @param tokenId Token id.
+     * @param tokenId Token ID.
      * @param price Token price.
      * @param expiredBlock Block number until which `signature` is valid.
      * @param participants Array with participants addresses.
@@ -116,7 +115,7 @@ abstract contract MarketSigner is Initializable, EIP712Upgradeable {
             )
         );
 
-        require(_marketSigner == ECDSAUpgradeable.recover(hash, signature), "MarketSigner: unauthorized");
+        require(_marketSigner == ECDSA.recover(hash, signature), "MarketSigner: unauthorized");
     }
 
     /**
