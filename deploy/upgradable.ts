@@ -2,8 +2,8 @@ import { ethers, network } from 'hardhat';
 import { deployUpgradeable } from '../scripts/deploy-upgradable';
 import { verify } from '../scripts/verify';
 
-const CONTRACT_NAME = 'WhiteList';
-const PROXY_ADMIN_ADDRESS = '0x77d3e2FAF8afEB827Db827116F1bF7dd14260D15';
+const CONTRACT_NAME = '';
+const PROXY_ADMIN_ADDRESS = String(process.env.PROXY_ADMIN_LOCAL_DEV);
 const CONSTRUCTOR_ARGS: any[] = [];
 const INITIALIZE_ARGS: any[] = [];
 const PATH_TO_CONTRACT = `contracts/${CONTRACT_NAME}.sol:${CONTRACT_NAME}`;
@@ -25,6 +25,7 @@ async function main() {
     console.log(JSON.stringify({
         implName,
         implAddress: impl.address,
+        implArgs: CONSTRUCTOR_ARGS,
         proxyName,
         proxyAddress: proxy.address,
         proxyArgs,
@@ -39,7 +40,7 @@ async function main() {
         console.log('Waiting confirmations...');
         await proxy.deployTransaction.wait(3);
 
-        await verify(PATH_TO_CONTRACT, impl.address, []);
+        await verify(PATH_TO_CONTRACT, impl.address, CONSTRUCTOR_ARGS);
         await verify(`contracts/proxy/${CONTRACT_NAME}.sol:${proxyName}`, proxy.address, proxyArgs);
     }
 }

@@ -43,6 +43,7 @@ contract DOCollection is ERC721Enumerable, ERC721URIStorage, Ownable2Step {
      * @param transferChecker_ TransferChecker contract address.
      */
     constructor(address minter_, address transferChecker_) ERC721("DOCollection", "DO") {
+        // TODO: remove transferChecker_ setting from constructor
         require(minter_ != address(0));
         require(transferChecker_ != address(0));
         _minter = minter_;

@@ -35,11 +35,18 @@ interface IAuction {
     /**
      * @dev Triggered when order was placed.
      */
-    event Placed(uint256 indexed orderId, uint256 indexed tokenId, address indexed seller, uint256 price);
+    // prettier-ignore
+    event Placed(
+        uint256 indexed orderId,
+        uint256 indexed tokenId,
+        address indexed seller,
+        uint256 price
+    );
 
     /**
      * @dev Triggered when order price was raised.
      */
+    // prettier-ignore
     event Raised(
         uint256 indexed orderId,
         uint256 indexed tokenId,
@@ -51,7 +58,14 @@ interface IAuction {
     /**
      * @dev Triggered when auction was ended.
      */
-    event Ended(uint256 indexed orderId, uint256 indexed tokenId, address indexed buyer, address seller, uint256 price);
+    // prettier-ignore
+    event Ended(
+        uint256 indexed orderId,
+        uint256 indexed tokenId,
+        address indexed buyer,
+        address seller,
+        uint256 price
+    );
 
     /**
      * @notice Raises auction order price, sets new buyer and locks Ether,

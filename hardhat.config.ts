@@ -17,12 +17,18 @@ const developmentConfig: HardhatUserConfig = {
             accounts: [DEPLOYER_PRIVATE_KEY],
             chainId: 11155111,
         },
-        local: {
-            url: 'http://127.0.0.1:8545/',
-        },
     },
     etherscan: {
         apiKey: ETHERSCAN_API_KEY,
+    },
+    gasReporter: {
+        enabled: !!REPORT_GAS,
+        token: 'eth',
+        currency: 'usd',
+        gasPrice: 26,
+        src: 'contracts',
+        excludeContracts: ['contracts/test'],
+        coinmarketcap: COINMARKETCAP_API_KEY,
     },
 };
 
@@ -42,15 +48,6 @@ const config: HardhatUserConfig = {
                 },
             },
         ],
-    },
-    gasReporter: {
-        enabled: !!REPORT_GAS,
-        token: 'eth',
-        currency: 'usd',
-        gasPrice: 26,
-        src: 'contracts',
-        excludeContracts: ['contracts/test'],
-        coinmarketcap: COINMARKETCAP_API_KEY,
     },
 };
 

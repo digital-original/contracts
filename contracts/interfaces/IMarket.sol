@@ -27,7 +27,13 @@ interface IMarket {
     /**
      * @dev Triggered when order was placed.
      */
-    event Placed(uint256 indexed orderId, uint256 indexed tokenId, address indexed seller, uint256 price);
+    // prettier-ignore
+    event Placed(
+        uint256 indexed orderId,
+        uint256 indexed tokenId,
+        address indexed seller,
+        uint256 price
+    );
 
     /**
      * @dev Triggered when token was realize.
@@ -43,7 +49,12 @@ interface IMarket {
     /**
      * @dev Triggered when order was cancelled.
      */
-    event Cancelled(uint256 indexed orderId, uint256 indexed tokenId, address indexed seller);
+    // prettier-ignore
+    event Cancelled(
+        uint256 indexed orderId,
+        uint256 indexed tokenId,
+        address indexed seller
+    );
 
     /**
      * @notice Distributes rewards and transfers token to buyer, closes sale order.
