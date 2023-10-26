@@ -1,75 +1,52 @@
 import { ethers } from 'hardhat';
-import { FormatTypes } from 'ethers/lib/utils';
+import type { Signer } from 'ethers';
 import { expect } from 'chai';
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { ImplV1Mock, ITransparentUpgradeableProxy } from '../typechain-types';
-import { deployClassic } from '../scripts/deploy-classic';
-import ITransparentUpgradeableProxyJSON from '../artifacts/@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol/ITransparentUpgradeableProxy.json';
-import ImplV1MockJSON from '../artifacts/contracts/test/ImplV1Mock.sol/ImplV1Mock.json';
+import { ImplV1Mock, ImplV2Mock, ProxyAdmin } from '../typechain-types';
+import { deployUpgrade } from '../src/scripts/deploy-upgrade';
+import { deployUpgradeable } from '../src/scripts/deploy-upgradable';
 
 describe('TransparentUpgradeableProxy', function () {
-    let proxy: ITransparentUpgradeableProxy & ImplV1Mock;
-    let owner: SignerWithAddress;
-    let proxyAdmin: SignerWithAddress;
-    let randomAccount: SignerWithAddress;
-    let implV1Address: string;
+    let proxy: ImplV1Mock | ImplV2Mock;
+    let proxyAdmin: ProxyAdmin;
+
+    let deployer: Signer;
+    let proxyAdminOwner: Signer;
 
     before(async () => {
-        [owner, proxyAdmin, randomAccount] = <SignerWithAddress[]>await ethers.getSigners();
+        [deployer, proxyAdminOwner] = await ethers.getSigners();
     });
 
     beforeEach(async () => {
-        const implV1 = await deployClassic({
-            contractName: 'ImplV1Mock',
-            constructorArgs: [],
-            signer: owner,
+        const { proxyAdmin: _proxyAdmin, proxyWithImpl: _proxy } = await deployUpgradeable({
+            implName: 'ImplV1Mock',
+            proxyAdminOwner: proxyAdminOwner,
+            deployer: deployer,
         });
 
-        const proxyContract = await deployClassic({
-            contractName: 'TransparentUpgradeableProxy',
-            constructorArgs: [implV1.address, proxyAdmin.address, []],
-            signer: owner,
-        });
-
-        const proxyWithImpl = await ethers.getContractAt(
-            [...ITransparentUpgradeableProxyJSON.abi, ...ImplV1MockJSON.abi],
-            proxyContract.address
-        );
-
-        implV1Address = implV1.address;
-        proxy = <ITransparentUpgradeableProxy & ImplV1Mock>proxyWithImpl;
-        proxy = proxy.connect(proxyAdmin);
+        proxy = <any>_proxy;
+        proxyAdmin = <any>_proxyAdmin;
     });
 
-    it(`Proxy is based on the V1 implementation`, async () => {
-        expect(await proxy.callStatic.implementation()).equal(implV1Address);
-
-        proxy = proxy.connect(randomAccount);
-
-        expect(await proxy.count()).equal(0);
+    it(`should based on the V1 implementation`, async () => {
+        expect(await proxy.count()).equal(0n);
 
         await proxy.increment();
 
-        expect(await proxy.count()).equal(1);
+        expect(await proxy.count()).equal(1n);
     });
 
-    it(`ProxyAdmin can change implementation`, async () => {
-        const implV2 = await deployClassic({
-            contractName: 'ImplV2Mock',
-            constructorArgs: [],
-            signer: owner,
+    it(`should upgrade implementation to the V2`, async () => {
+        await deployUpgrade({
+            implName: 'ImplV2Mock',
+            proxyAdminAddress: proxyAdmin,
+            proxyAddress: proxy,
+            deployer: proxyAdminOwner,
         });
 
-        await proxy.connect(proxyAdmin).upgradeTo(implV2.address);
-
-        expect(await proxy.callStatic.implementation()).equal(implV2.address);
-
-        proxy = proxy.connect(randomAccount);
-
-        expect(await proxy.count()).equal(0);
+        expect(await proxy.count()).equal(0n);
 
         await proxy.increment();
 
-        expect(await proxy.count()).equal(2);
+        expect(await proxy.count()).equal(2n);
     });
 });

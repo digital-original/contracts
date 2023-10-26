@@ -11,3 +11,4 @@ artifacts
 
 venv
 docs
+config.json

@@ -1,0 +1,85 @@
+{
+    "sepolia": {
+        "chainUrl": "",
+        "chainId": 11155111,
+        "env": {
+            "dev": {
+                "wallet": {
+                    "deployer": {
+                        "public": "0xc5fA4C1e0289092e615B28b9B54B3117a0294516",
+                        "private": ""
+                    },
+                    "proxyAdminOwner": {
+                        "public": "0xc5fA4C1e0289092e615B28b9B54B3117a0294516",
+                        "private": ""
+                    },
+                    "minter": {
+                        "public": "0x009F3d0e79E3C11E1786e3Fe42eCD64abf321037",
+                        "private": ""
+                    },
+                    "marketSigner": {
+                        "public": "0x542375626624D813B87817C4982900E9d3d28685",
+                        "private": ""
+                    },
+                    "platform": {
+                        "public": "",
+                        "private": ""
+                    }
+                },
+                "contract": {
+                    "token": "0x7A9A971F612655bDA4cb2e35938bEB7280A39F93",
+                    "market": {
+                        "proxy": "0xaF09116DB64c636AD4C3b156939742B577C28bC1",
+                        "admin": "0xc5fA4C1e0289092e615B28b9B54B3117a0294516"
+                    },
+                    "auction": {
+                        "proxy": "",
+                        "admin": ""
+                    },
+                    "transferChecker": "0x62C3c7Dd9DB2D6B8680db0c1c0816f8ed9757BF4"
+                }
+            },
+            "local": {
+                "wallet": {
+                    "deployer": {
+                        "public": "",
+                        "private": ""
+                    },
+                    "proxyAdminOwner": {
+                        "public": "",
+                        "private": ""
+                    },
+                    "minter": {
+                        "public": "",
+                        "private": ""
+                    },
+                    "marketSigner": {
+                        "public": "",
+                        "private": ""
+                    },
+                    "platform": {
+                        "public": "",
+                        "private": ""
+                    }
+                },
+                "contract": {
+                    "token": "",
+                    "market": {
+                        "proxy": "",
+                        "admin": ""
+                    },
+                    "auction": {
+                        "proxy": "",
+                        "admin": ""
+                    },
+                    "transferChecker": ""
+                }
+            }
+        }
+    },
+    "ethereum": {
+        "chainUrl": "",
+        "chainId": 1,
+        "env": {}
+    }
+}
