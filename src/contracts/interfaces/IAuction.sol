@@ -42,7 +42,7 @@ interface IAuction {
         address indexed seller,
         uint256 price,
         uint256 priceStep,
-        uint256 deadline
+        uint256 endTime
     );
 
     /**

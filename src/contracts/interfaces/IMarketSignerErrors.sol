@@ -10,6 +10,6 @@ pragma solidity ^0.8.20;
  * TODO_DOC
  */
 interface IMarketSignerErrors {
-    error MarketSignerSignatureExpired(uint256 deadline, uint256 currentTimestamp);
+    error MarketSignerSignatureExpired(uint256 deadline, uint256 currentTime);
     error MarketSignerUnauthorized();
 }

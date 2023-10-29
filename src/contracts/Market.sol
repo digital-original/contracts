@@ -89,24 +89,24 @@ contract Market is Upgradeable, BaseMarket, MarketSigner, IMarket, IMarketErrors
      * @param from Token owner.
      * @param tokenId Token for sale.
      * @param price Token price.
-     * @param sigDeadline Timestamp until which `signature` is valid.
+     * @param deadline Timestamp until which `signature` is valid.
      * @param participants Array with addresses between which reward will be distributed.
      * @param shares Array with rewards amounts,
      *   order of `shares` corresponds to order of `participants`,
      *   total shares must be equal to `price`.
-     * @param sig [EIP712](https://eips.ethereum.org/EIPS/eip-712) signature.
+     * @param signature [EIP712](https://eips.ethereum.org/EIPS/eip-712) signature.
      *   See `MarketSigner::ORDER_TYPE_HASH`.
      */
     function _place(
         address from,
         uint256 tokenId,
         uint256 price,
-        uint256 sigDeadline,
+        uint256 deadline,
         address[] memory participants,
         uint256[] memory shares,
-        bytes memory sig
+        bytes memory signature
     ) internal {
-        _validateSignature(from, tokenId, price, sigDeadline, participants, shares, sig);
+        _validateSignature(from, tokenId, price, deadline, participants, shares, signature);
         _validateShares(participants, shares);
 
         uint256 orderId = _useOrderId();
@@ -130,23 +130,23 @@ contract Market is Upgradeable, BaseMarket, MarketSigner, IMarket, IMarketErrors
      *
      * @param data abi.encode(
      *     `price`,
-     *     `sigDeadline`,
+     *     `deadline`,
      *     `participants`,
      *     `shares`,
-     *     `sig`
+     *     `signature`
      *   ).
      *   See `_place` method.
      */
     function _onReceived(address from, uint256 tokenId, bytes calldata data) internal override(BaseMarket) {
         (
             uint256 price,
-            uint256 sigDeadline,
+            uint256 deadline,
             address[] memory participants,
             uint256[] memory shares,
-            bytes memory sig
+            bytes memory signature
         ) = abi.decode(data, (uint256, uint256, address[], uint256[], bytes));
 
-        _place(from, tokenId, price, sigDeadline, participants, shares, sig);
+        _place(from, tokenId, price, deadline, participants, shares, signature);
     }
 
     /**

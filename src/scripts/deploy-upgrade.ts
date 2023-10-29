@@ -6,7 +6,7 @@ interface Options {
     implName: string;
     implConstructorArgs?: (string | Uint8Array | Addressable)[];
     proxyAdminAddress: string | Addressable;
-    proxyAddress: string | Addressable
+    proxyAddress: string | Addressable;
     deployer?: Signer;
 }
 
@@ -31,15 +31,8 @@ export async function deployUpgrade(options: Options) {
 
     const upgradeTransactionReceipt = await upgradeTransactionResponse.wait(1);
 
-    const proxyWithImpl = await ethers.getContractAt(
-        impl.interface.format(true).slice(1),
-        proxyAddress,
-        deployer,
-    );
-
     return {
         impl,
-        proxyWithImpl,
         upgradeTransactionResponse,
         upgradeTransactionReceipt,
     };

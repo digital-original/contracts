@@ -195,7 +195,7 @@ describe('Token', function () {
 
             const lessThan7days = 60 * 60 * 24 * 6; // 6 days in seconds
 
-            setNextBlockTimestamp(block!.timestamp + lessThan7days);
+            await setNextBlockTimestamp(block!.timestamp + lessThan7days);
 
             await token.connect(owner).rollback(tokenId);
 
@@ -207,7 +207,7 @@ describe('Token', function () {
 
             const moreThan7days = 60 * 60 * 24 * 8; // 8 days in seconds
 
-            setNextBlockTimestamp(block!.timestamp + moreThan7days);
+            await setNextBlockTimestamp(block!.timestamp + moreThan7days);
 
             await expect(token.connect(owner).rollback(tokenId)).to.rejectedWith(
                 'TokenCannotBeBurned',

@@ -11,6 +11,8 @@ import { OrderStruct } from '../src/typedefs';
 describe('Market', function () {
     let market: Market;
 
+    let marketAddress: string;
+
     let tokenMock: TokenMock;
 
     let tokenBaseUri: string;
@@ -22,11 +24,10 @@ describe('Market', function () {
     let buyer: Signer;
     let randomAccount: Signer;
 
-    let tokenOwnerAddress: string;
     let platformAddress: string;
+    let tokenOwnerAddress: string;
     let buyerAddress: string;
     let randomAccountAddress: string;
-    let marketAddress: string;
 
     let chainId: number;
 
@@ -43,10 +44,13 @@ describe('Market', function () {
         [deployer, platform, marketSigner, tokenOwner, buyer, randomAccount] =
             await ethers.getSigners();
 
-        tokenOwnerAddress = await tokenOwner.getAddress();
-        platformAddress = await platform.getAddress();
-        randomAccountAddress = await randomAccount.getAddress();
-        buyerAddress = await buyer.getAddress();
+        [tokenOwnerAddress, platformAddress, randomAccountAddress, buyerAddress] =
+            await Promise.all([
+                tokenOwner.getAddress(),
+                platform.getAddress(),
+                randomAccount.getAddress(),
+                buyer.getAddress(),
+            ]);
 
         tokenBaseUri = 'https://base-uri-mock/';
 
@@ -61,7 +65,7 @@ describe('Market', function () {
     });
 
     beforeEach(async () => {
-        const { proxyWithImpl: _market } = await deployUpgradeable({
+        const { proxy: _market } = await deployUpgradeable({
             implName: 'Market',
             implConstructorArgs: [tokenMock, marketSigner],
             proxyAdminOwner: '0x0000000000000000000000000000000000000001',
@@ -258,7 +262,7 @@ describe('Market', function () {
 
             const signature = await signMarketOrder(chainId, marketAddress, order, marketSigner);
 
-            setNextBlockTimestamp(deadline + 10);
+            await setNextBlockTimestamp(deadline + 10);
 
             await expect(
                 safeTransferToMarket(
@@ -301,7 +305,7 @@ describe('Market', function () {
             ).to.be.rejectedWith('BaseMarketInvalidSharesNumber');
         });
 
-        it(`should fail if total shares isn't maximum total share`, async () => {
+        it(`should fail if total shares isn't equal maximum total share`, async () => {
             const block = await ethers.provider.getBlock('latest');
             const deadline = block!.timestamp + 100000000;
 
@@ -528,17 +532,13 @@ describe('Market', function () {
         });
 
         it(`should fail if order doesn't exist`, async () => {
-            await expect(market.cancel('11111')).to.be.rejectedWith(
-                'BaseMarketOrderNotPlaced',
-            );
+            await expect(market.cancel('11111')).to.be.rejectedWith('BaseMarketOrderNotPlaced');
         });
 
         it(`should fail if order is already cancelled`, async () => {
             await market.cancel(orderId);
 
-            await expect(market.cancel(orderId)).to.be.rejectedWith(
-                'BaseMarketOrderNotPlaced',
-            );
+            await expect(market.cancel(orderId)).to.be.rejectedWith('BaseMarketOrderNotPlaced');
         });
 
         it(`should fail if order is Realized`, async () => {

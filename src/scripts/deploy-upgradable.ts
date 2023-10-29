@@ -36,19 +36,10 @@ export async function deployUpgradeable(options: Options) {
     const proxyAdmin = await ethers.getContractAt('ProxyAdmin' as string, proxyAdminAddress);
     const proxyAdminConstructorArgs = [proxyAdminOwner];
 
-    const proxyAddress = await proxy.getAddress();
-
-    const proxyWithImpl = await ethers.getContractAt(
-        impl.interface.format(true).slice(1),
-        proxyAddress,
-        deployer,
-    );
-
     return {
         impl,
         proxy,
         proxyAdmin,
-        proxyWithImpl,
         implConstructorArgs,
         proxyConstructorArgs,
         proxyAdminConstructorArgs,

@@ -17,14 +17,14 @@ describe('TransparentUpgradeableProxy', function () {
     });
 
     beforeEach(async () => {
-        const { proxyAdmin: _proxyAdmin, proxyWithImpl: _proxy } = await deployUpgradeable({
+        const { proxyAdmin: _proxyAdmin, proxy: _proxy } = await deployUpgradeable({
             implName: 'ImplV1Mock',
             proxyAdminOwner: proxyAdminOwner,
             deployer: deployer,
         });
 
-        proxy = <any>_proxy;
-        proxyAdmin = <any>_proxyAdmin;
+        proxy = await ethers.getContractAt('ImplV1Mock', _proxy);
+        proxyAdmin = await ethers.getContractAt('ProxyAdmin', _proxyAdmin);
     });
 
     it(`should based on the V1 implementation`, async () => {
