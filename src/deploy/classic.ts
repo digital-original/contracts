@@ -5,13 +5,13 @@ import { ChainConfig } from '../typedefs';
 
 // TODO: create hardhat task
 
-const chainConfig = <ChainConfig><any>network.config;
+const chainConfig = <ChainConfig>(<any>network.config);
 
-const NAME: string = 'Token';
+const NAME: string = 'Deployer';
 const CONSTRUCTOR_ARGS: string[] = [
     chainConfig.wallets.minter.public,
-    chainConfig.contracts.transferChecker,
-    chainConfig.wallets.deployer.public,
+    chainConfig.wallets.marketSigner.public,
+    chainConfig.wallets.proxyAdminOwner.public,
 ];
 const PATH: string = `${NAME}.sol:${NAME}`;
 
