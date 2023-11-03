@@ -2,11 +2,11 @@ import { ethers } from 'hardhat';
 import { AbiCoder, Signer } from 'ethers';
 import { setNextBlockTimestamp } from '@nomicfoundation/hardhat-network-helpers/dist/src/helpers/time';
 import { expect } from 'chai';
-import { deployClassic } from '../src/scripts/deploy-classic';
-import { deployUpgradeable } from '../src/scripts/deploy-upgradable';
-import { signAuctionOrder, signMarketOrder } from '../src/scripts/eip712';
+import { deployClassic } from '../scripts/deploy-classic';
+import { deployUpgradeable } from '../scripts/deploy-upgradable';
+import { signAuctionOrder, signMarketOrder } from '../scripts/eip712';
 import { Auction, TokenMock } from '../typechain-types';
-import { OrderStruct } from '../src/typedefs';
+import { OrderStruct } from '../types/environment';
 
 describe('Auction', function () {
     let auction: Auction;
@@ -240,7 +240,7 @@ describe('Auction', function () {
             expect(orderCount.toString()).equal('1');
         });
 
-        it(`should fail if caller isn't token contract`, async () => {
+        it(`should fail if caller is not token contract`, async () => {
             const block = await ethers.provider.getBlock('latest');
             const deadline = block!.timestamp + 100000000;
 
@@ -322,7 +322,7 @@ describe('Auction', function () {
             ).to.be.rejectedWith('MarketSignerSignatureExpired');
         });
 
-        it(`should fail if number of participants isn't equal number of shares`, async () => {
+        it(`should fail if number of participants is not equal number of shares`, async () => {
             const block = await ethers.provider.getBlock('latest');
             const deadline = block!.timestamp + 100000000;
 
@@ -355,7 +355,7 @@ describe('Auction', function () {
             ).to.be.rejectedWith('BaseMarketInvalidSharesNumber');
         });
 
-        it(`should fail if total shares isn't equal maximum total share`, async () => {
+        it(`should fail if total shares is not equal maximum total share`, async () => {
             const block = await ethers.provider.getBlock('latest');
             const deadline = block!.timestamp + 100000000;
 
@@ -421,7 +421,7 @@ describe('Auction', function () {
             ).to.be.rejectedWith('MarketSignerUnauthorized');
         });
 
-        it(`should fail if end time isn't more than current time`, async () => {
+        it(`should fail if end time is not more than current time`, async () => {
             const block = await ethers.provider.getBlock('latest');
             const deadline = block!.timestamp + 10000000000;
 
@@ -614,7 +614,7 @@ describe('Auction', function () {
             );
         });
 
-        it(`should fail if sent ether amount isn't enough `, async () => {
+        it(`should fail if sent ether amount is not enough `, async () => {
             price = price - 1n;
 
             await expect(auction.raise(orderId, { value: price })).to.be.rejectedWith(

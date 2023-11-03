@@ -1,30 +1,30 @@
 import { ethers } from 'hardhat';
-import type { Signer } from 'ethers';
 import { expect } from 'chai';
+import { deployUpgrade } from '../scripts/deploy-upgrade';
+import { deployUpgradeable } from '../scripts/deploy-upgradable';
+import { getSigners } from './utils/get-signers';
+import { getProxyAdmin } from './utils/get-admin-changed-event';
+import { Signer } from '../types/environment';
 import { ImplV1Mock, ImplV2Mock, ProxyAdmin } from '../typechain-types';
-import { deployUpgrade } from '../src/scripts/deploy-upgrade';
-import { deployUpgradeable } from '../src/scripts/deploy-upgradable';
 
 describe('TransparentUpgradeableProxy', function () {
     let proxy: ImplV1Mock | ImplV2Mock;
     let proxyAdmin: ProxyAdmin;
 
-    let deployer: Signer;
     let proxyAdminOwner: Signer;
 
     before(async () => {
-        [deployer, proxyAdminOwner] = await ethers.getSigners();
+        [[proxyAdminOwner]] = await getSigners();
     });
 
     beforeEach(async () => {
-        const { proxyAdmin: _proxyAdmin, proxy: _proxy } = await deployUpgradeable({
+        const { proxy: _proxy } = await deployUpgradeable({
             implName: 'ImplV1Mock',
-            proxyAdminOwner: proxyAdminOwner,
-            deployer: deployer,
+            proxyAdminOwner,
         });
 
         proxy = await ethers.getContractAt('ImplV1Mock', _proxy);
-        proxyAdmin = await ethers.getContractAt('ProxyAdmin', _proxyAdmin);
+        [proxyAdmin] = await getProxyAdmin(_proxy);
     });
 
     it(`should based on the V1 implementation`, async () => {
@@ -36,12 +36,14 @@ describe('TransparentUpgradeableProxy', function () {
     });
 
     it(`should upgrade implementation to the V2`, async () => {
-        await deployUpgrade({
-            implName: 'ImplV2Mock',
-            proxyAdminAddress: proxyAdmin,
-            proxyAddress: proxy,
-            deployer: proxyAdminOwner,
-        });
+        await deployUpgrade(
+            {
+                implName: 'ImplV2Mock',
+                proxyAdminAddress: proxyAdmin,
+                proxyAddress: proxy,
+            },
+            proxyAdminOwner,
+        );
 
         expect(await proxy.count()).equal(0n);
 

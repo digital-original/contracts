@@ -1,8 +1,8 @@
 import { HardhatUserConfig } from 'hardhat/config';
-import dotenv from 'dotenv';
 import '@nomicfoundation/hardhat-toolbox';
-import './src/tasks/deploy';
+import dotenv from 'dotenv';
 import config from './config.json';
+import './tasks/deploy';
 
 dotenv.config();
 
@@ -13,12 +13,6 @@ const REPORT_GAS = process.env.REPORT_GAS!;
 const COINMARKETCAP_API_KEY = process.env.COINMARKETCAP_API_KEY!;
 
 const hardhatBaseConfig: HardhatUserConfig = {
-    paths: {
-        sources: './src/contracts',
-        tests: './test',
-        cache: './cache',
-        artifacts: './artifacts',
-    },
     solidity: {
         compilers: [
             {
