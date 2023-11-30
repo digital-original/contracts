@@ -51,7 +51,7 @@ interface IAuction {
     // prettier-ignore
     event Raised(
         uint256 indexed orderId,
-        uint256 indexed tokenId,
+        uint256 indexed tokenId, // TODO: remove tokenId, we have tokenId in prev event
         address indexed buyer,
         uint256 price
     );
@@ -62,10 +62,10 @@ interface IAuction {
     // prettier-ignore
     event Ended(
         uint256 indexed orderId,
-        uint256 indexed tokenId,
-        address indexed buyer,
-        address seller,
-        uint256 price
+        uint256 indexed tokenId, // TODO: remove tokenId, we have tokenId in prev event
+        address indexed buyer, // TODO: remove buyer, we have buyer in prev event
+        address seller, // TODO: remove seller, we have seller in prev event
+        uint256 price // TODO: remove price, we have price in prev event
     );
 
     /**

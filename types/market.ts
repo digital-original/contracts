@@ -1,6 +1,6 @@
 export type MarketPermitStruct = {
-    seller: string;
     tokenId: bigint;
+    seller: string;
     price: bigint;
     participants: string[];
     shares: bigint[];

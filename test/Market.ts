@@ -6,11 +6,11 @@ import { getSigners } from './utils/get-signers';
 import { deployTokenMock } from './utils/deploy-token-mock';
 import { deployMarketUpgradeable } from './utils/deploy-market-upgradable';
 import { encodeMarketPlaceParams } from './utils/encode-market-place-params';
-import { getLatestBlock } from './utils/get-latest-block';
 import { signMarketPermit } from './utils/sign-market-permit';
 import { Signer } from '../types/environment';
 import { MarketPermitStruct } from '../types/market';
 import { Market, TokenMock } from '../typechain-types';
+import { getSignDeadline } from './utils/get-sign-deadline';
 
 describe('Market', function () {
     let market: Market, marketAddr: string;
@@ -101,13 +101,6 @@ describe('Market', function () {
         return tokenId;
     }
 
-    async function getSignatureDeadline() {
-        const block = await getLatestBlock();
-        const oneHourS = 60 * 60;
-        const deadline = block.timestamp + oneHourS;
-        return deadline;
-    }
-
     before(async () => {
         chainId = await getChainId();
 
@@ -131,7 +124,7 @@ describe('Market', function () {
         price = 100000n;
         participants = [tokenOwnerAddr, platformAddr];
         shares = [MAX_TOTAL_SHARE / 2n, MAX_TOTAL_SHARE / 2n];
-        deadline = await getSignatureDeadline();
+        deadline = await getSignDeadline();
     });
 
     it(`should have correct token`, async () => {
@@ -177,7 +170,7 @@ describe('Market', function () {
         });
 
         it(`should fail if signature is expired`, async () => {
-            const _deadline = await getSignatureDeadline();
+            const _deadline = await getSignDeadline();
 
             await setNextBlockTimestamp(_deadline + 10);
 
@@ -305,7 +298,7 @@ describe('Market', function () {
             await expect(realize({ orderId: 0 })).to.be.rejectedWith('BaseMarketOrderNotPlaced');
         });
 
-        it(`should fail if order doesn't exist`, async () => {
+        it(`should fail if order dose not exist`, async () => {
             await expect(realize({ orderId: 1 })).to.be.rejectedWith('BaseMarketOrderNotPlaced');
         });
 
@@ -349,7 +342,7 @@ describe('Market', function () {
             expect(order.status).equal(OrderStatus.Cancelled);
         });
 
-        it(`should fail if order doesn't exist`, async () => {
+        it(`should fail if order dose not exist`, async () => {
             await expect(cancel({ orderId: 1 })).to.be.rejectedWith('BaseMarketOrderNotPlaced');
         });
 

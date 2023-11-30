@@ -1,6 +1,6 @@
 export type AuctionPermitStruct = {
+    tokenId: bigint;
     seller: string;
-    tokenId: number;
     price: bigint;
     priceStep: bigint;
     endTime: number;

@@ -1,41 +1,31 @@
-import { ethers } from 'hardhat';
-import { AbiCoder, Signer } from 'ethers';
-import { setNextBlockTimestamp } from '@nomicfoundation/hardhat-network-helpers/dist/src/helpers/time';
 import { expect } from 'chai';
-import { deployClassic } from '../scripts/deploy-classic';
-import { deployUpgradeable } from '../scripts/deploy-upgradable';
-// import { signAuctionOrder, signMarketOrder } from '../scripts/eip712';
+import { ZeroAddress, Signer } from 'ethers';
+import { setNextBlockTimestamp } from '@nomicfoundation/hardhat-network-helpers/dist/src/helpers/time';
 import { Auction, TokenMock } from '../typechain-types';
-// import { OrderStruct } from '../types/environment';
+import { AuctionPermitStruct } from '../types/auction';
+import { encodeAuctionPlaceParams } from './utils/encode-auction-place-params copy';
+import { signAuctionPermit } from './utils/sign-auction-permit';
+import { getSigners } from './utils/get-signers';
+import { getChainId } from './utils/get-chain-id';
+import { deployTokenMock } from './utils/deploy-token-mock';
+import { MAX_TOTAL_SHARE } from '../constants/base-market';
+import { getSignDeadline } from './utils/get-sign-deadline';
+import { deployAuctionUpgradeable } from './utils/deploy-auction-upgradable';
+import { getAuctionEndTime } from './utils/get-auction-end-time';
 
-describe.skip('Auction', function () {
-    let auction: Auction;
-
-    let auctionAddress: string;
-
-    let tokenMock: TokenMock;
-
-    let tokenBaseUri: string;
-
-    let deployer: Signer;
-    let platform: Signer;
-    let marketSigner: Signer;
-    let tokenOwner: Signer;
-    let buyer1: Signer;
-    let buyer2: Signer;
-    let randomAccount: Signer;
-
-    let deployerAddress: string;
-    let platformAddress: string;
-    let marketSignerAddress: string;
-    let tokenOwnerAddress: string;
-    let buyer1Address: string;
-    let buyer2Address: string;
-    let randomAccountAddress: string;
+describe('Auction', function () {
+    let auction: Auction, auctionAddr: string;
 
     let chainId: number;
 
-    const maxTotalShare = 10_000n;
+    let platform: Signer, platformAddr: string;
+    let marketSigner: Signer, marketSignerAddr: string;
+    let tokenOwner: Signer, tokenOwnerAddr: string;
+    let buyer1: Signer, buyer1Addr: string;
+    let buyer2: Signer, buyer2Addr: string;
+    let randomAccount: Signer, randomAccountAddr: string;
+
+    let tokenMock: TokenMock, tokenMockAddr: string;
 
     enum OrderStatus {
         NotExists,
@@ -43,557 +33,376 @@ describe.skip('Auction', function () {
         Ended,
     }
 
-    before(async () => {
-        [deployer, platform, marketSigner, tokenOwner, buyer1, buyer2, randomAccount] =
-            await ethers.getSigners();
+    let tokenId: bigint;
+    let seller: string;
+    let price: bigint;
+    let priceStep: bigint;
+    let endTime: number;
+    let deadline: number;
+    let participants: string[];
+    let shares: bigint[];
 
-        [tokenOwnerAddress, platformAddress, randomAccountAddress, buyer1Address, buyer2Address] =
-            await Promise.all([
-                tokenOwner.getAddress(),
-                platform.getAddress(),
-                randomAccount.getAddress(),
-                buyer1.getAddress(),
-                buyer2.getAddress(),
-            ]);
-
-        tokenBaseUri = 'https://base-uri-mock/';
-
-        const _tokenMock = await deployClassic({
-            name: 'TokenMock',
-            constructorArgs: [tokenBaseUri],
-        });
-
-        tokenMock = <any>_tokenMock;
-
-        chainId = Number((await ethers.provider.getNetwork()).chainId);
-    });
-
-    beforeEach(async () => {
-        const { proxy: _auction } = await deployUpgradeable({
-            implName: 'Auction',
-            implConstructorArgs: [tokenMock, marketSigner],
-            proxyAdminOwner: '0x0000000000000000000000000000000000000001',
-        });
-
-        auction = await ethers.getContractAt('Auction', _auction);
-        auctionAddress = await auction.getAddress();
-    });
-
-    it(`should have correct token`, async () => {
-        const expected = await tokenMock.getAddress();
-        await expect(auction.TOKEN()).to.eventually.equal(expected);
-    });
-
-    it(`should have correct market signer`, async () => {
-        const expected = await marketSigner.getAddress();
-        await expect(auction.MARKET_SIGNER()).to.eventually.equal(expected);
-    });
-
-    it(`should have correct order count`, async () => {
-        await expect(auction.orderCount()).to.eventually.equal(0n);
-    });
-
-    it(`should have correct maximum total share`, async () => {
-        await expect(auction.MAX_TOTAL_SHARE()).to.eventually.equal(maxTotalShare);
-    });
-
-    function safeTransferFrom(
-        from: Signer,
-        tokenId: string,
-        price: bigint,
-        priceStep: bigint,
-        endTime: number,
-        deadline: number,
-        participants: string[],
-        shares: bigint[],
-        signature: string,
+    async function placeOrder(
+        params: {
+            _tokenId?: bigint;
+            _seller?: string;
+            _price?: bigint;
+            _priceStep?: bigint;
+            _endTime?: number;
+            _deadline?: number;
+            _participants?: string[];
+            _shares?: bigint[];
+            _tokenMock?: TokenMock;
+            _marketSigner?: Signer;
+        } = {},
     ) {
-        return tokenMock['safeTransferFrom(address,address,uint256,bytes)'](
-            from,
+        const {
+            _tokenId = tokenId,
+            _seller = seller,
+            _price = price,
+            _priceStep = priceStep,
+            _endTime = endTime,
+            _deadline = deadline,
+            _participants = participants,
+            _shares = shares,
+            _tokenMock = tokenMock,
+            _marketSigner = marketSigner,
+        } = params;
+
+        const permit: AuctionPermitStruct = {
+            seller: _seller,
+            tokenId: _tokenId,
+            price: _price,
+            priceStep: _priceStep,
+            endTime: _endTime,
+            participants: _participants,
+            shares: _shares,
+            deadline: _deadline,
+        };
+
+        const signature = await signAuctionPermit(chainId, auctionAddr, permit, _marketSigner);
+
+        return _tokenMock['safeTransferFrom(address,address,uint256,bytes)'](
+            _seller,
             auction,
-            tokenId,
-            AbiCoder.defaultAbiCoder().encode(
-                ['uint256', 'uint256', 'uint256', 'uint256', 'address[]', 'uint256[]', 'bytes'],
-                [price, priceStep, endTime, deadline, participants, shares, signature],
+            _tokenId,
+            encodeAuctionPlaceParams(
+                _price,
+                _priceStep,
+                _endTime,
+                _deadline,
+                _participants,
+                _shares,
+                signature,
             ),
         );
     }
 
+    async function raise(params: { orderId: number; _price: bigint; _auction?: Auction }) {
+        const { orderId, _price, _auction = auction } = params;
+
+        return _auction.raise(orderId, { value: _price });
+    }
+
+    async function end(params: { orderId: number; _auction?: Auction }) {
+        const { orderId, _auction = auction } = params;
+
+        return _auction.end(orderId);
+    }
+
+    async function mintToken() {
+        const tokenId = await tokenMock.totalSupply();
+
+        await tokenMock.mint(tokenOwner, tokenId);
+
+        return tokenId;
+    }
+
+    before(async () => {
+        chainId = await getChainId();
+
+        [
+            [platform, marketSigner, tokenOwner, buyer1, buyer2, randomAccount],
+            [
+                platformAddr,
+                marketSignerAddr,
+                tokenOwnerAddr,
+                buyer1Addr,
+                buyer2Addr,
+                randomAccountAddr,
+            ],
+        ] = await getSigners();
+
+        [tokenMock, tokenMockAddr] = await deployTokenMock();
+
+        tokenMock = tokenMock.connect(tokenOwner);
+    });
+
+    beforeEach(async () => {
+        [[auction, auctionAddr], tokenId] = await Promise.all([
+            deployAuctionUpgradeable(tokenMock, marketSigner),
+            mintToken(),
+        ]);
+
+        seller = tokenOwnerAddr;
+        price = 100000n;
+        priceStep = 100n;
+        endTime = await getAuctionEndTime();
+        participants = [tokenOwnerAddr, platformAddr];
+        shares = [MAX_TOTAL_SHARE / 2n, MAX_TOTAL_SHARE / 2n];
+        deadline = await getSignDeadline();
+
+        auction = auction.connect(buyer1);
+    });
+
+    it(`should have correct token`, async () => {
+        await expect(auction.TOKEN()).to.eventually.equal(tokenMockAddr);
+    });
+
+    it(`should have correct maximum total share`, async () => {
+        await expect(auction.MAX_TOTAL_SHARE()).to.eventually.equal(MAX_TOTAL_SHARE);
+    });
+
+    it(`should have correct initial order count`, async () => {
+        await expect(auction.orderCount()).to.eventually.equal(0n);
+    });
+
+    it(`should have correct market signer`, async () => {
+        await expect(auction.MARKET_SIGNER()).to.eventually.equal(marketSignerAddr);
+    });
+
     describe(`method 'onERC721Received'`, () => {
-        let tokenId: string;
+        it(`should place correct order`, async () => {
+            await placeOrder();
 
-        beforeEach(async () => {
-            tokenId = (await tokenMock.totalSupply()).toString();
+            const order = await auction.order(0);
 
-            tokenMock = tokenMock.connect(tokenOwner);
-
-            await tokenMock.mint(tokenOwner, tokenId);
+            expect(order.seller).equal(seller);
+            expect(order.buyer).equal(ZeroAddress);
+            expect(order.tokenId).equal(tokenId);
+            expect(order.price).equal(price);
+            expect(order.priceStep).equal(priceStep);
+            expect(order.endTime).equal(endTime);
+            expect(order.status).equal(OrderStatus.Placed);
+            expect(order.participants).to.deep.equal(participants);
+            expect(order.shares).to.deep.equal(shares);
         });
 
-        it(`should place order if data and signature are valid`, async () => {
-            const block = await ethers.provider.getBlock('latest');
-            const deadline = block!.timestamp + 100000000;
-
-            const order: OrderStruct = {
-                seller: tokenOwnerAddress,
-                tokenId,
-                price: 100000n,
-                participants: [tokenOwnerAddress, platformAddress],
-                shares: [maxTotalShare / 2n, maxTotalShare / 2n],
-                deadline,
-            };
-
-            const endTime = block!.timestamp + 100000000;
-            const priceStep = 100n;
-
-            const signature = await signAuctionOrder(chainId, auctionAddress, order, marketSigner);
-
-            await safeTransferFrom(
-                tokenOwner,
-                tokenId,
-                order.price,
-                priceStep,
-                endTime,
-                order.deadline,
-                order.participants,
-                order.shares,
-                signature,
-            );
-
-            const placedOrder = await auction.order(0);
-
-            expect(placedOrder.seller).equal(tokenOwnerAddress);
-            expect(placedOrder.tokenId.toString()).equal(order.tokenId);
-            expect(placedOrder.price.toString()).equal(order.price);
-            expect(placedOrder.status).equal(OrderStatus.Placed);
-        });
-
-        it(`should emit Placed event`, async () => {
-            const orderId = '0';
-
-            const block = await ethers.provider.getBlock('latest');
-            const deadline = block!.timestamp + 100000000;
-
-            const order: OrderStruct = {
-                seller: tokenOwnerAddress,
-                tokenId,
-                price: 100000n,
-                participants: [tokenOwnerAddress, platformAddress],
-                shares: [maxTotalShare / 2n, maxTotalShare / 2n],
-                deadline,
-            };
-
-            const endTime = block!.timestamp + 100000000;
-            const priceStep = 100n;
-
-            const signature = await signAuctionOrder(chainId, auctionAddress, order, marketSigner);
-
-            await expect(
-                safeTransferFrom(
-                    tokenOwner,
-                    tokenId,
-                    order.price,
-                    priceStep,
-                    endTime,
-                    order.deadline,
-                    order.participants,
-                    order.shares,
-                    signature,
-                ),
-            )
+        it(`should emit placed event`, async () => {
+            await expect(placeOrder())
                 .to.emit(auction, 'Placed')
-                .withArgs(orderId, tokenId, tokenOwnerAddress, order.price, priceStep, endTime);
+                .withArgs(0, tokenId, seller, price, priceStep, endTime);
         });
 
         it(`should increase order count`, async () => {
-            const block = await ethers.provider.getBlock('latest');
-            const deadline = block!.timestamp + 100000000;
+            await placeOrder();
 
-            const order: OrderStruct = {
-                seller: tokenOwnerAddress,
-                tokenId,
-                price: 100000n,
-                participants: [tokenOwnerAddress, platformAddress],
-                shares: [maxTotalShare / 2n, maxTotalShare / 2n],
-                deadline,
-            };
-
-            const endTime = block!.timestamp + 100000000;
-            const priceStep = 100n;
-
-            const signature = await signAuctionOrder(chainId, auctionAddress, order, marketSigner);
-
-            await safeTransferFrom(
-                tokenOwner,
-                tokenId,
-                order.price,
-                priceStep,
-                endTime,
-                order.deadline,
-                order.participants,
-                order.shares,
-                signature,
-            );
-
-            const orderCount = await auction.orderCount();
-
-            expect(orderCount.toString()).equal('1');
-        });
-
-        it(`should fail if caller is not token contract`, async () => {
-            const block = await ethers.provider.getBlock('latest');
-            const deadline = block!.timestamp + 100000000;
-
-            const order: OrderStruct = {
-                seller: tokenOwnerAddress,
-                tokenId,
-                price: 100000n,
-                participants: [tokenOwnerAddress, platformAddress],
-                shares: [maxTotalShare / 2n, maxTotalShare / 2n],
-                deadline,
-            };
-
-            const endTime = block!.timestamp + 100000000;
-            const priceStep = 100n;
-
-            const signature = await signAuctionOrder(chainId, auctionAddress, order, marketSigner);
-
-            await expect(
-                auction.onERC721Received(
-                    tokenOwner,
-                    tokenOwner,
-                    tokenId,
-                    AbiCoder.defaultAbiCoder().encode(
-                        [
-                            'uint256',
-                            'uint256',
-                            'uint256',
-                            'uint256',
-                            'address[]',
-                            'uint256[]',
-                            'bytes',
-                        ],
-                        [
-                            order.price,
-                            priceStep,
-                            endTime,
-                            deadline,
-                            order.participants,
-                            order.shares,
-                            signature,
-                        ],
-                    ),
-                ),
-            ).to.be.rejectedWith('BaseMarketUnauthorizedAccount');
+            await expect(auction.orderCount()).eventually.equal(1);
         });
 
         it(`should fail if signature is expired`, async () => {
-            const block = await ethers.provider.getBlock('latest');
-            const deadline = block!.timestamp + 100000000;
+            const _deadline = await getSignDeadline();
+            const _endTime = (await getAuctionEndTime()) + 20;
 
-            const order: OrderStruct = {
-                seller: tokenOwnerAddress,
-                tokenId,
-                price: 100000n,
-                participants: [tokenOwnerAddress, platformAddress],
-                shares: [maxTotalShare / 2n, maxTotalShare / 2n],
-                deadline,
-            };
+            await setNextBlockTimestamp(_deadline + 10);
 
-            const endTime = block!.timestamp + 100000000000;
-            const priceStep = 100n;
-
-            const signature = await signAuctionOrder(chainId, auctionAddress, order, marketSigner);
-
-            await setNextBlockTimestamp(deadline + 10);
-
-            await expect(
-                safeTransferFrom(
-                    tokenOwner,
-                    tokenId,
-                    order.price,
-                    priceStep,
-                    endTime,
-                    order.deadline,
-                    order.participants,
-                    order.shares,
-                    signature,
-                ),
-            ).to.be.rejectedWith('MarketSignerSignatureExpired');
+            await expect(placeOrder({ _endTime, _deadline })).to.be.rejectedWith(
+                'MarketSignerExpiredSignature',
+            );
         });
 
-        it(`should fail if number of participants is not equal number of shares`, async () => {
-            const block = await ethers.provider.getBlock('latest');
-            const deadline = block!.timestamp + 100000000;
+        it(`should fail if end time lass than block time`, async () => {
+            const _endTime = await getAuctionEndTime();
 
-            const order: OrderStruct = {
-                seller: tokenOwnerAddress,
-                tokenId,
-                price: 100000n,
-                participants: [tokenOwnerAddress, platformAddress, tokenOwnerAddress],
-                shares: [maxTotalShare / 2n, maxTotalShare / 2n],
-                deadline,
-            };
+            await setNextBlockTimestamp(_endTime + 10);
 
-            const endTime = block!.timestamp + 100000000000;
-            const priceStep = 100n;
+            await expect(placeOrder({ _endTime })).to.be.rejectedWith('AuctionInvalidEndTime');
+        });
 
-            const signature = await signAuctionOrder(chainId, auctionAddress, order, marketSigner);
+        it(`should fail if number of shares is not equal number of participants`, async () => {
+            const _participants = [tokenOwnerAddr];
+            const _shares = [MAX_TOTAL_SHARE / 2n, MAX_TOTAL_SHARE / 2n];
 
-            await expect(
-                safeTransferFrom(
-                    tokenOwner,
-                    tokenId,
-                    order.price,
-                    priceStep,
-                    endTime,
-                    order.deadline,
-                    order.participants,
-                    order.shares,
-                    signature,
-                ),
-            ).to.be.rejectedWith('BaseMarketInvalidSharesNumber');
+            await expect(placeOrder({ _participants, _shares })).to.be.rejectedWith(
+                'BaseMarketInvalidSharesNumber',
+            );
         });
 
         it(`should fail if total shares is not equal maximum total share`, async () => {
-            const block = await ethers.provider.getBlock('latest');
-            const deadline = block!.timestamp + 100000000;
+            const _participants = [tokenOwnerAddr, platformAddr];
+            const _shares = [MAX_TOTAL_SHARE, 1n];
 
-            const order: OrderStruct = {
-                seller: tokenOwnerAddress,
-                tokenId,
-                price: 100000n,
-                participants: [tokenOwnerAddress, platformAddress, tokenOwnerAddress],
-                shares: [maxTotalShare / 3n, maxTotalShare / 3n, maxTotalShare / 3n],
-                deadline,
-            };
+            await expect(placeOrder({ _participants, _shares })).to.be.rejectedWith(
+                'BaseMarketInvalidSharesSum',
+            );
+        });
 
-            const endTime = block!.timestamp + 100000000000;
-            const priceStep = 100n;
+        it(`should fail if shares and participants are empty`, async () => {
+            const _participants: string[] = [];
+            const _shares: bigint[] = [];
 
-            const signature = await signAuctionOrder(chainId, auctionAddress, order, marketSigner);
-
-            await expect(
-                safeTransferFrom(
-                    tokenOwner,
-                    tokenId,
-                    order.price,
-                    priceStep,
-                    endTime,
-                    order.deadline,
-                    order.participants,
-                    order.shares,
-                    signature,
-                ),
-            ).to.be.rejectedWith('BaseMarketInvalidSharesSum');
+            await expect(placeOrder({ _participants, _shares })).to.be.rejectedWith(
+                'BaseMarketInvalidSharesSum',
+            );
         });
 
         it(`should fail if market signer is invalid`, async () => {
-            const block = await ethers.provider.getBlock('latest');
-            const deadline = block!.timestamp + 100000000;
+            const _marketSigner = randomAccount;
 
-            const order: OrderStruct = {
-                seller: tokenOwnerAddress,
-                tokenId,
-                price: 100000n,
-                participants: [tokenOwnerAddress, platformAddress, tokenOwnerAddress],
-                shares: [maxTotalShare / 3n, maxTotalShare / 3n, maxTotalShare / 3n],
-                deadline,
-            };
-
-            const endTime = block!.timestamp + 100000000000;
-            const priceStep = 100n;
-
-            const signature = await signAuctionOrder(chainId, auctionAddress, order, randomAccount);
-
-            await expect(
-                safeTransferFrom(
-                    tokenOwner,
-                    tokenId,
-                    order.price,
-                    priceStep,
-                    endTime,
-                    order.deadline,
-                    order.participants,
-                    order.shares,
-                    signature,
-                ),
-            ).to.be.rejectedWith('MarketSignerUnauthorized');
+            await expect(placeOrder({ _marketSigner })).to.be.rejectedWith(
+                'MarketSignerInvalidSigner',
+            );
         });
 
-        it(`should fail if end time is not more than current time`, async () => {
-            const block = await ethers.provider.getBlock('latest');
-            const deadline = block!.timestamp + 10000000000;
-
-            const order: OrderStruct = {
-                seller: tokenOwnerAddress,
-                tokenId,
-                price: 100000n,
-                participants: [tokenOwnerAddress, platformAddress],
-                shares: [maxTotalShare / 2n, maxTotalShare / 2n],
-                deadline,
-            };
-
-            const endTime = block!.timestamp + 100000;
-            const priceStep = 100n;
-
-            const signature = await signAuctionOrder(chainId, auctionAddress, order, marketSigner);
-
-            await setNextBlockTimestamp(endTime + 10);
-
-            await expect(
-                safeTransferFrom(
-                    tokenOwner,
-                    tokenId,
-                    order.price,
-                    priceStep,
-                    endTime,
-                    order.deadline,
-                    order.participants,
-                    order.shares,
-                    signature,
-                ),
-            ).to.be.rejectedWith('AuctionInvalidEndTime');
-        });
-    });
-
-    describe(`method 'raise'`, () => {
-        let tokenId: string;
-        let price: bigint;
-        let priceStep: bigint;
-        let endTime: number;
-        let participants: string[];
-        let shares: bigint[];
-        let orderId: string;
-
-        beforeEach(async () => {
-            tokenMock = tokenMock.connect(tokenOwner);
-
-            const block = await ethers.provider.getBlock('latest');
-            const deadline = block!.timestamp + 100000000;
-
-            tokenId = (await tokenMock.totalSupply()).toString();
-            price = 100000n;
-            priceStep = 100n;
-            endTime = block!.timestamp + 100000000;
-            participants = [tokenOwnerAddress, platformAddress];
-            shares = [maxTotalShare / 2n, maxTotalShare / 2n];
-            orderId = '0';
-
-            await tokenMock.mint(tokenOwner, tokenId);
-
-            const order: OrderStruct = {
-                seller: tokenOwnerAddress,
+        it(`should fail if caller is not token contract`, async () => {
+            const marketPermit: AuctionPermitStruct = {
+                seller,
                 tokenId,
                 price,
+                priceStep,
+                endTime,
                 participants,
                 shares,
                 deadline,
             };
 
-            const signature = await signAuctionOrder(chainId, auctionAddress, order, marketSigner);
-
-            await safeTransferFrom(
-                tokenOwner,
-                tokenId,
-                order.price,
-                priceStep,
-                endTime,
-                order.deadline,
-                order.participants,
-                order.shares,
-                signature,
+            const signature = await signAuctionPermit(
+                chainId,
+                auctionAddr,
+                marketPermit,
+                marketSigner,
             );
 
-            auction = auction.connect(buyer1);
-            tokenMock = tokenMock.connect(buyer1);
+            await expect(
+                auction.onERC721Received(
+                    tokenOwnerAddr,
+                    tokenOwnerAddr,
+                    tokenId,
+                    encodeAuctionPlaceParams(
+                        price,
+                        priceStep,
+                        endTime,
+                        deadline,
+                        participants,
+                        shares,
+                        signature,
+                    ),
+                ),
+            ).to.be.rejectedWith('BaseMarketUnauthorizedAccount');
         });
+    });
 
-        it(`should set buyer if new price equal is order price for first raise`, async () => {
-            await auction.raise(orderId, { value: price });
+    describe(`method 'raise'`, () => {
+        beforeEach(placeOrder);
 
-            const order = await auction.order(orderId);
+        it(`should set buyer if new price is equal to order price for first raise`, async () => {
+            await raise({ orderId: 0, _price: price });
 
-            expect(order.buyer).equal(buyer1Address);
+            const order = await auction.order(0);
+
+            expect(order.buyer).equal(buyer1Addr);
             expect(order.price).equal(price);
         });
 
         it(`should set buyer and raise order price if new price is more than order price for first raise`, async () => {
-            price = price + 100n;
+            const _price = price + 10n;
 
-            await auction.raise(orderId, { value: price });
+            await raise({ orderId: 0, _price });
 
-            const order = await auction.order(orderId);
+            const order = await auction.order(0);
 
-            expect(order.buyer).equal(buyer1Address);
-            expect(order.price).equal(price);
+            expect(order.buyer).equal(buyer1Addr);
+            expect(order.price).equal(_price);
         });
 
-        it(`should increase contract balance`, async () => {
-            price = price + priceStep;
+        it(`should fail if new price is less than order price for first raise`, async () => {
+            const _price = price - 10n;
 
-            await expect(() => auction.raise(orderId, { value: price })).to.be.changeEtherBalances(
-                [buyer1Address, auctionAddress],
+            await expect(raise({ orderId: 0, _price })).to.be.rejectedWith('AuctionNotEnoughEther');
+        });
+
+        it(`should change buyer and raise order price if new price is equal to sum of order price and price step for second raise`, async () => {
+            await raise({ orderId: 0, _price: price });
+
+            const _auction = auction.connect(buyer2);
+            const _price = price + priceStep;
+
+            await raise({ orderId: 0, _price, _auction });
+
+            const order = await auction.order(0);
+
+            expect(order.buyer).equal(buyer2Addr);
+            expect(order.price).equal(_price);
+        });
+
+        it(`should change buyer and raise order price if new price is more than sum of order price and price step for second raise`, async () => {
+            await raise({ orderId: 0, _price: price });
+
+            const _auction = auction.connect(buyer2);
+            const _price = price + priceStep + 10n;
+
+            await raise({ orderId: 0, _price, _auction });
+
+            const order = await auction.order(0);
+
+            expect(order.buyer).equal(buyer2Addr);
+            expect(order.price).equal(_price);
+        });
+
+        it(`should fail if new price is less than sum of order price and price step for second raise`, async () => {
+            await raise({ orderId: 0, _price: price });
+
+            const _auction = auction.connect(buyer2);
+            const _price = price - 10n;
+
+            await expect(raise({ orderId: 0, _price, _auction })).to.be.rejectedWith(
+                'AuctionNotEnoughEther',
+            );
+        });
+
+        it(`should increase contract balance by new price for first raise`, async () => {
+            await expect(() => raise({ orderId: 0, _price: price })).to.be.changeEtherBalances(
+                [buyer1Addr, auctionAddr],
                 [price * -1n, price],
             );
         });
 
-        it(`should change contract balance by price difference for seconds raise`, async () => {
-            await auction.raise(orderId, { value: price });
+        it(`should increase contract balance by difference of old and new price for second raise`, async () => {
+            await raise({ orderId: 0, _price: price });
 
-            auction = auction.connect(buyer2);
-
-            const order = await auction.order(orderId);
-
-            const newValue = order.price + priceStep;
+            const _auction = auction.connect(buyer2);
+            const newPrice = price + priceStep;
 
             await expect(() =>
-                auction.raise(orderId, { value: newValue }),
+                raise({ orderId: 0, _price: newPrice, _auction }),
             ).to.be.changeEtherBalances(
-                [buyer2Address, auctionAddress],
-                [newValue * -1n, priceStep],
+                [buyer1Addr, buyer2Addr, auctionAddr],
+                [price, newPrice * -1n, newPrice - price],
             );
         });
 
-        it(`should change buyer`, async () => {
-            await auction.raise(orderId, { value: price });
-
-            auction = auction.connect(buyer2);
-
-            const order = await auction.order(orderId);
-
-            price = order.price + priceStep;
-
-            await auction.raise(orderId, { value: price });
-
-            const updatedOrder = await auction.order(orderId);
-
-            expect(updatedOrder.buyer).equal(buyer2Address);
-        });
-
         it(`should send back ether to prev buyer`, async () => {
-            await auction.raise(orderId, { value: price });
+            await raise({ orderId: 0, _price: price });
 
-            auction = auction.connect(buyer2);
+            const _auction = auction.connect(buyer2);
+            const newPrice = price + priceStep;
 
-            const order = await auction.order(orderId);
-
-            price = order.price + priceStep;
-
-            await expect(() => auction.raise(orderId, { value: price })).to.be.changeEtherBalances(
-                [buyer2Address, auctionAddress, buyer1Address],
-                [price * -1n, priceStep, price - priceStep],
+            await expect(() =>
+                raise({ orderId: 0, _price: newPrice, _auction }),
+            ).to.be.changeEtherBalances(
+                [buyer1Addr, buyer2Addr, auctionAddr],
+                [price, newPrice * -1n, newPrice - price],
             );
         });
 
         it(`should emit Raised event`, async () => {
-            await expect(auction.raise(orderId, { value: price }))
+            await expect(raise({ orderId: 0, _price: price }))
                 .to.be.emit(auction, 'Raised')
-                .withArgs(orderId, tokenId, buyer1Address, price);
+                .withArgs(0, tokenId, buyer1Addr, price);
         });
 
-        it(`should fail if order doesn't exist`, async () => {
-            await expect(auction.raise('1234', { value: price })).to.be.rejectedWith(
+        it(`should fail if order dose not exist`, async () => {
+            await expect(raise({ orderId: 1, _price: price })).to.be.rejectedWith(
                 'BaseMarketOrderNotPlaced',
             );
         });
@@ -601,147 +410,101 @@ describe.skip('Auction', function () {
         it(`should fail if auction is ended`, async () => {
             await setNextBlockTimestamp(endTime + 1);
 
-            await expect(auction.raise(orderId, { value: price })).to.be.rejectedWith(
+            await expect(raise({ orderId: 0, _price: price })).to.be.rejectedWith(
                 'AuctionTimeIsUp',
             );
         });
 
         it(`should fail if caller is seller`, async () => {
-            auction = auction.connect(tokenOwner);
+            const _auction = auction.connect(tokenOwner);
 
-            await expect(auction.raise(orderId, { value: price })).to.be.rejectedWith(
+            await expect(raise({ orderId: 0, _price: price, _auction })).to.be.rejectedWith(
                 'AuctionInvalidBuyer',
-            );
-        });
-
-        it(`should fail if sent ether amount is not enough `, async () => {
-            price = price - 1n;
-
-            await expect(auction.raise(orderId, { value: price })).to.be.rejectedWith(
-                'AuctionNotEnoughEther',
             );
         });
     });
 
     describe(`method 'end'`, () => {
-        let tokenId: string;
-        let price: bigint;
-        let priceStep: bigint;
-        let endTime: number;
-        let participants: string[];
-        let shares: bigint[];
-        let orderId: string;
+        beforeEach(placeOrder);
 
-        beforeEach(async () => {
-            tokenMock = tokenMock.connect(tokenOwner);
-
-            const block = await ethers.provider.getBlock('latest');
-            const deadline = block!.timestamp + 100000000;
-
-            tokenId = (await tokenMock.totalSupply()).toString();
-            price = 100000n;
-            priceStep = 100n;
-            endTime = block!.timestamp + 100000000;
-            participants = [tokenOwnerAddress, platformAddress, randomAccountAddress];
-            shares = [
-                maxTotalShare / 3n,
-                maxTotalShare / 3n,
-                maxTotalShare - 2n * (maxTotalShare / 3n),
-            ];
-            orderId = '0';
-
-            await tokenMock.mint(tokenOwnerAddress, tokenId);
-
-            const order: OrderStruct = {
-                seller: tokenOwnerAddress,
-                tokenId,
-                price,
-                participants,
-                shares,
-                deadline,
-            };
-
-            const signature = await signAuctionOrder(chainId, auctionAddress, order, marketSigner);
-
-            await safeTransferFrom(
-                tokenOwner,
-                tokenId,
-                order.price,
-                priceStep,
-                endTime,
-                order.deadline,
-                order.participants,
-                order.shares,
-                signature,
-            );
-
-            auction = auction.connect(buyer1);
-        });
-
-        it(`should fail if order doesn't exist`, async () => {
-            await expect(auction.end('1234')).to.be.rejectedWith('BaseMarketOrderNotPlaced');
+        it(`should fail if order dose not exist`, async () => {
+            await expect(end({ orderId: 1 })).to.be.rejectedWith('BaseMarketOrderNotPlaced');
         });
 
         it(`should fail if auction is still going`, async () => {
-            await expect(auction.end(orderId)).to.be.rejectedWith('AuctionStillGoing');
+            await expect(end({ orderId: 0 })).to.be.rejectedWith('AuctionStillGoing');
         });
 
-        it(`should emit Ended event`, async () => {
-            await setNextBlockTimestamp(endTime + 1);
+        describe(`if buyer dose not exist`, () => {
+            beforeEach(() => setNextBlockTimestamp(endTime + 1));
 
-            const order = await auction.order(orderId);
-
-            await expect(auction.end(orderId))
-                .to.be.emit(auction, 'Ended')
-                .withArgs(orderId, tokenId, order.buyer, tokenOwnerAddress, price);
-        });
-
-        describe(`if buyer doesn't exist`, () => {
-            beforeEach(async () => {
-                await setNextBlockTimestamp(endTime + 1);
+            it(`should end if caller is random account`, async () => {
+                await expect(end({ orderId: 0 }))
+                    .to.be.emit(auction, 'Ended')
+                    .withArgs(0, tokenId, ZeroAddress, tokenOwnerAddr, price);
             });
 
             it(`should transfer token back to seller`, async () => {
-                await expect(auction.end(orderId))
+                await expect(end({ orderId: 0 }))
                     .to.be.emit(tokenMock, 'Transfer')
-                    .withArgs(auctionAddress, tokenOwnerAddress, tokenId);
-                await expect(tokenMock.ownerOf(tokenId)).to.eventually.equal(tokenOwnerAddress);
+                    .withArgs(auctionAddr, tokenOwnerAddr, tokenId);
+                await expect(tokenMock.ownerOf(tokenId)).to.eventually.equal(tokenOwnerAddr);
+            });
+
+            it(`should emit Ended event with correct args`, async () => {
+                await expect(end({ orderId: 0 }))
+                    .to.be.emit(auction, 'Ended')
+                    .withArgs(0, tokenId, ZeroAddress, tokenOwnerAddr, price);
+            });
+
+            it(`should change order status`, async () => {
+                await end({ orderId: 0 });
+
+                const order = await auction.order(0);
+
+                expect(order.status).equal(OrderStatus.Ended);
             });
         });
 
         describe(`if buyer exists`, () => {
             beforeEach(async () => {
-                await auction.raise(orderId, { value: price });
+                await raise({ orderId: 0, _price: price });
 
                 await setNextBlockTimestamp(endTime + 1);
             });
 
+            it(`should end if caller is random account`, async () => {
+                await expect(end({ orderId: 0 }))
+                    .to.be.emit(auction, 'Ended')
+                    .withArgs(0, tokenId, buyer1Addr, tokenOwnerAddr, price);
+            });
+
             it(`should transfer token to buyer`, async () => {
-                await expect(auction.end(orderId))
+                await expect(end({ orderId: 0 }))
                     .to.be.emit(tokenMock, 'Transfer')
-                    .withArgs(auctionAddress, buyer1Address, tokenId);
-                await expect(tokenMock.ownerOf(tokenId)).to.eventually.equal(buyer1Address);
+                    .withArgs(auctionAddr, buyer1Addr, tokenId);
+                await expect(tokenMock.ownerOf(tokenId)).to.eventually.equal(buyer1Addr);
             });
 
             it(`should distribute ETH between participants according to shares`, async () => {
-                const values: bigint[] = [];
-
-                let released = 0n;
-
-                for (let i = 0; i < shares.length - 1; i++) {
-                    const value = (price * shares[i]) / maxTotalShare;
-
-                    released = released + value;
-
-                    values.push(value);
-                }
-
-                values.push(price - released);
-
-                await expect(() => auction.end(orderId)).to.be.changeEtherBalances(
-                    [auctionAddress, ...participants],
-                    [price * -1n, ...values],
+                await expect(end({ orderId: 0 })).to.be.changeEtherBalances(
+                    [auctionAddr, ...participants],
+                    [price * -1n, ...shares.map((share) => (price * share) / MAX_TOTAL_SHARE)],
                 );
+            });
+
+            it(`should emit Ended event with correct args`, async () => {
+                await expect(end({ orderId: 0 }))
+                    .to.be.emit(auction, 'Ended')
+                    .withArgs(0, tokenId, buyer1Addr, tokenOwnerAddr, price);
+            });
+
+            it(`should change order status`, async () => {
+                await end({ orderId: 0 });
+
+                const order = await auction.order(0);
+
+                expect(order.status).equal(OrderStatus.Ended);
             });
         });
     });
