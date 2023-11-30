@@ -46,7 +46,12 @@ abstract contract BaseMarket is IBaseMarket {
      *
      * @param data See `_onReceived` method implementation.
      */
-    function onERC721Received(address, address from, uint256 tokenId, bytes calldata data) external returns (bytes4) {
+    function onERC721Received(
+        address /* operator */,
+        address from,
+        uint256 tokenId,
+        bytes calldata data
+    ) external returns (bytes4) {
         if (msg.sender != address(TOKEN)) revert BaseMarketUnauthorizedAccount(msg.sender);
 
         _onReceived(from, tokenId, data);

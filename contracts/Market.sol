@@ -12,6 +12,7 @@ import "./errors/MarketErrors.sol";
  * @notice Market contract provides logic for selling and buying ERC721 tokens.
  */
 contract Market is BaseMarket, MarketSigner, IMarket {
+    // TODO: Do you need to remove seller?
     bytes32 public constant MARKET_PERMIT_TYPE_HASH =
         keccak256(
             "MarketPermit(address seller,uint256 tokenId,uint256 price,address[] participants,uint256[] shares,uint256 deadline)"

@@ -12,21 +12,19 @@ contract Deployer {
     error DeployerIncorrectTokenAddress();
 
     constructor(address minter, address marketSigner, address proxyAdminOwner) {
-        address token = contractAddressFrom(address(this), 5);
+        address token = contractAddressFrom(address(this), 6);
 
-        address market = address(
-            new TransparentUpgradeableProxy(address(new Market(token, marketSigner)), proxyAdminOwner, "")
-        );
-
-        address auction = address(
-            new TransparentUpgradeableProxy(address(new Auction(token, marketSigner)), proxyAdminOwner, "")
-        );
-
-        address _token = address(new Token(minter, market, auction));
+        address market = _deployProxy(address(new Market(token, marketSigner)), proxyAdminOwner);
+        address auction = _deployProxy(address(new Auction(token, marketSigner)), proxyAdminOwner);
+        address _token = _deployProxy(address(new Token(minter, market, auction)), proxyAdminOwner);
 
         if (token != _token) revert DeployerIncorrectTokenAddress();
 
         emit Deployed(token, market, auction);
+    }
+
+    function _deployProxy(address _logic, address _owner) private returns (address) {
+        return address(new TransparentUpgradeableProxy(_logic, _owner, ""));
     }
 
     function contractAddressFrom(address deployer, uint256 nonce) public pure returns (address) {

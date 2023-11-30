@@ -51,6 +51,7 @@ contract Token is ERC721Enumerable, ERC721URIStorage {
      * @param _tokenURI Token metadata uri.
      * @param data Bytes optional data to send along with the call.
      */
+    // TODO: do we really need safeMint function?
     function safeMint(address to, uint256 tokenId, string memory _tokenURI, bytes memory data) external onlyMinter {
         _safeMint(to, tokenId, data);
         _setTokenURI(tokenId, _tokenURI);

@@ -8,6 +8,7 @@ pragma solidity ^0.8.20;
  * @notice Market contract provides logic for selling and buying ERC721 tokens.
  */
 interface IMarket {
+    // TODO: Do you need to split object struct into separate states for upgradeability?
     struct Order {
         address seller;
         uint256 tokenId;

@@ -35,7 +35,7 @@ contract Auction is BaseMarket, MarketSigner, IAuction {
      *   seller can't raise price for their own order.
      */
     function raise(uint256 orderId) external payable placedOrder(orderId) {
-        if (_orders[orderId].deadline < block.timestamp) revert AuctionTimeIsUp(_orders[orderId].deadline);
+        if (_orders[orderId].endTime < block.timestamp) revert AuctionTimeIsUp(_orders[orderId].endTime);
 
         if (msg.sender == _orders[orderId].seller) revert AuctionInvalidBuyer(msg.sender);
 
@@ -68,7 +68,7 @@ contract Auction is BaseMarket, MarketSigner, IAuction {
      * @dev To invoke method order must have `Placed` status and auction must not be ongoing.
      */
     function end(uint256 orderId) external placedOrder(orderId) {
-        if (_orders[orderId].deadline >= block.timestamp) revert AuctionStillGoing(_orders[orderId].deadline);
+        if (_orders[orderId].endTime >= block.timestamp) revert AuctionStillGoing(_orders[orderId].endTime);
 
         _orders[orderId].status = OrderStatus.Ended;
 
@@ -150,7 +150,7 @@ contract Auction is BaseMarket, MarketSigner, IAuction {
             buyer: address(0),
             tokenId: tokenId,
             price: price,
-            deadline: deadline,
+            endTime: endTime,
             priceStep: priceStep,
             status: OrderStatus.Placed,
             participants: participants,

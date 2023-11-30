@@ -17,7 +17,7 @@ interface IAuction {
         uint256 tokenId;
         uint256 price;
         uint256 priceStep;
-        uint256 deadline;
+        uint256 endTime;
         OrderStatus status;
         address[] participants;
         uint256[] shares;
