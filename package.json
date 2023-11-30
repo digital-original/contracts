@@ -3,15 +3,13 @@
     "version": "1.0.0",
     "license": "UNLICENSED",
     "scripts": {
-        "test": "ENV_MODE=test hardhat test",
+        "test": "npm run compile && ENV_MODE=test hardhat test",
+        "compile": "hardhat clean && hardhat compile",
+        "fork": "hardhat run node",
         "lint": "solhint 'contracts/**'",
         "format": "prettier --write .",
         "prepare": "husky install",
         "est": "docker run -it --rm -v $PWD:/src trailofbits/eth-security-toolbox",
-        "deploy:classic": "hardhat run src/deploy/classic.ts",
-        "deploy:upgradable": "hardhat run src/deploy/upgradable.ts",
-        "deploy:upgrade": "hardhat run src/deploy/upgrade.ts",
-        "deploy:verify": "hardhat run src/deploy/verify.ts",
         "slither": "ENV_MODE=test slither ./ --config-file ./slither.config.json"
     },
     "dependencies": {
