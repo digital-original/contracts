@@ -41,7 +41,7 @@ const hardhatBaseConfig: HardhatUserConfig = {
 };
 
 function buildHardhatConfig(): HardhatUserConfig {
-    if (ENV_MODE === 'test') {
+    if (ENV_MODE === 'test' || !ENV_MODE) {
         const hardhatTestConfig: HardhatUserConfig = {};
 
         return { ...hardhatBaseConfig, ...hardhatTestConfig };
