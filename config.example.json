@@ -1,0 +1,89 @@
+{
+    "sepolia": {
+        "chainUrl": "",
+        "chainId": 11155111,
+        "env": {
+            "dev": {
+                "wallet": {
+                    "deployer": {
+                        "public": "",
+                        "private": ""
+                    },
+                    "proxyAdminOwner": {
+                        "public": "",
+                        "private": ""
+                    },
+                    "minter": {
+                        "public": "",
+                        "private": ""
+                    },
+                    "marketSigner": {
+                        "public": "",
+                        "private": ""
+                    },
+                    "platform": {
+                        "public": "",
+                        "private": ""
+                    }
+                },
+                "contract": {
+                    "token": {
+                        "proxy": "",
+                        "admin": ""
+                    },
+                    "market": {
+                        "proxy": "",
+                        "admin": ""
+                    },
+                    "auction": {
+                        "proxy": "",
+                        "admin": ""
+                    }
+                }
+            },
+            "local": {
+                "wallet": {
+                    "deployer": {
+                        "public": "",
+                        "private": ""
+                    },
+                    "proxyAdminOwner": {
+                        "public": "",
+                        "private": ""
+                    },
+                    "minter": {
+                        "public": "",
+                        "private": ""
+                    },
+                    "marketSigner": {
+                        "public": "",
+                        "private": ""
+                    },
+                    "platform": {
+                        "public": "",
+                        "private": ""
+                    }
+                },
+                "contract": {
+                    "token": {
+                        "proxy": "",
+                        "admin": ""
+                    },
+                    "market": {
+                        "proxy": "",
+                        "admin": ""
+                    },
+                    "auction": {
+                        "proxy": "",
+                        "admin": ""
+                    }
+                }
+            }
+        }
+    },
+    "ethereum": {
+        "chainUrl": "",
+        "chainId": 1,
+        "env": {}
+    }
+}

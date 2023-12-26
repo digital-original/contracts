@@ -1,38 +1,33 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
-import {Upgradeable} from "./utils/Upgradeable.sol";
 import {BaseMarket} from "./utils/BaseMarket.sol";
 import {MarketSigner} from "./utils/MarketSigner.sol";
 import {IMarket} from "./interfaces/IMarket.sol";
+import "./errors/MarketErrors.sol";
 
 /**
  * @title Market
  *
- * @notice Market contract provides logic for selling and buying ERC-721 tokens.
+ * @notice Market contract provides logic for selling and buying ERC721 tokens.
  */
-contract Market is Upgradeable, BaseMarket, MarketSigner, IMarket {
+contract Market is BaseMarket, MarketSigner, IMarket {
+    // TODO: Do you need to remove seller?
+    bytes32 public constant MARKET_PERMIT_TYPE_HASH =
+        keccak256(
+            "MarketPermit(address seller,uint256 tokenId,uint256 price,address[] participants,uint256[] shares,uint256 deadline)"
+        );
+
     /**
      * @dev Stores orders by order ID.
      */
     mapping(uint256 => Order) private _orders;
 
     /**
-     * @param collection_ ERC-721 contract address, immutable.
-     * @param marketSigner_ Data signer address, immutable.
+     * @param _token ERC721 token contract address, immutable.
+     * @param _marketSigner Data signer address, immutable.
      */
-    constructor(
-        address collection_,
-        address marketSigner_
-    ) BaseMarket(collection_) MarketSigner(marketSigner_, "Market", "1") {}
-
-    /**
-     * @inheritdoc Upgradeable
-     */
-    function initialize() external override initializer {
-        __BaseMarket_init();
-        __MarketSigner_init();
-    }
+    constructor(address _token, address _marketSigner) BaseMarket(_token) MarketSigner(_marketSigner, "Market", "1") {}
 
     /**
      * @inheritdoc IMarket
@@ -42,24 +37,21 @@ contract Market is Upgradeable, BaseMarket, MarketSigner, IMarket {
      */
     function realize(uint256 orderId) external payable placedOrder(orderId) {
         address seller = _orders[orderId].seller;
+        uint256 price = _orders[orderId].price;
 
-        require(msg.sender != seller, "Market: seller can not be buyer");
-        require(msg.value == _orders[orderId].price, "Market: invalid ether amount");
+        if (msg.sender == seller) revert MarketInvalidBuyer(msg.sender);
+
+        if (msg.value != price) revert MarketInvalidAmount(msg.value, price);
 
         uint256 tokenId = _orders[orderId].tokenId;
 
         _orders[orderId].status = OrderStatus.Realized;
 
-        emit Realized(orderId, tokenId, msg.sender, seller, msg.value);
+        emit Realized(orderId, tokenId, msg.sender, seller, price);
 
         _transferToken(address(this), msg.sender, tokenId);
 
-        address[] memory participants = _orders[orderId].participants;
-        uint256[] memory shares = _orders[orderId].shares;
-
-        for (uint256 i = 0; i < shares.length; i++) {
-            _sendValue(participants[i], shares[i]);
-        }
+        _distributeReward(price, _orders[orderId].participants, _orders[orderId].shares);
     }
 
     /**
@@ -69,7 +61,7 @@ contract Market is Upgradeable, BaseMarket, MarketSigner, IMarket {
      *   to invoke method order must have `Placed` status.
      */
     function cancel(uint256 orderId) external placedOrder(orderId) {
-        require(_orders[orderId].seller == msg.sender, "Market: invalid caller");
+        if (msg.sender != _orders[orderId].seller) revert MarketUnauthorizedAccount(msg.sender);
 
         uint256 tokenId = _orders[orderId].tokenId;
 
@@ -84,36 +76,48 @@ contract Market is Upgradeable, BaseMarket, MarketSigner, IMarket {
      * @inheritdoc IMarket
      */
     function order(uint256 orderId) external view returns (Order memory) {
-        require(_orders[orderId].status != OrderStatus.NotExists, "Market: order does not exist");
+        if (_orders[orderId].status == OrderStatus.NotExists) revert MarketOrderNotExist(orderId);
         return _orders[orderId];
     }
 
-    /**
-     * @dev Places token sale order.
-     *
-     * @param from Token owner.
-     * @param tokenId Token for sale.
-     * @param price Token price.
-     * @param expiredBlock Block number until which `signature` is valid.
-     * @param participants Array with addresses between which reward will be distributed.
-     * @param shares Array with rewards amounts,
-     *   order of `shares` corresponds to order of `participants`,
-     *   total shares must be equal to `price`.
-     * @param signature [EIP-712](https://eips.ethereum.org/EIPS/eip-712) signature.
-     *   Signature must include `expiredBlock` and can include other data for validation.
-     *   See `MarketSigner::ORDER_TYPE_HASH`.
-     */
+    // /**
+    //  * @dev Places token sale order.
+    //  *
+    //  * @param from Token owner.
+    //  * @param tokenId Token for sale.
+    //  * @param price Token price.
+    //  * @param deadline Timestamp until which `signature` is valid.
+    //  * @param participants Array with addresses between which reward will be distributed.
+    //  * @param shares Array with rewards amounts,
+    //  *   order of `shares` corresponds to order of `participants`,
+    //  *   total shares must be equal to `price`.
+    //  * @param signature [EIP712](https://eips.ethereum.org/EIPS/eip-712) signature.
+    //  *   See `MarketSigner::ORDER_TYPE_HASH`.
+    //  */ TODO_DOC
     function _place(
         address from,
         uint256 tokenId,
         uint256 price,
-        uint256 expiredBlock,
+        uint256 deadline,
         address[] memory participants,
         uint256[] memory shares,
         bytes memory signature
     ) internal {
-        _validateSignature(from, tokenId, price, expiredBlock, participants, shares, signature);
-        _validatePrice(price, participants, shares);
+        bytes32 structHash = keccak256(
+            abi.encode(
+                MARKET_PERMIT_TYPE_HASH,
+                from,
+                tokenId,
+                price,
+                keccak256(abi.encodePacked(participants)),
+                keccak256(abi.encodePacked(shares)),
+                deadline
+            )
+        );
+
+        _validateSignature(structHash, deadline, signature);
+
+        _validateShares(participants, shares);
 
         uint256 orderId = _useOrderId();
 
@@ -134,19 +138,25 @@ contract Market is Upgradeable, BaseMarket, MarketSigner, IMarket {
      *
      * @dev Method overrides `BaseMarket::_onReceived.`
      *
-     * @param data abi.encode(`price`, `expiredBlock`, `participants`, `shares`, `signature`).
+     * @param data abi.encode(
+     *     `price`,
+     *     `deadline`,
+     *     `participants`,
+     *     `shares`,
+     *     `signature`
+     *   ).
      *   See `_place` method.
      */
     function _onReceived(address from, uint256 tokenId, bytes calldata data) internal override(BaseMarket) {
         (
             uint256 price,
-            uint256 expiredBlock,
+            uint256 deadline,
             address[] memory participants,
             uint256[] memory shares,
             bytes memory signature
         ) = abi.decode(data, (uint256, uint256, address[], uint256[], bytes));
 
-        _place(from, tokenId, price, expiredBlock, participants, shares, signature);
+        _place(from, tokenId, price, deadline, participants, shares, signature);
     }
 
     /**
@@ -157,11 +167,4 @@ contract Market is Upgradeable, BaseMarket, MarketSigner, IMarket {
     function _orderPlaced(uint256 orderId) internal view override(BaseMarket) returns (bool) {
         return _orders[orderId].status == OrderStatus.Placed;
     }
-
-    /**
-     * @dev This empty reserved space is put in place to allow future versions to add new
-     *   variables without shifting down storage in the inheritance chain.
-     *   See <https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps>.
-     */
-    uint256[50] private __gap;
 }

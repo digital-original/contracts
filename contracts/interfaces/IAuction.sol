@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
 /**
  * @title IAuction.
  *
  * @notice Auction contract interface.
- * @notice Auction contract provides logic for creating auction with ERC-721 tokens.
+ * @notice Auction contract provides logic for creating auction with ERC721 tokens.
  */
 interface IAuction {
     /**
@@ -16,8 +16,8 @@ interface IAuction {
         address buyer;
         uint256 tokenId;
         uint256 price;
-        uint256 endBlock;
         uint256 priceStep;
+        uint256 endTime;
         OrderStatus status;
         address[] participants;
         uint256[] shares;
@@ -35,23 +35,38 @@ interface IAuction {
     /**
      * @dev Triggered when order was placed.
      */
-    event Placed(uint256 indexed orderId, uint256 indexed tokenId, address indexed seller, uint256 price);
+    // prettier-ignore
+    event Placed(
+        uint256 indexed orderId,
+        uint256 indexed tokenId,
+        address indexed seller,
+        uint256 price,
+        uint256 priceStep,
+        uint256 endTime
+    );
 
     /**
      * @dev Triggered when order price was raised.
      */
+    // prettier-ignore
     event Raised(
         uint256 indexed orderId,
-        uint256 indexed tokenId,
+        uint256 indexed tokenId, // TODO: remove tokenId, we have tokenId in prev event
         address indexed buyer,
-        address seller,
         uint256 price
     );
 
     /**
      * @dev Triggered when auction was ended.
      */
-    event Ended(uint256 indexed orderId, uint256 indexed tokenId, address indexed buyer, address seller, uint256 price);
+    // prettier-ignore
+    event Ended(
+        uint256 indexed orderId,
+        uint256 indexed tokenId, // TODO: remove tokenId, we have tokenId in prev event
+        address indexed buyer, // TODO: remove buyer, we have buyer in prev event
+        address seller, // TODO: remove seller, we have seller in prev event
+        uint256 price // TODO: remove price, we have price in prev event
+    );
 
     /**
      * @notice Raises auction order price, sets new buyer and locks Ether,

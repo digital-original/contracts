@@ -1,50 +1,69 @@
 import { ethers, network } from 'hardhat';
 import { deployUpgradeable } from '../scripts/deploy-upgradable';
-import { verify } from '../scripts/verify';
+import { _verify } from './_verify';
+import { ChainConfig } from '../types/environment';
 
-const CONTRACT_NAME = 'WhiteList';
-const PROXY_ADMIN_ADDRESS = '0x77d3e2FAF8afEB827Db827116F1bF7dd14260D15';
-const CONSTRUCTOR_ARGS: any[] = [];
-const INITIALIZE_ARGS: any[] = [];
-const PATH_TO_CONTRACT = `contracts/${CONTRACT_NAME}.sol:${CONTRACT_NAME}`;
+// TODO: create hardhat task
 
-async function main() {
+const chainConfig = <ChainConfig>(<any>network.config);
+
+const IMPL_NAME: string = 'Market';
+const IMPL_CONSTRUCTOR_ARGS: string[] = [
+    chainConfig.contracts.token,
+    chainConfig.wallets.marketSigner.public,
+];
+const IMPL_PATH: string = `${IMPL_NAME}.sol:${IMPL_NAME}`;
+const PROXY_ADMIN_OWNER: string = chainConfig.wallets.deployer.public;
+
+async function main(
+    implName: string,
+    implConstructorArgs: string[],
+    implPath: string,
+    proxyAdminOwner: string,
+) {
     const [deployer] = await ethers.getSigners();
 
-    console.log(`Deploying ${CONTRACT_NAME} Upgradeable Contract...\n`);
+    console.log(`\n`);
+    console.log(`Deploying ${implName} Upgradeable Contract...`);
+    console.log(`Environment Mode - ${process.env.ENV_MODE}`);
+    console.log(`Proxy Admin Owner - ${proxyAdminOwner}`);
+    console.log(`Impl Constructor Arguments - ${JSON.stringify(implConstructorArgs)}`);
 
-    const { impl, proxy, implName, proxyName, proxyArgs, initializeTx } = await deployUpgradeable({
-        contractName: CONTRACT_NAME,
-        proxyAdminAddress: PROXY_ADMIN_ADDRESS,
-        constructorArgs: CONSTRUCTOR_ARGS,
-        initializeArgs: INITIALIZE_ARGS,
-        signer: deployer,
-    });
+    const { impl, proxy, proxyAdmin, proxyConstructorArgs, proxyAdminConstructorArgs } =
+        await deployUpgradeable({
+            implName,
+            implConstructorArgs,
+            proxyAdminOwner,
+            deployer,
+        });
 
-    // prettier-ignore
-    console.log(JSON.stringify({
-        implName,
-        implAddress: impl.address,
-        proxyName,
-        proxyAddress: proxy.address,
-        proxyArgs,
-        proxyAdminAddress: PROXY_ADMIN_ADDRESS,
-        initializeTxHash: initializeTx.hash,
-        initializeArgs: INITIALIZE_ARGS,
-    }, null, 2));
-    console.log(`\n${CONTRACT_NAME} Upgradeable Contract Deployed\n`);
+    const implAddress = await impl.getAddress();
+    const proxyAddress = await proxy.getAddress();
+    const proxyAdminAddress = await proxyAdmin.getAddress();
 
-    if (!['hardhat', 'local'].includes(network.name)) {
-        // need to wait several block while etherscan process deploy transaction
-        console.log('Waiting confirmations...');
-        await proxy.deployTransaction.wait(3);
+    console.log('\n');
+    console.log(`${implName} Upgradeable Contract Deployed`);
+    console.log(`Impl Address - ${implAddress}`);
+    console.log(`Proxy Address - ${proxyAddress}`);
+    console.log(`Proxy Admin Address - ${proxyAdminAddress}`);
+    console.log(`Proxy Constructor Arguments - ${JSON.stringify(proxyConstructorArgs)}`);
 
-        await verify(PATH_TO_CONTRACT, impl.address, []);
-        await verify(`contracts/proxy/${CONTRACT_NAME}.sol:${proxyName}`, proxy.address, proxyArgs);
-    }
+    await _verify(impl, implPath, implAddress, implConstructorArgs);
+    await _verify(
+        proxy,
+        'TransparentUpgradeableProxy.sol:TransparentUpgradeableProxy',
+        proxyAddress,
+        proxyConstructorArgs,
+    );
+    await _verify(
+        proxyAdmin,
+        'ProxyAdmin.sol:ProxyAdmin',
+        proxyAdminAddress,
+        proxyAdminConstructorArgs,
+    );
 }
 
-main().catch((error) => {
+main(IMPL_NAME, IMPL_CONSTRUCTOR_ARGS, IMPL_PATH, PROXY_ADMIN_OWNER).catch((error) => {
     console.error(error);
     process.exitCode = 1;
 });

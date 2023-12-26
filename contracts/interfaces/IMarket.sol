@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
 /**
  * @title IMarket.
  *
  * @notice Market contract interface.
- * @notice Market contract provides logic for selling and buying ERC-721 tokens.
+ * @notice Market contract provides logic for selling and buying ERC721 tokens.
  */
 interface IMarket {
+    // TODO: Do you need to split object struct into separate states for upgradeability?
     struct Order {
         address seller;
         uint256 tokenId;
@@ -27,7 +28,13 @@ interface IMarket {
     /**
      * @dev Triggered when order was placed.
      */
-    event Placed(uint256 indexed orderId, uint256 indexed tokenId, address indexed seller, uint256 price);
+    // prettier-ignore
+    event Placed(
+        uint256 indexed orderId,
+        uint256 indexed tokenId,
+        address indexed seller,
+        uint256 price
+    );
 
     /**
      * @dev Triggered when token was realize.
@@ -43,10 +50,15 @@ interface IMarket {
     /**
      * @dev Triggered when order was cancelled.
      */
-    event Cancelled(uint256 indexed orderId, uint256 indexed tokenId, address indexed seller);
+    // prettier-ignore
+    event Cancelled(
+        uint256 indexed orderId,
+        uint256 indexed tokenId,
+        address indexed seller
+    );
 
     /**
-     * @notice Distributes rewards and transfers token to buyer, closes sale order.
+     * @notice Distributes rewards and transfers token to buyer.
      *
      * @param orderId Order ID.
      */

@@ -1,38 +1,32 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
-import {Upgradeable} from "./utils/Upgradeable.sol";
 import {BaseMarket} from "./utils/BaseMarket.sol";
 import {MarketSigner} from "./utils/MarketSigner.sol";
 import {IAuction} from "./interfaces/IAuction.sol";
+import "./errors/AuctionErrors.sol";
 
 /**
  * @title Auction
  *
- * @notice Auction contract provides logic for creating auction with ERC-721 tokens.
+ * @notice Auction contract provides logic for creating auction with ERC721 tokens.
  */
-contract Auction is Upgradeable, BaseMarket, MarketSigner, IAuction {
+contract Auction is BaseMarket, MarketSigner, IAuction {
+    bytes32 public constant AUCTION_PERMIT_TYPE_HASH =
+        keccak256(
+            "AuctionPermit(address seller,uint256 tokenId,uint256 price,uint256 priceStep,uint256 endTime,address[] participants,uint256[] shares,uint256 deadline)"
+        );
+
     /**
      * @dev Stores auction orders by order ID.
      */
     mapping(uint256 => Order) private _orders;
 
     /**
-     * @param collection_ ERC-721 contract address, immutable.
-     * @param marketSigner_ Data signer address, immutable.
+     * @param _token ERC721 token contract address, immutable.
+     * @param _marketSigner Data signer address, immutable.
      */
-    constructor(
-        address collection_,
-        address marketSigner_
-    ) BaseMarket(collection_) MarketSigner(marketSigner_, "Auction", "1") {}
-
-    /**
-     * @inheritdoc Upgradeable
-     */
-    function initialize() external override initializer {
-        __BaseMarket_init();
-        __MarketSigner_init();
-    }
+    constructor(address _token, address _marketSigner) BaseMarket(_token) MarketSigner(_marketSigner, "Auction", "1") {}
 
     /**
      * @inheritdoc IAuction
@@ -41,25 +35,29 @@ contract Auction is Upgradeable, BaseMarket, MarketSigner, IAuction {
      *   seller can't raise price for their own order.
      */
     function raise(uint256 orderId) external payable placedOrder(orderId) {
-        // TODO: How should work a first raise, should first bid eq prevPrice + _orders[orderId].priceStep or initial price?
-        require(_orders[orderId].endBlock >= block.number, "Auction: auction is ended");
+        if (_orders[orderId].endTime < block.timestamp) revert AuctionTimeIsUp(_orders[orderId].endTime);
 
-        address seller = _orders[orderId].seller;
-
-        require(msg.sender != seller, "Auction: seller can not be buyer");
-
-        uint256 prevPrice = _orders[orderId].price;
-
-        require(msg.value >= prevPrice + _orders[orderId].priceStep, "Auction: invalid ether amount");
+        if (msg.sender == _orders[orderId].seller) revert AuctionInvalidBuyer(msg.sender);
 
         address prevBuyer = _orders[orderId].buyer;
+        uint256 prevPrice = _orders[orderId].price;
 
-        _orders[orderId].price = msg.value;
-        _orders[orderId].buyer = msg.sender;
+        if (prevBuyer == address(0)) {
+            if (msg.value < prevPrice) revert AuctionNotEnoughEther(msg.value, prevPrice);
 
-        emit Raised(orderId, _orders[orderId].tokenId, msg.sender, seller, msg.value);
+            _orders[orderId].buyer = msg.sender;
+            _orders[orderId].price = msg.value;
 
-        if (prevBuyer != address(0)) {
+            emit Raised(orderId, _orders[orderId].tokenId, msg.sender, msg.value);
+        } else {
+            if (msg.value < prevPrice + _orders[orderId].priceStep)
+                revert AuctionNotEnoughEther(msg.value, prevPrice + _orders[orderId].priceStep);
+
+            _orders[orderId].buyer = msg.sender;
+            _orders[orderId].price = msg.value;
+
+            emit Raised(orderId, _orders[orderId].tokenId, msg.sender, msg.value);
+
             _sendValue(prevBuyer, prevPrice);
         }
     }
@@ -67,11 +65,10 @@ contract Auction is Upgradeable, BaseMarket, MarketSigner, IAuction {
     /**
      * @inheritdoc IAuction
      *
-     * @dev To invoke method order must have `Placed` status and auction must not be ongoing,
-     *   seller can't raise price in their own order.
+     * @dev To invoke method order must have `Placed` status and auction must not be ongoing.
      */
     function end(uint256 orderId) external placedOrder(orderId) {
-        require(_orders[orderId].endBlock < block.number, "Auction: auction is still going");
+        if (_orders[orderId].endTime >= block.timestamp) revert AuctionStillGoing(_orders[orderId].endTime);
 
         _orders[orderId].status = OrderStatus.Ended;
 
@@ -85,22 +82,7 @@ contract Auction is Upgradeable, BaseMarket, MarketSigner, IAuction {
         if (buyer != address(0)) {
             _transferToken(address(this), buyer, tokenId);
 
-            address[] memory participants = _orders[orderId].participants;
-            uint256[] memory shares = _orders[orderId].shares;
-            uint256 lastShareIndex = shares.length - 1;
-            uint256 totalShares = _sumShares(shares);
-            uint256 released;
-
-            for (uint256 i = 0; i < lastShareIndex; i++) {
-                uint256 value = (shares[i] * price) / totalShares;
-
-                released += value;
-
-                _sendValue(participants[i], value);
-            }
-
-            // calculates last share out of loop not to lose wei after division
-            _sendValue(participants[lastShareIndex], price - released);
+            _distributeReward(price, _orders[orderId].participants, _orders[orderId].shares);
         } else {
             _transferToken(address(this), seller, tokenId);
         }
@@ -110,7 +92,7 @@ contract Auction is Upgradeable, BaseMarket, MarketSigner, IAuction {
      * @inheritdoc IAuction
      */
     function order(uint256 orderId) external view returns (Order memory) {
-        require(_orders[orderId].status != OrderStatus.NotExists, "Auction: order does not exist");
+        if (_orders[orderId].status == OrderStatus.NotExists) revert AuctionOrderNotExist(orderId);
         return _orders[orderId];
     }
 
@@ -120,34 +102,46 @@ contract Auction is Upgradeable, BaseMarket, MarketSigner, IAuction {
      * @param from Token owner.
      * @param tokenId Token for sale.
      * @param price Token price.
-     * @param endBlock Block number until which the auction continues.
+     * @param endTime Timestamp until which the auction continues.
      * @param priceStep Minimum price raise step.
-     * @param expiredBlock Block number until which `signature` is valid.
+     * @param deadline Timestamp until which `signature` is valid.
      * @param participants Array with addresses between which reward will be distributed.
      * @param shares Array with rewards amounts,
      *   order of `shares` corresponds to order of `participants`,
      *   total shares must be equal to `price`.
-     * @param signature [EIP-712](https://eips.ethereum.org/EIPS/eip-712) signature.
-     *   Signature must include `expiredBlock` and can include other data for validation.
+     * @param signature [EIP712](https://eips.ethereum.org/EIPS/eip-712) signature.
      *   See `MarketSigner::ORDER_TYPE_HASH`.
      */
     function _place(
         address from,
         uint256 tokenId,
         uint256 price,
-        uint256 endBlock,
         uint256 priceStep,
-        uint256 expiredBlock,
+        uint256 endTime,
+        uint256 deadline,
         address[] memory participants,
         uint256[] memory shares,
         bytes memory signature
     ) internal {
-        // TODO: What happen if priceStep = 0?
+        if (endTime < block.timestamp) revert AuctionInvalidEndTime(endTime, block.timestamp);
 
-        require(endBlock > block.number, "Auction: end block is less than current");
+        bytes32 structHash = keccak256(
+            abi.encode(
+                AUCTION_PERMIT_TYPE_HASH,
+                from,
+                tokenId,
+                price,
+                priceStep,
+                endTime,
+                keccak256(abi.encodePacked(participants)),
+                keccak256(abi.encodePacked(shares)),
+                deadline
+            )
+        );
 
-        _validateSignature(from, tokenId, price, expiredBlock, participants, shares, signature);
-        _validatePrice(price, participants, shares);
+        _validateSignature(structHash, deadline, signature);
+
+        _validateShares(participants, shares);
 
         uint256 orderId = _useOrderId();
 
@@ -156,14 +150,14 @@ contract Auction is Upgradeable, BaseMarket, MarketSigner, IAuction {
             buyer: address(0),
             tokenId: tokenId,
             price: price,
-            endBlock: endBlock,
+            endTime: endTime,
             priceStep: priceStep,
             status: OrderStatus.Placed,
             participants: participants,
             shares: shares
         });
 
-        emit Placed(orderId, tokenId, from, price);
+        emit Placed(orderId, tokenId, from, price, priceStep, endTime);
     }
 
     /**
@@ -171,21 +165,29 @@ contract Auction is Upgradeable, BaseMarket, MarketSigner, IAuction {
      *
      * @dev Method overrides `BaseMarket::_onReceived.`
      *
-     * @param data abi.encode(`price`, `endBlock`, `priceStep`, `expiredBlock`, `participants`, `shares`, `signature`).
+     * @param data abi.encode(
+     *     `price`,
+     *     `endTime`,
+     *     `priceStep`,
+     *     `deadline`,
+     *     `participants`,
+     *     `shares`,
+     *     `signature`
+     *   ).
      *   See `_place` method.
      */
     function _onReceived(address from, uint256 tokenId, bytes calldata data) internal override(BaseMarket) {
         (
             uint256 price,
-            uint256 endBlock,
             uint256 priceStep,
-            uint256 expiredBlock,
+            uint256 endTime,
+            uint256 deadline,
             address[] memory participants,
             uint256[] memory shares,
             bytes memory signature
         ) = abi.decode(data, (uint256, uint256, uint256, uint256, address[], uint256[], bytes));
 
-        _place(from, tokenId, price, endBlock, priceStep, expiredBlock, participants, shares, signature);
+        _place(from, tokenId, price, priceStep, endTime, deadline, participants, shares, signature);
     }
 
     /**
@@ -198,11 +200,4 @@ contract Auction is Upgradeable, BaseMarket, MarketSigner, IAuction {
     function _orderPlaced(uint256 orderId) internal view override(BaseMarket) returns (bool) {
         return _orders[orderId].status == OrderStatus.Placed;
     }
-
-    /**
-     * @dev This empty reserved space is put in place to allow future versions to add new
-     *   variables without shifting down storage in the inheritance chain.
-     *   See <https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps>.
-     */
-    uint256[50] private __gap;
 }

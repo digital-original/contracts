@@ -1,22 +1,29 @@
-import { ethers } from 'hardhat';
-import { mineUpTo } from '@nomicfoundation/hardhat-network-helpers';
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
-import { deployClassic } from '../scripts/deploy-classic';
-import { deployUpgradeable } from '../scripts/deploy-upgradable';
-import { OrderTypedDataInterface, signMarketOrder } from '../scripts/eip712';
-import { Market, CollectionMock } from '../typechain-types';
+import { setNextBlockTimestamp } from '@nomicfoundation/hardhat-network-helpers/dist/src/helpers/time';
+import { MAX_TOTAL_SHARE } from '../constants/base-market';
+import { getChainId } from './utils/get-chain-id';
+import { getSigners } from './utils/get-signers';
+import { deployTokenMock } from './utils/deploy-token-mock';
+import { deployMarketUpgradeable } from './utils/deploy-market-upgradable';
+import { encodeMarketPlaceParams } from './utils/encode-market-place-params';
+import { signMarketPermit } from './utils/sign-market-permit';
+import { Signer } from '../types/environment';
+import { MarketPermitStruct } from '../types/market';
+import { Market, TokenMock } from '../typechain-types';
+import { getSignDeadline } from './utils/get-sign-deadline';
 
 describe('Market', function () {
-    let market: Market;
-    let collectionMock: CollectionMock;
-    let collectionBaseUri: string;
+    let market: Market, marketAddr: string;
 
-    let owner: SignerWithAddress;
-    let marketSigner: SignerWithAddress;
-    let tokenOwner: SignerWithAddress;
-    let buyer: SignerWithAddress;
-    let randomAccount: SignerWithAddress;
+    let chainId: number;
+
+    let platform: Signer, platformAddr: string;
+    let marketSigner: Signer, marketSignerAddr: string;
+    let tokenOwner: Signer, tokenOwnerAddr: string;
+    let buyer: Signer, buyerAddr: string;
+    let randomAccount: Signer, randomAccountAddr: string;
+
+    let tokenMock: TokenMock, tokenMockAddr: string;
 
     enum OrderStatus {
         NotExists,
@@ -25,513 +32,340 @@ describe('Market', function () {
         Cancelled,
     }
 
-    before(async () => {
-        [owner, marketSigner, tokenOwner, buyer, randomAccount] = <SignerWithAddress[]>(
-            await ethers.getSigners()
-        );
+    let tokenId: bigint;
+    let seller: string;
+    let price: bigint;
+    let deadline: number;
+    let participants: string[];
+    let shares: bigint[];
 
-        collectionBaseUri = 'https://base-uri-mock/';
-        collectionMock = <CollectionMock>await deployClassic({
-            contractName: 'CollectionMock',
-            constructorArgs: [collectionBaseUri],
-            signer: owner,
-        });
-    });
-
-    beforeEach(async () => {
-        const { proxyWithImpl } = await deployUpgradeable({
-            contractName: 'Market',
-            proxyAdminAddress: '0x0000000000000000000000000000000000000001',
-            constructorArgs: [collectionMock.address, marketSigner.address],
-            initializeArgs: [],
-            signer: owner,
-        });
-
-        market = <Market>proxyWithImpl;
-
-        collectionMock = collectionMock.connect(owner);
-        market = market.connect(owner);
-    });
-
-    it(`should have correct collection`, async () => {
-        await expect(market.collection()).to.eventually.equal(collectionMock.address);
-    });
-
-    it(`should have correct market signer`, async () => {
-        await expect(market.marketSigner()).to.eventually.equal(marketSigner.address);
-    });
-
-    it(`should have correct order count`, async () => {
-        const orderCount = await market.orderCount();
-
-        expect(orderCount.toString()).equal('0');
-    });
-
-    function safeTransferFrom(
-        from: string,
-        tokenId: string,
-        price: string | number,
-        expiredBlock: string | number,
-        participants: string[],
-        shares: (string | number)[],
-        signature: string
+    async function placeOrder(
+        params: {
+            _tokenId?: bigint;
+            _seller?: string;
+            _price?: bigint;
+            _deadline?: number;
+            _participants?: string[];
+            _shares?: bigint[];
+            _tokenMock?: TokenMock;
+            _marketSigner?: Signer;
+        } = {},
     ) {
-        return collectionMock['safeTransferFrom(address,address,uint256,bytes)'](
-            from,
-            market.address,
-            tokenId,
-            ethers.utils.defaultAbiCoder.encode(
-                ['uint256', 'uint256', 'address[]', 'uint256[]', 'bytes'],
-                [price, expiredBlock, participants, shares, signature]
-            )
+        const {
+            _tokenId = tokenId,
+            _seller = seller,
+            _price = price,
+            _deadline = deadline,
+            _participants = participants,
+            _shares = shares,
+            _tokenMock = tokenMock,
+            _marketSigner = marketSigner,
+        } = params;
+
+        const permit: MarketPermitStruct = {
+            seller: _seller,
+            tokenId: _tokenId,
+            price: _price,
+            participants: _participants,
+            shares: _shares,
+            deadline: _deadline,
+        };
+
+        const signature = await signMarketPermit(chainId, marketAddr, permit, _marketSigner);
+
+        return _tokenMock['safeTransferFrom(address,address,uint256,bytes)'](
+            _seller,
+            market,
+            _tokenId,
+            encodeMarketPlaceParams(_price, _deadline, _participants, _shares, signature),
         );
     }
 
+    function realize(params: { orderId: number; _price?: bigint; _market?: Market }) {
+        const { orderId, _price = price, _market = market } = params;
+
+        return _market.realize(orderId, { value: _price });
+    }
+
+    function cancel(params: { orderId: number; _market?: Market }) {
+        const { orderId, _market = market } = params;
+
+        return _market.cancel(orderId);
+    }
+
+    async function mintToken() {
+        const tokenId = await tokenMock.totalSupply();
+
+        await tokenMock.mint(tokenOwner, tokenId);
+
+        return tokenId;
+    }
+
+    before(async () => {
+        chainId = await getChainId();
+
+        [
+            [platform, marketSigner, tokenOwner, buyer, randomAccount],
+            [platformAddr, marketSignerAddr, tokenOwnerAddr, buyerAddr, randomAccountAddr],
+        ] = await getSigners();
+
+        [tokenMock, tokenMockAddr] = await deployTokenMock();
+
+        tokenMock = tokenMock.connect(tokenOwner);
+    });
+
+    beforeEach(async () => {
+        [[market, marketAddr], tokenId] = await Promise.all([
+            deployMarketUpgradeable(tokenMock, marketSigner),
+            mintToken(),
+        ]);
+
+        seller = tokenOwnerAddr;
+        price = 100000n;
+        participants = [tokenOwnerAddr, platformAddr];
+        shares = [MAX_TOTAL_SHARE / 2n, MAX_TOTAL_SHARE / 2n];
+        deadline = await getSignDeadline();
+    });
+
+    it(`should have correct token`, async () => {
+        await expect(market.TOKEN()).to.eventually.equal(tokenMockAddr);
+    });
+
+    it(`should have correct maximum total share`, async () => {
+        await expect(market.MAX_TOTAL_SHARE()).to.eventually.equal(MAX_TOTAL_SHARE);
+    });
+
+    it(`should have correct initial order count`, async () => {
+        await expect(market.orderCount()).to.eventually.equal(0n);
+    });
+
+    it(`should have correct market signer`, async () => {
+        await expect(market.MARKET_SIGNER()).to.eventually.equal(marketSignerAddr);
+    });
+
     describe(`method 'onERC721Received'`, () => {
-        let tokenId: string;
+        it(`should place correct order`, async () => {
+            await placeOrder();
 
-        beforeEach(async () => {
-            tokenId = (await collectionMock.totalSupply()).toString();
+            const order = await market.order(0);
 
-            collectionMock = collectionMock.connect(tokenOwner);
-
-            await collectionMock.mint(tokenOwner.address, tokenId);
+            expect(order.seller).equal(seller);
+            expect(order.tokenId).equal(tokenId);
+            expect(order.price).equal(price);
+            expect(order.status).equal(OrderStatus.Placed);
+            expect(order.participants).to.deep.equal(participants);
+            expect(order.shares).to.deep.equal(shares);
         });
 
-        it(`should place order if data and signature are valid`, async () => {
-            const blockNumber = await ethers.provider.getBlockNumber();
-            const expiredBlock = blockNumber + 10;
-
-            const order: OrderTypedDataInterface = {
-                seller: tokenOwner.address,
-                tokenId,
-                price: '100000',
-                participants: [owner.address, tokenOwner.address],
-                shares: ['50000', '50000'],
-                expiredBlock,
-            };
-
-            const signature = await signMarketOrder(marketSigner, market.address, order);
-
-            await safeTransferFrom(
-                tokenOwner.address,
-                tokenId,
-                order.price,
-                order.expiredBlock,
-                order.participants,
-                order.shares,
-                signature
-            );
-
-            const placedOrder = await market.order(0);
-
-            expect(placedOrder.seller).equal(tokenOwner.address);
-            expect(placedOrder.tokenId.toString()).equal(order.tokenId);
-            expect(placedOrder.price.toString()).equal(order.price);
-            expect(placedOrder.status).equal(OrderStatus.Placed);
-        });
-
-        it(`should emit Placed event`, async () => {
-            const orderId = '0';
-
-            const blockNumber = await ethers.provider.getBlockNumber();
-            const expiredBlock = blockNumber + 10;
-
-            const order: OrderTypedDataInterface = {
-                seller: tokenOwner.address,
-                tokenId,
-                price: '100000',
-                participants: [owner.address, tokenOwner.address],
-                shares: ['50000', '50000'],
-                expiredBlock,
-            };
-
-            const signature = await signMarketOrder(marketSigner, market.address, order);
-
-            await expect(
-                safeTransferFrom(
-                    tokenOwner.address,
-                    tokenId,
-                    order.price,
-                    order.expiredBlock,
-                    order.participants,
-                    order.shares,
-                    signature
-                )
-            )
+        it(`should emit placed event`, async () => {
+            await expect(placeOrder())
                 .to.emit(market, 'Placed')
-                .withArgs(orderId, tokenId, tokenOwner.address, order.price);
+                .withArgs(0, tokenId, seller, price);
         });
 
         it(`should increase order count`, async () => {
-            const blockNumber = await ethers.provider.getBlockNumber();
-            const expiredBlock = blockNumber + 10;
+            await placeOrder();
 
-            const order: OrderTypedDataInterface = {
-                seller: tokenOwner.address,
-                tokenId,
-                price: '100000',
-                participants: [owner.address, tokenOwner.address],
-                shares: ['50000', '50000'],
-                expiredBlock,
-            };
+            await expect(market.orderCount()).eventually.equal(1);
+        });
 
-            const signature = await signMarketOrder(marketSigner, market.address, order);
+        it(`should fail if signature is expired`, async () => {
+            const _deadline = await getSignDeadline();
 
-            await safeTransferFrom(
-                tokenOwner.address,
-                tokenId,
-                order.price,
-                order.expiredBlock,
-                order.participants,
-                order.shares,
-                signature
+            await setNextBlockTimestamp(_deadline + 10);
+
+            await expect(placeOrder({ _deadline })).to.be.rejectedWith(
+                'MarketSignerExpiredSignature',
             );
-
-            const orderCount = await market.orderCount();
-
-            expect(orderCount.toString()).equal('1');
         });
 
-        it(`should fail if caller isn't collection contract`, async () => {
-            const blockNumber = await ethers.provider.getBlockNumber();
-            const expiredBlock = blockNumber + 10;
+        it(`should fail if number of shares is not equal number of participants`, async () => {
+            const _participants = [tokenOwnerAddr];
+            const _shares = [MAX_TOTAL_SHARE / 2n, MAX_TOTAL_SHARE / 2n];
 
-            const order: OrderTypedDataInterface = {
-                seller: tokenOwner.address,
-                tokenId,
-                price: '100000',
-                participants: [owner.address, tokenOwner.address],
-                shares: ['50000', '50000'],
-                expiredBlock,
-            };
-
-            const signature = await signMarketOrder(marketSigner, market.address, order);
-
-            await expect(
-                market.onERC721Received(
-                    tokenOwner.address,
-                    tokenOwner.address,
-                    tokenId,
-                    ethers.utils.defaultAbiCoder.encode(
-                        ['uint256', 'uint256', 'address[]', 'uint256[]', 'bytes'],
-                        [
-                            order.price,
-                            order.expiredBlock,
-                            order.participants,
-                            order.shares,
-                            signature,
-                        ]
-                    )
-                )
-            ).to.be.rejectedWith('BaseMarket: caller is not the collection');
+            await expect(placeOrder({ _participants, _shares })).to.be.rejectedWith(
+                'BaseMarketInvalidSharesNumber',
+            );
         });
 
-        it(`should fail if expired block number less than current`, async () => {
-            const blockNumber = await ethers.provider.getBlockNumber();
-            const expiredBlock = blockNumber + 10;
+        it(`should fail if total shares is not equal maximum total share`, async () => {
+            const _participants = [tokenOwnerAddr, platformAddr];
+            const _shares = [MAX_TOTAL_SHARE, 1n];
 
-            const order: OrderTypedDataInterface = {
-                seller: tokenOwner.address,
-                tokenId,
-                price: '100000',
-                participants: [owner.address, tokenOwner.address],
-                shares: ['50000', '50000'],
-                expiredBlock,
-            };
-
-            const signature = await signMarketOrder(marketSigner, market.address, order);
-
-            await mineUpTo(order.expiredBlock + 1);
-
-            await expect(
-                safeTransferFrom(
-                    tokenOwner.address,
-                    tokenId,
-                    order.price,
-                    order.expiredBlock,
-                    order.participants,
-                    order.shares,
-                    signature
-                )
-            ).to.be.rejectedWith('MarketSigner: signature is expired');
+            await expect(placeOrder({ _participants, _shares })).to.be.rejectedWith(
+                'BaseMarketInvalidSharesSum',
+            );
         });
 
-        it(`should fail if number of participants isn't equal number of shares`, async () => {
-            const blockNumber = await ethers.provider.getBlockNumber();
-            const expiredBlock = blockNumber + 10;
+        it(`should fail if shares and participants are empty`, async () => {
+            const _participants: string[] = [];
+            const _shares: bigint[] = [];
 
-            const order: OrderTypedDataInterface = {
-                seller: tokenOwner.address,
-                tokenId,
-                price: '100000',
-                participants: [owner.address, tokenOwner.address],
-                shares: ['100000'],
-                expiredBlock,
-            };
-
-            const signature = await signMarketOrder(marketSigner, market.address, order);
-
-            await expect(
-                safeTransferFrom(
-                    tokenOwner.address,
-                    tokenId,
-                    order.price,
-                    order.expiredBlock,
-                    order.participants,
-                    order.shares,
-                    signature
-                )
-            ).to.be.rejectedWith('BaseMarket: number of shares is wrong');
-        });
-
-        it(`should fail if total shares isn't equal price`, async () => {
-            const blockNumber = await ethers.provider.getBlockNumber();
-            const expiredBlock = blockNumber + 10;
-
-            const order: OrderTypedDataInterface = {
-                seller: tokenOwner.address,
-                tokenId,
-                price: '100000',
-                participants: [owner.address, tokenOwner.address],
-                shares: ['50000', '40000'],
-                expiredBlock,
-            };
-
-            const signature = await signMarketOrder(marketSigner, market.address, order);
-
-            await expect(
-                safeTransferFrom(
-                    tokenOwner.address,
-                    tokenId,
-                    order.price,
-                    order.expiredBlock,
-                    order.participants,
-                    order.shares,
-                    signature
-                )
-            ).to.be.rejectedWith('BaseMarket: price is not equal sum of shares');
+            await expect(placeOrder({ _participants, _shares })).to.be.rejectedWith(
+                'BaseMarketInvalidSharesSum',
+            );
         });
 
         it(`should fail if market signer is invalid`, async () => {
-            const blockNumber = await ethers.provider.getBlockNumber();
-            const expiredBlock = blockNumber + 10;
+            const _marketSigner = randomAccount;
 
-            const order: OrderTypedDataInterface = {
-                seller: tokenOwner.address,
-                tokenId,
-                price: '100000',
-                participants: [owner.address, tokenOwner.address],
-                shares: ['50000', '40000'],
-                expiredBlock,
-            };
-
-            const signature = await signMarketOrder(randomAccount, market.address, order);
-
-            await expect(
-                safeTransferFrom(
-                    tokenOwner.address,
-                    tokenId,
-                    order.price,
-                    order.expiredBlock,
-                    order.participants,
-                    order.shares,
-                    signature
-                )
-            ).to.be.rejectedWith('MarketSigner: unauthorized');
+            await expect(placeOrder({ _marketSigner })).to.be.rejectedWith(
+                'MarketSignerInvalidSigner',
+            );
         });
-    });
 
-    describe(`method 'realize'`, () => {
-        let tokenId: string;
-        let price: string;
-        let participants: string[];
-        let shares: string[];
-        let orderId: string;
-
-        beforeEach(async () => {
-            collectionMock = collectionMock.connect(tokenOwner);
-
-            tokenId = (await collectionMock.totalSupply()).toString();
-            price = '100000';
-            participants = [owner.address, tokenOwner.address, randomAccount.address];
-            shares = ['40000', '35000', '25000'];
-            orderId = '0';
-
-            await collectionMock.mint(tokenOwner.address, tokenId);
-
-            const blockNumber = await ethers.provider.getBlockNumber();
-            const expiredBlock = blockNumber + 10;
-
-            const order = {
-                seller: tokenOwner.address,
+        it(`should fail if caller is not token contract`, async () => {
+            const marketPermit: MarketPermitStruct = {
+                seller,
                 tokenId,
                 price,
                 participants,
                 shares,
-                expiredBlock,
+                deadline,
             };
 
-            const signature = await signMarketOrder(marketSigner, market.address, order);
-
-            await safeTransferFrom(
-                tokenOwner.address,
-                tokenId,
-                order.price,
-                order.expiredBlock,
-                order.participants,
-                order.shares,
-                signature
+            const signature = await signMarketPermit(
+                chainId,
+                marketAddr,
+                marketPermit,
+                marketSigner,
             );
 
+            await expect(
+                market.onERC721Received(
+                    tokenOwnerAddr,
+                    tokenOwnerAddr,
+                    tokenId,
+                    encodeMarketPlaceParams(price, deadline, participants, shares, signature),
+                ),
+            ).to.be.rejectedWith('BaseMarketUnauthorizedAccount');
+        });
+    });
+
+    describe(`method 'realize'`, () => {
+        beforeEach(async () => {
+            await placeOrder();
+
             market = market.connect(buyer);
-            collectionMock = collectionMock.connect(buyer);
         });
 
         it(`should transfer token to buyer`, async () => {
-            await expect(market.realize(orderId, { value: price }))
-                .to.be.emit(collectionMock, 'Transfer')
-                .withArgs(market.address, buyer.address, tokenId);
-            await expect(collectionMock.ownerOf(tokenId)).to.be.eventually.equal(buyer.address);
+            await expect(realize({ orderId: 0 }))
+                .to.be.emit(tokenMock, 'Transfer')
+                .withArgs(marketAddr, buyerAddr, tokenId);
+
+            await expect(tokenMock.ownerOf(tokenId)).to.be.eventually.equal(buyerAddr);
         });
 
-        it(`should distribute ETH between participants according to shares`, async () => {
-            await expect(() => market.realize(orderId, { value: price })).to.be.changeEtherBalances(
+        it(`should distribute reward between participants according to shares`, async () => {
+            await expect(() => realize({ orderId: 0 })).to.be.changeEtherBalances(
                 [buyer, ...participants],
-                [Number(price) * -1, ...shares]
+                [price * -1n, ...shares.map((share) => (price * share) / MAX_TOTAL_SHARE)],
             );
         });
 
-        it(`should change order status to Realized`, async () => {
-            await market.realize(orderId, { value: price });
+        it(`should change order status to realized`, async () => {
+            await realize({ orderId: 0 });
 
-            const order = await market.order(orderId);
+            const order = await market.order(0);
 
             expect(order.status).equal(OrderStatus.Realized);
         });
 
-        it(`should emit Realized event`, async () => {
-            await expect(market.realize(orderId, { value: price }))
+        it(`should emit realized event`, async () => {
+            await expect(realize({ orderId: 0 }))
                 .to.be.emit(market, 'Realized')
-                .withArgs(orderId, tokenId, buyer.address, tokenOwner.address, price);
+                .withArgs(0, tokenId, buyerAddr, seller, price);
         });
 
         it(`should fail if invalid ether amount`, async () => {
-            await expect(market.realize(orderId, { value: Number(price) - 1 })).to.be.rejectedWith(
-                'Market: invalid ether amount'
-            );
+            const _price = price - 1n;
+
+            await expect(realize({ orderId: 0, _price })).to.be.rejectedWith('MarketInvalidAmount');
         });
 
-        it(`should fail if order is already Realized`, async () => {
-            await market.realize(orderId, { value: price });
+        it(`should fail if order is already realized`, async () => {
+            await realize({ orderId: 0 });
 
-            await expect(market.realize(orderId, { value: price })).to.be.rejectedWith(
-                'Market: order is not placed'
-            );
+            await expect(realize({ orderId: 0 })).to.be.rejectedWith('BaseMarketOrderNotPlaced');
         });
 
         it(`should fail if order is cancelled`, async () => {
-            await market.connect(tokenOwner).cancel(orderId);
+            const _market = market.connect(tokenOwner);
 
-            await expect(market.realize(orderId, { value: price })).to.be.rejectedWith(
-                'Market: order is not placed'
-            );
+            await cancel({ _market, orderId: 0 });
+
+            await expect(realize({ orderId: 0 })).to.be.rejectedWith('BaseMarketOrderNotPlaced');
         });
 
-        it(`should fail if order doesn't exist`, async () => {
-            await expect(market.realize('1', { value: '123' })).to.be.rejectedWith(
-                'BaseMarket: order is not placed'
-            );
+        it(`should fail if order dose not exist`, async () => {
+            await expect(realize({ orderId: 1 })).to.be.rejectedWith('BaseMarketOrderNotPlaced');
+        });
+
+        it(`should fail if caller is seller`, async () => {
+            const _market = market.connect(tokenOwner);
+
+            await expect(realize({ _market, orderId: 0 })).to.be.rejectedWith('MarketInvalidBuyer');
         });
     });
 
     describe(`method 'cancel'`, () => {
-        let tokenId: string;
-        let price: string;
-        let orderId: string;
+        let orderId: bigint;
 
         beforeEach(async () => {
+            await placeOrder();
+
+            orderId = (await market.orderCount()) - 1n;
+
             market = market.connect(tokenOwner);
-            collectionMock = collectionMock.connect(tokenOwner);
-
-            tokenId = (await collectionMock.totalSupply()).toString();
-            price = '110000';
-            orderId = '0';
-
-            await collectionMock.mint(tokenOwner.address, tokenId);
-
-            const blockNumber = await ethers.provider.getBlockNumber();
-            const expiredBlock = blockNumber + 10;
-
-            const order: OrderTypedDataInterface = {
-                seller: tokenOwner.address,
-                tokenId,
-                price,
-                participants: [owner.address, tokenOwner.address],
-                shares: ['65000', '45000'],
-                expiredBlock,
-            };
-
-            const signature = await signMarketOrder(marketSigner, market.address, order);
-
-            await safeTransferFrom(
-                tokenOwner.address,
-                tokenId,
-                order.price,
-                order.expiredBlock,
-                order.participants,
-                order.shares,
-                signature
-            );
         });
 
         it(`should transfer token back to seller`, async () => {
-            await expect(market.cancel(orderId))
-                .to.be.emit(collectionMock, 'Transfer')
-                .withArgs(market.address, tokenOwner.address, tokenId);
-            await expect(collectionMock.ownerOf(tokenId)).to.be.eventually.equal(
-                tokenOwner.address
-            );
+            await expect(cancel({ orderId: 0 }))
+                .to.be.emit(tokenMock, 'Transfer')
+                .withArgs(marketAddr, tokenOwnerAddr, tokenId);
+
+            await expect(tokenMock.ownerOf(tokenId)).to.be.eventually.equal(tokenOwnerAddr);
         });
 
-        it(`should emit Cancelled event`, async () => {
-            await expect(market.cancel(orderId))
+        it(`should emit cancelled event`, async () => {
+            await expect(cancel({ orderId: 0 }))
                 .to.be.emit(market, 'Cancelled')
-                .withArgs(orderId, tokenId, tokenOwner.address);
+                .withArgs(orderId, tokenId, tokenOwnerAddr);
         });
 
-        it(`should change order status to Cancelled`, async () => {
-            await market.cancel(orderId);
+        it(`should change order status to cancelled`, async () => {
+            await cancel({ orderId: 0 });
 
             const order = await market.order(orderId);
 
             expect(order.status).equal(OrderStatus.Cancelled);
         });
 
-        it(`should fail if order doesn't exist`, async () => {
-            await expect(market.cancel('11111')).to.be.rejectedWith(
-                'BaseMarket: order is not placed'
-            );
+        it(`should fail if order dose not exist`, async () => {
+            await expect(cancel({ orderId: 1 })).to.be.rejectedWith('BaseMarketOrderNotPlaced');
         });
 
         it(`should fail if order is already cancelled`, async () => {
-            await market.cancel(orderId);
+            await cancel({ orderId: 0 });
 
-            await expect(market.cancel(orderId)).to.be.rejectedWith(
-                'BaseMarket: order is not placed'
+            await expect(cancel({ orderId: 0 })).to.be.rejectedWith('BaseMarketOrderNotPlaced');
+        });
+
+        it(`should fail if order is realized`, async () => {
+            const _market = market.connect(buyer);
+
+            await realize({ _market, orderId: 0 });
+
+            await expect(cancel({ orderId: 0 })).to.be.rejectedWith('BaseMarketOrderNotPlaced');
+        });
+
+        it(`should fail if caller is not seller`, async () => {
+            const _market = market.connect(randomAccount);
+
+            await expect(cancel({ _market, orderId: 0 })).to.be.rejectedWith(
+                'MarketUnauthorizedAccount',
             );
-        });
-
-        it(`should fail if order is Realized`, async () => {
-            await market.connect(buyer).realize(orderId, { value: price });
-
-            await expect(market.cancel(orderId)).to.be.rejectedWith('Market: order is not placed');
-        });
-
-        it(`should fail if caller is random account`, async () => {
-            market = market.connect(randomAccount);
-
-            await expect(market.cancel(orderId)).to.be.rejectedWith('Market: invalid caller');
         });
     });
 });

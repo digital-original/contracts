@@ -1,18 +1,15 @@
 import { ethers } from 'hardhat';
+import { ContractConstructorArgs, Signer } from '../types/environment';
 
-interface Options {
-    contractName: string;
-    constructorArgs: any[];
-    signer?: any;
+interface Params {
+    name: string;
+    constructorArgs?: ContractConstructorArgs;
 }
 
-export async function deployClassic(options: Options) {
-    const { contractName, constructorArgs, signer } = options;
+export async function deployClassic(params: Params, deployer?: Signer) {
+    const { name, constructorArgs = [] } = params;
 
-    const Contract = await ethers.getContractFactory(contractName, signer);
-    const contract = await Contract.deploy(...constructorArgs);
+    const contract = await ethers.deployContract(name, constructorArgs, deployer);
 
-    await contract.deployed();
-
-    return contract;
+    return contract.waitForDeployment();
 }
