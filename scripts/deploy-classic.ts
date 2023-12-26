@@ -3,11 +3,11 @@ import { ContractConstructorArgs, Signer } from '../types/environment';
 
 interface Params {
     name: string;
-    constructorArgs?: ContractConstructorArgs;
+    constructorArgs: ContractConstructorArgs;
 }
 
 export async function deployClassic(params: Params, deployer?: Signer) {
-    const { name, constructorArgs = [] } = params;
+    const { name, constructorArgs } = params;
 
     const contract = await ethers.deployContract(name, constructorArgs, deployer);
 

@@ -8,9 +8,9 @@ import { signAuctionPermit } from './utils/sign-auction-permit';
 import { getSigners } from './utils/get-signers';
 import { getChainId } from './utils/get-chain-id';
 import { deployTokenMock } from './utils/deploy-token-mock';
-import { MAX_TOTAL_SHARE } from '../constants/base-market';
+import { MAX_TOTAL_SHARE } from '../constants/distribution';
 import { getSignDeadline } from './utils/get-sign-deadline';
-import { deployAuctionUpgradeable } from './utils/deploy-auction-upgradable';
+import { deployAuctionUpgradeable } from './utils/deploy-auction-upgradeable';
 import { getAuctionEndTime } from './utils/get-auction-end-time';
 
 describe('Auction', function () {
@@ -19,7 +19,7 @@ describe('Auction', function () {
     let chainId: number;
 
     let platform: Signer, platformAddr: string;
-    let marketSigner: Signer, marketSignerAddr: string;
+    let auctionSigner: Signer, auctionSignerAddr: string;
     let tokenOwner: Signer, tokenOwnerAddr: string;
     let buyer1: Signer, buyer1Addr: string;
     let buyer2: Signer, buyer2Addr: string;
@@ -66,7 +66,7 @@ describe('Auction', function () {
             _participants = participants,
             _shares = shares,
             _tokenMock = tokenMock,
-            _marketSigner = marketSigner,
+            _marketSigner = auctionSigner,
         } = params;
 
         const permit: AuctionPermitStruct = {
@@ -122,10 +122,10 @@ describe('Auction', function () {
         chainId = await getChainId();
 
         [
-            [platform, marketSigner, tokenOwner, buyer1, buyer2, randomAccount],
+            [platform, auctionSigner, tokenOwner, buyer1, buyer2, randomAccount],
             [
                 platformAddr,
-                marketSignerAddr,
+                auctionSignerAddr,
                 tokenOwnerAddr,
                 buyer1Addr,
                 buyer2Addr,
@@ -140,7 +140,7 @@ describe('Auction', function () {
 
     beforeEach(async () => {
         [[auction, auctionAddr], tokenId] = await Promise.all([
-            deployAuctionUpgradeable(tokenMock, marketSigner),
+            deployAuctionUpgradeable(tokenMock, auctionSigner),
             mintToken(),
         ]);
 
@@ -159,16 +159,12 @@ describe('Auction', function () {
         await expect(auction.TOKEN()).to.eventually.equal(tokenMockAddr);
     });
 
-    it(`should have correct maximum total share`, async () => {
-        await expect(auction.MAX_TOTAL_SHARE()).to.eventually.equal(MAX_TOTAL_SHARE);
-    });
-
     it(`should have correct initial order count`, async () => {
         await expect(auction.orderCount()).to.eventually.equal(0n);
     });
 
-    it(`should have correct market signer`, async () => {
-        await expect(auction.MARKET_SIGNER()).to.eventually.equal(marketSignerAddr);
+    it(`should have correct auction signer`, async () => {
+        await expect(auction.AUCTION_SIGNER()).to.eventually.equal(auctionSignerAddr);
     });
 
     describe(`method 'onERC721Received'`, () => {
@@ -197,7 +193,7 @@ describe('Auction', function () {
         it(`should increase order count`, async () => {
             await placeOrder();
 
-            await expect(auction.orderCount()).eventually.equal(1);
+            await expect(auction.orderCount()).to.eventually.equal(1);
         });
 
         it(`should fail if signature is expired`, async () => {
@@ -207,7 +203,7 @@ describe('Auction', function () {
             await setNextBlockTimestamp(_deadline + 10);
 
             await expect(placeOrder({ _endTime, _deadline })).to.be.rejectedWith(
-                'MarketSignerExpiredSignature',
+                'EIP712WrapperExpiredSignature',
             );
         });
 
@@ -224,7 +220,7 @@ describe('Auction', function () {
             const _shares = [MAX_TOTAL_SHARE / 2n, MAX_TOTAL_SHARE / 2n];
 
             await expect(placeOrder({ _participants, _shares })).to.be.rejectedWith(
-                'BaseMarketInvalidSharesNumber',
+                'DistributionInvalidSharesCount',
             );
         });
 
@@ -233,7 +229,7 @@ describe('Auction', function () {
             const _shares = [MAX_TOTAL_SHARE, 1n];
 
             await expect(placeOrder({ _participants, _shares })).to.be.rejectedWith(
-                'BaseMarketInvalidSharesSum',
+                'DistributionInvalidSharesSum',
             );
         });
 
@@ -242,7 +238,7 @@ describe('Auction', function () {
             const _shares: bigint[] = [];
 
             await expect(placeOrder({ _participants, _shares })).to.be.rejectedWith(
-                'BaseMarketInvalidSharesSum',
+                'DistributionInvalidSharesSum',
             );
         });
 
@@ -250,7 +246,7 @@ describe('Auction', function () {
             const _marketSigner = randomAccount;
 
             await expect(placeOrder({ _marketSigner })).to.be.rejectedWith(
-                'MarketSignerInvalidSigner',
+                'EIP712WrapperInvalidSigner',
             );
         });
 
@@ -270,7 +266,7 @@ describe('Auction', function () {
                 chainId,
                 auctionAddr,
                 marketPermit,
-                marketSigner,
+                auctionSigner,
             );
 
             await expect(
@@ -288,7 +284,7 @@ describe('Auction', function () {
                         signature,
                     ),
                 ),
-            ).to.be.rejectedWith('BaseMarketUnauthorizedAccount');
+            ).to.be.rejectedWith('TokenHolderUnauthorizedAccount');
         });
     });
 
@@ -403,7 +399,7 @@ describe('Auction', function () {
 
         it(`should fail if order dose not exist`, async () => {
             await expect(raise({ orderId: 1, _price: price })).to.be.rejectedWith(
-                'BaseMarketOrderNotPlaced',
+                'AuctionOrderNotPlaced',
             );
         });
 
@@ -428,7 +424,7 @@ describe('Auction', function () {
         beforeEach(placeOrder);
 
         it(`should fail if order dose not exist`, async () => {
-            await expect(end({ orderId: 1 })).to.be.rejectedWith('BaseMarketOrderNotPlaced');
+            await expect(end({ orderId: 1 })).to.be.rejectedWith('AuctionOrderNotPlaced');
         });
 
         it(`should fail if auction is still going`, async () => {

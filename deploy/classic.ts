@@ -7,23 +7,19 @@ import { ChainConfig } from '../types/environment';
 
 const chainConfig = <ChainConfig>(<any>network.config);
 
-const NAME: string = 'Deployer';
-const CONSTRUCTOR_ARGS: string[] = [
-    chainConfig.wallets.minter.public,
-    chainConfig.wallets.marketSigner.public,
-    chainConfig.wallets.proxyAdminOwner.public,
-];
+const NAME: string = '';
+const CONSTRUCTOR_ARGS: string[] = [];
 const PATH: string = `${NAME}.sol:${NAME}`;
 
 async function main(name: string, constructorArgs: any[], path: string) {
-    const [deployer] = await ethers.getSigners();
-
     console.log(`\n`);
     console.log(`Deploying ${name} Contract...`);
     console.log(`Environment Mode - ${process.env.ENV_MODE}`);
     console.log(`Constructor Arguments - ${JSON.stringify(constructorArgs)}`);
 
-    const contract = await deployClassic({ name, constructorArgs, deployer });
+    const [deployer] = await ethers.getSigners();
+
+    const contract = await deployClassic({ name, constructorArgs }, deployer);
     const contractAddress = await contract.getAddress();
 
     console.log('\n');

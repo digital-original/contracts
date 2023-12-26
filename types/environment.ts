@@ -5,7 +5,7 @@ export type WalletConfig = {
     private: string;
 };
 
-export type UpgradableContractConfig = {
+export type UpgradeableContractConfig = {
     proxy: string;
     admin: string;
 };
@@ -19,9 +19,9 @@ export type ChainConfig = {
         platform: WalletConfig;
     };
     contracts: {
-        token: UpgradableContractConfig;
-        market: UpgradableContractConfig;
-        auction: UpgradableContractConfig;
+        token: UpgradeableContractConfig;
+        market: UpgradeableContractConfig;
+        auction: UpgradeableContractConfig;
     };
 };
 

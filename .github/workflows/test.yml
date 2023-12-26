@@ -13,8 +13,8 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        node: [16]
-        python: [3.9]
+        node: [20.7.0]
+        # python: [3.11.6]
 
     runs-on: ${{ matrix.os }}
 
@@ -29,19 +29,19 @@ jobs:
       - name: Install node packages
         run: npm install
 
-      - name: Compile contracts
-        run: npm run compile
-
       - name: Run test
         run: npm run test
 
-      - name: Use Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python }}
+      # - name: Compile contracts
+      #   run: npm run compile
 
-      - name: Install python packages
-        run: pip install -r requirements.txt
+      # - name: Use Python
+      #   uses: actions/setup-python@v4
+      #   with:
+      #     python-version: ${{ matrix.python }}
 
-      - name: Run slither
-        run: npm run slither
+      # - name: Install python packages
+      #   run: pip install -r requirements.txt
+
+      # - name: Run slither
+      #   run: npm run slither

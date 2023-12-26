@@ -92,4 +92,12 @@ interface IAuction {
      * @return Auction order.
      */
     function order(uint256 orderId) external view returns (Order memory);
+
+    error AuctionTimeIsUp(uint256 endTime);
+    error AuctionStillGoing(uint256 endTime);
+    error AuctionInvalidBuyer(address buyer);
+    error AuctionNotEnoughEther(uint256 value, uint256 nextRaise);
+    error AuctionOrderNotExist(uint256 orderId);
+    error AuctionInvalidEndTime(uint256 endTime, uint256 currentTime);
+    error AuctionOrderNotPlaced(uint256 orderId);
 }

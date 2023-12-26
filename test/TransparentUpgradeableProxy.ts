@@ -1,7 +1,7 @@
 import { ethers } from 'hardhat';
 import { expect } from 'chai';
 import { deployUpgrade } from '../scripts/deploy-upgrade';
-import { deployUpgradeable } from '../scripts/deploy-upgradable';
+import { deployUpgradeable } from '../scripts/deploy-upgradeable';
 import { getSigners } from './utils/get-signers';
 import { getProxyAdmin } from './utils/get-admin-changed-event';
 import { Signer } from '../types/environment';
@@ -20,7 +20,8 @@ describe('TransparentUpgradeableProxy', function () {
     beforeEach(async () => {
         const { proxy: _proxy } = await deployUpgradeable({
             implName: 'ImplV1Mock',
-            proxyAdminOwner,
+            proxyAdminOwnerAddr: proxyAdminOwner,
+            implConstructorArgs: [],
         });
 
         proxy = await ethers.getContractAt('ImplV1Mock', _proxy);
@@ -36,14 +37,13 @@ describe('TransparentUpgradeableProxy', function () {
     });
 
     it(`should upgrade implementation to the V2`, async () => {
-        await deployUpgrade(
-            {
-                implName: 'ImplV2Mock',
-                proxyAdminAddress: proxyAdmin,
-                proxyAddress: proxy,
-            },
+        await deployUpgrade({
+            implName: 'ImplV2Mock',
+            implConstructorArgs: [],
+            proxyAdminAddr: proxyAdmin,
+            proxyAddr: proxy,
             proxyAdminOwner,
-        );
+        });
 
         expect(await proxy.count()).equal(0n);
 

@@ -1,9 +1,14 @@
 import { network, run } from 'hardhat';
 import { Contract } from 'ethers';
 
-const LOCAL_NETWORKS = ['hardhat', 'local', 'fork'];
+const LOCAL_NETWORKS = ['hardhat', 'fork'];
 
-export async function _verify(contract: Contract, path: string, address: string, constructorArgs: any[]) {
+export async function _verify(
+    contract: Contract,
+    path: string,
+    address: string,
+    constructorArgs: any[],
+) {
     if (LOCAL_NETWORKS.includes(network.name)) {
         return;
     }
