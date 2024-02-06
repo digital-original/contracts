@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import {ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
-import {ERC721URIStorage} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
-import "./errors/TokenErrors.sol";
+import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
+import {ERC721Wrapper} from "./utils/ERC721Wrapper.sol";
+import {EIP712Wrapper} from "./utils/EIP712Wrapper.sol";
+import {DistributionLibrary} from "./library/DistributionLibrary.sol";
+import {IToken} from "./interfaces/IToken.sol";
 
 /**
  * @title Token
@@ -12,9 +13,11 @@ import "./errors/TokenErrors.sol";
  * @notice Token is ERC721(Enumerable, URIStorage) contract.
  * @notice Contract based on [OpenZeppelin](https://docs.openzeppelin.com/) library.
  */
-contract Token is ERC721Enumerable, ERC721URIStorage {
-    string constant public TOKEN_NAME = "Digital Original";
-    string constant public TOKEN_SYMBOL = "DO";
+contract Token is IToken, ERC721Wrapper, EIP712Wrapper {
+    bytes32 public constant MINT_AND_PAY_PERMIT_TYPE_HASH =
+        keccak256(
+            "MintAndPayPermit(address to,uint256 tokenId,string tokenURI,uint256 price,address[] participants,uint256[] shares,uint256 deadline)"
+        );
 
     address public immutable MINTER;
     address public immutable MARKET;
@@ -33,7 +36,7 @@ contract Token is ERC721Enumerable, ERC721URIStorage {
      * @param _market TODO_DOC
      * @param _auction TODO_DOC
      */
-    constructor(address _minter, address _market, address _auction) ERC721(TOKEN_NAME, TOKEN_SYMBOL) {
+    constructor(address _minter, address _market, address _auction) EIP712("Token", "1") {
         MINTER = _minter;
         MARKET = _market;
         AUCTION = _auction;
@@ -51,16 +54,53 @@ contract Token is ERC721Enumerable, ERC721URIStorage {
      * @param _tokenURI Token metadata uri.
      * @param data Bytes optional data to send along with the call.
      */
-    // TODO: do we really need safeMint function?
     function safeMint(address to, uint256 tokenId, string memory _tokenURI, bytes memory data) external onlyMinter {
-        _safeMint(to, tokenId, data);
-        _setTokenURI(tokenId, _tokenURI);
+        _safeMintAndSetTokenUri(to, tokenId, _tokenURI, data);
     }
 
     /**
+     * @dev `to` should be EOA
+     */
+    function mintAndPay(
+        address to,
+        uint256 tokenId,
+        uint256 price,
+        uint256 deadline,
+        string memory _tokenURI,
+        address[] memory participants,
+        uint256[] memory shares,
+        bytes memory signature
+    ) external payable {
+        bytes32 structHash = keccak256(
+            abi.encode(
+                MINT_AND_PAY_PERMIT_TYPE_HASH,
+                to,
+                tokenId,
+                keccak256(bytes(_tokenURI)),
+                price,
+                keccak256(abi.encodePacked(participants)),
+                keccak256(abi.encodePacked(shares)),
+                deadline
+            )
+        );
+
+        _validateSignature(MINTER, structHash, deadline, signature);
+
+        DistributionLibrary.validateShares(participants, shares);
+
+        if (msg.sender != to) revert TokenUnauthorizedAccount(msg.sender);
+
+        if (msg.value != price) revert TokenInsufficientPayment(msg.value);
+
+        _mintAndSetTokenUri(to, tokenId, _tokenURI);
+
+        DistributionLibrary.distribute(price, participants, shares);
+    }
+
+    // TODO: safeMint payable
+
+    /**
      * @notice Burn a token.
-     *
-     * TODO_DOC
      *
      * @dev Only owner can invoke the method.
      * @dev This method provides the ability to burn a token during 7 days after the token creation.
@@ -71,59 +111,20 @@ contract Token is ERC721Enumerable, ERC721URIStorage {
         _burn(tokenId);
     }
 
-    function name() public pure override(ERC721) returns (string memory) {
-        return TOKEN_NAME;
-    }
-
-    function symbol() public pure override(ERC721) returns (string memory) {
-        return TOKEN_SYMBOL;
-    }
-
-    /**
-     * @dev An override required by Solidity.
-     */
-    function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory) {
-        return ERC721URIStorage.tokenURI(tokenId);
-    }
-
-    /**
-     * @dev An override required by Solidity.
-     */
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view override(ERC721Enumerable, ERC721URIStorage) returns (bool) {
-        return ERC721Enumerable.supportsInterface(interfaceId) || ERC721URIStorage.supportsInterface(interfaceId);
-    }
-
     /**
      * @dev Hook that is called during any token transfer.
-     * TODO_DOC
      */
-    function _update(
-        address to,
-        uint256 tokenId,
-        address auth
-    ) internal override(ERC721, ERC721Enumerable) returns (address) {
+    function _update(address to, uint256 tokenId, address auth) internal override(ERC721Wrapper) returns (address) {
         _validateTransfer(to);
 
-        return ERC721Enumerable._update(to, tokenId, auth);
+        return ERC721Wrapper._update(to, tokenId, auth);
     }
 
-    /**
-     * TODO_DOC
-     */
     function _validateTransfer(address to) internal view {
         if (to.code.length == 0) return;
         if (to == MARKET) return;
         if (to == AUCTION) return;
 
-        revert NotTrustedReceiver(to);
-    }
-
-    /**
-     * @dev An override required by Solidity.
-     */
-    function _increaseBalance(address account, uint128 amount) internal override(ERC721, ERC721Enumerable) {
-        ERC721Enumerable._increaseBalance(account, amount);
+        revert TokenNotTrustedReceiver(to);
     }
 }

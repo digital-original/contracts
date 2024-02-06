@@ -1,22 +1,26 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import {BaseMarket} from "./utils/BaseMarket.sol";
-import {MarketSigner} from "./utils/MarketSigner.sol";
+import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
+import {EIP712Wrapper} from "./utils/EIP712Wrapper.sol";
+import {TokenHolder} from "./utils/TokenHolder.sol";
+import {OrderCounter} from "./utils/OrderCounter.sol";
+import {DistributionLibrary} from "./library/DistributionLibrary.sol";
 import {IMarket} from "./interfaces/IMarket.sol";
-import "./errors/MarketErrors.sol";
 
 /**
  * @title Market
  *
  * @notice Market contract provides logic for selling and buying ERC721 tokens.
  */
-contract Market is BaseMarket, MarketSigner, IMarket {
+contract Market is IMarket, TokenHolder, OrderCounter, EIP712Wrapper {
     // TODO: Do you need to remove seller?
     bytes32 public constant MARKET_PERMIT_TYPE_HASH =
         keccak256(
             "MarketPermit(address seller,uint256 tokenId,uint256 price,address[] participants,uint256[] shares,uint256 deadline)"
         );
+
+    address public immutable MARKET_SIGNER;
 
     /**
      * @dev Stores orders by order ID.
@@ -24,10 +28,20 @@ contract Market is BaseMarket, MarketSigner, IMarket {
     mapping(uint256 => Order) private _orders;
 
     /**
-     * @param _token ERC721 token contract address, immutable.
-     * @param _marketSigner Data signer address, immutable.
+     * @dev Throws if the order is not placed.
      */
-    constructor(address _token, address _marketSigner) BaseMarket(_token) MarketSigner(_marketSigner, "Market", "1") {}
+    modifier placedOrder(uint256 orderId) {
+        if (_orders[orderId].status != OrderStatus.Placed) revert MarketOrderNotPlaced(orderId);
+        _;
+    }
+
+    /**
+     * @param _token ERC721 token contract address, immutable.
+     * @param marketSigner Data signer address, immutable.
+     */
+    constructor(address _token, address marketSigner) TokenHolder(_token) EIP712("Market", "1") {
+        MARKET_SIGNER = marketSigner;
+    }
 
     /**
      * @inheritdoc IMarket
@@ -41,7 +55,7 @@ contract Market is BaseMarket, MarketSigner, IMarket {
 
         if (msg.sender == seller) revert MarketInvalidBuyer(msg.sender);
 
-        if (msg.value != price) revert MarketInvalidAmount(msg.value, price);
+        if (msg.value != price) revert MarketInsufficientPayment(msg.value, price);
 
         uint256 tokenId = _orders[orderId].tokenId;
 
@@ -51,7 +65,7 @@ contract Market is BaseMarket, MarketSigner, IMarket {
 
         _transferToken(address(this), msg.sender, tokenId);
 
-        _distributeReward(price, _orders[orderId].participants, _orders[orderId].shares);
+        DistributionLibrary.distribute(price, _orders[orderId].participants, _orders[orderId].shares);
     }
 
     /**
@@ -115,9 +129,9 @@ contract Market is BaseMarket, MarketSigner, IMarket {
             )
         );
 
-        _validateSignature(structHash, deadline, signature);
+        _validateSignature(MARKET_SIGNER, structHash, deadline, signature);
 
-        _validateShares(participants, shares);
+        DistributionLibrary.validateShares(participants, shares);
 
         uint256 orderId = _useOrderId();
 
@@ -134,9 +148,9 @@ contract Market is BaseMarket, MarketSigner, IMarket {
     }
 
     /**
-     * @inheritdoc BaseMarket
+     * @inheritdoc TokenHolder
      *
-     * @dev Method overrides `BaseMarket::_onReceived.`
+     * @dev Method overrides `TokenHolder::_onReceived.`
      *
      * @param data abi.encode(
      *     `price`,
@@ -147,7 +161,7 @@ contract Market is BaseMarket, MarketSigner, IMarket {
      *   ).
      *   See `_place` method.
      */
-    function _onReceived(address from, uint256 tokenId, bytes calldata data) internal override(BaseMarket) {
+    function _onReceived(address, address from, uint256 tokenId, bytes calldata data) internal override(TokenHolder) {
         (
             uint256 price,
             uint256 deadline,
@@ -157,14 +171,5 @@ contract Market is BaseMarket, MarketSigner, IMarket {
         ) = abi.decode(data, (uint256, uint256, address[], uint256[], bytes));
 
         _place(from, tokenId, price, deadline, participants, shares, signature);
-    }
-
-    /**
-     * @inheritdoc BaseMarket
-     *
-     * @dev Method overrides `BaseMarket::_orderPlaced.`
-     */
-    function _orderPlaced(uint256 orderId) internal view override(BaseMarket) returns (bool) {
-        return _orders[orderId].status == OrderStatus.Placed;
     }
 }

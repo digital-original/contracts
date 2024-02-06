@@ -1,5 +1,5 @@
 import { ethers } from 'hardhat';
-import { deployUpgradeable } from '../../scripts/deploy-upgradable';
+import { deployUpgradeable } from '../../scripts/deploy-upgradeable';
 import { AddressParam } from '../../types/environment';
 
 export async function deployTokenUpgradeable(
@@ -10,7 +10,7 @@ export async function deployTokenUpgradeable(
     const { proxy: deployedContract } = await deployUpgradeable({
         implName: 'Token',
         implConstructorArgs: [minter, market, auction],
-        proxyAdminOwner: '0x0000000000000000000000000000000000000001',
+        proxyAdminOwnerAddr: '0x0000000000000000000000000000000000000001',
     });
 
     return Promise.all([

@@ -79,4 +79,10 @@ interface IMarket {
      * @return Order.
      */
     function order(uint256 orderId) external view returns (Order memory);
+
+    error MarketInvalidBuyer(address buyer);
+    error MarketInsufficientPayment(uint256 amount, uint256 price);
+    error MarketUnauthorizedAccount(address account);
+    error MarketOrderNotExist(uint256 orderId);
+    error MarketOrderNotPlaced(uint256 orderId);
 }

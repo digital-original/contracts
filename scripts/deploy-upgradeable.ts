@@ -3,8 +3,8 @@ import { AddressParam, ContractConstructorArgs, Signer } from '../types/environm
 
 interface Params {
     implName: string;
-    implConstructorArgs?: ContractConstructorArgs;
-    proxyAdminOwner: AddressParam;
+    implConstructorArgs: ContractConstructorArgs;
+    proxyAdminOwnerAddr: AddressParam;
 }
 
 export async function deployUpgradeable(params: Params, deployer?: Signer) {
@@ -20,8 +20,12 @@ export async function deployUpgradeable(params: Params, deployer?: Signer) {
     );
 
     const proxyName = `TransparentUpgradeableProxy`;
-    const proxyAdminOwner = params.proxyAdminOwner;
-    const proxyConstructorArgs: ContractConstructorArgs = [impl, proxyAdminOwner, new Uint8Array(0)];
+    const proxyAdminOwner = params.proxyAdminOwnerAddr;
+    const proxyConstructorArgs: ContractConstructorArgs = [
+        impl,
+        proxyAdminOwner,
+        new Uint8Array(0),
+    ];
 
     const proxy = await deployClassic(
         {
@@ -31,5 +35,5 @@ export async function deployUpgradeable(params: Params, deployer?: Signer) {
         deployer,
     );
 
-    return { impl, proxy };
+    return { impl, proxy, proxyConstructorArgs };
 }

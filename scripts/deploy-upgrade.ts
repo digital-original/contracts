@@ -4,12 +4,13 @@ import { AddressParam, ContractConstructorArgs, Signer } from '../types/environm
 
 interface Params {
     implName: string;
-    implConstructorArgs?: ContractConstructorArgs;
-    proxyAdminAddress: AddressParam;
-    proxyAddress: AddressParam;
+    implConstructorArgs: ContractConstructorArgs;
+    proxyAdminAddr: AddressParam;
+    proxyAddr: AddressParam;
+    proxyAdminOwner: Signer;
 }
 
-export async function deployUpgrade(params: Params, proxyAdminOwner?: Signer, deployer?: Signer) {
+export async function deployUpgrade(params: Params, deployer?: Signer) {
     const implName = params.implName;
     const implConstructorArgs = params.implConstructorArgs;
 
@@ -21,10 +22,11 @@ export async function deployUpgrade(params: Params, proxyAdminOwner?: Signer, de
         deployer,
     );
 
-    const proxyAdminAddress = params.proxyAdminAddress;
+    const proxyAdminAddress = params.proxyAdminAddr;
+    const proxyAdminOwner = params.proxyAdminOwner;
     const proxyAdmin = await ethers.getContractAt('ProxyAdmin', proxyAdminAddress, proxyAdminOwner);
 
-    const proxyAddress = params.proxyAddress;
+    const proxyAddress = params.proxyAddr;
     const response = await proxyAdmin.upgradeAndCall(proxyAddress, impl, new Uint8Array(0));
     const receipt = await response.wait();
 

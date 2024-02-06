@@ -8,12 +8,23 @@
             },
             {
                 "internalType": "address",
-                "name": "_marketSigner",
+                "name": "auctionSigner",
                 "type": "address"
             }
         ],
         "stateMutability": "nonpayable",
         "type": "constructor"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "account",
+                "type": "address"
+            }
+        ],
+        "name": "AddressInsufficientBalance",
+        "type": "error"
     },
     {
         "inputs": [
@@ -73,6 +84,17 @@
         "inputs": [
             {
                 "internalType": "uint256",
+                "name": "orderId",
+                "type": "uint256"
+            }
+        ],
+        "name": "AuctionOrderNotPlaced",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
                 "name": "endTime",
                 "type": "uint256"
             }
@@ -93,39 +115,12 @@
     },
     {
         "inputs": [],
-        "name": "BaseMarketInvalidSharesNumber",
+        "name": "DistributionInvalidSharesCount",
         "type": "error"
     },
     {
         "inputs": [],
-        "name": "BaseMarketInvalidSharesSum",
-        "type": "error"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "orderId",
-                "type": "uint256"
-            }
-        ],
-        "name": "BaseMarketOrderNotPlaced",
-        "type": "error"
-    },
-    {
-        "inputs": [],
-        "name": "BaseMarketSendValueFailed",
-        "type": "error"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "account",
-                "type": "address"
-            }
-        ],
-        "name": "BaseMarketUnauthorizedAccount",
+        "name": "DistributionInvalidSharesSum",
         "type": "error"
     },
     {
@@ -157,29 +152,22 @@
     },
     {
         "inputs": [],
+        "name": "EIP712WrapperExpiredSignature",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "EIP712WrapperInvalidSigner",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "FailedInnerCall",
+        "type": "error"
+    },
+    {
+        "inputs": [],
         "name": "InvalidShortString",
-        "type": "error"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "deadline",
-                "type": "uint256"
-            }
-        ],
-        "name": "MarketSignerExpiredSignature",
-        "type": "error"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "signer",
-                "type": "address"
-            }
-        ],
-        "name": "MarketSignerInvalidSigner",
         "type": "error"
     },
     {
@@ -191,6 +179,17 @@
             }
         ],
         "name": "StringTooLong",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "account",
+                "type": "address"
+            }
+        ],
+        "name": "TokenHolderUnauthorizedAccount",
         "type": "error"
     },
     {
@@ -325,25 +324,12 @@
     },
     {
         "inputs": [],
-        "name": "MARKET_SIGNER",
+        "name": "AUCTION_SIGNER",
         "outputs": [
             {
                 "internalType": "address",
                 "name": "",
                 "type": "address"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "MAX_TOTAL_SHARE",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
             }
         ],
         "stateMutability": "view",
@@ -422,7 +408,7 @@
         "inputs": [
             {
                 "internalType": "address",
-                "name": "",
+                "name": "operator",
                 "type": "address"
             },
             {
@@ -491,7 +477,7 @@
                     },
                     {
                         "internalType": "uint256",
-                        "name": "deadline",
+                        "name": "endTime",
                         "type": "uint256"
                     },
                     {

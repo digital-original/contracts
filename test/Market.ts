@@ -1,10 +1,10 @@
 import { expect } from 'chai';
 import { setNextBlockTimestamp } from '@nomicfoundation/hardhat-network-helpers/dist/src/helpers/time';
-import { MAX_TOTAL_SHARE } from '../constants/base-market';
+import { MAX_TOTAL_SHARE } from '../constants/distribution';
 import { getChainId } from './utils/get-chain-id';
 import { getSigners } from './utils/get-signers';
 import { deployTokenMock } from './utils/deploy-token-mock';
-import { deployMarketUpgradeable } from './utils/deploy-market-upgradable';
+import { deployMarketUpgradeable } from './utils/deploy-market-upgradeable';
 import { encodeMarketPlaceParams } from './utils/encode-market-place-params';
 import { signMarketPermit } from './utils/sign-market-permit';
 import { Signer } from '../types/environment';
@@ -131,10 +131,6 @@ describe('Market', function () {
         await expect(market.TOKEN()).to.eventually.equal(tokenMockAddr);
     });
 
-    it(`should have correct maximum total share`, async () => {
-        await expect(market.MAX_TOTAL_SHARE()).to.eventually.equal(MAX_TOTAL_SHARE);
-    });
-
     it(`should have correct initial order count`, async () => {
         await expect(market.orderCount()).to.eventually.equal(0n);
     });
@@ -166,7 +162,7 @@ describe('Market', function () {
         it(`should increase order count`, async () => {
             await placeOrder();
 
-            await expect(market.orderCount()).eventually.equal(1);
+            await expect(market.orderCount()).to.eventually.equal(1);
         });
 
         it(`should fail if signature is expired`, async () => {
@@ -175,7 +171,7 @@ describe('Market', function () {
             await setNextBlockTimestamp(_deadline + 10);
 
             await expect(placeOrder({ _deadline })).to.be.rejectedWith(
-                'MarketSignerExpiredSignature',
+                'EIP712WrapperExpiredSignature',
             );
         });
 
@@ -184,7 +180,7 @@ describe('Market', function () {
             const _shares = [MAX_TOTAL_SHARE / 2n, MAX_TOTAL_SHARE / 2n];
 
             await expect(placeOrder({ _participants, _shares })).to.be.rejectedWith(
-                'BaseMarketInvalidSharesNumber',
+                'DistributionInvalidSharesCount',
             );
         });
 
@@ -193,7 +189,7 @@ describe('Market', function () {
             const _shares = [MAX_TOTAL_SHARE, 1n];
 
             await expect(placeOrder({ _participants, _shares })).to.be.rejectedWith(
-                'BaseMarketInvalidSharesSum',
+                'DistributionInvalidSharesSum',
             );
         });
 
@@ -202,7 +198,7 @@ describe('Market', function () {
             const _shares: bigint[] = [];
 
             await expect(placeOrder({ _participants, _shares })).to.be.rejectedWith(
-                'BaseMarketInvalidSharesSum',
+                'DistributionInvalidSharesSum',
             );
         });
 
@@ -210,7 +206,7 @@ describe('Market', function () {
             const _marketSigner = randomAccount;
 
             await expect(placeOrder({ _marketSigner })).to.be.rejectedWith(
-                'MarketSignerInvalidSigner',
+                'EIP712WrapperInvalidSigner',
             );
         });
 
@@ -238,7 +234,7 @@ describe('Market', function () {
                     tokenId,
                     encodeMarketPlaceParams(price, deadline, participants, shares, signature),
                 ),
-            ).to.be.rejectedWith('BaseMarketUnauthorizedAccount');
+            ).to.be.rejectedWith('TokenHolderUnauthorizedAccount');
         });
     });
 
@@ -254,7 +250,7 @@ describe('Market', function () {
                 .to.be.emit(tokenMock, 'Transfer')
                 .withArgs(marketAddr, buyerAddr, tokenId);
 
-            await expect(tokenMock.ownerOf(tokenId)).to.be.eventually.equal(buyerAddr);
+            await expect(tokenMock.ownerOf(tokenId)).to.eventually.equal(buyerAddr);
         });
 
         it(`should distribute reward between participants according to shares`, async () => {
@@ -278,16 +274,18 @@ describe('Market', function () {
                 .withArgs(0, tokenId, buyerAddr, seller, price);
         });
 
-        it(`should fail if invalid ether amount`, async () => {
+        it(`should fail if insufficient payment`, async () => {
             const _price = price - 1n;
 
-            await expect(realize({ orderId: 0, _price })).to.be.rejectedWith('MarketInvalidAmount');
+            await expect(realize({ orderId: 0, _price })).to.be.rejectedWith(
+                'MarketInsufficientPayment',
+            );
         });
 
         it(`should fail if order is already realized`, async () => {
             await realize({ orderId: 0 });
 
-            await expect(realize({ orderId: 0 })).to.be.rejectedWith('BaseMarketOrderNotPlaced');
+            await expect(realize({ orderId: 0 })).to.be.rejectedWith('MarketOrderNotPlaced');
         });
 
         it(`should fail if order is cancelled`, async () => {
@@ -295,11 +293,11 @@ describe('Market', function () {
 
             await cancel({ _market, orderId: 0 });
 
-            await expect(realize({ orderId: 0 })).to.be.rejectedWith('BaseMarketOrderNotPlaced');
+            await expect(realize({ orderId: 0 })).to.be.rejectedWith('MarketOrderNotPlaced');
         });
 
         it(`should fail if order dose not exist`, async () => {
-            await expect(realize({ orderId: 1 })).to.be.rejectedWith('BaseMarketOrderNotPlaced');
+            await expect(realize({ orderId: 1 })).to.be.rejectedWith('MarketOrderNotPlaced');
         });
 
         it(`should fail if caller is seller`, async () => {
@@ -325,7 +323,7 @@ describe('Market', function () {
                 .to.be.emit(tokenMock, 'Transfer')
                 .withArgs(marketAddr, tokenOwnerAddr, tokenId);
 
-            await expect(tokenMock.ownerOf(tokenId)).to.be.eventually.equal(tokenOwnerAddr);
+            await expect(tokenMock.ownerOf(tokenId)).to.eventually.equal(tokenOwnerAddr);
         });
 
         it(`should emit cancelled event`, async () => {
@@ -343,13 +341,13 @@ describe('Market', function () {
         });
 
         it(`should fail if order dose not exist`, async () => {
-            await expect(cancel({ orderId: 1 })).to.be.rejectedWith('BaseMarketOrderNotPlaced');
+            await expect(cancel({ orderId: 1 })).to.be.rejectedWith('MarketOrderNotPlaced');
         });
 
         it(`should fail if order is already cancelled`, async () => {
             await cancel({ orderId: 0 });
 
-            await expect(cancel({ orderId: 0 })).to.be.rejectedWith('BaseMarketOrderNotPlaced');
+            await expect(cancel({ orderId: 0 })).to.be.rejectedWith('MarketOrderNotPlaced');
         });
 
         it(`should fail if order is realized`, async () => {
@@ -357,7 +355,7 @@ describe('Market', function () {
 
             await realize({ _market, orderId: 0 });
 
-            await expect(cancel({ orderId: 0 })).to.be.rejectedWith('BaseMarketOrderNotPlaced');
+            await expect(cancel({ orderId: 0 })).to.be.rejectedWith('MarketOrderNotPlaced');
         });
 
         it(`should fail if caller is not seller`, async () => {

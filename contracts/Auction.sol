@@ -1,21 +1,26 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import {BaseMarket} from "./utils/BaseMarket.sol";
-import {MarketSigner} from "./utils/MarketSigner.sol";
+import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {EIP712Wrapper} from "./utils/EIP712Wrapper.sol";
+import {TokenHolder} from "./utils/TokenHolder.sol";
+import {OrderCounter} from "./utils/OrderCounter.sol";
+import {DistributionLibrary} from "./library/DistributionLibrary.sol";
 import {IAuction} from "./interfaces/IAuction.sol";
-import "./errors/AuctionErrors.sol";
 
 /**
  * @title Auction
  *
  * @notice Auction contract provides logic for creating auction with ERC721 tokens.
  */
-contract Auction is BaseMarket, MarketSigner, IAuction {
+contract Auction is IAuction, TokenHolder, OrderCounter, EIP712Wrapper {
     bytes32 public constant AUCTION_PERMIT_TYPE_HASH =
         keccak256(
             "AuctionPermit(address seller,uint256 tokenId,uint256 price,uint256 priceStep,uint256 endTime,address[] participants,uint256[] shares,uint256 deadline)"
         );
+
+    address public immutable AUCTION_SIGNER;
 
     /**
      * @dev Stores auction orders by order ID.
@@ -23,10 +28,20 @@ contract Auction is BaseMarket, MarketSigner, IAuction {
     mapping(uint256 => Order) private _orders;
 
     /**
-     * @param _token ERC721 token contract address, immutable.
-     * @param _marketSigner Data signer address, immutable.
+     * @dev Throws if the order is not placed.
      */
-    constructor(address _token, address _marketSigner) BaseMarket(_token) MarketSigner(_marketSigner, "Auction", "1") {}
+    modifier placedOrder(uint256 orderId) {
+        if (_orders[orderId].status != OrderStatus.Placed) revert AuctionOrderNotPlaced(orderId);
+        _;
+    }
+
+    /**
+     * @param _token ERC721 token contract address, immutable.
+     * @param auctionSigner Data signer address, immutable.
+     */
+    constructor(address _token, address auctionSigner) TokenHolder(_token) EIP712("Auction", "1") {
+        AUCTION_SIGNER = auctionSigner;
+    }
 
     /**
      * @inheritdoc IAuction
@@ -58,7 +73,7 @@ contract Auction is BaseMarket, MarketSigner, IAuction {
 
             emit Raised(orderId, _orders[orderId].tokenId, msg.sender, msg.value);
 
-            _sendValue(prevBuyer, prevPrice);
+            Address.sendValue(payable(prevBuyer), prevPrice);
         }
     }
 
@@ -82,7 +97,7 @@ contract Auction is BaseMarket, MarketSigner, IAuction {
         if (buyer != address(0)) {
             _transferToken(address(this), buyer, tokenId);
 
-            _distributeReward(price, _orders[orderId].participants, _orders[orderId].shares);
+            DistributionLibrary.distribute(price, _orders[orderId].participants, _orders[orderId].shares);
         } else {
             _transferToken(address(this), seller, tokenId);
         }
@@ -139,9 +154,9 @@ contract Auction is BaseMarket, MarketSigner, IAuction {
             )
         );
 
-        _validateSignature(structHash, deadline, signature);
+        _validateSignature(AUCTION_SIGNER, structHash, deadline, signature);
 
-        _validateShares(participants, shares);
+        DistributionLibrary.validateShares(participants, shares);
 
         uint256 orderId = _useOrderId();
 
@@ -161,9 +176,9 @@ contract Auction is BaseMarket, MarketSigner, IAuction {
     }
 
     /**
-     * @inheritdoc BaseMarket
+     * @inheritdoc TokenHolder
      *
-     * @dev Method overrides `BaseMarket::_onReceived.`
+     * @dev Method overrides `TokenHolder::_onReceived.`
      *
      * @param data abi.encode(
      *     `price`,
@@ -176,7 +191,7 @@ contract Auction is BaseMarket, MarketSigner, IAuction {
      *   ).
      *   See `_place` method.
      */
-    function _onReceived(address from, uint256 tokenId, bytes calldata data) internal override(BaseMarket) {
+    function _onReceived(address, address from, uint256 tokenId, bytes calldata data) internal override(TokenHolder) {
         (
             uint256 price,
             uint256 priceStep,
@@ -188,16 +203,5 @@ contract Auction is BaseMarket, MarketSigner, IAuction {
         ) = abi.decode(data, (uint256, uint256, uint256, uint256, address[], uint256[], bytes));
 
         _place(from, tokenId, price, priceStep, endTime, deadline, participants, shares, signature);
-    }
-
-    /**
-     * @inheritdoc BaseMarket
-     *
-     * @dev Method overrides `BaseMarket::_orderPlaced.`
-     *
-     * @param orderId Auction order ID.
-     */
-    function _orderPlaced(uint256 orderId) internal view override(BaseMarket) returns (bool) {
-        return _orders[orderId].status == OrderStatus.Placed;
     }
 }
