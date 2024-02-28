@@ -1,4 +1,3 @@
-import { ethers } from 'hardhat';
 import { ContractConstructorArgs, Signer } from '../types/environment';
 
 interface Params {
@@ -7,6 +6,8 @@ interface Params {
 }
 
 export async function deployClassic(params: Params, deployer?: Signer) {
+    const { ethers } = await import('hardhat');
+
     const { name, constructorArgs } = params;
 
     const contract = await ethers.deployContract(name, constructorArgs, deployer);
