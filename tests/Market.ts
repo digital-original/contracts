@@ -23,7 +23,7 @@ describe('Market', function () {
     let buyer: Signer, buyerAddr: string;
     let randomAccount: Signer, randomAccountAddr: string;
 
-    let artTokenMock: ArtTokenMock, artTokenMockAddr: string;
+    let tokenMock: ArtTokenMock, tokenMockAddr: string;
 
     enum OrderStatus {
         NotExists,
@@ -39,68 +39,6 @@ describe('Market', function () {
     let participants: string[];
     let shares: bigint[];
 
-    async function placeOrder(
-        params: {
-            _tokenId?: bigint;
-            _seller?: string;
-            _price?: bigint;
-            _deadline?: number;
-            _participants?: string[];
-            _shares?: bigint[];
-            _artTokenMock?: ArtTokenMock;
-            _marketSigner?: Signer;
-        } = {},
-    ) {
-        const {
-            _tokenId = tokenId,
-            _seller = seller,
-            _price = price,
-            _deadline = deadline,
-            _participants = participants,
-            _shares = shares,
-            _artTokenMock = artTokenMock,
-            _marketSigner = marketSigner,
-        } = params;
-
-        const permit: MarketPermitStruct = {
-            seller: _seller,
-            tokenId: _tokenId,
-            price: _price,
-            participants: _participants,
-            shares: _shares,
-            deadline: _deadline,
-        };
-
-        const signature = await signMarketPermit(chainId, marketAddr, permit, _marketSigner);
-
-        return _artTokenMock['safeTransferFrom(address,address,uint256,bytes)'](
-            _seller,
-            market,
-            _tokenId,
-            encodeMarketPlaceParams(_price, _deadline, _participants, _shares, signature),
-        );
-    }
-
-    function realize(params: { orderId: number; _price?: bigint; _market?: Market }) {
-        const { orderId, _price = price, _market = market } = params;
-
-        return _market.realize(orderId, { value: _price });
-    }
-
-    function cancel(params: { orderId: number; _market?: Market }) {
-        const { orderId, _market = market } = params;
-
-        return _market.cancel(orderId);
-    }
-
-    async function mintToken() {
-        const tokenId = await artTokenMock.totalSupply();
-
-        await artTokenMock.mint(tokenOwner, tokenId);
-
-        return tokenId;
-    }
-
     before(async () => {
         chainId = await getChainId();
 
@@ -109,14 +47,14 @@ describe('Market', function () {
             [platformAddr, marketSignerAddr, tokenOwnerAddr, buyerAddr, randomAccountAddr],
         ] = await getSigners();
 
-        [artTokenMock, artTokenMockAddr] = await deployArtTokenMock();
+        [tokenMock, tokenMockAddr] = await deployArtTokenMock();
 
-        artTokenMock = artTokenMock.connect(tokenOwner);
+        tokenMock = tokenMock.connect(tokenOwner);
     });
 
     beforeEach(async () => {
         [[market, marketAddr], tokenId] = await Promise.all([
-            deployMarketUpgradeable(artTokenMock, marketSigner),
+            deployMarketUpgradeable(tokenMock, marketSigner),
             mintToken(),
         ]);
 
@@ -128,7 +66,7 @@ describe('Market', function () {
     });
 
     it(`should have correct token`, async () => {
-        await expect(market.TOKEN()).to.eventually.equal(artTokenMockAddr);
+        await expect(market.TOKEN()).to.eventually.equal(tokenMockAddr);
     });
 
     it(`should have correct initial order count`, async () => {
@@ -245,10 +183,10 @@ describe('Market', function () {
 
         it(`should transfer token to buyer`, async () => {
             await expect(realize({ orderId: 0 }))
-                .to.be.emit(artTokenMock, 'Transfer')
+                .to.be.emit(tokenMock, 'Transfer')
                 .withArgs(marketAddr, buyerAddr, tokenId);
 
-            await expect(artTokenMock.ownerOf(tokenId)).to.eventually.equal(buyerAddr);
+            await expect(tokenMock.ownerOf(tokenId)).to.eventually.equal(buyerAddr);
         });
 
         it(`should distribute reward between participants according to shares`, async () => {
@@ -294,7 +232,7 @@ describe('Market', function () {
             await expect(realize({ orderId: 0 })).to.be.rejectedWith('MarketOrderNotPlaced');
         });
 
-        it(`should fail if order dose not exist`, async () => {
+        it(`should fail if order does not exist`, async () => {
             await expect(realize({ orderId: 1 })).to.be.rejectedWith('MarketOrderNotPlaced');
         });
 
@@ -318,10 +256,10 @@ describe('Market', function () {
 
         it(`should transfer token back to seller`, async () => {
             await expect(cancel({ orderId: 0 }))
-                .to.be.emit(artTokenMock, 'Transfer')
+                .to.be.emit(tokenMock, 'Transfer')
                 .withArgs(marketAddr, tokenOwnerAddr, tokenId);
 
-            await expect(artTokenMock.ownerOf(tokenId)).to.eventually.equal(tokenOwnerAddr);
+            await expect(tokenMock.ownerOf(tokenId)).to.eventually.equal(tokenOwnerAddr);
         });
 
         it(`should emit cancelled event`, async () => {
@@ -338,7 +276,7 @@ describe('Market', function () {
             expect(order.status).equal(OrderStatus.Cancelled);
         });
 
-        it(`should fail if order dose not exist`, async () => {
+        it(`should fail if order does not exist`, async () => {
             await expect(cancel({ orderId: 1 })).to.be.rejectedWith('MarketOrderNotPlaced');
         });
 
@@ -364,4 +302,66 @@ describe('Market', function () {
             );
         });
     });
+
+    async function placeOrder(
+        params: {
+            _tokenId?: bigint;
+            _seller?: string;
+            _price?: bigint;
+            _deadline?: number;
+            _participants?: string[];
+            _shares?: bigint[];
+            _tokenMock?: ArtTokenMock;
+            _marketSigner?: Signer;
+        } = {},
+    ) {
+        const {
+            _tokenId = tokenId,
+            _seller = seller,
+            _price = price,
+            _deadline = deadline,
+            _participants = participants,
+            _shares = shares,
+            _tokenMock = tokenMock,
+            _marketSigner = marketSigner,
+        } = params;
+
+        const permit: MarketPermitStruct = {
+            seller: _seller,
+            tokenId: _tokenId,
+            price: _price,
+            participants: _participants,
+            shares: _shares,
+            deadline: _deadline,
+        };
+
+        const signature = await signMarketPermit(chainId, marketAddr, permit, _marketSigner);
+
+        return _tokenMock['safeTransferFrom(address,address,uint256,bytes)'](
+            _seller,
+            market,
+            _tokenId,
+            encodeMarketPlaceParams(_price, _deadline, _participants, _shares, signature),
+        );
+    }
+
+    function realize(params: { orderId: number; _price?: bigint; _market?: Market }) {
+        const { orderId, _price = price, _market = market } = params;
+
+        return _market.realize(orderId, { value: _price });
+    }
+
+    function cancel(params: { orderId: number; _market?: Market }) {
+        const { orderId, _market = market } = params;
+
+        return _market.cancel(orderId);
+    }
+
+    async function mintToken() {
+        const tokenId = await tokenMock.totalSupply();
+
+        await tokenMock.mint(tokenOwner, tokenId);
+
+        return tokenId;
+    }
 });

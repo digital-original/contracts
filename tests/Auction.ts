@@ -2,8 +2,8 @@ import { expect } from 'chai';
 import { ZeroAddress, Signer } from 'ethers';
 import { setNextBlockTimestamp } from '@nomicfoundation/hardhat-network-helpers/dist/src/helpers/time';
 import { Auction, TokenMock } from '../typechain-types';
-import { AuctionPermitStruct } from '../types/auction-house';
-import { encodeAuctionPlaceParams } from './utils/encode-auction-place-params';
+import { AuctionPermitStruct } from '../types/auction';
+import { encodeAuctionHouseCreateParams } from './utils/encode-auction-house-create-params';
 import { signAuctionPermit } from './utils/sign-auction-permit';
 import { getSigners } from './utils/get-signers';
 import { getChainId } from './utils/get-chain-id';
@@ -86,7 +86,7 @@ describe.skip('Auction', function () {
             _seller,
             auction,
             _tokenId,
-            encodeAuctionPlaceParams(
+            encodeAuctionHouseCreateParams(
                 _price,
                 _priceStep,
                 _endTime,
@@ -274,7 +274,7 @@ describe.skip('Auction', function () {
                     tokenOwnerAddr,
                     tokenOwnerAddr,
                     tokenId,
-                    encodeAuctionPlaceParams(
+                    encodeAuctionHouseCreateParams(
                         price,
                         priceStep,
                         endTime,
@@ -397,7 +397,7 @@ describe.skip('Auction', function () {
                 .withArgs(0, tokenId, buyer1Addr, price);
         });
 
-        it(`should fail if order dose not exist`, async () => {
+        it(`should fail if order does not exist`, async () => {
             await expect(raise({ orderId: 1, _price: price })).to.be.rejectedWith(
                 'AuctionOrderNotPlaced',
             );
@@ -423,7 +423,7 @@ describe.skip('Auction', function () {
     describe(`method 'end'`, () => {
         beforeEach(placeOrder);
 
-        it(`should fail if order dose not exist`, async () => {
+        it(`should fail if order does not exist`, async () => {
             await expect(end({ orderId: 1 })).to.be.rejectedWith('AuctionOrderNotPlaced');
         });
 
@@ -431,7 +431,7 @@ describe.skip('Auction', function () {
             await expect(end({ orderId: 0 })).to.be.rejectedWith('AuctionStillGoing');
         });
 
-        describe(`if buyer dose not exist`, () => {
+        describe(`if buyer does not exist`, () => {
             beforeEach(() => setNextBlockTimestamp(endTime + 1));
 
             it(`should end if caller is random account`, async () => {

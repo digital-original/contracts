@@ -4,11 +4,11 @@ pragma solidity ^0.8.20;
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {EIP712} from "../utils/EIP712.sol";
 import {Distribution} from "../utils/Distribution.sol";
-import {ArtTokenHolder} from "../art-token/ArtTokenHolder.sol";
+import {TokenHolder} from "../utils/TokenHolder.sol";
 import {AuctionHouseStorage} from "./AuctionHouseStorage.sol";
 import {IAuctionHouse} from "./IAuctionHouse.sol";
 
-contract AuctionHouse is IAuctionHouse, ArtTokenHolder, EIP712 {
+contract AuctionHouse is IAuctionHouse, TokenHolder, EIP712 {
     bytes32 public constant AUCTION_PERMIT_TYPE_HASH =
         // prettier-ignore
         keccak256(
@@ -33,9 +33,7 @@ contract AuctionHouse is IAuctionHouse, ArtTokenHolder, EIP712 {
     modifier auctionOngoing(uint256 auctionId) {
         AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
 
-        if (!(auctionId < $.auctionsCount)) {
-            revert AuctionHouseAuctionNotExist(auctionId);
-        }
+        _requireExist(auctionId);
 
         if (!($.auctions[auctionId].startTime <= block.timestamp)) {
             revert AuctionHouseAuctionNotStarted($.auctions[auctionId].startTime);
@@ -51,16 +49,14 @@ contract AuctionHouse is IAuctionHouse, ArtTokenHolder, EIP712 {
     modifier auctionEnded(uint256 auctionId) {
         AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
 
-        if (!(auctionId < $.auctionsCount)) {
-            revert AuctionHouseAuctionNotExist(auctionId);
+        _requireExist(auctionId);
+
+        if ($.auctions[auctionId].completed) {
+            revert AuctionHouseAuctionCompleted();
         }
 
         if (!($.auctions[auctionId].endTime <= block.timestamp)) {
             revert AuctionHouseAuctionNotEnded($.auctions[auctionId].endTime);
-        }
-
-        if ($.auctions[auctionId].completed) {
-            revert AuctionHouseAuctionCompleted();
         }
 
         _;
@@ -86,11 +82,7 @@ contract AuctionHouse is IAuctionHouse, ArtTokenHolder, EIP712 {
         _;
     }
 
-    constructor(
-        address _token,
-        address platform,
-        address auctionSigner
-    ) ArtTokenHolder(_token) EIP712("AuctionHouse", "1") {
+    constructor(address token, address platform, address auctionSigner) TokenHolder(token) EIP712("AuctionHouse", "1") {
         PLATFORM = platform;
         AUCTION_SIGNER = auctionSigner;
     }
@@ -177,6 +169,14 @@ contract AuctionHouse is IAuctionHouse, ArtTokenHolder, EIP712 {
         Address.sendValue(payable(PLATFORM), msg.value);
     }
 
+    function auction(uint256 auctionId) external view returns (Auction memory) {
+        _requireExist(auctionId);
+
+        AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
+
+        return $.auctions[auctionId];
+    }
+
     function _crate(
         uint256 tokenId,
         address seller,
@@ -223,9 +223,9 @@ contract AuctionHouse is IAuctionHouse, ArtTokenHolder, EIP712 {
     }
 
     /**
-     * @inheritdoc ArtTokenHolder
+     * @inheritdoc TokenHolder
      *
-     * @dev Method overrides `ArtTokenHolder::_onReceived.`
+     * @dev Method overrides `TokenHolder::_onReceived.`
      *
      * @param data AuctionData - abi.encode(
      *     uint256   tokenId
@@ -248,7 +248,7 @@ contract AuctionHouse is IAuctionHouse, ArtTokenHolder, EIP712 {
         address /* from */,
         uint256 _tokenId,
         bytes calldata data
-    ) internal override {
+    ) internal override(TokenHolder) {
         (
             uint256 tokenId,
             address seller,
@@ -322,5 +322,13 @@ contract AuctionHouse is IAuctionHouse, ArtTokenHolder, EIP712 {
         AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
 
         return $.auctionsCount++;
+    }
+
+    function _requireExist(uint256 auctionId) private view {
+        AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
+
+        if (!(auctionId < $.auctionsCount)) {
+            revert AuctionHouseAuctionNotExist(auctionId);
+        }
     }
 }

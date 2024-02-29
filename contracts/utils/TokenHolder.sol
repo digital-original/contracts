@@ -4,13 +4,12 @@ pragma solidity ^0.8.20;
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
-abstract contract ArtTokenHolder is IERC721Receiver {
-    error ArtTokenHolderUnauthorizedAccount(address account);
+abstract contract TokenHolder is IERC721Receiver {
+    error TokenHolderUnauthorizedAccount(address account);
 
     /**
      * @dev ERC721 token contract address.
      */
-    // TODO: Rename to ART_TOKEN
     IERC721 public immutable TOKEN;
 
     /**
@@ -18,7 +17,7 @@ abstract contract ArtTokenHolder is IERC721Receiver {
      */
     modifier onlyToken() {
         if (msg.sender != address(TOKEN)) {
-            revert ArtTokenHolderUnauthorizedAccount(msg.sender);
+            revert TokenHolderUnauthorizedAccount(msg.sender);
         }
 
         _;

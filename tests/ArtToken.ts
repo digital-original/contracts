@@ -14,7 +14,7 @@ import { MAX_TOTAL_SHARE } from '../constants/distribution';
 import { getSignDeadline } from './utils/get-sign-deadline';
 
 describe('ArtToken', function () {
-    let artToken: ArtToken, artTokenAddr: string;
+    let token: ArtToken, tokenAddr: string;
 
     let chainId: number;
 
@@ -34,7 +34,7 @@ describe('ArtToken', function () {
     const tokenUriMock = 'ipfs://Q...';
 
     function safeMint(params: { to: AddressParam; _token?: ArtToken }) {
-        const { to, _token = artToken } = params;
+        const { to, _token = token } = params;
 
         return _token.safeMint(to, tokenId, tokenUriMock, ZERO_BYTES);
     }
@@ -61,29 +61,29 @@ describe('ArtToken', function () {
     });
 
     beforeEach(async () => {
-        [artToken, artTokenAddr] = await deployArtTokenUpgradeable(minter, marketMock, auctionMock);
+        [token, tokenAddr] = await deployArtTokenUpgradeable(minter, marketMock, auctionMock);
 
-        artToken = artToken.connect(minter);
+        token = token.connect(minter);
     });
 
     it(`should have right minter`, async () => {
-        await expect(artToken.MINTER()).to.eventually.equal(minterAddr);
+        await expect(token.MINTER()).to.eventually.equal(minterAddr);
     });
 
     it(`should have right market`, async () => {
-        await expect(artToken.MARKET()).to.eventually.equal(marketMockAddr);
+        await expect(token.MARKET()).to.eventually.equal(marketMockAddr);
     });
 
     it(`should have right auction`, async () => {
-        await expect(artToken.AUCTION_HOUSE()).to.eventually.equal(auctionMockAddr);
+        await expect(token.AUCTION_HOUSE()).to.eventually.equal(auctionMockAddr);
     });
 
     it(`should have right name`, async () => {
-        await expect(artToken.name()).to.eventually.equal(ART_TOKEN_NAME);
+        await expect(token.name()).to.eventually.equal(ART_TOKEN_NAME);
     });
 
     it(`should have right symbol`, async () => {
-        await expect(artToken.symbol()).to.eventually.equal(ART_TOKEN_SYMBOL);
+        await expect(token.symbol()).to.eventually.equal(ART_TOKEN_SYMBOL);
     });
 
     describe(`method 'safeMint'`, () => {
@@ -91,9 +91,9 @@ describe('ArtToken', function () {
             await safeMint({ to: tokenOwner });
 
             await Promise.all([
-                expect(artToken.ownerOf(tokenId)).to.eventually.equal(tokenOwnerAddr),
-                expect(artToken.tokenURI(tokenId)).to.eventually.equal(tokenUriMock),
-                expect(artToken.balanceOf(tokenOwner)).to.eventually.equal(1n),
+                expect(token.ownerOf(tokenId)).to.eventually.equal(tokenOwnerAddr),
+                expect(token.tokenURI(tokenId)).to.eventually.equal(tokenUriMock),
+                expect(token.balanceOf(tokenOwner)).to.eventually.equal(1n),
             ]);
         });
 
@@ -101,8 +101,8 @@ describe('ArtToken', function () {
             await safeMint({ to: marketMock });
 
             await Promise.all([
-                expect(artToken.ownerOf(tokenId)).to.eventually.equal(marketMockAddr),
-                expect(artToken.balanceOf(marketMock)).to.eventually.equal(1n),
+                expect(token.ownerOf(tokenId)).to.eventually.equal(marketMockAddr),
+                expect(token.balanceOf(marketMock)).to.eventually.equal(1n),
             ]);
         });
 
@@ -110,16 +110,16 @@ describe('ArtToken', function () {
             await safeMint({ to: auctionMock });
 
             await Promise.all([
-                expect(artToken.ownerOf(tokenId)).to.eventually.equal(auctionMockAddr),
-                expect(artToken.balanceOf(auctionMock)).to.eventually.equal(1n),
+                expect(token.ownerOf(tokenId)).to.eventually.equal(auctionMockAddr),
+                expect(token.balanceOf(auctionMock)).to.eventually.equal(1n),
             ]);
         });
 
         it(`should fail if caller is not minter`, async () => {
-            const _token = artToken.connect(randomAccount1);
+            const _token = token.connect(randomAccount1);
 
             await expect(safeMint({ _token, to: randomAccount1 })).to.be.rejectedWith(
-                'TokenUnauthorizedAccount',
+                'ArtTokenUnauthorizedAccount',
             );
         });
 
@@ -158,7 +158,7 @@ describe('ArtToken', function () {
                 _deadline = deadline,
                 _value = price,
                 _minter = minter,
-                _token = artToken,
+                _token = token,
             } = params;
 
             const permit: MintAndPayPermitStruct = {
@@ -171,7 +171,7 @@ describe('ArtToken', function () {
                 deadline: _deadline,
             };
 
-            const signature = await signMintAndPayPermit(chainId, artTokenAddr, permit, _minter);
+            const signature = await signMintAndPayPermit(chainId, tokenAddr, permit, _minter);
 
             return _token.mintAndPay(
                 _to,
@@ -195,7 +195,7 @@ describe('ArtToken', function () {
 
         it(`should mint token if all conditions are met`, async () => {
             const _to = randomAccount1Addr;
-            const _token = artToken.connect(randomAccount1);
+            const _token = token.connect(randomAccount1);
 
             await mintAndPay({
                 _to,
@@ -203,16 +203,16 @@ describe('ArtToken', function () {
             });
 
             await Promise.all([
-                expect(artToken.ownerOf(tokenId)).to.eventually.equal(_to),
-                expect(artToken.tokenURI(tokenId)).to.eventually.equal(tokenUriMock),
-                expect(artToken.balanceOf(_to)).to.eventually.equal(1n),
+                expect(token.ownerOf(tokenId)).to.eventually.equal(_to),
+                expect(token.tokenURI(tokenId)).to.eventually.equal(tokenUriMock),
+                expect(token.balanceOf(_to)).to.eventually.equal(1n),
             ]);
         });
 
         it(`should fail if permit signer is not minter`, async () => {
             const _to = randomAccount1Addr;
             const _minter = randomAccount1;
-            const _token = artToken.connect(randomAccount1);
+            const _token = token.connect(randomAccount1);
 
             await Promise.all([
                 expect(
@@ -228,7 +228,7 @@ describe('ArtToken', function () {
         it(`should fail if permit is expired`, async () => {
             const _to = randomAccount1Addr;
             const _deadline = await getSignDeadline();
-            const _token = artToken.connect(randomAccount1);
+            const _token = token.connect(randomAccount1);
 
             await setNextBlockTimestamp(_deadline + 10);
 
@@ -246,7 +246,7 @@ describe('ArtToken', function () {
         it(`should fail if insufficient payment`, async () => {
             const _to = randomAccount1Addr;
             const _price = price;
-            const _token = artToken.connect(randomAccount1);
+            const _token = token.connect(randomAccount1);
 
             await Promise.all([
                 expect(
@@ -256,13 +256,13 @@ describe('ArtToken', function () {
                         _value: _price - 1n,
                         _token,
                     }),
-                ).to.be.rejectedWith('TokenInsufficientPayment'),
+                ).to.be.rejectedWith('ArtTokenInsufficientPayment'),
             ]);
         });
 
         it(`should fail if 'to' in permit and caller are different`, async () => {
             const _to = randomAccount1Addr;
-            const _token = artToken.connect(randomAccount2);
+            const _token = token.connect(randomAccount2);
 
             await Promise.all([
                 expect(
@@ -270,13 +270,13 @@ describe('ArtToken', function () {
                         _to,
                         _token,
                     }),
-                ).to.be.rejectedWith('TokenUnauthorizedAccount'),
+                ).to.be.rejectedWith('ArtTokenUnauthorizedAccount'),
             ]);
         });
 
         it(`should distribute reward between participants according to shares`, async () => {
             const _to = randomAccount1Addr;
-            const _token = artToken.connect(randomAccount1);
+            const _token = token.connect(randomAccount1);
 
             await expect(() =>
                 mintAndPay({
@@ -293,7 +293,7 @@ describe('ArtToken', function () {
             const _to = randomAccount1Addr;
             const _participants = [platformAddr];
             const _shares = [MAX_TOTAL_SHARE / 2n, MAX_TOTAL_SHARE / 2n];
-            const _token = artToken.connect(randomAccount1);
+            const _token = token.connect(randomAccount1);
 
             await expect(
                 mintAndPay({
@@ -309,7 +309,7 @@ describe('ArtToken', function () {
             const _to = randomAccount1Addr;
             const _participants = [platformAddr, partnerAddr];
             const _shares = [MAX_TOTAL_SHARE, 1n];
-            const _token = artToken.connect(randomAccount1);
+            const _token = token.connect(randomAccount1);
 
             await expect(
                 mintAndPay({
@@ -325,7 +325,7 @@ describe('ArtToken', function () {
             const _to = randomAccount1Addr;
             const _participants: string[] = [];
             const _shares: bigint[] = [];
-            const _token = artToken.connect(randomAccount1);
+            const _token = token.connect(randomAccount1);
 
             await expect(
                 mintAndPay({
@@ -344,7 +344,7 @@ describe('ArtToken', function () {
             to: AddressParam;
             _token?: ArtToken;
         }) {
-            const { from, to, _token = artToken } = params;
+            const { from, to, _token = token } = params;
 
             return _token['safeTransferFrom(address,address,uint256,bytes)'](
                 from,
@@ -357,25 +357,25 @@ describe('ArtToken', function () {
         beforeEach(async () => {
             await safeMint({ to: tokenOwner });
 
-            artToken = artToken.connect(tokenOwner);
+            token = token.connect(tokenOwner);
         });
 
         it(`should transfer to EOA`, async () => {
             await safeTransferFrom({ from: tokenOwner, to: tokenReceiver });
 
-            await expect(artToken.ownerOf(tokenId)).to.eventually.equal(tokenReceiverAddr);
+            await expect(token.ownerOf(tokenId)).to.eventually.equal(tokenReceiverAddr);
         });
 
         it(`should transfer to trusted market`, async () => {
             await safeTransferFrom({ from: tokenOwner, to: marketMock });
 
-            await expect(artToken.ownerOf(tokenId)).to.eventually.equal(marketMockAddr);
+            await expect(token.ownerOf(tokenId)).to.eventually.equal(marketMockAddr);
         });
 
         it(`should transfer to trusted auction`, async () => {
             await safeTransferFrom({ from: tokenOwner, to: auctionMock });
 
-            await expect(artToken.ownerOf(tokenId)).to.eventually.equal(auctionMockAddr);
+            await expect(token.ownerOf(tokenId)).to.eventually.equal(auctionMockAddr);
         });
 
         it(`should fail if receiver is not trusted contract`, async () => {
@@ -387,7 +387,7 @@ describe('ArtToken', function () {
 
     describe(`method 'rollback'`, () => {
         function rollback(params: { _token?: ArtToken } = {}) {
-            const { _token = artToken } = params;
+            const { _token = token } = params;
 
             return _token.rollback(tokenId);
         }
@@ -399,13 +399,13 @@ describe('ArtToken', function () {
         it(`should burn if caller is minter`, async () => {
             await rollback();
 
-            await expect(artToken.ownerOf(tokenId)).to.be.rejectedWith('ERC721NonexistentToken');
+            await expect(token.ownerOf(tokenId)).to.be.rejectedWith('ERC721NonexistentToken');
         });
 
         it(`should fail if caller is not minter`, async () => {
-            const _token = artToken.connect(randomAccount1);
+            const _token = token.connect(randomAccount1);
 
-            await expect(rollback({ _token })).to.be.rejectedWith('TokenUnauthorizedAccount');
+            await expect(rollback({ _token })).to.be.rejectedWith('ArtTokenUnauthorizedAccount');
         });
     });
 });

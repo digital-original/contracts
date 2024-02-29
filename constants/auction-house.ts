@@ -1,5 +1,5 @@
-export const AUCTION_DOMAIN_NAME = 'AuctionHouse';
-export const AUCTION_DOMAIN_VERSION = '1';
+export const AUCTION_HOUSE_DOMAIN_NAME = 'AuctionHouse';
+export const AUCTION_HOUSE_DOMAIN_VERSION = '1';
 
 export const AUCTION_PERMIT_TYPE = {
     AuctionPermit: [

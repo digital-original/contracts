@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import {EIP712} from "../utils/EIP712.sol";
 import {Distribution} from "../utils/Distribution.sol";
-import {ArtTokenHolder} from "../art-token/ArtTokenHolder.sol";
+import {TokenHolder} from "../utils/TokenHolder.sol";
 import {MarketStorage} from "./MarketStorage.sol";
 import {IMarket} from "./IMarket.sol";
 
@@ -12,7 +12,7 @@ import {IMarket} from "./IMarket.sol";
  *
  * @notice Market contract provides logic for selling and buying ERC721 tokens.
  */
-contract Market is IMarket, ArtTokenHolder, EIP712 {
+contract Market is IMarket, TokenHolder, EIP712 {
     bytes32 public constant MARKET_PERMIT_TYPE_HASH =
         // prettier-ignore
         keccak256(
@@ -42,10 +42,10 @@ contract Market is IMarket, ArtTokenHolder, EIP712 {
     }
 
     /**
-     * @param _token ERC721 token contract address, immutable.
+     * @param token ERC721 token contract address, immutable.
      * @param marketSigner Data signer address, immutable.
      */
-    constructor(address _token, address marketSigner) ArtTokenHolder(_token) EIP712("Market", "1") {
+    constructor(address token, address marketSigner) TokenHolder(token) EIP712("Market", "1") {
         MARKET_SIGNER = marketSigner;
     }
 
@@ -175,9 +175,9 @@ contract Market is IMarket, ArtTokenHolder, EIP712 {
     }
 
     /**
-     * @inheritdoc ArtTokenHolder
+     * @inheritdoc TokenHolder
      *
-     * @dev Method overrides `ArtTokenHolder::_onReceived.`
+     * @dev Method overrides `TokenHolder::_onReceived.`
      *
      * @param data abi.encode(
      *     `price`,
@@ -188,12 +188,7 @@ contract Market is IMarket, ArtTokenHolder, EIP712 {
      *   ).
      *   See `_place` method.
      */
-    function _onReceived(
-        address,
-        address from,
-        uint256 tokenId,
-        bytes calldata data
-    ) internal override(ArtTokenHolder) {
+    function _onReceived(address, address from, uint256 tokenId, bytes calldata data) internal override(TokenHolder) {
         (
             uint256 price,
             uint256 deadline,
