@@ -2,16 +2,75 @@
     {
         "elements": [
             {
+                "type": "contract",
+                "name": "CollabTokenMock",
+                "source_mapping": {
+                    "start": 241,
+                    "length": 266,
+                    "filename_relative": "contracts/collab-token/CollabTokenMock.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/collab-token/CollabTokenMock.sol",
+                    "filename_short": "contracts/collab-token/CollabTokenMock.sol",
+                    "is_dependency": false,
+                    "lines": [7, 8, 9, 10, 11, 12, 13],
+                    "starting_column": 1,
+                    "ending_column": 2
+                }
+            },
+            {
+                "type": "function",
+                "name": "mint",
+                "source_mapping": {
+                    "start": 359,
+                    "length": 146,
+                    "filename_relative": "contracts/collab-token/CollabTokenMock.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/collab-token/CollabTokenMock.sol",
+                    "filename_short": "contracts/collab-token/CollabTokenMock.sol",
+                    "is_dependency": false,
+                    "lines": [10, 11, 12],
+                    "starting_column": 5,
+                    "ending_column": 6
+                },
+                "type_specific_fields": {
+                    "parent": {
+                        "type": "contract",
+                        "name": "CollabTokenMock",
+                        "source_mapping": {
+                            "start": 241,
+                            "length": 266,
+                            "filename_relative": "contracts/collab-token/CollabTokenMock.sol",
+                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/collab-token/CollabTokenMock.sol",
+                            "filename_short": "contracts/collab-token/CollabTokenMock.sol",
+                            "is_dependency": false,
+                            "lines": [7, 8, 9, 10, 11, 12, 13],
+                            "starting_column": 1,
+                            "ending_column": 2
+                        }
+                    },
+                    "signature": "mint(address,uint256,uint256,uint256)"
+                }
+            }
+        ],
+        "description": "Contract locking ether found:\n\tContract CollabTokenMock (contracts/collab-token/CollabTokenMock.sol#7-13) has payable functions:\n\t - CollabTokenMock.mint(address,uint256,uint256,uint256) (contracts/collab-token/CollabTokenMock.sol#10-12)\n\tBut does not have a function to withdraw the ether\n",
+        "markdown": "Contract locking ether found:\n\tContract [CollabTokenMock](contracts/collab-token/CollabTokenMock.sol#L7-L13) has payable functions:\n\t - [CollabTokenMock.mint(address,uint256,uint256,uint256)](contracts/collab-token/CollabTokenMock.sol#L10-L12)\n\tBut does not have a function to withdraw the ether\n",
+        "first_markdown_element": "contracts/collab-token/CollabTokenMock.sol#L7-L13",
+        "id": "6ed8c2c8df071fa08b2181ac3e2d8e28fdb75dfce17b3163760ef645ced68192",
+        "check": "locked-ether",
+        "impact": "Medium",
+        "confidence": "High"
+    },
+    {
+        "elements": [
+            {
                 "type": "variable",
                 "name": "minter",
                 "source_mapping": {
-                    "start": 1388,
+                    "start": 1809,
                     "length": 14,
                     "filename_relative": "contracts/art-token/ArtToken.sol",
                     "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtToken.sol",
                     "filename_short": "contracts/art-token/ArtToken.sol",
                     "is_dependency": false,
-                    "lines": [50],
+                    "lines": [64],
                     "starting_column": 17,
                     "ending_column": 31
                 },
@@ -20,13 +79,13 @@
                         "type": "function",
                         "name": "constructor",
                         "source_mapping": {
-                            "start": 1376,
-                            "length": 185,
+                            "start": 1797,
+                            "length": 242,
                             "filename_relative": "contracts/art-token/ArtToken.sol",
                             "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtToken.sol",
                             "filename_short": "contracts/art-token/ArtToken.sol",
                             "is_dependency": false,
-                            "lines": [50, 51, 52, 53, 54],
+                            "lines": [64, 65, 66, 67, 68, 69],
                             "starting_column": 5,
                             "ending_column": 6
                         },
@@ -35,29 +94,33 @@
                                 "type": "contract",
                                 "name": "ArtToken",
                                 "source_mapping": {
-                                    "start": 431,
-                                    "length": 3876,
+                                    "start": 494,
+                                    "length": 5114,
                                     "filename_relative": "contracts/art-token/ArtToken.sol",
                                     "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtToken.sol",
                                     "filename_short": "contracts/art-token/ArtToken.sol",
                                     "is_dependency": false,
                                     "lines": [
-                                        15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
-                                        30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44,
-                                        45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59,
-                                        60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74,
-                                        75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89,
-                                        90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103,
-                                        104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115,
-                                        116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127,
-                                        128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139,
-                                        140, 141, 142, 143, 144, 145, 146
+                                        16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
+                                        31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45,
+                                        46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60,
+                                        61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75,
+                                        76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90,
+                                        91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104,
+                                        105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116,
+                                        117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128,
+                                        129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140,
+                                        141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152,
+                                        153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164,
+                                        165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176,
+                                        177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188,
+                                        189
                                     ],
                                     "starting_column": 1,
                                     "ending_column": 2
                                 }
                             },
-                            "signature": "constructor(address,address,address)"
+                            "signature": "constructor(address,address,address,address)"
                         }
                     }
                 }
@@ -66,13 +129,13 @@
                 "type": "node",
                 "name": "MINTER = minter",
                 "source_mapping": {
-                    "start": 1476,
+                    "start": 1918,
                     "length": 15,
                     "filename_relative": "contracts/art-token/ArtToken.sol",
                     "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtToken.sol",
                     "filename_short": "contracts/art-token/ArtToken.sol",
                     "is_dependency": false,
-                    "lines": [51],
+                    "lines": [65],
                     "starting_column": 9,
                     "ending_column": 24
                 },
@@ -81,13 +144,13 @@
                         "type": "function",
                         "name": "constructor",
                         "source_mapping": {
-                            "start": 1376,
-                            "length": 185,
+                            "start": 1797,
+                            "length": 242,
                             "filename_relative": "contracts/art-token/ArtToken.sol",
                             "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtToken.sol",
                             "filename_short": "contracts/art-token/ArtToken.sol",
                             "is_dependency": false,
-                            "lines": [50, 51, 52, 53, 54],
+                            "lines": [64, 65, 66, 67, 68, 69],
                             "starting_column": 5,
                             "ending_column": 6
                         },
@@ -96,38 +159,42 @@
                                 "type": "contract",
                                 "name": "ArtToken",
                                 "source_mapping": {
-                                    "start": 431,
-                                    "length": 3876,
+                                    "start": 494,
+                                    "length": 5114,
                                     "filename_relative": "contracts/art-token/ArtToken.sol",
                                     "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtToken.sol",
                                     "filename_short": "contracts/art-token/ArtToken.sol",
                                     "is_dependency": false,
                                     "lines": [
-                                        15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
-                                        30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44,
-                                        45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59,
-                                        60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74,
-                                        75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89,
-                                        90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103,
-                                        104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115,
-                                        116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127,
-                                        128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139,
-                                        140, 141, 142, 143, 144, 145, 146
+                                        16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
+                                        31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45,
+                                        46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60,
+                                        61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75,
+                                        76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90,
+                                        91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104,
+                                        105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116,
+                                        117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128,
+                                        129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140,
+                                        141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152,
+                                        153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164,
+                                        165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176,
+                                        177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188,
+                                        189
                                     ],
                                     "starting_column": 1,
                                     "ending_column": 2
                                 }
                             },
-                            "signature": "constructor(address,address,address)"
+                            "signature": "constructor(address,address,address,address)"
                         }
                     }
                 }
             }
         ],
-        "description": "ArtToken.constructor(address,address,address).minter (contracts/art-token/ArtToken.sol#50) lacks a zero-check on :\n\t\t- MINTER = minter (contracts/art-token/ArtToken.sol#51)\n",
-        "markdown": "[ArtToken.constructor(address,address,address).minter](contracts/art-token/ArtToken.sol#L50) lacks a zero-check on :\n\t\t- [MINTER = minter](contracts/art-token/ArtToken.sol#L51)\n",
-        "first_markdown_element": "contracts/art-token/ArtToken.sol#L50",
-        "id": "119ab2b9bf361445e9c658b728af2e1004455b9c7796d0d6c358e7b15de8f2f3",
+        "description": "ArtToken.constructor(address,address,address,address).minter (contracts/art-token/ArtToken.sol#64) lacks a zero-check on :\n\t\t- MINTER = minter (contracts/art-token/ArtToken.sol#65)\n",
+        "markdown": "[ArtToken.constructor(address,address,address,address).minter](contracts/art-token/ArtToken.sol#L64) lacks a zero-check on :\n\t\t- [MINTER = minter](contracts/art-token/ArtToken.sol#L65)\n",
+        "first_markdown_element": "contracts/art-token/ArtToken.sol#L64",
+        "id": "5ea920a51da20c293e04eae226d68ed864929f7efe47c3ea5f7082fd0d29d0b9",
         "check": "missing-zero-check",
         "impact": "Low",
         "confidence": "Medium"
@@ -138,13 +205,13 @@
                 "type": "variable",
                 "name": "market",
                 "source_mapping": {
-                    "start": 1404,
+                    "start": 1825,
                     "length": 14,
                     "filename_relative": "contracts/art-token/ArtToken.sol",
                     "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtToken.sol",
                     "filename_short": "contracts/art-token/ArtToken.sol",
                     "is_dependency": false,
-                    "lines": [50],
+                    "lines": [64],
                     "starting_column": 33,
                     "ending_column": 47
                 },
@@ -153,13 +220,13 @@
                         "type": "function",
                         "name": "constructor",
                         "source_mapping": {
-                            "start": 1376,
-                            "length": 185,
+                            "start": 1797,
+                            "length": 242,
                             "filename_relative": "contracts/art-token/ArtToken.sol",
                             "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtToken.sol",
                             "filename_short": "contracts/art-token/ArtToken.sol",
                             "is_dependency": false,
-                            "lines": [50, 51, 52, 53, 54],
+                            "lines": [64, 65, 66, 67, 68, 69],
                             "starting_column": 5,
                             "ending_column": 6
                         },
@@ -168,29 +235,33 @@
                                 "type": "contract",
                                 "name": "ArtToken",
                                 "source_mapping": {
-                                    "start": 431,
-                                    "length": 3876,
+                                    "start": 494,
+                                    "length": 5114,
                                     "filename_relative": "contracts/art-token/ArtToken.sol",
                                     "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtToken.sol",
                                     "filename_short": "contracts/art-token/ArtToken.sol",
                                     "is_dependency": false,
                                     "lines": [
-                                        15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
-                                        30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44,
-                                        45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59,
-                                        60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74,
-                                        75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89,
-                                        90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103,
-                                        104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115,
-                                        116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127,
-                                        128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139,
-                                        140, 141, 142, 143, 144, 145, 146
+                                        16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
+                                        31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45,
+                                        46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60,
+                                        61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75,
+                                        76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90,
+                                        91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104,
+                                        105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116,
+                                        117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128,
+                                        129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140,
+                                        141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152,
+                                        153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164,
+                                        165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176,
+                                        177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188,
+                                        189
                                     ],
                                     "starting_column": 1,
                                     "ending_column": 2
                                 }
                             },
-                            "signature": "constructor(address,address,address)"
+                            "signature": "constructor(address,address,address,address)"
                         }
                     }
                 }
@@ -199,13 +270,13 @@
                 "type": "node",
                 "name": "MARKET = market",
                 "source_mapping": {
-                    "start": 1501,
+                    "start": 1943,
                     "length": 15,
                     "filename_relative": "contracts/art-token/ArtToken.sol",
                     "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtToken.sol",
                     "filename_short": "contracts/art-token/ArtToken.sol",
                     "is_dependency": false,
-                    "lines": [52],
+                    "lines": [66],
                     "starting_column": 9,
                     "ending_column": 24
                 },
@@ -214,13 +285,13 @@
                         "type": "function",
                         "name": "constructor",
                         "source_mapping": {
-                            "start": 1376,
-                            "length": 185,
+                            "start": 1797,
+                            "length": 242,
                             "filename_relative": "contracts/art-token/ArtToken.sol",
                             "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtToken.sol",
                             "filename_short": "contracts/art-token/ArtToken.sol",
                             "is_dependency": false,
-                            "lines": [50, 51, 52, 53, 54],
+                            "lines": [64, 65, 66, 67, 68, 69],
                             "starting_column": 5,
                             "ending_column": 6
                         },
@@ -229,38 +300,42 @@
                                 "type": "contract",
                                 "name": "ArtToken",
                                 "source_mapping": {
-                                    "start": 431,
-                                    "length": 3876,
+                                    "start": 494,
+                                    "length": 5114,
                                     "filename_relative": "contracts/art-token/ArtToken.sol",
                                     "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtToken.sol",
                                     "filename_short": "contracts/art-token/ArtToken.sol",
                                     "is_dependency": false,
                                     "lines": [
-                                        15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
-                                        30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44,
-                                        45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59,
-                                        60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74,
-                                        75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89,
-                                        90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103,
-                                        104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115,
-                                        116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127,
-                                        128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139,
-                                        140, 141, 142, 143, 144, 145, 146
+                                        16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
+                                        31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45,
+                                        46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60,
+                                        61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75,
+                                        76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90,
+                                        91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104,
+                                        105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116,
+                                        117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128,
+                                        129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140,
+                                        141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152,
+                                        153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164,
+                                        165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176,
+                                        177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188,
+                                        189
                                     ],
                                     "starting_column": 1,
                                     "ending_column": 2
                                 }
                             },
-                            "signature": "constructor(address,address,address)"
+                            "signature": "constructor(address,address,address,address)"
                         }
                     }
                 }
             }
         ],
-        "description": "ArtToken.constructor(address,address,address).market (contracts/art-token/ArtToken.sol#50) lacks a zero-check on :\n\t\t- MARKET = market (contracts/art-token/ArtToken.sol#52)\n",
-        "markdown": "[ArtToken.constructor(address,address,address).market](contracts/art-token/ArtToken.sol#L50) lacks a zero-check on :\n\t\t- [MARKET = market](contracts/art-token/ArtToken.sol#L52)\n",
-        "first_markdown_element": "contracts/art-token/ArtToken.sol#L50",
-        "id": "b5742d9ccf922c2a23fbb0b90e3cfbc45b564567d6c264563172868d454afc15",
+        "description": "ArtToken.constructor(address,address,address,address).market (contracts/art-token/ArtToken.sol#64) lacks a zero-check on :\n\t\t- MARKET = market (contracts/art-token/ArtToken.sol#66)\n",
+        "markdown": "[ArtToken.constructor(address,address,address,address).market](contracts/art-token/ArtToken.sol#L64) lacks a zero-check on :\n\t\t- [MARKET = market](contracts/art-token/ArtToken.sol#L66)\n",
+        "first_markdown_element": "contracts/art-token/ArtToken.sol#L64",
+        "id": "22d15b18987620c3e4dfa86b6ad10249ffd8be0d77af3f48865e0c55958c4afe",
         "check": "missing-zero-check",
         "impact": "Low",
         "confidence": "Medium"
@@ -271,13 +346,13 @@
                 "type": "variable",
                 "name": "auctionHouse",
                 "source_mapping": {
-                    "start": 1420,
+                    "start": 1841,
                     "length": 20,
                     "filename_relative": "contracts/art-token/ArtToken.sol",
                     "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtToken.sol",
                     "filename_short": "contracts/art-token/ArtToken.sol",
                     "is_dependency": false,
-                    "lines": [50],
+                    "lines": [64],
                     "starting_column": 49,
                     "ending_column": 69
                 },
@@ -286,13 +361,13 @@
                         "type": "function",
                         "name": "constructor",
                         "source_mapping": {
-                            "start": 1376,
-                            "length": 185,
+                            "start": 1797,
+                            "length": 242,
                             "filename_relative": "contracts/art-token/ArtToken.sol",
                             "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtToken.sol",
                             "filename_short": "contracts/art-token/ArtToken.sol",
                             "is_dependency": false,
-                            "lines": [50, 51, 52, 53, 54],
+                            "lines": [64, 65, 66, 67, 68, 69],
                             "starting_column": 5,
                             "ending_column": 6
                         },
@@ -301,29 +376,33 @@
                                 "type": "contract",
                                 "name": "ArtToken",
                                 "source_mapping": {
-                                    "start": 431,
-                                    "length": 3876,
+                                    "start": 494,
+                                    "length": 5114,
                                     "filename_relative": "contracts/art-token/ArtToken.sol",
                                     "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtToken.sol",
                                     "filename_short": "contracts/art-token/ArtToken.sol",
                                     "is_dependency": false,
                                     "lines": [
-                                        15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
-                                        30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44,
-                                        45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59,
-                                        60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74,
-                                        75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89,
-                                        90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103,
-                                        104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115,
-                                        116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127,
-                                        128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139,
-                                        140, 141, 142, 143, 144, 145, 146
+                                        16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
+                                        31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45,
+                                        46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60,
+                                        61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75,
+                                        76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90,
+                                        91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104,
+                                        105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116,
+                                        117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128,
+                                        129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140,
+                                        141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152,
+                                        153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164,
+                                        165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176,
+                                        177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188,
+                                        189
                                     ],
                                     "starting_column": 1,
                                     "ending_column": 2
                                 }
                             },
-                            "signature": "constructor(address,address,address)"
+                            "signature": "constructor(address,address,address,address)"
                         }
                     }
                 }
@@ -332,13 +411,13 @@
                 "type": "node",
                 "name": "AUCTION_HOUSE = auctionHouse",
                 "source_mapping": {
-                    "start": 1526,
+                    "start": 1968,
                     "length": 28,
                     "filename_relative": "contracts/art-token/ArtToken.sol",
                     "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtToken.sol",
                     "filename_short": "contracts/art-token/ArtToken.sol",
                     "is_dependency": false,
-                    "lines": [53],
+                    "lines": [67],
                     "starting_column": 9,
                     "ending_column": 37
                 },
@@ -347,13 +426,13 @@
                         "type": "function",
                         "name": "constructor",
                         "source_mapping": {
-                            "start": 1376,
-                            "length": 185,
+                            "start": 1797,
+                            "length": 242,
                             "filename_relative": "contracts/art-token/ArtToken.sol",
                             "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtToken.sol",
                             "filename_short": "contracts/art-token/ArtToken.sol",
                             "is_dependency": false,
-                            "lines": [50, 51, 52, 53, 54],
+                            "lines": [64, 65, 66, 67, 68, 69],
                             "starting_column": 5,
                             "ending_column": 6
                         },
@@ -362,38 +441,183 @@
                                 "type": "contract",
                                 "name": "ArtToken",
                                 "source_mapping": {
-                                    "start": 431,
-                                    "length": 3876,
+                                    "start": 494,
+                                    "length": 5114,
                                     "filename_relative": "contracts/art-token/ArtToken.sol",
                                     "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtToken.sol",
                                     "filename_short": "contracts/art-token/ArtToken.sol",
                                     "is_dependency": false,
                                     "lines": [
-                                        15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
-                                        30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44,
-                                        45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59,
-                                        60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74,
-                                        75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89,
-                                        90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103,
-                                        104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115,
-                                        116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127,
-                                        128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139,
-                                        140, 141, 142, 143, 144, 145, 146
+                                        16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
+                                        31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45,
+                                        46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60,
+                                        61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75,
+                                        76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90,
+                                        91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104,
+                                        105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116,
+                                        117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128,
+                                        129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140,
+                                        141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152,
+                                        153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164,
+                                        165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176,
+                                        177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188,
+                                        189
                                     ],
                                     "starting_column": 1,
                                     "ending_column": 2
                                 }
                             },
-                            "signature": "constructor(address,address,address)"
+                            "signature": "constructor(address,address,address,address)"
                         }
                     }
                 }
             }
         ],
-        "description": "ArtToken.constructor(address,address,address).auctionHouse (contracts/art-token/ArtToken.sol#50) lacks a zero-check on :\n\t\t- AUCTION_HOUSE = auctionHouse (contracts/art-token/ArtToken.sol#53)\n",
-        "markdown": "[ArtToken.constructor(address,address,address).auctionHouse](contracts/art-token/ArtToken.sol#L50) lacks a zero-check on :\n\t\t- [AUCTION_HOUSE = auctionHouse](contracts/art-token/ArtToken.sol#L53)\n",
-        "first_markdown_element": "contracts/art-token/ArtToken.sol#L50",
-        "id": "a195fbfa8b83e9b6bdc86af54388c84135b468c4f1ad7c5e3c27945a7b50f379",
+        "description": "ArtToken.constructor(address,address,address,address).auctionHouse (contracts/art-token/ArtToken.sol#64) lacks a zero-check on :\n\t\t- AUCTION_HOUSE = auctionHouse (contracts/art-token/ArtToken.sol#67)\n",
+        "markdown": "[ArtToken.constructor(address,address,address,address).auctionHouse](contracts/art-token/ArtToken.sol#L64) lacks a zero-check on :\n\t\t- [AUCTION_HOUSE = auctionHouse](contracts/art-token/ArtToken.sol#L67)\n",
+        "first_markdown_element": "contracts/art-token/ArtToken.sol#L64",
+        "id": "710fda5c113494c0a98f37cd48e1e19bbd654c5d2ba8122ef292621b22e014ad",
+        "check": "missing-zero-check",
+        "impact": "Low",
+        "confidence": "Medium"
+    },
+    {
+        "elements": [
+            {
+                "type": "variable",
+                "name": "collabToken",
+                "source_mapping": {
+                    "start": 1863,
+                    "length": 19,
+                    "filename_relative": "contracts/art-token/ArtToken.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtToken.sol",
+                    "filename_short": "contracts/art-token/ArtToken.sol",
+                    "is_dependency": false,
+                    "lines": [64],
+                    "starting_column": 71,
+                    "ending_column": 90
+                },
+                "type_specific_fields": {
+                    "parent": {
+                        "type": "function",
+                        "name": "constructor",
+                        "source_mapping": {
+                            "start": 1797,
+                            "length": 242,
+                            "filename_relative": "contracts/art-token/ArtToken.sol",
+                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtToken.sol",
+                            "filename_short": "contracts/art-token/ArtToken.sol",
+                            "is_dependency": false,
+                            "lines": [64, 65, 66, 67, 68, 69],
+                            "starting_column": 5,
+                            "ending_column": 6
+                        },
+                        "type_specific_fields": {
+                            "parent": {
+                                "type": "contract",
+                                "name": "ArtToken",
+                                "source_mapping": {
+                                    "start": 494,
+                                    "length": 5114,
+                                    "filename_relative": "contracts/art-token/ArtToken.sol",
+                                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtToken.sol",
+                                    "filename_short": "contracts/art-token/ArtToken.sol",
+                                    "is_dependency": false,
+                                    "lines": [
+                                        16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
+                                        31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45,
+                                        46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60,
+                                        61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75,
+                                        76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90,
+                                        91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104,
+                                        105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116,
+                                        117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128,
+                                        129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140,
+                                        141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152,
+                                        153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164,
+                                        165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176,
+                                        177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188,
+                                        189
+                                    ],
+                                    "starting_column": 1,
+                                    "ending_column": 2
+                                }
+                            },
+                            "signature": "constructor(address,address,address,address)"
+                        }
+                    }
+                }
+            },
+            {
+                "type": "node",
+                "name": "COLLAB_TOKEN = collabToken",
+                "source_mapping": {
+                    "start": 2006,
+                    "length": 26,
+                    "filename_relative": "contracts/art-token/ArtToken.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtToken.sol",
+                    "filename_short": "contracts/art-token/ArtToken.sol",
+                    "is_dependency": false,
+                    "lines": [68],
+                    "starting_column": 9,
+                    "ending_column": 35
+                },
+                "type_specific_fields": {
+                    "parent": {
+                        "type": "function",
+                        "name": "constructor",
+                        "source_mapping": {
+                            "start": 1797,
+                            "length": 242,
+                            "filename_relative": "contracts/art-token/ArtToken.sol",
+                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtToken.sol",
+                            "filename_short": "contracts/art-token/ArtToken.sol",
+                            "is_dependency": false,
+                            "lines": [64, 65, 66, 67, 68, 69],
+                            "starting_column": 5,
+                            "ending_column": 6
+                        },
+                        "type_specific_fields": {
+                            "parent": {
+                                "type": "contract",
+                                "name": "ArtToken",
+                                "source_mapping": {
+                                    "start": 494,
+                                    "length": 5114,
+                                    "filename_relative": "contracts/art-token/ArtToken.sol",
+                                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtToken.sol",
+                                    "filename_short": "contracts/art-token/ArtToken.sol",
+                                    "is_dependency": false,
+                                    "lines": [
+                                        16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
+                                        31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45,
+                                        46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60,
+                                        61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75,
+                                        76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90,
+                                        91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104,
+                                        105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116,
+                                        117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128,
+                                        129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140,
+                                        141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152,
+                                        153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164,
+                                        165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176,
+                                        177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188,
+                                        189
+                                    ],
+                                    "starting_column": 1,
+                                    "ending_column": 2
+                                }
+                            },
+                            "signature": "constructor(address,address,address,address)"
+                        }
+                    }
+                }
+            }
+        ],
+        "description": "ArtToken.constructor(address,address,address,address).collabToken (contracts/art-token/ArtToken.sol#64) lacks a zero-check on :\n\t\t- COLLAB_TOKEN = collabToken (contracts/art-token/ArtToken.sol#68)\n",
+        "markdown": "[ArtToken.constructor(address,address,address,address).collabToken](contracts/art-token/ArtToken.sol#L64) lacks a zero-check on :\n\t\t- [COLLAB_TOKEN = collabToken](contracts/art-token/ArtToken.sol#L68)\n",
+        "first_markdown_element": "contracts/art-token/ArtToken.sol#L64",
+        "id": "3dfe683d69a26cd27e6d8d1d829218210636a904095b6f201e62614784fbd158",
         "check": "missing-zero-check",
         "impact": "Low",
         "confidence": "Medium"
@@ -728,6 +952,248 @@
         "markdown": "[AuctionHouse.constructor(address,address,address).auctionSigner](contracts/auction-house/AuctionHouse.sol#L85) lacks a zero-check on :\n\t\t- [AUCTION_SIGNER = auctionSigner](contracts/auction-house/AuctionHouse.sol#L87)\n",
         "first_markdown_element": "contracts/auction-house/AuctionHouse.sol#L85",
         "id": "ad17b5309796b51962cbff09cc0c03c446fb4e9c13e8b94426bd99f0323baa4e",
+        "check": "missing-zero-check",
+        "impact": "Low",
+        "confidence": "Medium"
+    },
+    {
+        "elements": [
+            {
+                "type": "variable",
+                "name": "artToken",
+                "source_mapping": {
+                    "start": 562,
+                    "length": 16,
+                    "filename_relative": "contracts/collab-token/CollabToken.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/collab-token/CollabToken.sol",
+                    "filename_short": "contracts/collab-token/CollabToken.sol",
+                    "is_dependency": false,
+                    "lines": [15],
+                    "starting_column": 17,
+                    "ending_column": 33
+                },
+                "type_specific_fields": {
+                    "parent": {
+                        "type": "function",
+                        "name": "constructor",
+                        "source_mapping": {
+                            "start": 550,
+                            "length": 161,
+                            "filename_relative": "contracts/collab-token/CollabToken.sol",
+                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/collab-token/CollabToken.sol",
+                            "filename_short": "contracts/collab-token/CollabToken.sol",
+                            "is_dependency": false,
+                            "lines": [15, 16, 17, 18],
+                            "starting_column": 5,
+                            "ending_column": 6
+                        },
+                        "type_specific_fields": {
+                            "parent": {
+                                "type": "contract",
+                                "name": "CollabToken",
+                                "source_mapping": {
+                                    "start": 357,
+                                    "length": 1466,
+                                    "filename_relative": "contracts/collab-token/CollabToken.sol",
+                                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/collab-token/CollabToken.sol",
+                                    "filename_short": "contracts/collab-token/CollabToken.sol",
+                                    "is_dependency": false,
+                                    "lines": [
+                                        9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
+                                        24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38,
+                                        39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53,
+                                        54, 55, 56, 57, 58, 59
+                                    ],
+                                    "starting_column": 1,
+                                    "ending_column": 2
+                                }
+                            },
+                            "signature": "constructor(address,address)"
+                        }
+                    }
+                }
+            },
+            {
+                "type": "node",
+                "name": "ART_TOKEN = artToken",
+                "source_mapping": {
+                    "start": 646,
+                    "length": 20,
+                    "filename_relative": "contracts/collab-token/CollabToken.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/collab-token/CollabToken.sol",
+                    "filename_short": "contracts/collab-token/CollabToken.sol",
+                    "is_dependency": false,
+                    "lines": [16],
+                    "starting_column": 9,
+                    "ending_column": 29
+                },
+                "type_specific_fields": {
+                    "parent": {
+                        "type": "function",
+                        "name": "constructor",
+                        "source_mapping": {
+                            "start": 550,
+                            "length": 161,
+                            "filename_relative": "contracts/collab-token/CollabToken.sol",
+                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/collab-token/CollabToken.sol",
+                            "filename_short": "contracts/collab-token/CollabToken.sol",
+                            "is_dependency": false,
+                            "lines": [15, 16, 17, 18],
+                            "starting_column": 5,
+                            "ending_column": 6
+                        },
+                        "type_specific_fields": {
+                            "parent": {
+                                "type": "contract",
+                                "name": "CollabToken",
+                                "source_mapping": {
+                                    "start": 357,
+                                    "length": 1466,
+                                    "filename_relative": "contracts/collab-token/CollabToken.sol",
+                                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/collab-token/CollabToken.sol",
+                                    "filename_short": "contracts/collab-token/CollabToken.sol",
+                                    "is_dependency": false,
+                                    "lines": [
+                                        9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
+                                        24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38,
+                                        39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53,
+                                        54, 55, 56, 57, 58, 59
+                                    ],
+                                    "starting_column": 1,
+                                    "ending_column": 2
+                                }
+                            },
+                            "signature": "constructor(address,address)"
+                        }
+                    }
+                }
+            }
+        ],
+        "description": "CollabToken.constructor(address,address).artToken (contracts/collab-token/CollabToken.sol#15) lacks a zero-check on :\n\t\t- ART_TOKEN = artToken (contracts/collab-token/CollabToken.sol#16)\n",
+        "markdown": "[CollabToken.constructor(address,address).artToken](contracts/collab-token/CollabToken.sol#L15) lacks a zero-check on :\n\t\t- [ART_TOKEN = artToken](contracts/collab-token/CollabToken.sol#L16)\n",
+        "first_markdown_element": "contracts/collab-token/CollabToken.sol#L15",
+        "id": "dc705ac5ac9ad18cb5c54a9b3f2320489542a1704a6ec6f7d446824b804b27e5",
+        "check": "missing-zero-check",
+        "impact": "Low",
+        "confidence": "Medium"
+    },
+    {
+        "elements": [
+            {
+                "type": "variable",
+                "name": "auctionHouse",
+                "source_mapping": {
+                    "start": 580,
+                    "length": 20,
+                    "filename_relative": "contracts/collab-token/CollabToken.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/collab-token/CollabToken.sol",
+                    "filename_short": "contracts/collab-token/CollabToken.sol",
+                    "is_dependency": false,
+                    "lines": [15],
+                    "starting_column": 35,
+                    "ending_column": 55
+                },
+                "type_specific_fields": {
+                    "parent": {
+                        "type": "function",
+                        "name": "constructor",
+                        "source_mapping": {
+                            "start": 550,
+                            "length": 161,
+                            "filename_relative": "contracts/collab-token/CollabToken.sol",
+                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/collab-token/CollabToken.sol",
+                            "filename_short": "contracts/collab-token/CollabToken.sol",
+                            "is_dependency": false,
+                            "lines": [15, 16, 17, 18],
+                            "starting_column": 5,
+                            "ending_column": 6
+                        },
+                        "type_specific_fields": {
+                            "parent": {
+                                "type": "contract",
+                                "name": "CollabToken",
+                                "source_mapping": {
+                                    "start": 357,
+                                    "length": 1466,
+                                    "filename_relative": "contracts/collab-token/CollabToken.sol",
+                                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/collab-token/CollabToken.sol",
+                                    "filename_short": "contracts/collab-token/CollabToken.sol",
+                                    "is_dependency": false,
+                                    "lines": [
+                                        9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
+                                        24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38,
+                                        39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53,
+                                        54, 55, 56, 57, 58, 59
+                                    ],
+                                    "starting_column": 1,
+                                    "ending_column": 2
+                                }
+                            },
+                            "signature": "constructor(address,address)"
+                        }
+                    }
+                }
+            },
+            {
+                "type": "node",
+                "name": "AUCTION_HOUSE = auctionHouse",
+                "source_mapping": {
+                    "start": 676,
+                    "length": 28,
+                    "filename_relative": "contracts/collab-token/CollabToken.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/collab-token/CollabToken.sol",
+                    "filename_short": "contracts/collab-token/CollabToken.sol",
+                    "is_dependency": false,
+                    "lines": [17],
+                    "starting_column": 9,
+                    "ending_column": 37
+                },
+                "type_specific_fields": {
+                    "parent": {
+                        "type": "function",
+                        "name": "constructor",
+                        "source_mapping": {
+                            "start": 550,
+                            "length": 161,
+                            "filename_relative": "contracts/collab-token/CollabToken.sol",
+                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/collab-token/CollabToken.sol",
+                            "filename_short": "contracts/collab-token/CollabToken.sol",
+                            "is_dependency": false,
+                            "lines": [15, 16, 17, 18],
+                            "starting_column": 5,
+                            "ending_column": 6
+                        },
+                        "type_specific_fields": {
+                            "parent": {
+                                "type": "contract",
+                                "name": "CollabToken",
+                                "source_mapping": {
+                                    "start": 357,
+                                    "length": 1466,
+                                    "filename_relative": "contracts/collab-token/CollabToken.sol",
+                                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/collab-token/CollabToken.sol",
+                                    "filename_short": "contracts/collab-token/CollabToken.sol",
+                                    "is_dependency": false,
+                                    "lines": [
+                                        9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
+                                        24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38,
+                                        39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53,
+                                        54, 55, 56, 57, 58, 59
+                                    ],
+                                    "starting_column": 1,
+                                    "ending_column": 2
+                                }
+                            },
+                            "signature": "constructor(address,address)"
+                        }
+                    }
+                }
+            }
+        ],
+        "description": "CollabToken.constructor(address,address).auctionHouse (contracts/collab-token/CollabToken.sol#15) lacks a zero-check on :\n\t\t- AUCTION_HOUSE = auctionHouse (contracts/collab-token/CollabToken.sol#17)\n",
+        "markdown": "[CollabToken.constructor(address,address).auctionHouse](contracts/collab-token/CollabToken.sol#L15) lacks a zero-check on :\n\t\t- [AUCTION_HOUSE = auctionHouse](contracts/collab-token/CollabToken.sol#L17)\n",
+        "first_markdown_element": "contracts/collab-token/CollabToken.sol#L15",
+        "id": "3b235beb36605f7c3e23cc3f724a9598e4bbbf1f7fcc692c28797ff8fc5ee7c3",
         "check": "missing-zero-check",
         "impact": "Low",
         "confidence": "Medium"
@@ -1622,6 +2088,60 @@
         "markdown": "Pragma version[^0.8.20](contracts/collab-token/CollabToken.sol#L2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
         "first_markdown_element": "contracts/collab-token/CollabToken.sol#L2",
         "id": "c06c21362b8077ff3815623411a4d86c2a0c0a5b5155a35685f09cc43f18f581",
+        "check": "solc-version",
+        "impact": "Informational",
+        "confidence": "High"
+    },
+    {
+        "elements": [
+            {
+                "type": "pragma",
+                "name": "^0.8.20",
+                "source_mapping": {
+                    "start": 39,
+                    "length": 24,
+                    "filename_relative": "contracts/collab-token/CollabTokenMock.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/collab-token/CollabTokenMock.sol",
+                    "filename_short": "contracts/collab-token/CollabTokenMock.sol",
+                    "is_dependency": false,
+                    "lines": [2],
+                    "starting_column": 1,
+                    "ending_column": 25
+                },
+                "type_specific_fields": { "directive": ["solidity", "^", "0.8", ".20"] }
+            }
+        ],
+        "description": "Pragma version^0.8.20 (contracts/collab-token/CollabTokenMock.sol#2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
+        "markdown": "Pragma version[^0.8.20](contracts/collab-token/CollabTokenMock.sol#L2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
+        "first_markdown_element": "contracts/collab-token/CollabTokenMock.sol#L2",
+        "id": "f29b5e9ce1937862f260f7caf5eccc3e04a83a1c56e3cedbcbf855cf9d900d13",
+        "check": "solc-version",
+        "impact": "Informational",
+        "confidence": "High"
+    },
+    {
+        "elements": [
+            {
+                "type": "pragma",
+                "name": "^0.8.20",
+                "source_mapping": {
+                    "start": 39,
+                    "length": 24,
+                    "filename_relative": "contracts/collab-token/ICollabToken.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/collab-token/ICollabToken.sol",
+                    "filename_short": "contracts/collab-token/ICollabToken.sol",
+                    "is_dependency": false,
+                    "lines": [2],
+                    "starting_column": 1,
+                    "ending_column": 25
+                },
+                "type_specific_fields": { "directive": ["solidity", "^", "0.8", ".20"] }
+            }
+        ],
+        "description": "Pragma version^0.8.20 (contracts/collab-token/ICollabToken.sol#2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
+        "markdown": "Pragma version[^0.8.20](contracts/collab-token/ICollabToken.sol#L2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
+        "first_markdown_element": "contracts/collab-token/ICollabToken.sol#L2",
+        "id": "61d719b0e9456642ee3f6e0c9012698362a2cd460f80b5bc38de28aa601f6b47",
         "check": "solc-version",
         "impact": "Informational",
         "confidence": "High"
