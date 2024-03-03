@@ -10,7 +10,7 @@ import { signMarketPermit } from './utils/sign-market-permit';
 import { Signer } from '../types/environment';
 import { MarketPermitStruct } from '../types/market';
 import { Market, ArtTokenMock } from '../typechain-types';
-import { getSignDeadline } from './utils/get-sign-deadline';
+import { getSigDeadline } from './utils/get-sig-deadline';
 
 describe('Market', function () {
     let market: Market, marketAddr: string;
@@ -62,7 +62,7 @@ describe('Market', function () {
         price = 100000n;
         participants = [tokenOwnerAddr, platformAddr];
         shares = [MAX_TOTAL_SHARE / 2n, MAX_TOTAL_SHARE / 2n];
-        deadline = await getSignDeadline();
+        deadline = await getSigDeadline();
     });
 
     it(`should have correct token`, async () => {
@@ -104,7 +104,7 @@ describe('Market', function () {
         });
 
         it(`should fail if signature is expired`, async () => {
-            const _deadline = await getSignDeadline();
+            const _deadline = await getSigDeadline();
 
             await setNextBlockTimestamp(_deadline + 10);
 
