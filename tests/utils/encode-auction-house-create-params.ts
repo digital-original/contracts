@@ -25,8 +25,8 @@ export function encodeAuctionHouseCreateParams(
             'uint256',
             'uint256',
             'uint256',
-            'address',
-            'uint256',
+            'address[]',
+            'uint256[]',
             'bytes',
         ],
         [

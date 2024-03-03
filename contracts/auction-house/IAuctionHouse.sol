@@ -37,7 +37,6 @@ interface IAuctionHouse {
         address asset,
         uint256 price,
         uint256 step,
-        uint256 penalty,
         uint256 startTime,
         uint256 endTime
     );

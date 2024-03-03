@@ -4,8 +4,8 @@ export const ART_TOKEN_SYMBOL = 'DO';
 export const ART_TOKEN_DOMAIN_NAME = 'ArtToken';
 export const ART_TOKEN_DOMAIN_VERSION = '1';
 
-export const MINT_AND_PAY_PERMIT_TYPE = {
-    MintAndPayPermit: [
+export const BUY_PERMIT_TYPE = {
+    BuyPermit: [
         { name: 'to', type: 'address' },
         { name: 'tokenId', type: 'uint256' },
         { name: 'tokenURI', type: 'string' },

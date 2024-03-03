@@ -1,8 +1,8 @@
-import { getLatestBlock } from './get-latest-block';
+import { getLatestBlockTimestamp } from './get-latest-block-timestamp';
 
 export async function getSignDeadline() {
-    const block = await getLatestBlock();
+    const timestamp = await getLatestBlockTimestamp();
     const oneHourS = 60 * 60;
-    const deadline = block.timestamp + oneHourS;
+    const deadline = timestamp + oneHourS;
     return deadline;
 }

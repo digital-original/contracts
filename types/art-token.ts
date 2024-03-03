@@ -1,4 +1,4 @@
-export type MintAndPayPermitStruct = {
+export type BuyPermitStruct = {
     to: string;
     tokenId: number;
     tokenURI: string;

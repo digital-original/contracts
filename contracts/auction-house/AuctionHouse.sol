@@ -112,12 +112,14 @@ contract AuctionHouse is IAuctionHouse, TokenHolder, EIP712 {
             revert AuctionHouseRaiseTooSmall(msg.value, price + $.auctions[auctionId].step);
         }
 
+        address prevBuyer = $.auctions[auctionId].buyer;
+
         $.auctions[auctionId].buyer = msg.sender;
         $.auctions[auctionId].price = msg.value;
 
         emit Raised(auctionId, msg.sender, msg.value);
 
-        Address.sendValue(payable($.auctions[auctionId].buyer), price);
+        Address.sendValue(payable(prevBuyer), price);
     }
 
     function take(uint256 auctionId) external payable auctionEnded(auctionId) withBuyer(auctionId) {
@@ -167,6 +169,12 @@ contract AuctionHouse is IAuctionHouse, TokenHolder, EIP712 {
         _transferToken($.auctions[auctionId].seller, $.auctions[auctionId].tokenId);
 
         Address.sendValue(payable(PLATFORM), msg.value);
+    }
+
+    function auctionsCount() external view returns (uint256 count) {
+        AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
+
+        return $.auctionsCount;
     }
 
     function auction(uint256 auctionId) external view returns (Auction memory) {
@@ -219,7 +227,7 @@ contract AuctionHouse is IAuctionHouse, TokenHolder, EIP712 {
             shares: shares
         });
 
-        emit Created(auctionId, tokenId, seller, asset, price, step, penalty, startTime, endTime);
+        emit Created(auctionId, tokenId, seller, asset, price, step, startTime, endTime);
     }
 
     /**

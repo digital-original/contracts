@@ -8,6 +8,7 @@ export const AUCTION_PERMIT_TYPE = {
         { name: 'asset', type: 'address' },
         { name: 'price', type: 'uint256' },
         { name: 'step', type: 'uint256' },
+        { name: 'penalty', type: 'uint256' },
         { name: 'startTime', type: 'uint256' },
         { name: 'endTime', type: 'uint256' },
         { name: 'deadline', type: 'uint256' },

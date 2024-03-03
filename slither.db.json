@@ -3,66 +3,644 @@
         "elements": [
             {
                 "type": "variable",
-                "name": "auctionSigner",
+                "name": "minter",
                 "source_mapping": {
-                    "start": 1487,
-                    "length": 21,
-                    "filename_relative": "contracts/Auction.sol",
-                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Auction.sol",
-                    "filename_short": "contracts/Auction.sol",
+                    "start": 1388,
+                    "length": 14,
+                    "filename_relative": "contracts/art-token/ArtToken.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtToken.sol",
+                    "filename_short": "contracts/art-token/ArtToken.sol",
                     "is_dependency": false,
-                    "lines": [42],
-                    "starting_column": 33,
-                    "ending_column": 54
+                    "lines": [50],
+                    "starting_column": 17,
+                    "ending_column": 31
                 },
                 "type_specific_fields": {
                     "parent": {
                         "type": "function",
                         "name": "constructor",
                         "source_mapping": {
-                            "start": 1459,
-                            "length": 141,
-                            "filename_relative": "contracts/Auction.sol",
-                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Auction.sol",
-                            "filename_short": "contracts/Auction.sol",
+                            "start": 1376,
+                            "length": 185,
+                            "filename_relative": "contracts/art-token/ArtToken.sol",
+                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtToken.sol",
+                            "filename_short": "contracts/art-token/ArtToken.sol",
                             "is_dependency": false,
-                            "lines": [42, 43, 44],
+                            "lines": [50, 51, 52, 53, 54],
                             "starting_column": 5,
                             "ending_column": 6
                         },
                         "type_specific_fields": {
                             "parent": {
                                 "type": "contract",
-                                "name": "Auction",
+                                "name": "ArtToken",
                                 "source_mapping": {
-                                    "start": 612,
-                                    "length": 6532,
-                                    "filename_relative": "contracts/Auction.sol",
-                                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Auction.sol",
-                                    "filename_short": "contracts/Auction.sol",
+                                    "start": 431,
+                                    "length": 3876,
+                                    "filename_relative": "contracts/art-token/ArtToken.sol",
+                                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtToken.sol",
+                                    "filename_short": "contracts/art-token/ArtToken.sol",
                                     "is_dependency": false,
                                     "lines": [
-                                        17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
-                                        32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46,
-                                        47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61,
-                                        62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76,
-                                        77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91,
-                                        92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104,
-                                        105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116,
-                                        117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128,
-                                        129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140,
-                                        141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152,
-                                        153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164,
-                                        165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176,
-                                        177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188,
-                                        189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200,
-                                        201, 202, 203, 204, 205, 206, 207
+                                        15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
+                                        30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44,
+                                        45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59,
+                                        60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74,
+                                        75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89,
+                                        90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103,
+                                        104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115,
+                                        116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127,
+                                        128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139,
+                                        140, 141, 142, 143, 144, 145, 146
                                     ],
                                     "starting_column": 1,
                                     "ending_column": 2
                                 }
                             },
-                            "signature": "constructor(address,address)"
+                            "signature": "constructor(address,address,address)"
+                        }
+                    }
+                }
+            },
+            {
+                "type": "node",
+                "name": "MINTER = minter",
+                "source_mapping": {
+                    "start": 1476,
+                    "length": 15,
+                    "filename_relative": "contracts/art-token/ArtToken.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtToken.sol",
+                    "filename_short": "contracts/art-token/ArtToken.sol",
+                    "is_dependency": false,
+                    "lines": [51],
+                    "starting_column": 9,
+                    "ending_column": 24
+                },
+                "type_specific_fields": {
+                    "parent": {
+                        "type": "function",
+                        "name": "constructor",
+                        "source_mapping": {
+                            "start": 1376,
+                            "length": 185,
+                            "filename_relative": "contracts/art-token/ArtToken.sol",
+                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtToken.sol",
+                            "filename_short": "contracts/art-token/ArtToken.sol",
+                            "is_dependency": false,
+                            "lines": [50, 51, 52, 53, 54],
+                            "starting_column": 5,
+                            "ending_column": 6
+                        },
+                        "type_specific_fields": {
+                            "parent": {
+                                "type": "contract",
+                                "name": "ArtToken",
+                                "source_mapping": {
+                                    "start": 431,
+                                    "length": 3876,
+                                    "filename_relative": "contracts/art-token/ArtToken.sol",
+                                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtToken.sol",
+                                    "filename_short": "contracts/art-token/ArtToken.sol",
+                                    "is_dependency": false,
+                                    "lines": [
+                                        15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
+                                        30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44,
+                                        45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59,
+                                        60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74,
+                                        75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89,
+                                        90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103,
+                                        104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115,
+                                        116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127,
+                                        128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139,
+                                        140, 141, 142, 143, 144, 145, 146
+                                    ],
+                                    "starting_column": 1,
+                                    "ending_column": 2
+                                }
+                            },
+                            "signature": "constructor(address,address,address)"
+                        }
+                    }
+                }
+            }
+        ],
+        "description": "ArtToken.constructor(address,address,address).minter (contracts/art-token/ArtToken.sol#50) lacks a zero-check on :\n\t\t- MINTER = minter (contracts/art-token/ArtToken.sol#51)\n",
+        "markdown": "[ArtToken.constructor(address,address,address).minter](contracts/art-token/ArtToken.sol#L50) lacks a zero-check on :\n\t\t- [MINTER = minter](contracts/art-token/ArtToken.sol#L51)\n",
+        "first_markdown_element": "contracts/art-token/ArtToken.sol#L50",
+        "id": "119ab2b9bf361445e9c658b728af2e1004455b9c7796d0d6c358e7b15de8f2f3",
+        "check": "missing-zero-check",
+        "impact": "Low",
+        "confidence": "Medium"
+    },
+    {
+        "elements": [
+            {
+                "type": "variable",
+                "name": "market",
+                "source_mapping": {
+                    "start": 1404,
+                    "length": 14,
+                    "filename_relative": "contracts/art-token/ArtToken.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtToken.sol",
+                    "filename_short": "contracts/art-token/ArtToken.sol",
+                    "is_dependency": false,
+                    "lines": [50],
+                    "starting_column": 33,
+                    "ending_column": 47
+                },
+                "type_specific_fields": {
+                    "parent": {
+                        "type": "function",
+                        "name": "constructor",
+                        "source_mapping": {
+                            "start": 1376,
+                            "length": 185,
+                            "filename_relative": "contracts/art-token/ArtToken.sol",
+                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtToken.sol",
+                            "filename_short": "contracts/art-token/ArtToken.sol",
+                            "is_dependency": false,
+                            "lines": [50, 51, 52, 53, 54],
+                            "starting_column": 5,
+                            "ending_column": 6
+                        },
+                        "type_specific_fields": {
+                            "parent": {
+                                "type": "contract",
+                                "name": "ArtToken",
+                                "source_mapping": {
+                                    "start": 431,
+                                    "length": 3876,
+                                    "filename_relative": "contracts/art-token/ArtToken.sol",
+                                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtToken.sol",
+                                    "filename_short": "contracts/art-token/ArtToken.sol",
+                                    "is_dependency": false,
+                                    "lines": [
+                                        15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
+                                        30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44,
+                                        45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59,
+                                        60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74,
+                                        75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89,
+                                        90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103,
+                                        104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115,
+                                        116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127,
+                                        128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139,
+                                        140, 141, 142, 143, 144, 145, 146
+                                    ],
+                                    "starting_column": 1,
+                                    "ending_column": 2
+                                }
+                            },
+                            "signature": "constructor(address,address,address)"
+                        }
+                    }
+                }
+            },
+            {
+                "type": "node",
+                "name": "MARKET = market",
+                "source_mapping": {
+                    "start": 1501,
+                    "length": 15,
+                    "filename_relative": "contracts/art-token/ArtToken.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtToken.sol",
+                    "filename_short": "contracts/art-token/ArtToken.sol",
+                    "is_dependency": false,
+                    "lines": [52],
+                    "starting_column": 9,
+                    "ending_column": 24
+                },
+                "type_specific_fields": {
+                    "parent": {
+                        "type": "function",
+                        "name": "constructor",
+                        "source_mapping": {
+                            "start": 1376,
+                            "length": 185,
+                            "filename_relative": "contracts/art-token/ArtToken.sol",
+                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtToken.sol",
+                            "filename_short": "contracts/art-token/ArtToken.sol",
+                            "is_dependency": false,
+                            "lines": [50, 51, 52, 53, 54],
+                            "starting_column": 5,
+                            "ending_column": 6
+                        },
+                        "type_specific_fields": {
+                            "parent": {
+                                "type": "contract",
+                                "name": "ArtToken",
+                                "source_mapping": {
+                                    "start": 431,
+                                    "length": 3876,
+                                    "filename_relative": "contracts/art-token/ArtToken.sol",
+                                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtToken.sol",
+                                    "filename_short": "contracts/art-token/ArtToken.sol",
+                                    "is_dependency": false,
+                                    "lines": [
+                                        15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
+                                        30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44,
+                                        45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59,
+                                        60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74,
+                                        75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89,
+                                        90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103,
+                                        104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115,
+                                        116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127,
+                                        128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139,
+                                        140, 141, 142, 143, 144, 145, 146
+                                    ],
+                                    "starting_column": 1,
+                                    "ending_column": 2
+                                }
+                            },
+                            "signature": "constructor(address,address,address)"
+                        }
+                    }
+                }
+            }
+        ],
+        "description": "ArtToken.constructor(address,address,address).market (contracts/art-token/ArtToken.sol#50) lacks a zero-check on :\n\t\t- MARKET = market (contracts/art-token/ArtToken.sol#52)\n",
+        "markdown": "[ArtToken.constructor(address,address,address).market](contracts/art-token/ArtToken.sol#L50) lacks a zero-check on :\n\t\t- [MARKET = market](contracts/art-token/ArtToken.sol#L52)\n",
+        "first_markdown_element": "contracts/art-token/ArtToken.sol#L50",
+        "id": "b5742d9ccf922c2a23fbb0b90e3cfbc45b564567d6c264563172868d454afc15",
+        "check": "missing-zero-check",
+        "impact": "Low",
+        "confidence": "Medium"
+    },
+    {
+        "elements": [
+            {
+                "type": "variable",
+                "name": "auctionHouse",
+                "source_mapping": {
+                    "start": 1420,
+                    "length": 20,
+                    "filename_relative": "contracts/art-token/ArtToken.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtToken.sol",
+                    "filename_short": "contracts/art-token/ArtToken.sol",
+                    "is_dependency": false,
+                    "lines": [50],
+                    "starting_column": 49,
+                    "ending_column": 69
+                },
+                "type_specific_fields": {
+                    "parent": {
+                        "type": "function",
+                        "name": "constructor",
+                        "source_mapping": {
+                            "start": 1376,
+                            "length": 185,
+                            "filename_relative": "contracts/art-token/ArtToken.sol",
+                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtToken.sol",
+                            "filename_short": "contracts/art-token/ArtToken.sol",
+                            "is_dependency": false,
+                            "lines": [50, 51, 52, 53, 54],
+                            "starting_column": 5,
+                            "ending_column": 6
+                        },
+                        "type_specific_fields": {
+                            "parent": {
+                                "type": "contract",
+                                "name": "ArtToken",
+                                "source_mapping": {
+                                    "start": 431,
+                                    "length": 3876,
+                                    "filename_relative": "contracts/art-token/ArtToken.sol",
+                                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtToken.sol",
+                                    "filename_short": "contracts/art-token/ArtToken.sol",
+                                    "is_dependency": false,
+                                    "lines": [
+                                        15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
+                                        30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44,
+                                        45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59,
+                                        60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74,
+                                        75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89,
+                                        90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103,
+                                        104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115,
+                                        116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127,
+                                        128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139,
+                                        140, 141, 142, 143, 144, 145, 146
+                                    ],
+                                    "starting_column": 1,
+                                    "ending_column": 2
+                                }
+                            },
+                            "signature": "constructor(address,address,address)"
+                        }
+                    }
+                }
+            },
+            {
+                "type": "node",
+                "name": "AUCTION_HOUSE = auctionHouse",
+                "source_mapping": {
+                    "start": 1526,
+                    "length": 28,
+                    "filename_relative": "contracts/art-token/ArtToken.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtToken.sol",
+                    "filename_short": "contracts/art-token/ArtToken.sol",
+                    "is_dependency": false,
+                    "lines": [53],
+                    "starting_column": 9,
+                    "ending_column": 37
+                },
+                "type_specific_fields": {
+                    "parent": {
+                        "type": "function",
+                        "name": "constructor",
+                        "source_mapping": {
+                            "start": 1376,
+                            "length": 185,
+                            "filename_relative": "contracts/art-token/ArtToken.sol",
+                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtToken.sol",
+                            "filename_short": "contracts/art-token/ArtToken.sol",
+                            "is_dependency": false,
+                            "lines": [50, 51, 52, 53, 54],
+                            "starting_column": 5,
+                            "ending_column": 6
+                        },
+                        "type_specific_fields": {
+                            "parent": {
+                                "type": "contract",
+                                "name": "ArtToken",
+                                "source_mapping": {
+                                    "start": 431,
+                                    "length": 3876,
+                                    "filename_relative": "contracts/art-token/ArtToken.sol",
+                                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtToken.sol",
+                                    "filename_short": "contracts/art-token/ArtToken.sol",
+                                    "is_dependency": false,
+                                    "lines": [
+                                        15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
+                                        30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44,
+                                        45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59,
+                                        60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74,
+                                        75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89,
+                                        90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103,
+                                        104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115,
+                                        116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127,
+                                        128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139,
+                                        140, 141, 142, 143, 144, 145, 146
+                                    ],
+                                    "starting_column": 1,
+                                    "ending_column": 2
+                                }
+                            },
+                            "signature": "constructor(address,address,address)"
+                        }
+                    }
+                }
+            }
+        ],
+        "description": "ArtToken.constructor(address,address,address).auctionHouse (contracts/art-token/ArtToken.sol#50) lacks a zero-check on :\n\t\t- AUCTION_HOUSE = auctionHouse (contracts/art-token/ArtToken.sol#53)\n",
+        "markdown": "[ArtToken.constructor(address,address,address).auctionHouse](contracts/art-token/ArtToken.sol#L50) lacks a zero-check on :\n\t\t- [AUCTION_HOUSE = auctionHouse](contracts/art-token/ArtToken.sol#L53)\n",
+        "first_markdown_element": "contracts/art-token/ArtToken.sol#L50",
+        "id": "a195fbfa8b83e9b6bdc86af54388c84135b468c4f1ad7c5e3c27945a7b50f379",
+        "check": "missing-zero-check",
+        "impact": "Low",
+        "confidence": "Medium"
+    },
+    {
+        "elements": [
+            {
+                "type": "variable",
+                "name": "platform",
+                "source_mapping": {
+                    "start": 2605,
+                    "length": 16,
+                    "filename_relative": "contracts/auction-house/AuctionHouse.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/auction-house/AuctionHouse.sol",
+                    "filename_short": "contracts/auction-house/AuctionHouse.sol",
+                    "is_dependency": false,
+                    "lines": [85],
+                    "starting_column": 32,
+                    "ending_column": 48
+                },
+                "type_specific_fields": {
+                    "parent": {
+                        "type": "function",
+                        "name": "constructor",
+                        "source_mapping": {
+                            "start": 2578,
+                            "length": 191,
+                            "filename_relative": "contracts/auction-house/AuctionHouse.sol",
+                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/auction-house/AuctionHouse.sol",
+                            "filename_short": "contracts/auction-house/AuctionHouse.sol",
+                            "is_dependency": false,
+                            "lines": [85, 86, 87, 88],
+                            "starting_column": 5,
+                            "ending_column": 6
+                        },
+                        "type_specific_fields": {
+                            "parent": {
+                                "type": "contract",
+                                "name": "AuctionHouse",
+                                "source_mapping": {
+                                    "start": 401,
+                                    "length": 10019,
+                                    "filename_relative": "contracts/auction-house/AuctionHouse.sol",
+                                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/auction-house/AuctionHouse.sol",
+                                    "filename_short": "contracts/auction-house/AuctionHouse.sol",
+                                    "is_dependency": false,
+                                    "lines": [
+                                        11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
+                                        26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+                                        41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55,
+                                        56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70,
+                                        71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85,
+                                        86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100,
+                                        101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112,
+                                        113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124,
+                                        125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136,
+                                        137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148,
+                                        149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160,
+                                        161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172,
+                                        173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184,
+                                        185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196,
+                                        197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208,
+                                        209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220,
+                                        221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232,
+                                        233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244,
+                                        245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256,
+                                        257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268,
+                                        269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280,
+                                        281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292,
+                                        293, 294, 295, 296, 297, 298, 299, 300, 301, 302, 303, 304,
+                                        305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316,
+                                        317, 318, 319, 320, 321, 322, 323, 324, 325, 326, 327, 328,
+                                        329, 330, 331, 332, 333, 334, 335, 336, 337, 338, 339, 340,
+                                        341, 342
+                                    ],
+                                    "starting_column": 1,
+                                    "ending_column": 2
+                                }
+                            },
+                            "signature": "constructor(address,address,address)"
+                        }
+                    }
+                }
+            },
+            {
+                "type": "node",
+                "name": "PLATFORM = platform",
+                "source_mapping": {
+                    "start": 2703,
+                    "length": 19,
+                    "filename_relative": "contracts/auction-house/AuctionHouse.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/auction-house/AuctionHouse.sol",
+                    "filename_short": "contracts/auction-house/AuctionHouse.sol",
+                    "is_dependency": false,
+                    "lines": [86],
+                    "starting_column": 9,
+                    "ending_column": 28
+                },
+                "type_specific_fields": {
+                    "parent": {
+                        "type": "function",
+                        "name": "constructor",
+                        "source_mapping": {
+                            "start": 2578,
+                            "length": 191,
+                            "filename_relative": "contracts/auction-house/AuctionHouse.sol",
+                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/auction-house/AuctionHouse.sol",
+                            "filename_short": "contracts/auction-house/AuctionHouse.sol",
+                            "is_dependency": false,
+                            "lines": [85, 86, 87, 88],
+                            "starting_column": 5,
+                            "ending_column": 6
+                        },
+                        "type_specific_fields": {
+                            "parent": {
+                                "type": "contract",
+                                "name": "AuctionHouse",
+                                "source_mapping": {
+                                    "start": 401,
+                                    "length": 10019,
+                                    "filename_relative": "contracts/auction-house/AuctionHouse.sol",
+                                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/auction-house/AuctionHouse.sol",
+                                    "filename_short": "contracts/auction-house/AuctionHouse.sol",
+                                    "is_dependency": false,
+                                    "lines": [
+                                        11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
+                                        26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+                                        41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55,
+                                        56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70,
+                                        71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85,
+                                        86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100,
+                                        101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112,
+                                        113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124,
+                                        125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136,
+                                        137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148,
+                                        149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160,
+                                        161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172,
+                                        173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184,
+                                        185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196,
+                                        197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208,
+                                        209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220,
+                                        221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232,
+                                        233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244,
+                                        245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256,
+                                        257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268,
+                                        269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280,
+                                        281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292,
+                                        293, 294, 295, 296, 297, 298, 299, 300, 301, 302, 303, 304,
+                                        305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316,
+                                        317, 318, 319, 320, 321, 322, 323, 324, 325, 326, 327, 328,
+                                        329, 330, 331, 332, 333, 334, 335, 336, 337, 338, 339, 340,
+                                        341, 342
+                                    ],
+                                    "starting_column": 1,
+                                    "ending_column": 2
+                                }
+                            },
+                            "signature": "constructor(address,address,address)"
+                        }
+                    }
+                }
+            }
+        ],
+        "description": "AuctionHouse.constructor(address,address,address).platform (contracts/auction-house/AuctionHouse.sol#85) lacks a zero-check on :\n\t\t- PLATFORM = platform (contracts/auction-house/AuctionHouse.sol#86)\n",
+        "markdown": "[AuctionHouse.constructor(address,address,address).platform](contracts/auction-house/AuctionHouse.sol#L85) lacks a zero-check on :\n\t\t- [PLATFORM = platform](contracts/auction-house/AuctionHouse.sol#L86)\n",
+        "first_markdown_element": "contracts/auction-house/AuctionHouse.sol#L85",
+        "id": "c391875d9678ae3530dadbc2e46a0550a52144ab898db3424c2cb6623c0e7879",
+        "check": "missing-zero-check",
+        "impact": "Low",
+        "confidence": "Medium"
+    },
+    {
+        "elements": [
+            {
+                "type": "variable",
+                "name": "auctionSigner",
+                "source_mapping": {
+                    "start": 2623,
+                    "length": 21,
+                    "filename_relative": "contracts/auction-house/AuctionHouse.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/auction-house/AuctionHouse.sol",
+                    "filename_short": "contracts/auction-house/AuctionHouse.sol",
+                    "is_dependency": false,
+                    "lines": [85],
+                    "starting_column": 50,
+                    "ending_column": 71
+                },
+                "type_specific_fields": {
+                    "parent": {
+                        "type": "function",
+                        "name": "constructor",
+                        "source_mapping": {
+                            "start": 2578,
+                            "length": 191,
+                            "filename_relative": "contracts/auction-house/AuctionHouse.sol",
+                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/auction-house/AuctionHouse.sol",
+                            "filename_short": "contracts/auction-house/AuctionHouse.sol",
+                            "is_dependency": false,
+                            "lines": [85, 86, 87, 88],
+                            "starting_column": 5,
+                            "ending_column": 6
+                        },
+                        "type_specific_fields": {
+                            "parent": {
+                                "type": "contract",
+                                "name": "AuctionHouse",
+                                "source_mapping": {
+                                    "start": 401,
+                                    "length": 10019,
+                                    "filename_relative": "contracts/auction-house/AuctionHouse.sol",
+                                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/auction-house/AuctionHouse.sol",
+                                    "filename_short": "contracts/auction-house/AuctionHouse.sol",
+                                    "is_dependency": false,
+                                    "lines": [
+                                        11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
+                                        26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+                                        41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55,
+                                        56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70,
+                                        71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85,
+                                        86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100,
+                                        101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112,
+                                        113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124,
+                                        125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136,
+                                        137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148,
+                                        149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160,
+                                        161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172,
+                                        173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184,
+                                        185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196,
+                                        197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208,
+                                        209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220,
+                                        221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232,
+                                        233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244,
+                                        245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256,
+                                        257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268,
+                                        269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280,
+                                        281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292,
+                                        293, 294, 295, 296, 297, 298, 299, 300, 301, 302, 303, 304,
+                                        305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316,
+                                        317, 318, 319, 320, 321, 322, 323, 324, 325, 326, 327, 328,
+                                        329, 330, 331, 332, 333, 334, 335, 336, 337, 338, 339, 340,
+                                        341, 342
+                                    ],
+                                    "starting_column": 1,
+                                    "ending_column": 2
+                                }
+                            },
+                            "signature": "constructor(address,address,address)"
                         }
                     }
                 }
@@ -71,13 +649,13 @@
                 "type": "node",
                 "name": "AUCTION_SIGNER = auctionSigner",
                 "source_mapping": {
-                    "start": 1563,
+                    "start": 2732,
                     "length": 30,
-                    "filename_relative": "contracts/Auction.sol",
-                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Auction.sol",
-                    "filename_short": "contracts/Auction.sol",
+                    "filename_relative": "contracts/auction-house/AuctionHouse.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/auction-house/AuctionHouse.sol",
+                    "filename_short": "contracts/auction-house/AuctionHouse.sol",
                     "is_dependency": false,
-                    "lines": [43],
+                    "lines": [87],
                     "starting_column": 9,
                     "ending_column": 39
                 },
@@ -86,58 +664,70 @@
                         "type": "function",
                         "name": "constructor",
                         "source_mapping": {
-                            "start": 1459,
-                            "length": 141,
-                            "filename_relative": "contracts/Auction.sol",
-                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Auction.sol",
-                            "filename_short": "contracts/Auction.sol",
+                            "start": 2578,
+                            "length": 191,
+                            "filename_relative": "contracts/auction-house/AuctionHouse.sol",
+                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/auction-house/AuctionHouse.sol",
+                            "filename_short": "contracts/auction-house/AuctionHouse.sol",
                             "is_dependency": false,
-                            "lines": [42, 43, 44],
+                            "lines": [85, 86, 87, 88],
                             "starting_column": 5,
                             "ending_column": 6
                         },
                         "type_specific_fields": {
                             "parent": {
                                 "type": "contract",
-                                "name": "Auction",
+                                "name": "AuctionHouse",
                                 "source_mapping": {
-                                    "start": 612,
-                                    "length": 6532,
-                                    "filename_relative": "contracts/Auction.sol",
-                                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Auction.sol",
-                                    "filename_short": "contracts/Auction.sol",
+                                    "start": 401,
+                                    "length": 10019,
+                                    "filename_relative": "contracts/auction-house/AuctionHouse.sol",
+                                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/auction-house/AuctionHouse.sol",
+                                    "filename_short": "contracts/auction-house/AuctionHouse.sol",
                                     "is_dependency": false,
                                     "lines": [
-                                        17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
-                                        32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46,
-                                        47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61,
-                                        62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76,
-                                        77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91,
-                                        92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104,
-                                        105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116,
-                                        117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128,
-                                        129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140,
-                                        141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152,
-                                        153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164,
-                                        165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176,
-                                        177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188,
-                                        189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200,
-                                        201, 202, 203, 204, 205, 206, 207
+                                        11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
+                                        26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+                                        41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55,
+                                        56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70,
+                                        71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85,
+                                        86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100,
+                                        101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112,
+                                        113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124,
+                                        125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136,
+                                        137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148,
+                                        149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160,
+                                        161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172,
+                                        173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184,
+                                        185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196,
+                                        197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208,
+                                        209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220,
+                                        221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232,
+                                        233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244,
+                                        245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256,
+                                        257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268,
+                                        269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280,
+                                        281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292,
+                                        293, 294, 295, 296, 297, 298, 299, 300, 301, 302, 303, 304,
+                                        305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316,
+                                        317, 318, 319, 320, 321, 322, 323, 324, 325, 326, 327, 328,
+                                        329, 330, 331, 332, 333, 334, 335, 336, 337, 338, 339, 340,
+                                        341, 342
                                     ],
                                     "starting_column": 1,
                                     "ending_column": 2
                                 }
                             },
-                            "signature": "constructor(address,address)"
+                            "signature": "constructor(address,address,address)"
                         }
                     }
                 }
             }
         ],
-        "description": "Auction.constructor(address,address).auctionSigner (contracts/Auction.sol#42) lacks a zero-check on :\n\t\t- AUCTION_SIGNER = auctionSigner (contracts/Auction.sol#43)\n",
-        "markdown": "[Auction.constructor(address,address).auctionSigner](contracts/Auction.sol#L42) lacks a zero-check on :\n\t\t- [AUCTION_SIGNER = auctionSigner](contracts/Auction.sol#L43)\n",
-        "first_markdown_element": "contracts/Auction.sol#L42",
-        "id": "e374299ae4485bb63861e6cbccc36f3c7a29a766eaa525f2d4b8ab6ada10c80e",
+        "description": "AuctionHouse.constructor(address,address,address).auctionSigner (contracts/auction-house/AuctionHouse.sol#85) lacks a zero-check on :\n\t\t- AUCTION_SIGNER = auctionSigner (contracts/auction-house/AuctionHouse.sol#87)\n",
+        "markdown": "[AuctionHouse.constructor(address,address,address).auctionSigner](contracts/auction-house/AuctionHouse.sol#L85) lacks a zero-check on :\n\t\t- [AUCTION_SIGNER = auctionSigner](contracts/auction-house/AuctionHouse.sol#L87)\n",
+        "first_markdown_element": "contracts/auction-house/AuctionHouse.sol#L85",
+        "id": "ad17b5309796b51962cbff09cc0c03c446fb4e9c13e8b94426bd99f0323baa4e",
         "check": "missing-zero-check",
         "impact": "Low",
         "confidence": "Medium"
@@ -148,28 +738,28 @@
                 "type": "variable",
                 "name": "marketSigner",
                 "source_mapping": {
-                    "start": 1407,
+                    "start": 1366,
                     "length": 20,
-                    "filename_relative": "contracts/Market.sol",
-                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Market.sol",
-                    "filename_short": "contracts/Market.sol",
+                    "filename_relative": "contracts/market/Market.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/market/Market.sol",
+                    "filename_short": "contracts/market/Market.sol",
                     "is_dependency": false,
-                    "lines": [42],
-                    "starting_column": 33,
-                    "ending_column": 53
+                    "lines": [48],
+                    "starting_column": 32,
+                    "ending_column": 52
                 },
                 "type_specific_fields": {
                     "parent": {
                         "type": "function",
                         "name": "constructor",
                         "source_mapping": {
-                            "start": 1379,
-                            "length": 137,
-                            "filename_relative": "contracts/Market.sol",
-                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Market.sol",
-                            "filename_short": "contracts/Market.sol",
+                            "start": 1339,
+                            "length": 135,
+                            "filename_relative": "contracts/market/Market.sol",
+                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/market/Market.sol",
+                            "filename_short": "contracts/market/Market.sol",
                             "is_dependency": false,
-                            "lines": [42, 43, 44],
+                            "lines": [48, 49, 50],
                             "starting_column": 5,
                             "ending_column": 6
                         },
@@ -178,25 +768,28 @@
                                 "type": "contract",
                                 "name": "Market",
                                 "source_mapping": {
-                                    "start": 538,
-                                    "length": 5152,
-                                    "filename_relative": "contracts/Market.sol",
-                                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Market.sol",
-                                    "filename_short": "contracts/Market.sol",
+                                    "start": 418,
+                                    "length": 5845,
+                                    "filename_relative": "contracts/market/Market.sol",
+                                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/market/Market.sol",
+                                    "filename_short": "contracts/market/Market.sol",
                                     "is_dependency": false,
                                     "lines": [
-                                        16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
-                                        31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45,
-                                        46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60,
-                                        61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75,
-                                        76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90,
-                                        91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104,
-                                        105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116,
-                                        117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128,
-                                        129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140,
-                                        141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152,
-                                        153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164,
-                                        165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175
+                                        15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
+                                        30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44,
+                                        45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59,
+                                        60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74,
+                                        75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89,
+                                        90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103,
+                                        104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115,
+                                        116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127,
+                                        128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139,
+                                        140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151,
+                                        152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163,
+                                        164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175,
+                                        176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187,
+                                        188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199,
+                                        200, 201, 202, 203, 204, 205, 206, 207, 208
                                     ],
                                     "starting_column": 1,
                                     "ending_column": 2
@@ -211,13 +804,13 @@
                 "type": "node",
                 "name": "MARKET_SIGNER = marketSigner",
                 "source_mapping": {
-                    "start": 1481,
+                    "start": 1439,
                     "length": 28,
-                    "filename_relative": "contracts/Market.sol",
-                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Market.sol",
-                    "filename_short": "contracts/Market.sol",
+                    "filename_relative": "contracts/market/Market.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/market/Market.sol",
+                    "filename_short": "contracts/market/Market.sol",
                     "is_dependency": false,
-                    "lines": [43],
+                    "lines": [49],
                     "starting_column": 9,
                     "ending_column": 37
                 },
@@ -226,13 +819,13 @@
                         "type": "function",
                         "name": "constructor",
                         "source_mapping": {
-                            "start": 1379,
-                            "length": 137,
-                            "filename_relative": "contracts/Market.sol",
-                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Market.sol",
-                            "filename_short": "contracts/Market.sol",
+                            "start": 1339,
+                            "length": 135,
+                            "filename_relative": "contracts/market/Market.sol",
+                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/market/Market.sol",
+                            "filename_short": "contracts/market/Market.sol",
                             "is_dependency": false,
-                            "lines": [42, 43, 44],
+                            "lines": [48, 49, 50],
                             "starting_column": 5,
                             "ending_column": 6
                         },
@@ -241,25 +834,28 @@
                                 "type": "contract",
                                 "name": "Market",
                                 "source_mapping": {
-                                    "start": 538,
-                                    "length": 5152,
-                                    "filename_relative": "contracts/Market.sol",
-                                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Market.sol",
-                                    "filename_short": "contracts/Market.sol",
+                                    "start": 418,
+                                    "length": 5845,
+                                    "filename_relative": "contracts/market/Market.sol",
+                                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/market/Market.sol",
+                                    "filename_short": "contracts/market/Market.sol",
                                     "is_dependency": false,
                                     "lines": [
-                                        16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
-                                        31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45,
-                                        46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60,
-                                        61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75,
-                                        76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90,
-                                        91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104,
-                                        105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116,
-                                        117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128,
-                                        129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140,
-                                        141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152,
-                                        153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164,
-                                        165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175
+                                        15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
+                                        30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44,
+                                        45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59,
+                                        60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74,
+                                        75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89,
+                                        90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103,
+                                        104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115,
+                                        116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127,
+                                        128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139,
+                                        140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151,
+                                        152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163,
+                                        164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175,
+                                        176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187,
+                                        188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199,
+                                        200, 201, 202, 203, 204, 205, 206, 207, 208
                                     ],
                                     "starting_column": 1,
                                     "ending_column": 2
@@ -271,403 +867,10 @@
                 }
             }
         ],
-        "description": "Market.constructor(address,address).marketSigner (contracts/Market.sol#42) lacks a zero-check on :\n\t\t- MARKET_SIGNER = marketSigner (contracts/Market.sol#43)\n",
-        "markdown": "[Market.constructor(address,address).marketSigner](contracts/Market.sol#L42) lacks a zero-check on :\n\t\t- [MARKET_SIGNER = marketSigner](contracts/Market.sol#L43)\n",
-        "first_markdown_element": "contracts/Market.sol#L42",
-        "id": "3b0f7dd2c0b9a52e26fb247fc93da0984ecead3eaf4fbb69b813b512d0e820da",
-        "check": "missing-zero-check",
-        "impact": "Low",
-        "confidence": "Medium"
-    },
-    {
-        "elements": [
-            {
-                "type": "variable",
-                "name": "_minter",
-                "source_mapping": {
-                    "start": 1298,
-                    "length": 15,
-                    "filename_relative": "contracts/Token.sol",
-                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Token.sol",
-                    "filename_short": "contracts/Token.sol",
-                    "is_dependency": false,
-                    "lines": [39],
-                    "starting_column": 17,
-                    "ending_column": 32
-                },
-                "type_specific_fields": {
-                    "parent": {
-                        "type": "function",
-                        "name": "constructor",
-                        "source_mapping": {
-                            "start": 1286,
-                            "length": 172,
-                            "filename_relative": "contracts/Token.sol",
-                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Token.sol",
-                            "filename_short": "contracts/Token.sol",
-                            "is_dependency": false,
-                            "lines": [39, 40, 41, 42, 43],
-                            "starting_column": 5,
-                            "ending_column": 6
-                        },
-                        "type_specific_fields": {
-                            "parent": {
-                                "type": "contract",
-                                "name": "Token",
-                                "source_mapping": {
-                                    "start": 550,
-                                    "length": 3548,
-                                    "filename_relative": "contracts/Token.sol",
-                                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Token.sol",
-                                    "filename_short": "contracts/Token.sol",
-                                    "is_dependency": false,
-                                    "lines": [
-                                        16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
-                                        31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45,
-                                        46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60,
-                                        61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75,
-                                        76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90,
-                                        91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104,
-                                        105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116,
-                                        117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128,
-                                        129, 130
-                                    ],
-                                    "starting_column": 1,
-                                    "ending_column": 2
-                                }
-                            },
-                            "signature": "constructor(address,address,address)"
-                        }
-                    }
-                }
-            },
-            {
-                "type": "node",
-                "name": "MINTER = _minter",
-                "source_mapping": {
-                    "start": 1381,
-                    "length": 16,
-                    "filename_relative": "contracts/Token.sol",
-                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Token.sol",
-                    "filename_short": "contracts/Token.sol",
-                    "is_dependency": false,
-                    "lines": [40],
-                    "starting_column": 9,
-                    "ending_column": 25
-                },
-                "type_specific_fields": {
-                    "parent": {
-                        "type": "function",
-                        "name": "constructor",
-                        "source_mapping": {
-                            "start": 1286,
-                            "length": 172,
-                            "filename_relative": "contracts/Token.sol",
-                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Token.sol",
-                            "filename_short": "contracts/Token.sol",
-                            "is_dependency": false,
-                            "lines": [39, 40, 41, 42, 43],
-                            "starting_column": 5,
-                            "ending_column": 6
-                        },
-                        "type_specific_fields": {
-                            "parent": {
-                                "type": "contract",
-                                "name": "Token",
-                                "source_mapping": {
-                                    "start": 550,
-                                    "length": 3548,
-                                    "filename_relative": "contracts/Token.sol",
-                                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Token.sol",
-                                    "filename_short": "contracts/Token.sol",
-                                    "is_dependency": false,
-                                    "lines": [
-                                        16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
-                                        31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45,
-                                        46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60,
-                                        61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75,
-                                        76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90,
-                                        91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104,
-                                        105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116,
-                                        117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128,
-                                        129, 130
-                                    ],
-                                    "starting_column": 1,
-                                    "ending_column": 2
-                                }
-                            },
-                            "signature": "constructor(address,address,address)"
-                        }
-                    }
-                }
-            }
-        ],
-        "description": "Token.constructor(address,address,address)._minter (contracts/Token.sol#39) lacks a zero-check on :\n\t\t- MINTER = _minter (contracts/Token.sol#40)\n",
-        "markdown": "[Token.constructor(address,address,address)._minter](contracts/Token.sol#L39) lacks a zero-check on :\n\t\t- [MINTER = _minter](contracts/Token.sol#L40)\n",
-        "first_markdown_element": "contracts/Token.sol#L39",
-        "id": "3114e6c8a8f9829989fe618e02760a711d5fadfa919f7fa899f9aa1fac2bdf9c",
-        "check": "missing-zero-check",
-        "impact": "Low",
-        "confidence": "Medium"
-    },
-    {
-        "elements": [
-            {
-                "type": "variable",
-                "name": "_market",
-                "source_mapping": {
-                    "start": 1315,
-                    "length": 15,
-                    "filename_relative": "contracts/Token.sol",
-                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Token.sol",
-                    "filename_short": "contracts/Token.sol",
-                    "is_dependency": false,
-                    "lines": [39],
-                    "starting_column": 34,
-                    "ending_column": 49
-                },
-                "type_specific_fields": {
-                    "parent": {
-                        "type": "function",
-                        "name": "constructor",
-                        "source_mapping": {
-                            "start": 1286,
-                            "length": 172,
-                            "filename_relative": "contracts/Token.sol",
-                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Token.sol",
-                            "filename_short": "contracts/Token.sol",
-                            "is_dependency": false,
-                            "lines": [39, 40, 41, 42, 43],
-                            "starting_column": 5,
-                            "ending_column": 6
-                        },
-                        "type_specific_fields": {
-                            "parent": {
-                                "type": "contract",
-                                "name": "Token",
-                                "source_mapping": {
-                                    "start": 550,
-                                    "length": 3548,
-                                    "filename_relative": "contracts/Token.sol",
-                                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Token.sol",
-                                    "filename_short": "contracts/Token.sol",
-                                    "is_dependency": false,
-                                    "lines": [
-                                        16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
-                                        31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45,
-                                        46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60,
-                                        61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75,
-                                        76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90,
-                                        91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104,
-                                        105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116,
-                                        117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128,
-                                        129, 130
-                                    ],
-                                    "starting_column": 1,
-                                    "ending_column": 2
-                                }
-                            },
-                            "signature": "constructor(address,address,address)"
-                        }
-                    }
-                }
-            },
-            {
-                "type": "node",
-                "name": "MARKET = _market",
-                "source_mapping": {
-                    "start": 1407,
-                    "length": 16,
-                    "filename_relative": "contracts/Token.sol",
-                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Token.sol",
-                    "filename_short": "contracts/Token.sol",
-                    "is_dependency": false,
-                    "lines": [41],
-                    "starting_column": 9,
-                    "ending_column": 25
-                },
-                "type_specific_fields": {
-                    "parent": {
-                        "type": "function",
-                        "name": "constructor",
-                        "source_mapping": {
-                            "start": 1286,
-                            "length": 172,
-                            "filename_relative": "contracts/Token.sol",
-                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Token.sol",
-                            "filename_short": "contracts/Token.sol",
-                            "is_dependency": false,
-                            "lines": [39, 40, 41, 42, 43],
-                            "starting_column": 5,
-                            "ending_column": 6
-                        },
-                        "type_specific_fields": {
-                            "parent": {
-                                "type": "contract",
-                                "name": "Token",
-                                "source_mapping": {
-                                    "start": 550,
-                                    "length": 3548,
-                                    "filename_relative": "contracts/Token.sol",
-                                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Token.sol",
-                                    "filename_short": "contracts/Token.sol",
-                                    "is_dependency": false,
-                                    "lines": [
-                                        16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
-                                        31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45,
-                                        46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60,
-                                        61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75,
-                                        76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90,
-                                        91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104,
-                                        105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116,
-                                        117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128,
-                                        129, 130
-                                    ],
-                                    "starting_column": 1,
-                                    "ending_column": 2
-                                }
-                            },
-                            "signature": "constructor(address,address,address)"
-                        }
-                    }
-                }
-            }
-        ],
-        "description": "Token.constructor(address,address,address)._market (contracts/Token.sol#39) lacks a zero-check on :\n\t\t- MARKET = _market (contracts/Token.sol#41)\n",
-        "markdown": "[Token.constructor(address,address,address)._market](contracts/Token.sol#L39) lacks a zero-check on :\n\t\t- [MARKET = _market](contracts/Token.sol#L41)\n",
-        "first_markdown_element": "contracts/Token.sol#L39",
-        "id": "6cc052ebee77eae85dc34a21f7c9cdff2c17aa3afbe4aa343be2c285ae5158f9",
-        "check": "missing-zero-check",
-        "impact": "Low",
-        "confidence": "Medium"
-    },
-    {
-        "elements": [
-            {
-                "type": "variable",
-                "name": "_auction",
-                "source_mapping": {
-                    "start": 1332,
-                    "length": 16,
-                    "filename_relative": "contracts/Token.sol",
-                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Token.sol",
-                    "filename_short": "contracts/Token.sol",
-                    "is_dependency": false,
-                    "lines": [39],
-                    "starting_column": 51,
-                    "ending_column": 67
-                },
-                "type_specific_fields": {
-                    "parent": {
-                        "type": "function",
-                        "name": "constructor",
-                        "source_mapping": {
-                            "start": 1286,
-                            "length": 172,
-                            "filename_relative": "contracts/Token.sol",
-                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Token.sol",
-                            "filename_short": "contracts/Token.sol",
-                            "is_dependency": false,
-                            "lines": [39, 40, 41, 42, 43],
-                            "starting_column": 5,
-                            "ending_column": 6
-                        },
-                        "type_specific_fields": {
-                            "parent": {
-                                "type": "contract",
-                                "name": "Token",
-                                "source_mapping": {
-                                    "start": 550,
-                                    "length": 3548,
-                                    "filename_relative": "contracts/Token.sol",
-                                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Token.sol",
-                                    "filename_short": "contracts/Token.sol",
-                                    "is_dependency": false,
-                                    "lines": [
-                                        16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
-                                        31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45,
-                                        46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60,
-                                        61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75,
-                                        76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90,
-                                        91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104,
-                                        105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116,
-                                        117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128,
-                                        129, 130
-                                    ],
-                                    "starting_column": 1,
-                                    "ending_column": 2
-                                }
-                            },
-                            "signature": "constructor(address,address,address)"
-                        }
-                    }
-                }
-            },
-            {
-                "type": "node",
-                "name": "AUCTION = _auction",
-                "source_mapping": {
-                    "start": 1433,
-                    "length": 18,
-                    "filename_relative": "contracts/Token.sol",
-                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Token.sol",
-                    "filename_short": "contracts/Token.sol",
-                    "is_dependency": false,
-                    "lines": [42],
-                    "starting_column": 9,
-                    "ending_column": 27
-                },
-                "type_specific_fields": {
-                    "parent": {
-                        "type": "function",
-                        "name": "constructor",
-                        "source_mapping": {
-                            "start": 1286,
-                            "length": 172,
-                            "filename_relative": "contracts/Token.sol",
-                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Token.sol",
-                            "filename_short": "contracts/Token.sol",
-                            "is_dependency": false,
-                            "lines": [39, 40, 41, 42, 43],
-                            "starting_column": 5,
-                            "ending_column": 6
-                        },
-                        "type_specific_fields": {
-                            "parent": {
-                                "type": "contract",
-                                "name": "Token",
-                                "source_mapping": {
-                                    "start": 550,
-                                    "length": 3548,
-                                    "filename_relative": "contracts/Token.sol",
-                                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Token.sol",
-                                    "filename_short": "contracts/Token.sol",
-                                    "is_dependency": false,
-                                    "lines": [
-                                        16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
-                                        31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45,
-                                        46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60,
-                                        61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75,
-                                        76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90,
-                                        91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104,
-                                        105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116,
-                                        117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128,
-                                        129, 130
-                                    ],
-                                    "starting_column": 1,
-                                    "ending_column": 2
-                                }
-                            },
-                            "signature": "constructor(address,address,address)"
-                        }
-                    }
-                }
-            }
-        ],
-        "description": "Token.constructor(address,address,address)._auction (contracts/Token.sol#39) lacks a zero-check on :\n\t\t- AUCTION = _auction (contracts/Token.sol#42)\n",
-        "markdown": "[Token.constructor(address,address,address)._auction](contracts/Token.sol#L39) lacks a zero-check on :\n\t\t- [AUCTION = _auction](contracts/Token.sol#L42)\n",
-        "first_markdown_element": "contracts/Token.sol#L39",
-        "id": "8c6b5c7db49105dc8893202c30807c52998edf36c390537ef31b935528350b8a",
+        "description": "Market.constructor(address,address).marketSigner (contracts/market/Market.sol#48) lacks a zero-check on :\n\t\t- MARKET_SIGNER = marketSigner (contracts/market/Market.sol#49)\n",
+        "markdown": "[Market.constructor(address,address).marketSigner](contracts/market/Market.sol#L48) lacks a zero-check on :\n\t\t- [MARKET_SIGNER = marketSigner](contracts/market/Market.sol#L49)\n",
+        "first_markdown_element": "contracts/market/Market.sol#L48",
+        "id": "348bdd0c1aa620a3a268c29249694422c315032cf27fe1db89935146f1471642",
         "check": "missing-zero-check",
         "impact": "Low",
         "confidence": "Medium"
@@ -676,17 +879,18 @@
         "elements": [
             {
                 "type": "function",
-                "name": "raise",
+                "name": "_crate",
                 "source_mapping": {
-                    "start": 1802,
-                    "length": 1130,
-                    "filename_relative": "contracts/Auction.sol",
-                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Auction.sol",
-                    "filename_short": "contracts/Auction.sol",
+                    "start": 6243,
+                    "length": 1262,
+                    "filename_relative": "contracts/auction-house/AuctionHouse.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/auction-house/AuctionHouse.sol",
+                    "filename_short": "contracts/auction-house/AuctionHouse.sol",
                     "is_dependency": false,
                     "lines": [
-                        52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70,
-                        71, 72, 73, 74, 75, 76, 77, 78
+                        188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202,
+                        203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217,
+                        218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231
                     ],
                     "starting_column": 5,
                     "ending_column": 6
@@ -694,65 +898,77 @@
                 "type_specific_fields": {
                     "parent": {
                         "type": "contract",
-                        "name": "Auction",
+                        "name": "AuctionHouse",
                         "source_mapping": {
-                            "start": 612,
-                            "length": 6532,
-                            "filename_relative": "contracts/Auction.sol",
-                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Auction.sol",
-                            "filename_short": "contracts/Auction.sol",
+                            "start": 401,
+                            "length": 10019,
+                            "filename_relative": "contracts/auction-house/AuctionHouse.sol",
+                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/auction-house/AuctionHouse.sol",
+                            "filename_short": "contracts/auction-house/AuctionHouse.sol",
                             "is_dependency": false,
                             "lines": [
-                                17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33,
-                                34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50,
-                                51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67,
-                                68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84,
-                                85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100,
-                                101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113,
-                                114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126,
-                                127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139,
-                                140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152,
-                                153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165,
-                                166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178,
-                                179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191,
-                                192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204,
-                                205, 206, 207
+                                11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27,
+                                28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44,
+                                45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61,
+                                62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78,
+                                79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95,
+                                96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109,
+                                110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122,
+                                123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135,
+                                136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148,
+                                149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161,
+                                162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174,
+                                175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187,
+                                188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200,
+                                201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213,
+                                214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226,
+                                227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239,
+                                240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252,
+                                253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265,
+                                266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278,
+                                279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291,
+                                292, 293, 294, 295, 296, 297, 298, 299, 300, 301, 302, 303, 304,
+                                305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316, 317,
+                                318, 319, 320, 321, 322, 323, 324, 325, 326, 327, 328, 329, 330,
+                                331, 332, 333, 334, 335, 336, 337, 338, 339, 340, 341, 342
                             ],
                             "starting_column": 1,
                             "ending_column": 2
                         }
                     },
-                    "signature": "raise(uint256)"
+                    "signature": "_crate(uint256,address,address,uint256,uint256,uint256,uint256,uint256,address[],uint256[])"
                 }
             },
             {
                 "type": "node",
-                "name": "_orders[orderId].endTime < block.timestamp",
+                "name": "! (endTime > block.timestamp)",
                 "source_mapping": {
-                    "start": 1886,
-                    "length": 42,
-                    "filename_relative": "contracts/Auction.sol",
-                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Auction.sol",
-                    "filename_short": "contracts/Auction.sol",
+                    "start": 6671,
+                    "length": 28,
+                    "filename_relative": "contracts/auction-house/AuctionHouse.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/auction-house/AuctionHouse.sol",
+                    "filename_short": "contracts/auction-house/AuctionHouse.sol",
                     "is_dependency": false,
-                    "lines": [53],
+                    "lines": [204],
                     "starting_column": 13,
-                    "ending_column": 55
+                    "ending_column": 41
                 },
                 "type_specific_fields": {
                     "parent": {
                         "type": "function",
-                        "name": "raise",
+                        "name": "_crate",
                         "source_mapping": {
-                            "start": 1802,
-                            "length": 1130,
-                            "filename_relative": "contracts/Auction.sol",
-                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Auction.sol",
-                            "filename_short": "contracts/Auction.sol",
+                            "start": 6243,
+                            "length": 1262,
+                            "filename_relative": "contracts/auction-house/AuctionHouse.sol",
+                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/auction-house/AuctionHouse.sol",
+                            "filename_short": "contracts/auction-house/AuctionHouse.sol",
                             "is_dependency": false,
                             "lines": [
-                                52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68,
-                                69, 70, 71, 72, 73, 74, 75, 76, 77, 78
+                                188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200,
+                                201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213,
+                                214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226,
+                                227, 228, 229, 230, 231
                             ],
                             "starting_column": 5,
                             "ending_column": 6
@@ -760,405 +976,57 @@
                         "type_specific_fields": {
                             "parent": {
                                 "type": "contract",
-                                "name": "Auction",
+                                "name": "AuctionHouse",
                                 "source_mapping": {
-                                    "start": 612,
-                                    "length": 6532,
-                                    "filename_relative": "contracts/Auction.sol",
-                                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Auction.sol",
-                                    "filename_short": "contracts/Auction.sol",
+                                    "start": 401,
+                                    "length": 10019,
+                                    "filename_relative": "contracts/auction-house/AuctionHouse.sol",
+                                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/auction-house/AuctionHouse.sol",
+                                    "filename_short": "contracts/auction-house/AuctionHouse.sol",
                                     "is_dependency": false,
                                     "lines": [
-                                        17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
-                                        32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46,
-                                        47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61,
-                                        62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76,
-                                        77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91,
-                                        92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104,
-                                        105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116,
-                                        117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128,
-                                        129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140,
-                                        141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152,
-                                        153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164,
-                                        165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176,
-                                        177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188,
-                                        189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200,
-                                        201, 202, 203, 204, 205, 206, 207
+                                        11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
+                                        26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+                                        41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55,
+                                        56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70,
+                                        71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85,
+                                        86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100,
+                                        101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112,
+                                        113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124,
+                                        125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136,
+                                        137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148,
+                                        149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160,
+                                        161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172,
+                                        173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184,
+                                        185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196,
+                                        197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208,
+                                        209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220,
+                                        221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232,
+                                        233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244,
+                                        245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256,
+                                        257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268,
+                                        269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280,
+                                        281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292,
+                                        293, 294, 295, 296, 297, 298, 299, 300, 301, 302, 303, 304,
+                                        305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316,
+                                        317, 318, 319, 320, 321, 322, 323, 324, 325, 326, 327, 328,
+                                        329, 330, 331, 332, 333, 334, 335, 336, 337, 338, 339, 340,
+                                        341, 342
                                     ],
                                     "starting_column": 1,
                                     "ending_column": 2
                                 }
                             },
-                            "signature": "raise(uint256)"
+                            "signature": "_crate(uint256,address,address,uint256,uint256,uint256,uint256,uint256,address[],uint256[])"
                         }
                     }
                 }
             }
         ],
-        "description": "Auction.raise(uint256) (contracts/Auction.sol#52-78) uses timestamp for comparisons\n\tDangerous comparisons:\n\t- _orders[orderId].endTime < block.timestamp (contracts/Auction.sol#53)\n",
-        "markdown": "[Auction.raise(uint256)](contracts/Auction.sol#L52-L78) uses timestamp for comparisons\n\tDangerous comparisons:\n\t- [_orders[orderId].endTime < block.timestamp](contracts/Auction.sol#L53)\n",
-        "first_markdown_element": "contracts/Auction.sol#L52-L78",
-        "id": "8ac593917816ff76a51dd9384aab23e3e0011d931337b0cb0834bebd701b938e",
-        "check": "timestamp",
-        "impact": "Low",
-        "confidence": "Medium"
-    },
-    {
-        "elements": [
-            {
-                "type": "function",
-                "name": "end",
-                "source_mapping": {
-                    "start": 3083,
-                    "length": 780,
-                    "filename_relative": "contracts/Auction.sol",
-                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Auction.sol",
-                    "filename_short": "contracts/Auction.sol",
-                    "is_dependency": false,
-                    "lines": [
-                        85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102,
-                        103, 104
-                    ],
-                    "starting_column": 5,
-                    "ending_column": 6
-                },
-                "type_specific_fields": {
-                    "parent": {
-                        "type": "contract",
-                        "name": "Auction",
-                        "source_mapping": {
-                            "start": 612,
-                            "length": 6532,
-                            "filename_relative": "contracts/Auction.sol",
-                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Auction.sol",
-                            "filename_short": "contracts/Auction.sol",
-                            "is_dependency": false,
-                            "lines": [
-                                17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33,
-                                34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50,
-                                51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67,
-                                68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84,
-                                85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100,
-                                101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113,
-                                114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126,
-                                127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139,
-                                140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152,
-                                153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165,
-                                166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178,
-                                179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191,
-                                192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204,
-                                205, 206, 207
-                            ],
-                            "starting_column": 1,
-                            "ending_column": 2
-                        }
-                    },
-                    "signature": "end(uint256)"
-                }
-            },
-            {
-                "type": "node",
-                "name": "_orders[orderId].endTime >= block.timestamp",
-                "source_mapping": {
-                    "start": 3157,
-                    "length": 43,
-                    "filename_relative": "contracts/Auction.sol",
-                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Auction.sol",
-                    "filename_short": "contracts/Auction.sol",
-                    "is_dependency": false,
-                    "lines": [86],
-                    "starting_column": 13,
-                    "ending_column": 56
-                },
-                "type_specific_fields": {
-                    "parent": {
-                        "type": "function",
-                        "name": "end",
-                        "source_mapping": {
-                            "start": 3083,
-                            "length": 780,
-                            "filename_relative": "contracts/Auction.sol",
-                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Auction.sol",
-                            "filename_short": "contracts/Auction.sol",
-                            "is_dependency": false,
-                            "lines": [
-                                85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100,
-                                101, 102, 103, 104
-                            ],
-                            "starting_column": 5,
-                            "ending_column": 6
-                        },
-                        "type_specific_fields": {
-                            "parent": {
-                                "type": "contract",
-                                "name": "Auction",
-                                "source_mapping": {
-                                    "start": 612,
-                                    "length": 6532,
-                                    "filename_relative": "contracts/Auction.sol",
-                                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Auction.sol",
-                                    "filename_short": "contracts/Auction.sol",
-                                    "is_dependency": false,
-                                    "lines": [
-                                        17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
-                                        32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46,
-                                        47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61,
-                                        62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76,
-                                        77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91,
-                                        92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104,
-                                        105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116,
-                                        117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128,
-                                        129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140,
-                                        141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152,
-                                        153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164,
-                                        165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176,
-                                        177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188,
-                                        189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200,
-                                        201, 202, 203, 204, 205, 206, 207
-                                    ],
-                                    "starting_column": 1,
-                                    "ending_column": 2
-                                }
-                            },
-                            "signature": "end(uint256)"
-                        }
-                    }
-                }
-            }
-        ],
-        "description": "Auction.end(uint256) (contracts/Auction.sol#85-104) uses timestamp for comparisons\n\tDangerous comparisons:\n\t- _orders[orderId].endTime >= block.timestamp (contracts/Auction.sol#86)\n",
-        "markdown": "[Auction.end(uint256)](contracts/Auction.sol#L85-L104) uses timestamp for comparisons\n\tDangerous comparisons:\n\t- [_orders[orderId].endTime >= block.timestamp](contracts/Auction.sol#L86)\n",
-        "first_markdown_element": "contracts/Auction.sol#L85-L104",
-        "id": "5a0275a63e61843a617d3ec9ffc65d3fc1e84c1313e7a82ae2244e293a0c0b13",
-        "check": "timestamp",
-        "impact": "Low",
-        "confidence": "Medium"
-    },
-    {
-        "elements": [
-            {
-                "type": "function",
-                "name": "_place",
-                "source_mapping": {
-                    "start": 4856,
-                    "length": 1368,
-                    "filename_relative": "contracts/Auction.sol",
-                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Auction.sol",
-                    "filename_short": "contracts/Auction.sol",
-                    "is_dependency": false,
-                    "lines": [
-                        130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144,
-                        145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159,
-                        160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174,
-                        175, 176
-                    ],
-                    "starting_column": 5,
-                    "ending_column": 6
-                },
-                "type_specific_fields": {
-                    "parent": {
-                        "type": "contract",
-                        "name": "Auction",
-                        "source_mapping": {
-                            "start": 612,
-                            "length": 6532,
-                            "filename_relative": "contracts/Auction.sol",
-                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Auction.sol",
-                            "filename_short": "contracts/Auction.sol",
-                            "is_dependency": false,
-                            "lines": [
-                                17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33,
-                                34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50,
-                                51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67,
-                                68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84,
-                                85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100,
-                                101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113,
-                                114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126,
-                                127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139,
-                                140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152,
-                                153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165,
-                                166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178,
-                                179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191,
-                                192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204,
-                                205, 206, 207
-                            ],
-                            "starting_column": 1,
-                            "ending_column": 2
-                        }
-                    },
-                    "signature": "_place(address,uint256,uint256,uint256,uint256,uint256,address[],uint256[],bytes)"
-                }
-            },
-            {
-                "type": "node",
-                "name": "endTime < block.timestamp",
-                "source_mapping": {
-                    "start": 5153,
-                    "length": 25,
-                    "filename_relative": "contracts/Auction.sol",
-                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Auction.sol",
-                    "filename_short": "contracts/Auction.sol",
-                    "is_dependency": false,
-                    "lines": [141],
-                    "starting_column": 13,
-                    "ending_column": 38
-                },
-                "type_specific_fields": {
-                    "parent": {
-                        "type": "function",
-                        "name": "_place",
-                        "source_mapping": {
-                            "start": 4856,
-                            "length": 1368,
-                            "filename_relative": "contracts/Auction.sol",
-                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Auction.sol",
-                            "filename_short": "contracts/Auction.sol",
-                            "is_dependency": false,
-                            "lines": [
-                                130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142,
-                                143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155,
-                                156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168,
-                                169, 170, 171, 172, 173, 174, 175, 176
-                            ],
-                            "starting_column": 5,
-                            "ending_column": 6
-                        },
-                        "type_specific_fields": {
-                            "parent": {
-                                "type": "contract",
-                                "name": "Auction",
-                                "source_mapping": {
-                                    "start": 612,
-                                    "length": 6532,
-                                    "filename_relative": "contracts/Auction.sol",
-                                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Auction.sol",
-                                    "filename_short": "contracts/Auction.sol",
-                                    "is_dependency": false,
-                                    "lines": [
-                                        17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
-                                        32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46,
-                                        47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61,
-                                        62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76,
-                                        77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91,
-                                        92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104,
-                                        105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116,
-                                        117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128,
-                                        129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140,
-                                        141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152,
-                                        153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164,
-                                        165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176,
-                                        177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188,
-                                        189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200,
-                                        201, 202, 203, 204, 205, 206, 207
-                                    ],
-                                    "starting_column": 1,
-                                    "ending_column": 2
-                                }
-                            },
-                            "signature": "_place(address,uint256,uint256,uint256,uint256,uint256,address[],uint256[],bytes)"
-                        }
-                    }
-                }
-            }
-        ],
-        "description": "Auction._place(address,uint256,uint256,uint256,uint256,uint256,address[],uint256[],bytes) (contracts/Auction.sol#130-176) uses timestamp for comparisons\n\tDangerous comparisons:\n\t- endTime < block.timestamp (contracts/Auction.sol#141)\n",
-        "markdown": "[Auction._place(address,uint256,uint256,uint256,uint256,uint256,address[],uint256[],bytes)](contracts/Auction.sol#L130-L176) uses timestamp for comparisons\n\tDangerous comparisons:\n\t- [endTime < block.timestamp](contracts/Auction.sol#L141)\n",
-        "first_markdown_element": "contracts/Auction.sol#L130-L176",
-        "id": "e9c4d9a7b7a7a7f488f14bd61bb99b8aeaf8d84dd0e02ce53f4ab16b0b64b701",
-        "check": "timestamp",
-        "impact": "Low",
-        "confidence": "Medium"
-    },
-    {
-        "elements": [
-            {
-                "type": "function",
-                "name": "validateSignature",
-                "source_mapping": {
-                    "start": 293,
-                    "length": 370,
-                    "filename_relative": "contracts/library/SignatureValidationLibrary.sol",
-                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/library/SignatureValidationLibrary.sol",
-                    "filename_short": "contracts/library/SignatureValidationLibrary.sol",
-                    "is_dependency": false,
-                    "lines": [10, 11, 12, 13, 14, 15, 16],
-                    "starting_column": 5,
-                    "ending_column": 6
-                },
-                "type_specific_fields": {
-                    "parent": {
-                        "type": "contract",
-                        "name": "SignatureValidationLibrary",
-                        "source_mapping": {
-                            "start": 142,
-                            "length": 523,
-                            "filename_relative": "contracts/library/SignatureValidationLibrary.sol",
-                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/library/SignatureValidationLibrary.sol",
-                            "filename_short": "contracts/library/SignatureValidationLibrary.sol",
-                            "is_dependency": false,
-                            "lines": [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17],
-                            "starting_column": 1,
-                            "ending_column": 2
-                        }
-                    },
-                    "signature": "validateSignature(address,bytes32,uint256,bytes)"
-                }
-            },
-            {
-                "type": "node",
-                "name": "block.timestamp > deadline",
-                "source_mapping": {
-                    "start": 420,
-                    "length": 26,
-                    "filename_relative": "contracts/library/SignatureValidationLibrary.sol",
-                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/library/SignatureValidationLibrary.sol",
-                    "filename_short": "contracts/library/SignatureValidationLibrary.sol",
-                    "is_dependency": false,
-                    "lines": [11],
-                    "starting_column": 13,
-                    "ending_column": 39
-                },
-                "type_specific_fields": {
-                    "parent": {
-                        "type": "function",
-                        "name": "validateSignature",
-                        "source_mapping": {
-                            "start": 293,
-                            "length": 370,
-                            "filename_relative": "contracts/library/SignatureValidationLibrary.sol",
-                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/library/SignatureValidationLibrary.sol",
-                            "filename_short": "contracts/library/SignatureValidationLibrary.sol",
-                            "is_dependency": false,
-                            "lines": [10, 11, 12, 13, 14, 15, 16],
-                            "starting_column": 5,
-                            "ending_column": 6
-                        },
-                        "type_specific_fields": {
-                            "parent": {
-                                "type": "contract",
-                                "name": "SignatureValidationLibrary",
-                                "source_mapping": {
-                                    "start": 142,
-                                    "length": 523,
-                                    "filename_relative": "contracts/library/SignatureValidationLibrary.sol",
-                                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/library/SignatureValidationLibrary.sol",
-                                    "filename_short": "contracts/library/SignatureValidationLibrary.sol",
-                                    "is_dependency": false,
-                                    "lines": [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17],
-                                    "starting_column": 1,
-                                    "ending_column": 2
-                                }
-                            },
-                            "signature": "validateSignature(address,bytes32,uint256,bytes)"
-                        }
-                    }
-                }
-            }
-        ],
-        "description": "SignatureValidationLibrary.validateSignature(address,bytes32,uint256,bytes) (contracts/library/SignatureValidationLibrary.sol#10-16) uses timestamp for comparisons\n\tDangerous comparisons:\n\t- block.timestamp > deadline (contracts/library/SignatureValidationLibrary.sol#11)\n",
-        "markdown": "[SignatureValidationLibrary.validateSignature(address,bytes32,uint256,bytes)](contracts/library/SignatureValidationLibrary.sol#L10-L16) uses timestamp for comparisons\n\tDangerous comparisons:\n\t- [block.timestamp > deadline](contracts/library/SignatureValidationLibrary.sol#L11)\n",
-        "first_markdown_element": "contracts/library/SignatureValidationLibrary.sol#L10-L16",
-        "id": "922d2dde27f770d500e31114ec6ffe212b882ac997ad070991e0fbd64abfd336",
+        "description": "AuctionHouse._crate(uint256,address,address,uint256,uint256,uint256,uint256,uint256,address[],uint256[]) (contracts/auction-house/AuctionHouse.sol#188-231) uses timestamp for comparisons\n\tDangerous comparisons:\n\t- ! (endTime > block.timestamp) (contracts/auction-house/AuctionHouse.sol#204)\n",
+        "markdown": "[AuctionHouse._crate(uint256,address,address,uint256,uint256,uint256,uint256,uint256,address[],uint256[])](contracts/auction-house/AuctionHouse.sol#L188-L231) uses timestamp for comparisons\n\tDangerous comparisons:\n\t- [! (endTime > block.timestamp)](contracts/auction-house/AuctionHouse.sol#L204)\n",
+        "first_markdown_element": "contracts/auction-house/AuctionHouse.sol#L188-L231",
+        "id": "8417597564ff78240fccc50587db5b25c9ee94fb9aa0cae034041a32ec9b8807",
         "check": "timestamp",
         "impact": "Low",
         "confidence": "Medium"
@@ -1169,33 +1037,34 @@
                 "type": "function",
                 "name": "_validateSignature",
                 "source_mapping": {
-                    "start": 352,
-                    "length": 396,
-                    "filename_relative": "contracts/utils/EIP712Wrapper.sol",
-                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/utils/EIP712Wrapper.sol",
-                    "filename_short": "contracts/utils/EIP712Wrapper.sol",
+                    "start": 894,
+                    "length": 513,
+                    "filename_relative": "contracts/utils/EIP712.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/utils/EIP712.sol",
+                    "filename_short": "contracts/utils/EIP712.sol",
                     "is_dependency": false,
-                    "lines": [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22],
+                    "lines": [30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46],
                     "starting_column": 5,
-                    "ending_column": 38
+                    "ending_column": 6
                 },
                 "type_specific_fields": {
                     "parent": {
                         "type": "contract",
-                        "name": "EIP712Wrapper",
+                        "name": "EIP712",
                         "source_mapping": {
-                            "start": 220,
-                            "length": 705,
-                            "filename_relative": "contracts/utils/EIP712Wrapper.sol",
-                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/utils/EIP712Wrapper.sol",
-                            "filename_short": "contracts/utils/EIP712Wrapper.sol",
+                            "start": 240,
+                            "length": 1361,
+                            "filename_relative": "contracts/utils/EIP712.sol",
+                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/utils/EIP712.sol",
+                            "filename_short": "contracts/utils/EIP712.sol",
                             "is_dependency": false,
                             "lines": [
                                 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
-                                25, 26, 27, 28, 29, 30
+                                25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41,
+                                42, 43, 44, 45, 46, 47, 48, 49, 50, 51
                             ],
                             "starting_column": 1,
-                            "ending_column": 3
+                            "ending_column": 2
                         }
                     },
                     "signature": "_validateSignature(address,bytes32,uint256,bytes)"
@@ -1203,50 +1072,53 @@
             },
             {
                 "type": "node",
-                "name": "block.timestamp > deadline",
+                "name": "deadline <= block.timestamp",
                 "source_mapping": {
-                    "start": 486,
-                    "length": 26,
-                    "filename_relative": "contracts/utils/EIP712Wrapper.sol",
-                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/utils/EIP712Wrapper.sol",
-                    "filename_short": "contracts/utils/EIP712Wrapper.sol",
+                    "start": 1066,
+                    "length": 27,
+                    "filename_relative": "contracts/utils/EIP712.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/utils/EIP712.sol",
+                    "filename_short": "contracts/utils/EIP712.sol",
                     "is_dependency": false,
-                    "lines": [15, 16, 17],
-                    "starting_column": 28,
-                    "ending_column": 1
+                    "lines": [36],
+                    "starting_column": 13,
+                    "ending_column": 40
                 },
                 "type_specific_fields": {
                     "parent": {
                         "type": "function",
                         "name": "_validateSignature",
                         "source_mapping": {
-                            "start": 352,
-                            "length": 396,
-                            "filename_relative": "contracts/utils/EIP712Wrapper.sol",
-                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/utils/EIP712Wrapper.sol",
-                            "filename_short": "contracts/utils/EIP712Wrapper.sol",
+                            "start": 894,
+                            "length": 513,
+                            "filename_relative": "contracts/utils/EIP712.sol",
+                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/utils/EIP712.sol",
+                            "filename_short": "contracts/utils/EIP712.sol",
                             "is_dependency": false,
-                            "lines": [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22],
+                            "lines": [
+                                30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46
+                            ],
                             "starting_column": 5,
-                            "ending_column": 38
+                            "ending_column": 6
                         },
                         "type_specific_fields": {
                             "parent": {
                                 "type": "contract",
-                                "name": "EIP712Wrapper",
+                                "name": "EIP712",
                                 "source_mapping": {
-                                    "start": 220,
-                                    "length": 705,
-                                    "filename_relative": "contracts/utils/EIP712Wrapper.sol",
-                                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/utils/EIP712Wrapper.sol",
-                                    "filename_short": "contracts/utils/EIP712Wrapper.sol",
+                                    "start": 240,
+                                    "length": 1361,
+                                    "filename_relative": "contracts/utils/EIP712.sol",
+                                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/utils/EIP712.sol",
+                                    "filename_short": "contracts/utils/EIP712.sol",
                                     "is_dependency": false,
                                     "lines": [
                                         7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
-                                        23, 24, 25, 26, 27, 28, 29, 30
+                                        23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37,
+                                        38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51
                                     ],
                                     "starting_column": 1,
-                                    "ending_column": 3
+                                    "ending_column": 2
                                 }
                             },
                             "signature": "_validateSignature(address,bytes32,uint256,bytes)"
@@ -1255,10 +1127,10 @@
                 }
             }
         ],
-        "description": "EIP712Wrapper._validateSignature(address,bytes32,uint256,bytes) (contracts/utils/EIP712Wrapper.sol#11-22) uses timestamp for comparisons\n\tDangerous comparisons:\n\t- block.timestamp > deadline (contracts/utils/EIP712Wrapper.sol#15-17)\n",
-        "markdown": "[EIP712Wrapper._validateSignature(address,bytes32,uint256,bytes)](contracts/utils/EIP712Wrapper.sol#L11-L22) uses timestamp for comparisons\n\tDangerous comparisons:\n\t- [block.timestamp > deadline](contracts/utils/EIP712Wrapper.sol#L15-L17)\n",
-        "first_markdown_element": "contracts/utils/EIP712Wrapper.sol#L11-L22",
-        "id": "343b2443a9f6ade1f861460e8535ac140edcb3e61a2fec2ce95abf682f7aafc4",
+        "description": "EIP712._validateSignature(address,bytes32,uint256,bytes) (contracts/utils/EIP712.sol#30-46) uses timestamp for comparisons\n\tDangerous comparisons:\n\t- deadline <= block.timestamp (contracts/utils/EIP712.sol#36)\n",
+        "markdown": "[EIP712._validateSignature(address,bytes32,uint256,bytes)](contracts/utils/EIP712.sol#L30-L46) uses timestamp for comparisons\n\tDangerous comparisons:\n\t- [deadline <= block.timestamp](contracts/utils/EIP712.sol#L36)\n",
+        "first_markdown_element": "contracts/utils/EIP712.sol#L30-L46",
+        "id": "af80e54bf24b9e286e776ad6c368699f8fbc08d63f55264324651ea3c4b94fd0",
         "check": "timestamp",
         "impact": "Low",
         "confidence": "Medium"
@@ -1267,34 +1139,233 @@
         "elements": [
             {
                 "type": "function",
-                "name": "_increaseBalance",
+                "name": "layout",
                 "source_mapping": {
-                    "start": 2090,
-                    "length": 170,
-                    "filename_relative": "contracts/utils/ERC721Wrapper.sol",
-                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/utils/ERC721Wrapper.sol",
-                    "filename_short": "contracts/utils/ERC721Wrapper.sol",
+                    "start": 552,
+                    "length": 197,
+                    "filename_relative": "contracts/auction-house/AuctionHouseStorage.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/auction-house/AuctionHouseStorage.sol",
+                    "filename_short": "contracts/auction-house/AuctionHouseStorage.sol",
                     "is_dependency": false,
-                    "lines": [63, 64, 65],
+                    "lines": [19, 20, 21, 22, 23, 24, 25, 26],
                     "starting_column": 5,
                     "ending_column": 6
                 },
                 "type_specific_fields": {
                     "parent": {
                         "type": "contract",
-                        "name": "ERC721Wrapper",
+                        "name": "AuctionHouseStorage",
                         "source_mapping": {
-                            "start": 344,
-                            "length": 1918,
-                            "filename_relative": "contracts/utils/ERC721Wrapper.sol",
-                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/utils/ERC721Wrapper.sol",
-                            "filename_short": "contracts/utils/ERC721Wrapper.sol",
+                            "start": 117,
+                            "length": 634,
+                            "filename_relative": "contracts/auction-house/AuctionHouseStorage.sol",
+                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/auction-house/AuctionHouseStorage.sol",
+                            "filename_short": "contracts/auction-house/AuctionHouseStorage.sol",
+                            "is_dependency": false,
+                            "lines": [
+                                6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
+                                24, 25, 26, 27
+                            ],
+                            "starting_column": 1,
+                            "ending_column": 2
+                        }
+                    },
+                    "signature": "layout()"
+                }
+            },
+            {
+                "type": "node",
+                "name": "",
+                "source_mapping": {
+                    "start": 696,
+                    "length": 47,
+                    "filename_relative": "contracts/auction-house/AuctionHouseStorage.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/auction-house/AuctionHouseStorage.sol",
+                    "filename_short": "contracts/auction-house/AuctionHouseStorage.sol",
+                    "is_dependency": false,
+                    "lines": [23, 24, 25],
+                    "starting_column": 9,
+                    "ending_column": 10
+                },
+                "type_specific_fields": {
+                    "parent": {
+                        "type": "function",
+                        "name": "layout",
+                        "source_mapping": {
+                            "start": 552,
+                            "length": 197,
+                            "filename_relative": "contracts/auction-house/AuctionHouseStorage.sol",
+                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/auction-house/AuctionHouseStorage.sol",
+                            "filename_short": "contracts/auction-house/AuctionHouseStorage.sol",
+                            "is_dependency": false,
+                            "lines": [19, 20, 21, 22, 23, 24, 25, 26],
+                            "starting_column": 5,
+                            "ending_column": 6
+                        },
+                        "type_specific_fields": {
+                            "parent": {
+                                "type": "contract",
+                                "name": "AuctionHouseStorage",
+                                "source_mapping": {
+                                    "start": 117,
+                                    "length": 634,
+                                    "filename_relative": "contracts/auction-house/AuctionHouseStorage.sol",
+                                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/auction-house/AuctionHouseStorage.sol",
+                                    "filename_short": "contracts/auction-house/AuctionHouseStorage.sol",
+                                    "is_dependency": false,
+                                    "lines": [
+                                        6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
+                                        22, 23, 24, 25, 26, 27
+                                    ],
+                                    "starting_column": 1,
+                                    "ending_column": 2
+                                }
+                            },
+                            "signature": "layout()"
+                        }
+                    }
+                }
+            }
+        ],
+        "description": "AuctionHouseStorage.layout() (contracts/auction-house/AuctionHouseStorage.sol#19-26) uses assembly\n\t- INLINE ASM (contracts/auction-house/AuctionHouseStorage.sol#23-25)\n",
+        "markdown": "[AuctionHouseStorage.layout()](contracts/auction-house/AuctionHouseStorage.sol#L19-L26) uses assembly\n\t- [INLINE ASM](contracts/auction-house/AuctionHouseStorage.sol#L23-L25)\n",
+        "first_markdown_element": "contracts/auction-house/AuctionHouseStorage.sol#L19-L26",
+        "id": "7f661962fd804b534b768b1a4fb7e0e8e234b67dcb8464030d74c501f53a5ef5",
+        "check": "assembly",
+        "impact": "Informational",
+        "confidence": "High"
+    },
+    {
+        "elements": [
+            {
+                "type": "function",
+                "name": "layout",
+                "source_mapping": {
+                    "start": 496,
+                    "length": 197,
+                    "filename_relative": "contracts/market/MarketStorage.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/market/MarketStorage.sol",
+                    "filename_short": "contracts/market/MarketStorage.sol",
+                    "is_dependency": false,
+                    "lines": [18, 19, 20, 21, 22, 23, 24, 25],
+                    "starting_column": 5,
+                    "ending_column": 6
+                },
+                "type_specific_fields": {
+                    "parent": {
+                        "type": "contract",
+                        "name": "MarketStorage",
+                        "source_mapping": {
+                            "start": 105,
+                            "length": 590,
+                            "filename_relative": "contracts/market/MarketStorage.sol",
+                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/market/MarketStorage.sol",
+                            "filename_short": "contracts/market/MarketStorage.sol",
+                            "is_dependency": false,
+                            "lines": [
+                                6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
+                                24, 25, 26
+                            ],
+                            "starting_column": 1,
+                            "ending_column": 2
+                        }
+                    },
+                    "signature": "layout()"
+                }
+            },
+            {
+                "type": "node",
+                "name": "",
+                "source_mapping": {
+                    "start": 640,
+                    "length": 47,
+                    "filename_relative": "contracts/market/MarketStorage.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/market/MarketStorage.sol",
+                    "filename_short": "contracts/market/MarketStorage.sol",
+                    "is_dependency": false,
+                    "lines": [22, 23, 24],
+                    "starting_column": 9,
+                    "ending_column": 10
+                },
+                "type_specific_fields": {
+                    "parent": {
+                        "type": "function",
+                        "name": "layout",
+                        "source_mapping": {
+                            "start": 496,
+                            "length": 197,
+                            "filename_relative": "contracts/market/MarketStorage.sol",
+                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/market/MarketStorage.sol",
+                            "filename_short": "contracts/market/MarketStorage.sol",
+                            "is_dependency": false,
+                            "lines": [18, 19, 20, 21, 22, 23, 24, 25],
+                            "starting_column": 5,
+                            "ending_column": 6
+                        },
+                        "type_specific_fields": {
+                            "parent": {
+                                "type": "contract",
+                                "name": "MarketStorage",
+                                "source_mapping": {
+                                    "start": 105,
+                                    "length": 590,
+                                    "filename_relative": "contracts/market/MarketStorage.sol",
+                                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/market/MarketStorage.sol",
+                                    "filename_short": "contracts/market/MarketStorage.sol",
+                                    "is_dependency": false,
+                                    "lines": [
+                                        6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
+                                        22, 23, 24, 25, 26
+                                    ],
+                                    "starting_column": 1,
+                                    "ending_column": 2
+                                }
+                            },
+                            "signature": "layout()"
+                        }
+                    }
+                }
+            }
+        ],
+        "description": "MarketStorage.layout() (contracts/market/MarketStorage.sol#18-25) uses assembly\n\t- INLINE ASM (contracts/market/MarketStorage.sol#22-24)\n",
+        "markdown": "[MarketStorage.layout()](contracts/market/MarketStorage.sol#L18-L25) uses assembly\n\t- [INLINE ASM](contracts/market/MarketStorage.sol#L22-L24)\n",
+        "first_markdown_element": "contracts/market/MarketStorage.sol#L18-L25",
+        "id": "0342405b7ab25782cb4c31d810fc8a4d2f877f1c88a40c2004dd85bfe4ab7c2c",
+        "check": "assembly",
+        "impact": "Informational",
+        "confidence": "High"
+    },
+    {
+        "elements": [
+            {
+                "type": "function",
+                "name": "_increaseBalance",
+                "source_mapping": {
+                    "start": 2004,
+                    "length": 178,
+                    "filename_relative": "contracts/art-token/ArtTokenBase.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtTokenBase.sol",
+                    "filename_short": "contracts/art-token/ArtTokenBase.sol",
+                    "is_dependency": false,
+                    "lines": [53, 54, 55],
+                    "starting_column": 5,
+                    "ending_column": 6
+                },
+                "type_specific_fields": {
+                    "parent": {
+                        "type": "contract",
+                        "name": "ArtTokenBase",
+                        "source_mapping": {
+                            "start": 496,
+                            "length": 1688,
+                            "filename_relative": "contracts/art-token/ArtTokenBase.sol",
+                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtTokenBase.sol",
+                            "filename_short": "contracts/art-token/ArtTokenBase.sol",
                             "is_dependency": false,
                             "lines": [
                                 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
                                 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41,
-                                42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58,
-                                59, 60, 61, 62, 63, 64, 65, 66
+                                42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56
                             ],
                             "starting_column": 1,
                             "ending_column": 2
@@ -1304,54 +1375,10 @@
                 }
             }
         ],
-        "description": "ERC721Wrapper._increaseBalance(address,uint128) (contracts/utils/ERC721Wrapper.sol#63-65) is never used and should be removed\n",
-        "markdown": "[ERC721Wrapper._increaseBalance(address,uint128)](contracts/utils/ERC721Wrapper.sol#L63-L65) is never used and should be removed\n",
-        "first_markdown_element": "contracts/utils/ERC721Wrapper.sol#L63-L65",
-        "id": "824284e13c33d8d9aa2885d730d808d505858e5f259e0b7c15b83f33fa3ef7e8",
-        "check": "dead-code",
-        "impact": "Informational",
-        "confidence": "Medium"
-    },
-    {
-        "elements": [
-            {
-                "type": "function",
-                "name": "validateSignature",
-                "source_mapping": {
-                    "start": 293,
-                    "length": 370,
-                    "filename_relative": "contracts/library/SignatureValidationLibrary.sol",
-                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/library/SignatureValidationLibrary.sol",
-                    "filename_short": "contracts/library/SignatureValidationLibrary.sol",
-                    "is_dependency": false,
-                    "lines": [10, 11, 12, 13, 14, 15, 16],
-                    "starting_column": 5,
-                    "ending_column": 6
-                },
-                "type_specific_fields": {
-                    "parent": {
-                        "type": "contract",
-                        "name": "SignatureValidationLibrary",
-                        "source_mapping": {
-                            "start": 142,
-                            "length": 523,
-                            "filename_relative": "contracts/library/SignatureValidationLibrary.sol",
-                            "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/library/SignatureValidationLibrary.sol",
-                            "filename_short": "contracts/library/SignatureValidationLibrary.sol",
-                            "is_dependency": false,
-                            "lines": [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17],
-                            "starting_column": 1,
-                            "ending_column": 2
-                        }
-                    },
-                    "signature": "validateSignature(address,bytes32,uint256,bytes)"
-                }
-            }
-        ],
-        "description": "SignatureValidationLibrary.validateSignature(address,bytes32,uint256,bytes) (contracts/library/SignatureValidationLibrary.sol#10-16) is never used and should be removed\n",
-        "markdown": "[SignatureValidationLibrary.validateSignature(address,bytes32,uint256,bytes)](contracts/library/SignatureValidationLibrary.sol#L10-L16) is never used and should be removed\n",
-        "first_markdown_element": "contracts/library/SignatureValidationLibrary.sol#L10-L16",
-        "id": "2298d3e44abbeac60a10004b20d84bc240a6c035fe7ad3111503af39051620dc",
+        "description": "ArtTokenBase._increaseBalance(address,uint128) (contracts/art-token/ArtTokenBase.sol#53-55) is never used and should be removed\n",
+        "markdown": "[ArtTokenBase._increaseBalance(address,uint128)](contracts/art-token/ArtTokenBase.sol#L53-L55) is never used and should be removed\n",
+        "first_markdown_element": "contracts/art-token/ArtTokenBase.sol#L53-L55",
+        "id": "a548e9dd0856e89fbbade6fefa791dda22cc4edc39e8e8cbd15b1a088281bdf8",
         "check": "dead-code",
         "impact": "Informational",
         "confidence": "Medium"
@@ -1364,9 +1391,9 @@
                 "source_mapping": {
                     "start": 39,
                     "length": 24,
-                    "filename_relative": "contracts/Auction.sol",
-                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Auction.sol",
-                    "filename_short": "contracts/Auction.sol",
+                    "filename_relative": "contracts/art-token/ArtToken.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtToken.sol",
+                    "filename_short": "contracts/art-token/ArtToken.sol",
                     "is_dependency": false,
                     "lines": [2],
                     "starting_column": 1,
@@ -1375,10 +1402,10 @@
                 "type_specific_fields": { "directive": ["solidity", "^", "0.8", ".20"] }
             }
         ],
-        "description": "Pragma version^0.8.20 (contracts/Auction.sol#2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
-        "markdown": "Pragma version[^0.8.20](contracts/Auction.sol#L2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
-        "first_markdown_element": "contracts/Auction.sol#L2",
-        "id": "2dfbdaaf1445cf81a1b629ab20ad5b51963212a28ab1eaf20cff5942d5b9e617",
+        "description": "Pragma version^0.8.20 (contracts/art-token/ArtToken.sol#2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
+        "markdown": "Pragma version[^0.8.20](contracts/art-token/ArtToken.sol#L2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
+        "first_markdown_element": "contracts/art-token/ArtToken.sol#L2",
+        "id": "e979027ec4a607db7dcdf395e2c3ef66294f6dd9ae4f9f410977618bae3235ed",
         "check": "solc-version",
         "impact": "Informational",
         "confidence": "High"
@@ -1391,9 +1418,9 @@
                 "source_mapping": {
                     "start": 39,
                     "length": 24,
-                    "filename_relative": "contracts/Deployer.sol",
-                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Deployer.sol",
-                    "filename_short": "contracts/Deployer.sol",
+                    "filename_relative": "contracts/art-token/ArtTokenBase.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtTokenBase.sol",
+                    "filename_short": "contracts/art-token/ArtTokenBase.sol",
                     "is_dependency": false,
                     "lines": [2],
                     "starting_column": 1,
@@ -1402,10 +1429,10 @@
                 "type_specific_fields": { "directive": ["solidity", "^", "0.8", ".20"] }
             }
         ],
-        "description": "Pragma version^0.8.20 (contracts/Deployer.sol#2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
-        "markdown": "Pragma version[^0.8.20](contracts/Deployer.sol#L2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
-        "first_markdown_element": "contracts/Deployer.sol#L2",
-        "id": "c571fbd940bb3e36040857dfcf08cb378ac124876f0a3cc765f16077b2060336",
+        "description": "Pragma version^0.8.20 (contracts/art-token/ArtTokenBase.sol#2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
+        "markdown": "Pragma version[^0.8.20](contracts/art-token/ArtTokenBase.sol#L2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
+        "first_markdown_element": "contracts/art-token/ArtTokenBase.sol#L2",
+        "id": "74c047e003548e5c3ae93dffdabccd185908eab4f43df4f38bd284779fb6cc4a",
         "check": "solc-version",
         "impact": "Informational",
         "confidence": "High"
@@ -1418,9 +1445,9 @@
                 "source_mapping": {
                     "start": 39,
                     "length": 24,
-                    "filename_relative": "contracts/Market.sol",
-                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Market.sol",
-                    "filename_short": "contracts/Market.sol",
+                    "filename_relative": "contracts/art-token/ArtTokenMock.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/ArtTokenMock.sol",
+                    "filename_short": "contracts/art-token/ArtTokenMock.sol",
                     "is_dependency": false,
                     "lines": [2],
                     "starting_column": 1,
@@ -1429,10 +1456,10 @@
                 "type_specific_fields": { "directive": ["solidity", "^", "0.8", ".20"] }
             }
         ],
-        "description": "Pragma version^0.8.20 (contracts/Market.sol#2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
-        "markdown": "Pragma version[^0.8.20](contracts/Market.sol#L2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
-        "first_markdown_element": "contracts/Market.sol#L2",
-        "id": "28c129b9a0da4c7203b97c3c9212f8d099d730b8feb4f8eb7cdbdfed573e9c21",
+        "description": "Pragma version^0.8.20 (contracts/art-token/ArtTokenMock.sol#2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
+        "markdown": "Pragma version[^0.8.20](contracts/art-token/ArtTokenMock.sol#L2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
+        "first_markdown_element": "contracts/art-token/ArtTokenMock.sol#L2",
+        "id": "862acece8dd98f5e5724a60b03340cf5ef93b837802659fb6e55b54d6e3d2db3",
         "check": "solc-version",
         "impact": "Informational",
         "confidence": "High"
@@ -1445,9 +1472,9 @@
                 "source_mapping": {
                     "start": 39,
                     "length": 24,
-                    "filename_relative": "contracts/Token.sol",
-                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/Token.sol",
-                    "filename_short": "contracts/Token.sol",
+                    "filename_relative": "contracts/art-token/IArtToken.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/art-token/IArtToken.sol",
+                    "filename_short": "contracts/art-token/IArtToken.sol",
                     "is_dependency": false,
                     "lines": [2],
                     "starting_column": 1,
@@ -1456,10 +1483,10 @@
                 "type_specific_fields": { "directive": ["solidity", "^", "0.8", ".20"] }
             }
         ],
-        "description": "Pragma version^0.8.20 (contracts/Token.sol#2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
-        "markdown": "Pragma version[^0.8.20](contracts/Token.sol#L2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
-        "first_markdown_element": "contracts/Token.sol#L2",
-        "id": "3ea8e61a1f169b9e803c90b9d769db1d18f9b7a2caf36b775049f4058280a990",
+        "description": "Pragma version^0.8.20 (contracts/art-token/IArtToken.sol#2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
+        "markdown": "Pragma version[^0.8.20](contracts/art-token/IArtToken.sol#L2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
+        "first_markdown_element": "contracts/art-token/IArtToken.sol#L2",
+        "id": "dc0aaec176d7746facd289ce39516cb9fc9a6d53e4473ef6283b0d97438493e2",
         "check": "solc-version",
         "impact": "Informational",
         "confidence": "High"
@@ -1472,9 +1499,9 @@
                 "source_mapping": {
                     "start": 39,
                     "length": 24,
-                    "filename_relative": "contracts/interfaces/IAuction.sol",
-                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/interfaces/IAuction.sol",
-                    "filename_short": "contracts/interfaces/IAuction.sol",
+                    "filename_relative": "contracts/auction-house/AuctionHouse.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/auction-house/AuctionHouse.sol",
+                    "filename_short": "contracts/auction-house/AuctionHouse.sol",
                     "is_dependency": false,
                     "lines": [2],
                     "starting_column": 1,
@@ -1483,10 +1510,10 @@
                 "type_specific_fields": { "directive": ["solidity", "^", "0.8", ".20"] }
             }
         ],
-        "description": "Pragma version^0.8.20 (contracts/interfaces/IAuction.sol#2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
-        "markdown": "Pragma version[^0.8.20](contracts/interfaces/IAuction.sol#L2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
-        "first_markdown_element": "contracts/interfaces/IAuction.sol#L2",
-        "id": "c5a624917c26c85d33a2a76bbdc2748e390ac868fd48cd6c26b93c7b94eef30d",
+        "description": "Pragma version^0.8.20 (contracts/auction-house/AuctionHouse.sol#2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
+        "markdown": "Pragma version[^0.8.20](contracts/auction-house/AuctionHouse.sol#L2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
+        "first_markdown_element": "contracts/auction-house/AuctionHouse.sol#L2",
+        "id": "09563583af40c7f1f457edc28455e4c21145c502f2d1e02568d71a18c3f7137b",
         "check": "solc-version",
         "impact": "Informational",
         "confidence": "High"
@@ -1499,9 +1526,9 @@
                 "source_mapping": {
                     "start": 39,
                     "length": 24,
-                    "filename_relative": "contracts/interfaces/IMarket.sol",
-                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/interfaces/IMarket.sol",
-                    "filename_short": "contracts/interfaces/IMarket.sol",
+                    "filename_relative": "contracts/auction-house/AuctionHouseMock.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/auction-house/AuctionHouseMock.sol",
+                    "filename_short": "contracts/auction-house/AuctionHouseMock.sol",
                     "is_dependency": false,
                     "lines": [2],
                     "starting_column": 1,
@@ -1510,10 +1537,10 @@
                 "type_specific_fields": { "directive": ["solidity", "^", "0.8", ".20"] }
             }
         ],
-        "description": "Pragma version^0.8.20 (contracts/interfaces/IMarket.sol#2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
-        "markdown": "Pragma version[^0.8.20](contracts/interfaces/IMarket.sol#L2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
-        "first_markdown_element": "contracts/interfaces/IMarket.sol#L2",
-        "id": "4c2e0f2699b73676424eae10882844d0753aa8bd6f001387621a8b39b8d20487",
+        "description": "Pragma version^0.8.20 (contracts/auction-house/AuctionHouseMock.sol#2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
+        "markdown": "Pragma version[^0.8.20](contracts/auction-house/AuctionHouseMock.sol#L2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
+        "first_markdown_element": "contracts/auction-house/AuctionHouseMock.sol#L2",
+        "id": "19ec8aae7205dbe6af0f95a026467abae0ee41adbfc76fa07e5c78f876af8cc4",
         "check": "solc-version",
         "impact": "Informational",
         "confidence": "High"
@@ -1526,9 +1553,9 @@
                 "source_mapping": {
                     "start": 39,
                     "length": 24,
-                    "filename_relative": "contracts/interfaces/IToken.sol",
-                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/interfaces/IToken.sol",
-                    "filename_short": "contracts/interfaces/IToken.sol",
+                    "filename_relative": "contracts/auction-house/AuctionHouseStorage.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/auction-house/AuctionHouseStorage.sol",
+                    "filename_short": "contracts/auction-house/AuctionHouseStorage.sol",
                     "is_dependency": false,
                     "lines": [2],
                     "starting_column": 1,
@@ -1537,10 +1564,10 @@
                 "type_specific_fields": { "directive": ["solidity", "^", "0.8", ".20"] }
             }
         ],
-        "description": "Pragma version^0.8.20 (contracts/interfaces/IToken.sol#2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
-        "markdown": "Pragma version[^0.8.20](contracts/interfaces/IToken.sol#L2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
-        "first_markdown_element": "contracts/interfaces/IToken.sol#L2",
-        "id": "fd50daeb68a2cab1f9255683ac2cac2f7ec64e6b171746285326b6a009c3a64d",
+        "description": "Pragma version^0.8.20 (contracts/auction-house/AuctionHouseStorage.sol#2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
+        "markdown": "Pragma version[^0.8.20](contracts/auction-house/AuctionHouseStorage.sol#L2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
+        "first_markdown_element": "contracts/auction-house/AuctionHouseStorage.sol#L2",
+        "id": "46eb40c7a4f0b3ad279f243e9e283903661a1778669e58ef7c0a0eefb69711d1",
         "check": "solc-version",
         "impact": "Informational",
         "confidence": "High"
@@ -1553,9 +1580,9 @@
                 "source_mapping": {
                     "start": 39,
                     "length": 24,
-                    "filename_relative": "contracts/library/DistributionLibrary.sol",
-                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/library/DistributionLibrary.sol",
-                    "filename_short": "contracts/library/DistributionLibrary.sol",
+                    "filename_relative": "contracts/auction-house/IAuctionHouse.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/auction-house/IAuctionHouse.sol",
+                    "filename_short": "contracts/auction-house/IAuctionHouse.sol",
                     "is_dependency": false,
                     "lines": [2],
                     "starting_column": 1,
@@ -1564,10 +1591,10 @@
                 "type_specific_fields": { "directive": ["solidity", "^", "0.8", ".20"] }
             }
         ],
-        "description": "Pragma version^0.8.20 (contracts/library/DistributionLibrary.sol#2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
-        "markdown": "Pragma version[^0.8.20](contracts/library/DistributionLibrary.sol#L2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
-        "first_markdown_element": "contracts/library/DistributionLibrary.sol#L2",
-        "id": "c4eb14d90c2bccd54494f5910ac40ad9eb30e86d15bca046508f87fc8d891e05",
+        "description": "Pragma version^0.8.20 (contracts/auction-house/IAuctionHouse.sol#2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
+        "markdown": "Pragma version[^0.8.20](contracts/auction-house/IAuctionHouse.sol#L2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
+        "first_markdown_element": "contracts/auction-house/IAuctionHouse.sol#L2",
+        "id": "39c2636c4b41138d7d400133bb5aae50453f37831f04336e59eef1fbc22b7c79",
         "check": "solc-version",
         "impact": "Informational",
         "confidence": "High"
@@ -1580,9 +1607,9 @@
                 "source_mapping": {
                     "start": 39,
                     "length": 24,
-                    "filename_relative": "contracts/library/SignatureValidationLibrary.sol",
-                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/library/SignatureValidationLibrary.sol",
-                    "filename_short": "contracts/library/SignatureValidationLibrary.sol",
+                    "filename_relative": "contracts/collab-token/CollabToken.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/collab-token/CollabToken.sol",
+                    "filename_short": "contracts/collab-token/CollabToken.sol",
                     "is_dependency": false,
                     "lines": [2],
                     "starting_column": 1,
@@ -1591,10 +1618,172 @@
                 "type_specific_fields": { "directive": ["solidity", "^", "0.8", ".20"] }
             }
         ],
-        "description": "Pragma version^0.8.20 (contracts/library/SignatureValidationLibrary.sol#2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
-        "markdown": "Pragma version[^0.8.20](contracts/library/SignatureValidationLibrary.sol#L2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
-        "first_markdown_element": "contracts/library/SignatureValidationLibrary.sol#L2",
-        "id": "7e17187f6b8333bf4e2a7a46a0ab55f390e76814ab99a94ee1f62b938c9dfe65",
+        "description": "Pragma version^0.8.20 (contracts/collab-token/CollabToken.sol#2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
+        "markdown": "Pragma version[^0.8.20](contracts/collab-token/CollabToken.sol#L2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
+        "first_markdown_element": "contracts/collab-token/CollabToken.sol#L2",
+        "id": "c06c21362b8077ff3815623411a4d86c2a0c0a5b5155a35685f09cc43f18f581",
+        "check": "solc-version",
+        "impact": "Informational",
+        "confidence": "High"
+    },
+    {
+        "elements": [
+            {
+                "type": "pragma",
+                "name": "^0.8.20",
+                "source_mapping": {
+                    "start": 39,
+                    "length": 24,
+                    "filename_relative": "contracts/market/IMarket.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/market/IMarket.sol",
+                    "filename_short": "contracts/market/IMarket.sol",
+                    "is_dependency": false,
+                    "lines": [2],
+                    "starting_column": 1,
+                    "ending_column": 25
+                },
+                "type_specific_fields": { "directive": ["solidity", "^", "0.8", ".20"] }
+            }
+        ],
+        "description": "Pragma version^0.8.20 (contracts/market/IMarket.sol#2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
+        "markdown": "Pragma version[^0.8.20](contracts/market/IMarket.sol#L2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
+        "first_markdown_element": "contracts/market/IMarket.sol#L2",
+        "id": "0fa52ad76f4c511be23b00376e8e524befa5f26559e2da87895f38d8e367e8ff",
+        "check": "solc-version",
+        "impact": "Informational",
+        "confidence": "High"
+    },
+    {
+        "elements": [
+            {
+                "type": "pragma",
+                "name": "^0.8.20",
+                "source_mapping": {
+                    "start": 39,
+                    "length": 24,
+                    "filename_relative": "contracts/market/Market.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/market/Market.sol",
+                    "filename_short": "contracts/market/Market.sol",
+                    "is_dependency": false,
+                    "lines": [2],
+                    "starting_column": 1,
+                    "ending_column": 25
+                },
+                "type_specific_fields": { "directive": ["solidity", "^", "0.8", ".20"] }
+            }
+        ],
+        "description": "Pragma version^0.8.20 (contracts/market/Market.sol#2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
+        "markdown": "Pragma version[^0.8.20](contracts/market/Market.sol#L2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
+        "first_markdown_element": "contracts/market/Market.sol#L2",
+        "id": "9efe3e0df6d60702fb5ffec5c216328f238b68aab335234eaedc0b89c3d0fc95",
+        "check": "solc-version",
+        "impact": "Informational",
+        "confidence": "High"
+    },
+    {
+        "elements": [
+            {
+                "type": "pragma",
+                "name": "^0.8.20",
+                "source_mapping": {
+                    "start": 39,
+                    "length": 24,
+                    "filename_relative": "contracts/market/MarketMock.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/market/MarketMock.sol",
+                    "filename_short": "contracts/market/MarketMock.sol",
+                    "is_dependency": false,
+                    "lines": [2],
+                    "starting_column": 1,
+                    "ending_column": 25
+                },
+                "type_specific_fields": { "directive": ["solidity", "^", "0.8", ".20"] }
+            }
+        ],
+        "description": "Pragma version^0.8.20 (contracts/market/MarketMock.sol#2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
+        "markdown": "Pragma version[^0.8.20](contracts/market/MarketMock.sol#L2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
+        "first_markdown_element": "contracts/market/MarketMock.sol#L2",
+        "id": "25055aa3be6a89af806d11cf8bce64a89926fec8c2b5cbe12caa90b65c02516e",
+        "check": "solc-version",
+        "impact": "Informational",
+        "confidence": "High"
+    },
+    {
+        "elements": [
+            {
+                "type": "pragma",
+                "name": "^0.8.20",
+                "source_mapping": {
+                    "start": 39,
+                    "length": 24,
+                    "filename_relative": "contracts/market/MarketStorage.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/market/MarketStorage.sol",
+                    "filename_short": "contracts/market/MarketStorage.sol",
+                    "is_dependency": false,
+                    "lines": [2],
+                    "starting_column": 1,
+                    "ending_column": 25
+                },
+                "type_specific_fields": { "directive": ["solidity", "^", "0.8", ".20"] }
+            }
+        ],
+        "description": "Pragma version^0.8.20 (contracts/market/MarketStorage.sol#2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
+        "markdown": "Pragma version[^0.8.20](contracts/market/MarketStorage.sol#L2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
+        "first_markdown_element": "contracts/market/MarketStorage.sol#L2",
+        "id": "93c98af2224671821b0ab2a3ed35ff9ccbe9b6fbd6d409f909e6fb63bc0e1204",
+        "check": "solc-version",
+        "impact": "Informational",
+        "confidence": "High"
+    },
+    {
+        "elements": [
+            {
+                "type": "pragma",
+                "name": "^0.8.20",
+                "source_mapping": {
+                    "start": 39,
+                    "length": 24,
+                    "filename_relative": "contracts/proxy/ImplV1Mock.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/proxy/ImplV1Mock.sol",
+                    "filename_short": "contracts/proxy/ImplV1Mock.sol",
+                    "is_dependency": false,
+                    "lines": [2],
+                    "starting_column": 1,
+                    "ending_column": 25
+                },
+                "type_specific_fields": { "directive": ["solidity", "^", "0.8", ".20"] }
+            }
+        ],
+        "description": "Pragma version^0.8.20 (contracts/proxy/ImplV1Mock.sol#2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
+        "markdown": "Pragma version[^0.8.20](contracts/proxy/ImplV1Mock.sol#L2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
+        "first_markdown_element": "contracts/proxy/ImplV1Mock.sol#L2",
+        "id": "ce513a3342a687c0e3dbb4c713777e5675d815fcb33966edf5343e262c57a1a2",
+        "check": "solc-version",
+        "impact": "Informational",
+        "confidence": "High"
+    },
+    {
+        "elements": [
+            {
+                "type": "pragma",
+                "name": "^0.8.20",
+                "source_mapping": {
+                    "start": 39,
+                    "length": 24,
+                    "filename_relative": "contracts/proxy/ImplV2Mock.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/proxy/ImplV2Mock.sol",
+                    "filename_short": "contracts/proxy/ImplV2Mock.sol",
+                    "is_dependency": false,
+                    "lines": [2],
+                    "starting_column": 1,
+                    "ending_column": 25
+                },
+                "type_specific_fields": { "directive": ["solidity", "^", "0.8", ".20"] }
+            }
+        ],
+        "description": "Pragma version^0.8.20 (contracts/proxy/ImplV2Mock.sol#2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
+        "markdown": "Pragma version[^0.8.20](contracts/proxy/ImplV2Mock.sol#L2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
+        "first_markdown_element": "contracts/proxy/ImplV2Mock.sol#L2",
+        "id": "fe5df849658f165a99b66356661b9e4d6487b255f1a2f5942d83ee1c7cadb398",
         "check": "solc-version",
         "impact": "Informational",
         "confidence": "High"
@@ -1661,9 +1850,9 @@
                 "source_mapping": {
                     "start": 39,
                     "length": 24,
-                    "filename_relative": "contracts/utils/EIP712Wrapper.sol",
-                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/utils/EIP712Wrapper.sol",
-                    "filename_short": "contracts/utils/EIP712Wrapper.sol",
+                    "filename_relative": "contracts/utils/Deployer.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/utils/Deployer.sol",
+                    "filename_short": "contracts/utils/Deployer.sol",
                     "is_dependency": false,
                     "lines": [2],
                     "starting_column": 1,
@@ -1672,10 +1861,10 @@
                 "type_specific_fields": { "directive": ["solidity", "^", "0.8", ".20"] }
             }
         ],
-        "description": "Pragma version^0.8.20 (contracts/utils/EIP712Wrapper.sol#2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
-        "markdown": "Pragma version[^0.8.20](contracts/utils/EIP712Wrapper.sol#L2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
-        "first_markdown_element": "contracts/utils/EIP712Wrapper.sol#L2",
-        "id": "86159f78c79bf1009d941acd3c01c317c73a9c693683caef8c10522c6c201213",
+        "description": "Pragma version^0.8.20 (contracts/utils/Deployer.sol#2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
+        "markdown": "Pragma version[^0.8.20](contracts/utils/Deployer.sol#L2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
+        "first_markdown_element": "contracts/utils/Deployer.sol#L2",
+        "id": "ce5084a4ee7d0f27e2c2cb191693549a6a0db145a74ceb086f0224f1c3b18d90",
         "check": "solc-version",
         "impact": "Informational",
         "confidence": "High"
@@ -1688,9 +1877,9 @@
                 "source_mapping": {
                     "start": 39,
                     "length": 24,
-                    "filename_relative": "contracts/utils/ERC721Wrapper.sol",
-                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/utils/ERC721Wrapper.sol",
-                    "filename_short": "contracts/utils/ERC721Wrapper.sol",
+                    "filename_relative": "contracts/utils/Distribution.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/utils/Distribution.sol",
+                    "filename_short": "contracts/utils/Distribution.sol",
                     "is_dependency": false,
                     "lines": [2],
                     "starting_column": 1,
@@ -1699,10 +1888,10 @@
                 "type_specific_fields": { "directive": ["solidity", "^", "0.8", ".20"] }
             }
         ],
-        "description": "Pragma version^0.8.20 (contracts/utils/ERC721Wrapper.sol#2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
-        "markdown": "Pragma version[^0.8.20](contracts/utils/ERC721Wrapper.sol#L2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
-        "first_markdown_element": "contracts/utils/ERC721Wrapper.sol#L2",
-        "id": "7704a58028ce08f1ee150d4c56ea859f5e18b3381c7d3bef00457193e47869ba",
+        "description": "Pragma version^0.8.20 (contracts/utils/Distribution.sol#2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
+        "markdown": "Pragma version[^0.8.20](contracts/utils/Distribution.sol#L2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
+        "first_markdown_element": "contracts/utils/Distribution.sol#L2",
+        "id": "59a80a4c9d16971051a1a81ff705d2bf0d436155869c71aeadbe696ba52c16d0",
         "check": "solc-version",
         "impact": "Informational",
         "confidence": "High"
@@ -1715,9 +1904,9 @@
                 "source_mapping": {
                     "start": 39,
                     "length": 24,
-                    "filename_relative": "contracts/utils/OrderCounter.sol",
-                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/utils/OrderCounter.sol",
-                    "filename_short": "contracts/utils/OrderCounter.sol",
+                    "filename_relative": "contracts/utils/EIP712.sol",
+                    "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/utils/EIP712.sol",
+                    "filename_short": "contracts/utils/EIP712.sol",
                     "is_dependency": false,
                     "lines": [2],
                     "starting_column": 1,
@@ -1726,10 +1915,10 @@
                 "type_specific_fields": { "directive": ["solidity", "^", "0.8", ".20"] }
             }
         ],
-        "description": "Pragma version^0.8.20 (contracts/utils/OrderCounter.sol#2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
-        "markdown": "Pragma version[^0.8.20](contracts/utils/OrderCounter.sol#L2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
-        "first_markdown_element": "contracts/utils/OrderCounter.sol#L2",
-        "id": "95db84352f95b9b0164635c34084817bbe74f59ac0ce6d042b80d54fe5c798bf",
+        "description": "Pragma version^0.8.20 (contracts/utils/EIP712.sol#2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
+        "markdown": "Pragma version[^0.8.20](contracts/utils/EIP712.sol#L2) necessitates a version too recent to be trusted. Consider deploying with 0.8.18.\n",
+        "first_markdown_element": "contracts/utils/EIP712.sol#L2",
+        "id": "66ff855b3ef6d9e98a1b21bb39d8c5c247e66071d674ee2df677974bc44d9dea",
         "check": "solc-version",
         "impact": "Informational",
         "confidence": "High"

@@ -13,10 +13,10 @@ import {IArtToken} from "./IArtToken.sol";
  * @notice Contract based on [OpenZeppelin](https://docs.openzeppelin.com/) library.
  */
 contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
-    bytes32 public constant MINT_AND_PAY_PERMIT_TYPE_HASH =
+    bytes32 public constant BUY_PERMIT_TYPE_HASH =
         // prettier-ignore
         keccak256(
-            "MintAndPayPermit("
+            "BuyPermit("
                 "address to,"
                 "uint256 tokenId,"
                 "string tokenURI,"
@@ -76,7 +76,7 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
     /**
      * @dev `to` should be EOA
      */
-    function mintAndPay(
+    function buy(
         address to,
         uint256 tokenId,
         uint256 price,
@@ -88,7 +88,7 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
     ) external payable {
         bytes32 structHash = keccak256(
             abi.encode(
-                MINT_AND_PAY_PERMIT_TYPE_HASH,
+                BUY_PERMIT_TYPE_HASH,
                 to,
                 tokenId,
                 keccak256(bytes(_tokenURI)),

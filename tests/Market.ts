@@ -32,13 +32,6 @@ describe('Market', function () {
         Cancelled,
     }
 
-    let tokenId: bigint;
-    let seller: string;
-    let price: bigint;
-    let deadline: number;
-    let participants: string[];
-    let shares: bigint[];
-
     before(async () => {
         chainId = await getChainId();
 
@@ -51,6 +44,13 @@ describe('Market', function () {
 
         tokenMock = tokenMock.connect(tokenOwner);
     });
+
+    let tokenId: bigint;
+    let seller: string;
+    let price: bigint;
+    let deadline: number;
+    let participants: string[];
+    let shares: bigint[];
 
     beforeEach(async () => {
         [[market, marketAddr], tokenId] = await Promise.all([

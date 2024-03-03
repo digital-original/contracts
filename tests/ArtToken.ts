@@ -7,9 +7,9 @@ import { deployArtTokenUpgradeable } from './utils/deploy-art-token-upgradeable'
 import { getSigners } from './utils/get-signers';
 import { MarketMock, ArtToken } from '../typechain-types';
 import { AddressParam, Signer } from '../types/environment';
-import { signMintAndPayPermit } from './utils/sign-mint-and-pay-permit';
+import { signBuyPermit } from './utils/sign-buy-permit';
 import { getChainId } from './utils/get-chain-id';
-import { MintAndPayPermitStruct } from '../types/art-token';
+import { BuyPermitStruct } from '../types/art-token';
 import { MAX_TOTAL_SHARE } from '../constants/distribution';
 import { getSignDeadline } from './utils/get-sign-deadline';
 
@@ -130,13 +130,13 @@ describe('ArtToken', function () {
         });
     });
 
-    describe(`method 'mintAndPay'`, () => {
+    describe(`method 'buy'`, () => {
         let price: bigint;
         let participants: string[];
         let shares: bigint[];
         let deadline: number;
 
-        async function mintAndPay(params: {
+        async function buy(params: {
             _to: string;
             _tokenId?: number;
             _tokenUri?: string;
@@ -161,7 +161,7 @@ describe('ArtToken', function () {
                 _token = token,
             } = params;
 
-            const permit: MintAndPayPermitStruct = {
+            const permit: BuyPermitStruct = {
                 to: _to,
                 tokenId: _tokenId,
                 tokenURI: _tokenUri,
@@ -171,9 +171,9 @@ describe('ArtToken', function () {
                 deadline: _deadline,
             };
 
-            const signature = await signMintAndPayPermit(chainId, tokenAddr, permit, _minter);
+            const signature = await signBuyPermit(chainId, tokenAddr, permit, _minter);
 
-            return _token.mintAndPay(
+            return _token.buy(
                 _to,
                 _tokenId,
                 _price,
@@ -197,7 +197,7 @@ describe('ArtToken', function () {
             const _to = randomAccount1Addr;
             const _token = token.connect(randomAccount1);
 
-            await mintAndPay({
+            await buy({
                 _to,
                 _token,
             });
@@ -216,7 +216,7 @@ describe('ArtToken', function () {
 
             await Promise.all([
                 expect(
-                    mintAndPay({
+                    buy({
                         _to,
                         _minter,
                         _token,
@@ -234,7 +234,7 @@ describe('ArtToken', function () {
 
             await Promise.all([
                 expect(
-                    mintAndPay({
+                    buy({
                         _to,
                         _deadline,
                         _token,
@@ -250,7 +250,7 @@ describe('ArtToken', function () {
 
             await Promise.all([
                 expect(
-                    mintAndPay({
+                    buy({
                         _to,
                         _price,
                         _value: _price - 1n,
@@ -266,7 +266,7 @@ describe('ArtToken', function () {
 
             await Promise.all([
                 expect(
-                    mintAndPay({
+                    buy({
                         _to,
                         _token,
                     }),
@@ -279,7 +279,7 @@ describe('ArtToken', function () {
             const _token = token.connect(randomAccount1);
 
             await expect(() =>
-                mintAndPay({
+                buy({
                     _to,
                     _token,
                 }),
@@ -296,7 +296,7 @@ describe('ArtToken', function () {
             const _token = token.connect(randomAccount1);
 
             await expect(
-                mintAndPay({
+                buy({
                     _to,
                     _token,
                     _participants,
@@ -312,7 +312,7 @@ describe('ArtToken', function () {
             const _token = token.connect(randomAccount1);
 
             await expect(
-                mintAndPay({
+                buy({
                     _to,
                     _token,
                     _participants,
@@ -328,7 +328,7 @@ describe('ArtToken', function () {
             const _token = token.connect(randomAccount1);
 
             await expect(
-                mintAndPay({
+                buy({
                     _to,
                     _token,
                     _participants,

@@ -3,7 +3,7 @@
         "inputs": [
             {
                 "internalType": "address",
-                "name": "_token",
+                "name": "token",
                 "type": "address"
             },
             {
@@ -24,17 +24,6 @@
             }
         ],
         "name": "AddressInsufficientBalance",
-        "type": "error"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "account",
-                "type": "address"
-            }
-        ],
-        "name": "ArtTokenHolderUnauthorizedAccount",
         "type": "error"
     },
     {
@@ -147,6 +136,17 @@
             }
         ],
         "name": "MarketUnauthorizedAccount",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "account",
+                "type": "address"
+            }
+        ],
+        "name": "TokenHolderUnauthorizedAccount",
         "type": "error"
     },
     {

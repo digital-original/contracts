@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import { deployUpgrade } from '../scripts/deploy-upgrade';
 import { deployUpgradeable } from '../scripts/deploy-upgradeable';
 import { getSigners } from './utils/get-signers';
-import { getProxyAdmin } from './utils/get-admin-changed-event';
+import { getProxyAdmin } from './utils/get-proxy-admin';
 import { Signer } from '../types/environment';
 import { ImplV1Mock, ImplV2Mock, ProxyAdmin } from '../typechain-types';
 
