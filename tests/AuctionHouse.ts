@@ -7,12 +7,13 @@ import { deployArtTokenMock } from './utils/deploy-art-token-mock';
 import { getChainId } from './utils/get-chain-id';
 import { getSigners } from './utils/get-signers';
 import { signAuctionPermit } from './utils/sign-auction-permit';
-import { AuctionPermitStruct } from '../types/auction-house';
+import { AuctionPermitStruct, AuctionRaisePermitStruct } from '../types/auction-house';
 import { encodeAuctionHouseCreateParams } from './utils/encode-auction-house-create-params';
 import { MAX_TOTAL_SHARE } from '../constants/distribution';
 import { getSigDeadline } from './utils/get-sig-deadline';
 import { deployAuctionHouseUpgradeable } from './utils/deploy-auction-house-upgradeable';
 import { getLatestBlockTimestamp } from './utils/get-latest-block-timestamp';
+import { signAuctionRaisePermit } from './utils/sign-auction-raise-permit';
 
 describe('AuctionHouse', function () {
     let auctionHouse: AuctionHouse, auctionHouseAddr: string;
@@ -50,6 +51,8 @@ describe('AuctionHouse', function () {
     let participants: string[];
     let shares: bigint[];
 
+    let fee: bigint;
+
     beforeEach(async () => {
         [[auctionHouse, auctionHouseAddr], tokenId] = await Promise.all([
             deployAuctionHouseUpgradeable(tokenMock, platform, auctionSigner),
@@ -66,6 +69,8 @@ describe('AuctionHouse', function () {
         deadline = await getSigDeadline();
         participants = [sellerAddr, platformAddr];
         shares = [MAX_TOTAL_SHARE / 2n, MAX_TOTAL_SHARE / 2n];
+
+        fee = 1234n;
     });
 
     it(`should have correct token`, async () => {
@@ -93,7 +98,7 @@ describe('AuctionHouse', function () {
             expect(auction.price).equal(price);
             expect(auction.step).equal(step);
             expect(auction.penalty).equal(penalty);
-            expect(auction.platformFee).equal(0n);
+            expect(auction.fee).equal(0n);
             expect(auction.startTime).equal(startTime);
             expect(auction.endTime).equal(endTime);
             expect(auction.completed).equal(false);
@@ -222,17 +227,18 @@ describe('AuctionHouse', function () {
     describe(`method 'raise' initial`, () => {
         beforeEach(create);
 
-        it(`should set buyer if new price is equal initial price`, async () => {
+        it(`should set buyer and fee if new price is equal initial price and payment includes fee`, async () => {
             await start();
             await raiseInitial();
 
             const auction = await auctionHouse.auction(0);
 
             expect(auction.buyer).equal(buyerAddr);
+            expect(auction.fee).equal(fee);
             expect(auction.price).equal(price);
         });
 
-        it(`should set buyer and price if new price is more than initial price`, async () => {
+        it(`should set buyer, price and fee if new price is more than initial price and payment is correct`, async () => {
             const _price = price + 1n;
 
             await start();
@@ -241,17 +247,16 @@ describe('AuctionHouse', function () {
             const auction = await auctionHouse.auction(0);
 
             expect(auction.buyer).equal(buyerAddr);
+            expect(auction.fee).equal(fee);
             expect(auction.price).equal(_price);
         });
 
-        it(`should increase contract balance by prices`, async () => {
-            const _price = price + 1n;
-
+        it(`should increase contract balance by price plus fee`, async () => {
             await start();
 
-            await expect(() => raiseInitial({ _price })).to.be.changeEtherBalances(
+            await expect(() => raiseInitial()).to.be.changeEtherBalances(
                 [buyer, auctionHouse],
-                [_price * -1n, _price],
+                [(price + fee) * -1n, price + fee],
             );
         });
 
@@ -269,6 +274,45 @@ describe('AuctionHouse', function () {
             await expect(raiseInitial({ _price: price - 1n })).to.eventually.rejectedWith(
                 'AuctionHouseRaiseTooSmall',
             );
+        });
+
+        it(`should fail if payment is not equal price plus fee`, async () => {
+            await start();
+
+            await expect(raiseInitial({ _value: price })).to.eventually.rejectedWith(
+                'AuctionHouseWrongPayment',
+            );
+        });
+
+        it(`should fail if signature is expired`, async () => {
+            await start();
+
+            await expect(
+                raiseInitial({ _deadline: await getLatestBlockTimestamp() }),
+            ).to.eventually.rejectedWith('EIP712ExpiredSignature');
+        });
+
+        it(`should fail if signature is invalid`, async () => {
+            await start();
+
+            const permit: AuctionRaisePermitStruct = {
+                auctionId: 0n,
+                price: 100n,
+                fee: 100n,
+                deadline,
+            };
+
+            await expect(raiseInitial({ _permit: permit })).to.eventually.rejectedWith(
+                'EIP712InvalidSignature',
+            );
+        });
+
+        it(`should fail if auction signer is invalid`, async () => {
+            await start();
+
+            await expect(
+                raiseInitial({ _auctionSigner: randomAccount }),
+            ).to.eventually.rejectedWith('EIP712InvalidSignature');
         });
 
         it(`should fail if auction does not exist`, async () => {
@@ -301,45 +345,55 @@ describe('AuctionHouse', function () {
     describe(`method 'raise'`, () => {
         beforeEach(create);
 
-        it(`should change buyer and price if new price is equal sum of old price plus step`, async () => {
+        it(`should change buyer, price and fee if new price is equal sum of old price plus step and payment includes fee`, async () => {
+            const _fee = fee + 30n;
+
             await startWithBuyer({ _buyer: randomAccount });
-            await raise();
+            await raise({ _fee });
 
             const auction = await auctionHouse.auction(0);
 
             expect(auction.buyer).equal(buyerAddr);
             expect(auction.price).equal(price + step);
+            expect(auction.fee).equal(_fee);
         });
 
-        it(`should change buyer and price if new price is more than sum of old price plus step`, async () => {
+        it(`should change buyer, price and fee if new price is more than sum of old price plus step and payment includes fee`, async () => {
             const _price = price + step + 1n;
+            const _fee = fee + 30n;
 
             await startWithBuyer({ _buyer: randomAccount });
-            await raise({ _price });
+            await raise({ _price, _fee });
 
             const auction = await auctionHouse.auction(0);
 
             expect(auction.buyer).equal(buyerAddr);
             expect(auction.price).equal(_price);
+            expect(auction.fee).equal(_fee);
         });
 
-        it(`should increase contract balance by diff new and old prices`, async () => {
+        it(`should increase contract balance by diff new and old price, new fee and old fee`, async () => {
+            const _fee = fee + 30n;
+
             await startWithBuyer({ _buyer: randomAccount });
 
-            await expect(() => raise()).to.be.changeEtherBalances(
+            await expect(() => raise({ _fee })).to.be.changeEtherBalances(
                 [buyer, auctionHouse],
-                [(price + step) * -1n, step],
+                [(price + step + _fee) * -1n, step - fee + _fee],
             );
         });
 
-        it(`should transfer old price to old buyer`, async () => {
+        it(`should transfer old price and old fee to old buyer`, async () => {
             await startWithBuyer({ _buyer: randomAccount });
 
-            await expect(() => raise()).to.be.changeEtherBalances([randomAccountAddr], [price]);
+            await expect(() => raise()).to.be.changeEtherBalances(
+                [randomAccountAddr],
+                [price + fee],
+            );
         });
 
         it(`should emit raised event`, async () => {
-            await startWithBuyer();
+            await startWithBuyer({ _buyer: randomAccount });
 
             await expect(raise())
                 .to.be.emit(auctionHouse, 'Raised')
@@ -349,9 +403,48 @@ describe('AuctionHouse', function () {
         it(`should fail if new price is less than sum of old price plus step`, async () => {
             const _price = price + step - 1n;
 
-            await startWithBuyer();
+            await startWithBuyer({ _buyer: randomAccount });
 
             await expect(raise({ _price })).to.eventually.rejectedWith('AuctionHouseRaiseTooSmall');
+        });
+
+        it(`should fail if payment is not equal price plus fee`, async () => {
+            await startWithBuyer({ _buyer: randomAccount });
+
+            await expect(raise({ _value: price + step })).to.eventually.rejectedWith(
+                'AuctionHouseWrongPayment',
+            );
+        });
+
+        it(`should fail if signature is expired`, async () => {
+            await startWithBuyer({ _buyer: randomAccount });
+
+            await expect(
+                raise({ _deadline: await getLatestBlockTimestamp() }),
+            ).to.eventually.rejectedWith('EIP712ExpiredSignature');
+        });
+
+        it(`should fail if signature is invalid`, async () => {
+            await startWithBuyer({ _buyer: randomAccount });
+
+            const permit: AuctionRaisePermitStruct = {
+                auctionId: 0n,
+                price: 100n,
+                fee: 100n,
+                deadline,
+            };
+
+            await expect(raise({ _permit: permit })).to.eventually.rejectedWith(
+                'EIP712InvalidSignature',
+            );
+        });
+
+        it(`should fail if auction signer is invalid`, async () => {
+            await startWithBuyer({ _buyer: randomAccount });
+
+            await expect(raise({ _auctionSigner: randomAccount })).to.eventually.rejectedWith(
+                'EIP712InvalidSignature',
+            );
         });
 
         it(`should fail if auction does not exist`, async () => {
@@ -403,9 +496,16 @@ describe('AuctionHouse', function () {
         it(`should distribute rewards between participants according to shares`, async () => {
             await endWithBuyer();
 
+            const platformIndex = participants.findIndex((a) => a == platformAddr);
+
             await expect(() => take()).to.be.changeEtherBalances(
                 [auctionHouse, ...participants],
-                [price * -1n, ...shares.map((share) => (price * share) / MAX_TOTAL_SHARE)],
+                [
+                    (price + fee) * -1n,
+                    ...shares
+                        .map((share) => (price * share) / MAX_TOTAL_SHARE)
+                        .map((value, i) => (i == platformIndex ? value + fee : value)),
+                ],
             );
         });
 
@@ -567,7 +667,7 @@ describe('AuctionHouse', function () {
                 unlock({
                     _penalty: penalty - 1n,
                 }),
-            ).to.eventually.rejectedWith('AuctionHouseWrongPenalty');
+            ).to.eventually.rejectedWith('AuctionHouseWrongPayment');
         });
 
         it(`should fail if auction does not exist`, async () => {
@@ -693,26 +793,99 @@ describe('AuctionHouse', function () {
         params: {
             _auctionId?: bigint;
             _price?: bigint;
+            _fee?: bigint;
+            _deadline?: number;
+            _auctionSigner?: Signer;
+            _permit?: AuctionRaisePermitStruct;
             _buyer?: Signer;
+            _value?: bigint;
         } = {},
     ) {
-        const { _auctionId = 0n, _price = price, _buyer = buyer } = params;
+        const {
+            _auctionId = 0n,
+            _price = price,
+            _fee = fee,
+            _deadline = deadline,
+            _auctionSigner = auctionSigner,
+            _buyer = buyer,
+            _value = _price + _fee,
+            _permit,
+        } = params;
+
+        const permit: AuctionRaisePermitStruct = _permit || {
+            auctionId: _auctionId,
+            price: _price,
+            fee: _fee,
+            deadline: _deadline,
+        };
+
+        const signature = await signAuctionRaisePermit(
+            chainId,
+            auctionHouseAddr,
+            permit,
+            _auctionSigner,
+        );
 
         return auctionHouse
             .connect(_buyer)
-            ['raise(uint256,bool)'](_auctionId, true, { value: _price });
+            ['raise(uint256,uint256,uint256,uint256,bool,bytes)'](
+                _auctionId,
+                _price,
+                _fee,
+                _deadline,
+                true,
+                signature,
+                { value: _value },
+            );
     }
 
     async function raise(
         params: {
             _auctionId?: bigint;
             _price?: bigint;
+            _fee?: bigint;
+            _deadline?: number;
+            _auctionSigner?: Signer;
+            _permit?: AuctionRaisePermitStruct;
             _buyer?: Signer;
+            _value?: bigint;
         } = {},
     ) {
-        const { _auctionId = 0n, _price = price + step, _buyer = buyer } = params;
+        const {
+            _auctionId = 0n,
+            _price = price + step,
+            _fee = fee,
+            _deadline = deadline,
+            _auctionSigner = auctionSigner,
+            _buyer = buyer,
+            _value = _price + _fee,
+            _permit,
+        } = params;
 
-        return auctionHouse.connect(_buyer)['raise(uint256)'](_auctionId, { value: _price });
+        const permit: AuctionRaisePermitStruct = _permit || {
+            auctionId: _auctionId,
+            price: _price,
+            fee: _fee,
+            deadline: _deadline,
+        };
+
+        const signature = await signAuctionRaisePermit(
+            chainId,
+            auctionHouseAddr,
+            permit,
+            _auctionSigner,
+        );
+
+        return auctionHouse
+            .connect(_buyer)
+            ['raise(uint256,uint256,uint256,uint256,bytes)'](
+                _auctionId,
+                _price,
+                _fee,
+                _deadline,
+                signature,
+                { value: _value },
+            );
     }
 
     async function take(auctionId = 0n) {

@@ -34,7 +34,7 @@ task('deploy').setAction(async (taskArgs: Record<string, string>, hardhat) => {
     const marketSignerAddr = config.wallets.marketSigner.public;
     const proxyAdminOwnerAddr = config.wallets.proxyAdminOwner.public;
 
-    console.log(`Deploying Pool contract...`);
+    console.log(`Deploying contracts...`);
     console.log(`\n`);
     console.group('Params:');
     console.log(`platform: ${platformAddr}`);

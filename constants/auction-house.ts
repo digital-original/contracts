@@ -16,3 +16,12 @@ export const AUCTION_PERMIT_TYPE = {
         { name: 'shares', type: 'uint256[]' },
     ],
 };
+
+export const AUCTION_RAISE_PERMIT_TYPE = {
+    AuctionRaisePermit: [
+        { name: 'auctionId', type: 'uint256' },
+        { name: 'price', type: 'uint256' },
+        { name: 'fee', type: 'uint256' },
+        { name: 'deadline', type: 'uint256' },
+    ],
+};

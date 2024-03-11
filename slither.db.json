@@ -628,13 +628,13 @@
                 "type": "variable",
                 "name": "platform",
                 "source_mapping": {
-                    "start": 2605,
+                    "start": 2910,
                     "length": 16,
                     "filename_relative": "contracts/auction-house/AuctionHouse.sol",
                     "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/auction-house/AuctionHouse.sol",
                     "filename_short": "contracts/auction-house/AuctionHouse.sol",
                     "is_dependency": false,
-                    "lines": [85],
+                    "lines": [96],
                     "starting_column": 32,
                     "ending_column": 48
                 },
@@ -643,13 +643,13 @@
                         "type": "function",
                         "name": "constructor",
                         "source_mapping": {
-                            "start": 2578,
+                            "start": 2883,
                             "length": 191,
                             "filename_relative": "contracts/auction-house/AuctionHouse.sol",
                             "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/auction-house/AuctionHouse.sol",
                             "filename_short": "contracts/auction-house/AuctionHouse.sol",
                             "is_dependency": false,
-                            "lines": [85, 86, 87, 88],
+                            "lines": [96, 97, 98, 99],
                             "starting_column": 5,
                             "ending_column": 6
                         },
@@ -659,7 +659,7 @@
                                 "name": "AuctionHouse",
                                 "source_mapping": {
                                     "start": 401,
-                                    "length": 10019,
+                                    "length": 11401,
                                     "filename_relative": "contracts/auction-house/AuctionHouse.sol",
                                     "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/auction-house/AuctionHouse.sol",
                                     "filename_short": "contracts/auction-house/AuctionHouse.sol",
@@ -691,7 +691,11 @@
                                         305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316,
                                         317, 318, 319, 320, 321, 322, 323, 324, 325, 326, 327, 328,
                                         329, 330, 331, 332, 333, 334, 335, 336, 337, 338, 339, 340,
-                                        341, 342
+                                        341, 342, 343, 344, 345, 346, 347, 348, 349, 350, 351, 352,
+                                        353, 354, 355, 356, 357, 358, 359, 360, 361, 362, 363, 364,
+                                        365, 366, 367, 368, 369, 370, 371, 372, 373, 374, 375, 376,
+                                        377, 378, 379, 380, 381, 382, 383, 384, 385, 386, 387, 388,
+                                        389, 390
                                     ],
                                     "starting_column": 1,
                                     "ending_column": 2
@@ -706,13 +710,13 @@
                 "type": "node",
                 "name": "PLATFORM = platform",
                 "source_mapping": {
-                    "start": 2703,
+                    "start": 3008,
                     "length": 19,
                     "filename_relative": "contracts/auction-house/AuctionHouse.sol",
                     "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/auction-house/AuctionHouse.sol",
                     "filename_short": "contracts/auction-house/AuctionHouse.sol",
                     "is_dependency": false,
-                    "lines": [86],
+                    "lines": [97],
                     "starting_column": 9,
                     "ending_column": 28
                 },
@@ -721,13 +725,13 @@
                         "type": "function",
                         "name": "constructor",
                         "source_mapping": {
-                            "start": 2578,
+                            "start": 2883,
                             "length": 191,
                             "filename_relative": "contracts/auction-house/AuctionHouse.sol",
                             "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/auction-house/AuctionHouse.sol",
                             "filename_short": "contracts/auction-house/AuctionHouse.sol",
                             "is_dependency": false,
-                            "lines": [85, 86, 87, 88],
+                            "lines": [96, 97, 98, 99],
                             "starting_column": 5,
                             "ending_column": 6
                         },
@@ -737,7 +741,7 @@
                                 "name": "AuctionHouse",
                                 "source_mapping": {
                                     "start": 401,
-                                    "length": 10019,
+                                    "length": 11401,
                                     "filename_relative": "contracts/auction-house/AuctionHouse.sol",
                                     "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/auction-house/AuctionHouse.sol",
                                     "filename_short": "contracts/auction-house/AuctionHouse.sol",
@@ -769,7 +773,11 @@
                                         305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316,
                                         317, 318, 319, 320, 321, 322, 323, 324, 325, 326, 327, 328,
                                         329, 330, 331, 332, 333, 334, 335, 336, 337, 338, 339, 340,
-                                        341, 342
+                                        341, 342, 343, 344, 345, 346, 347, 348, 349, 350, 351, 352,
+                                        353, 354, 355, 356, 357, 358, 359, 360, 361, 362, 363, 364,
+                                        365, 366, 367, 368, 369, 370, 371, 372, 373, 374, 375, 376,
+                                        377, 378, 379, 380, 381, 382, 383, 384, 385, 386, 387, 388,
+                                        389, 390
                                     ],
                                     "starting_column": 1,
                                     "ending_column": 2
@@ -781,10 +789,10 @@
                 }
             }
         ],
-        "description": "AuctionHouse.constructor(address,address,address).platform (contracts/auction-house/AuctionHouse.sol#85) lacks a zero-check on :\n\t\t- PLATFORM = platform (contracts/auction-house/AuctionHouse.sol#86)\n",
-        "markdown": "[AuctionHouse.constructor(address,address,address).platform](contracts/auction-house/AuctionHouse.sol#L85) lacks a zero-check on :\n\t\t- [PLATFORM = platform](contracts/auction-house/AuctionHouse.sol#L86)\n",
-        "first_markdown_element": "contracts/auction-house/AuctionHouse.sol#L85",
-        "id": "c391875d9678ae3530dadbc2e46a0550a52144ab898db3424c2cb6623c0e7879",
+        "description": "AuctionHouse.constructor(address,address,address).platform (contracts/auction-house/AuctionHouse.sol#96) lacks a zero-check on :\n\t\t- PLATFORM = platform (contracts/auction-house/AuctionHouse.sol#97)\n",
+        "markdown": "[AuctionHouse.constructor(address,address,address).platform](contracts/auction-house/AuctionHouse.sol#L96) lacks a zero-check on :\n\t\t- [PLATFORM = platform](contracts/auction-house/AuctionHouse.sol#L97)\n",
+        "first_markdown_element": "contracts/auction-house/AuctionHouse.sol#L96",
+        "id": "17cb37626ba9d306cc2d05f3a6aa183abdc0d01693b70835cea3e390feee6eaa",
         "check": "missing-zero-check",
         "impact": "Low",
         "confidence": "Medium"
@@ -795,13 +803,13 @@
                 "type": "variable",
                 "name": "auctionSigner",
                 "source_mapping": {
-                    "start": 2623,
+                    "start": 2928,
                     "length": 21,
                     "filename_relative": "contracts/auction-house/AuctionHouse.sol",
                     "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/auction-house/AuctionHouse.sol",
                     "filename_short": "contracts/auction-house/AuctionHouse.sol",
                     "is_dependency": false,
-                    "lines": [85],
+                    "lines": [96],
                     "starting_column": 50,
                     "ending_column": 71
                 },
@@ -810,13 +818,13 @@
                         "type": "function",
                         "name": "constructor",
                         "source_mapping": {
-                            "start": 2578,
+                            "start": 2883,
                             "length": 191,
                             "filename_relative": "contracts/auction-house/AuctionHouse.sol",
                             "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/auction-house/AuctionHouse.sol",
                             "filename_short": "contracts/auction-house/AuctionHouse.sol",
                             "is_dependency": false,
-                            "lines": [85, 86, 87, 88],
+                            "lines": [96, 97, 98, 99],
                             "starting_column": 5,
                             "ending_column": 6
                         },
@@ -826,7 +834,7 @@
                                 "name": "AuctionHouse",
                                 "source_mapping": {
                                     "start": 401,
-                                    "length": 10019,
+                                    "length": 11401,
                                     "filename_relative": "contracts/auction-house/AuctionHouse.sol",
                                     "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/auction-house/AuctionHouse.sol",
                                     "filename_short": "contracts/auction-house/AuctionHouse.sol",
@@ -858,7 +866,11 @@
                                         305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316,
                                         317, 318, 319, 320, 321, 322, 323, 324, 325, 326, 327, 328,
                                         329, 330, 331, 332, 333, 334, 335, 336, 337, 338, 339, 340,
-                                        341, 342
+                                        341, 342, 343, 344, 345, 346, 347, 348, 349, 350, 351, 352,
+                                        353, 354, 355, 356, 357, 358, 359, 360, 361, 362, 363, 364,
+                                        365, 366, 367, 368, 369, 370, 371, 372, 373, 374, 375, 376,
+                                        377, 378, 379, 380, 381, 382, 383, 384, 385, 386, 387, 388,
+                                        389, 390
                                     ],
                                     "starting_column": 1,
                                     "ending_column": 2
@@ -873,13 +885,13 @@
                 "type": "node",
                 "name": "AUCTION_SIGNER = auctionSigner",
                 "source_mapping": {
-                    "start": 2732,
+                    "start": 3037,
                     "length": 30,
                     "filename_relative": "contracts/auction-house/AuctionHouse.sol",
                     "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/auction-house/AuctionHouse.sol",
                     "filename_short": "contracts/auction-house/AuctionHouse.sol",
                     "is_dependency": false,
-                    "lines": [87],
+                    "lines": [98],
                     "starting_column": 9,
                     "ending_column": 39
                 },
@@ -888,13 +900,13 @@
                         "type": "function",
                         "name": "constructor",
                         "source_mapping": {
-                            "start": 2578,
+                            "start": 2883,
                             "length": 191,
                             "filename_relative": "contracts/auction-house/AuctionHouse.sol",
                             "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/auction-house/AuctionHouse.sol",
                             "filename_short": "contracts/auction-house/AuctionHouse.sol",
                             "is_dependency": false,
-                            "lines": [85, 86, 87, 88],
+                            "lines": [96, 97, 98, 99],
                             "starting_column": 5,
                             "ending_column": 6
                         },
@@ -904,7 +916,7 @@
                                 "name": "AuctionHouse",
                                 "source_mapping": {
                                     "start": 401,
-                                    "length": 10019,
+                                    "length": 11401,
                                     "filename_relative": "contracts/auction-house/AuctionHouse.sol",
                                     "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/auction-house/AuctionHouse.sol",
                                     "filename_short": "contracts/auction-house/AuctionHouse.sol",
@@ -936,7 +948,11 @@
                                         305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316,
                                         317, 318, 319, 320, 321, 322, 323, 324, 325, 326, 327, 328,
                                         329, 330, 331, 332, 333, 334, 335, 336, 337, 338, 339, 340,
-                                        341, 342
+                                        341, 342, 343, 344, 345, 346, 347, 348, 349, 350, 351, 352,
+                                        353, 354, 355, 356, 357, 358, 359, 360, 361, 362, 363, 364,
+                                        365, 366, 367, 368, 369, 370, 371, 372, 373, 374, 375, 376,
+                                        377, 378, 379, 380, 381, 382, 383, 384, 385, 386, 387, 388,
+                                        389, 390
                                     ],
                                     "starting_column": 1,
                                     "ending_column": 2
@@ -948,10 +964,10 @@
                 }
             }
         ],
-        "description": "AuctionHouse.constructor(address,address,address).auctionSigner (contracts/auction-house/AuctionHouse.sol#85) lacks a zero-check on :\n\t\t- AUCTION_SIGNER = auctionSigner (contracts/auction-house/AuctionHouse.sol#87)\n",
-        "markdown": "[AuctionHouse.constructor(address,address,address).auctionSigner](contracts/auction-house/AuctionHouse.sol#L85) lacks a zero-check on :\n\t\t- [AUCTION_SIGNER = auctionSigner](contracts/auction-house/AuctionHouse.sol#L87)\n",
-        "first_markdown_element": "contracts/auction-house/AuctionHouse.sol#L85",
-        "id": "ad17b5309796b51962cbff09cc0c03c446fb4e9c13e8b94426bd99f0323baa4e",
+        "description": "AuctionHouse.constructor(address,address,address).auctionSigner (contracts/auction-house/AuctionHouse.sol#96) lacks a zero-check on :\n\t\t- AUCTION_SIGNER = auctionSigner (contracts/auction-house/AuctionHouse.sol#98)\n",
+        "markdown": "[AuctionHouse.constructor(address,address,address).auctionSigner](contracts/auction-house/AuctionHouse.sol#L96) lacks a zero-check on :\n\t\t- [AUCTION_SIGNER = auctionSigner](contracts/auction-house/AuctionHouse.sol#L98)\n",
+        "first_markdown_element": "contracts/auction-house/AuctionHouse.sol#L96",
+        "id": "a85a25468bf7642a51e73e9e43ab684af56267b96acfd4dfad42f91407ce1b89",
         "check": "missing-zero-check",
         "impact": "Low",
         "confidence": "Medium"
@@ -962,7 +978,7 @@
                 "type": "variable",
                 "name": "artToken",
                 "source_mapping": {
-                    "start": 562,
+                    "start": 570,
                     "length": 16,
                     "filename_relative": "contracts/collab-token/CollabToken.sol",
                     "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/collab-token/CollabToken.sol",
@@ -977,7 +993,7 @@
                         "type": "function",
                         "name": "constructor",
                         "source_mapping": {
-                            "start": 550,
+                            "start": 558,
                             "length": 161,
                             "filename_relative": "contracts/collab-token/CollabToken.sol",
                             "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/collab-token/CollabToken.sol",
@@ -993,7 +1009,7 @@
                                 "name": "CollabToken",
                                 "source_mapping": {
                                     "start": 357,
-                                    "length": 1466,
+                                    "length": 1474,
                                     "filename_relative": "contracts/collab-token/CollabToken.sol",
                                     "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/collab-token/CollabToken.sol",
                                     "filename_short": "contracts/collab-token/CollabToken.sol",
@@ -1017,7 +1033,7 @@
                 "type": "node",
                 "name": "ART_TOKEN = artToken",
                 "source_mapping": {
-                    "start": 646,
+                    "start": 654,
                     "length": 20,
                     "filename_relative": "contracts/collab-token/CollabToken.sol",
                     "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/collab-token/CollabToken.sol",
@@ -1032,7 +1048,7 @@
                         "type": "function",
                         "name": "constructor",
                         "source_mapping": {
-                            "start": 550,
+                            "start": 558,
                             "length": 161,
                             "filename_relative": "contracts/collab-token/CollabToken.sol",
                             "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/collab-token/CollabToken.sol",
@@ -1048,7 +1064,7 @@
                                 "name": "CollabToken",
                                 "source_mapping": {
                                     "start": 357,
-                                    "length": 1466,
+                                    "length": 1474,
                                     "filename_relative": "contracts/collab-token/CollabToken.sol",
                                     "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/collab-token/CollabToken.sol",
                                     "filename_short": "contracts/collab-token/CollabToken.sol",
@@ -1083,7 +1099,7 @@
                 "type": "variable",
                 "name": "auctionHouse",
                 "source_mapping": {
-                    "start": 580,
+                    "start": 588,
                     "length": 20,
                     "filename_relative": "contracts/collab-token/CollabToken.sol",
                     "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/collab-token/CollabToken.sol",
@@ -1098,7 +1114,7 @@
                         "type": "function",
                         "name": "constructor",
                         "source_mapping": {
-                            "start": 550,
+                            "start": 558,
                             "length": 161,
                             "filename_relative": "contracts/collab-token/CollabToken.sol",
                             "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/collab-token/CollabToken.sol",
@@ -1114,7 +1130,7 @@
                                 "name": "CollabToken",
                                 "source_mapping": {
                                     "start": 357,
-                                    "length": 1466,
+                                    "length": 1474,
                                     "filename_relative": "contracts/collab-token/CollabToken.sol",
                                     "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/collab-token/CollabToken.sol",
                                     "filename_short": "contracts/collab-token/CollabToken.sol",
@@ -1138,7 +1154,7 @@
                 "type": "node",
                 "name": "AUCTION_HOUSE = auctionHouse",
                 "source_mapping": {
-                    "start": 676,
+                    "start": 684,
                     "length": 28,
                     "filename_relative": "contracts/collab-token/CollabToken.sol",
                     "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/collab-token/CollabToken.sol",
@@ -1153,7 +1169,7 @@
                         "type": "function",
                         "name": "constructor",
                         "source_mapping": {
-                            "start": 550,
+                            "start": 558,
                             "length": 161,
                             "filename_relative": "contracts/collab-token/CollabToken.sol",
                             "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/collab-token/CollabToken.sol",
@@ -1169,7 +1185,7 @@
                                 "name": "CollabToken",
                                 "source_mapping": {
                                     "start": 357,
-                                    "length": 1466,
+                                    "length": 1474,
                                     "filename_relative": "contracts/collab-token/CollabToken.sol",
                                     "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/collab-token/CollabToken.sol",
                                     "filename_short": "contracts/collab-token/CollabToken.sol",
@@ -1347,16 +1363,16 @@
                 "type": "function",
                 "name": "_crate",
                 "source_mapping": {
-                    "start": 6243,
-                    "length": 1262,
+                    "start": 7633,
+                    "length": 1254,
                     "filename_relative": "contracts/auction-house/AuctionHouse.sol",
                     "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/auction-house/AuctionHouse.sol",
                     "filename_short": "contracts/auction-house/AuctionHouse.sol",
                     "is_dependency": false,
                     "lines": [
-                        188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202,
-                        203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217,
-                        218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231
+                        236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250,
+                        251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265,
+                        266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279
                     ],
                     "starting_column": 5,
                     "ending_column": 6
@@ -1367,7 +1383,7 @@
                         "name": "AuctionHouse",
                         "source_mapping": {
                             "start": 401,
-                            "length": 10019,
+                            "length": 11401,
                             "filename_relative": "contracts/auction-house/AuctionHouse.sol",
                             "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/auction-house/AuctionHouse.sol",
                             "filename_short": "contracts/auction-house/AuctionHouse.sol",
@@ -1396,7 +1412,11 @@
                                 292, 293, 294, 295, 296, 297, 298, 299, 300, 301, 302, 303, 304,
                                 305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316, 317,
                                 318, 319, 320, 321, 322, 323, 324, 325, 326, 327, 328, 329, 330,
-                                331, 332, 333, 334, 335, 336, 337, 338, 339, 340, 341, 342
+                                331, 332, 333, 334, 335, 336, 337, 338, 339, 340, 341, 342, 343,
+                                344, 345, 346, 347, 348, 349, 350, 351, 352, 353, 354, 355, 356,
+                                357, 358, 359, 360, 361, 362, 363, 364, 365, 366, 367, 368, 369,
+                                370, 371, 372, 373, 374, 375, 376, 377, 378, 379, 380, 381, 382,
+                                383, 384, 385, 386, 387, 388, 389, 390
                             ],
                             "starting_column": 1,
                             "ending_column": 2
@@ -1409,13 +1429,13 @@
                 "type": "node",
                 "name": "! (endTime > block.timestamp)",
                 "source_mapping": {
-                    "start": 6671,
+                    "start": 8061,
                     "length": 28,
                     "filename_relative": "contracts/auction-house/AuctionHouse.sol",
                     "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/auction-house/AuctionHouse.sol",
                     "filename_short": "contracts/auction-house/AuctionHouse.sol",
                     "is_dependency": false,
-                    "lines": [204],
+                    "lines": [252],
                     "starting_column": 13,
                     "ending_column": 41
                 },
@@ -1424,17 +1444,17 @@
                         "type": "function",
                         "name": "_crate",
                         "source_mapping": {
-                            "start": 6243,
-                            "length": 1262,
+                            "start": 7633,
+                            "length": 1254,
                             "filename_relative": "contracts/auction-house/AuctionHouse.sol",
                             "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/auction-house/AuctionHouse.sol",
                             "filename_short": "contracts/auction-house/AuctionHouse.sol",
                             "is_dependency": false,
                             "lines": [
-                                188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200,
-                                201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213,
-                                214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226,
-                                227, 228, 229, 230, 231
+                                236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248,
+                                249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261,
+                                262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274,
+                                275, 276, 277, 278, 279
                             ],
                             "starting_column": 5,
                             "ending_column": 6
@@ -1445,7 +1465,7 @@
                                 "name": "AuctionHouse",
                                 "source_mapping": {
                                     "start": 401,
-                                    "length": 10019,
+                                    "length": 11401,
                                     "filename_relative": "contracts/auction-house/AuctionHouse.sol",
                                     "filename_absolute": "/Users/v.biliy/Documents/work/do/do-contracts/contracts/auction-house/AuctionHouse.sol",
                                     "filename_short": "contracts/auction-house/AuctionHouse.sol",
@@ -1477,7 +1497,11 @@
                                         305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316,
                                         317, 318, 319, 320, 321, 322, 323, 324, 325, 326, 327, 328,
                                         329, 330, 331, 332, 333, 334, 335, 336, 337, 338, 339, 340,
-                                        341, 342
+                                        341, 342, 343, 344, 345, 346, 347, 348, 349, 350, 351, 352,
+                                        353, 354, 355, 356, 357, 358, 359, 360, 361, 362, 363, 364,
+                                        365, 366, 367, 368, 369, 370, 371, 372, 373, 374, 375, 376,
+                                        377, 378, 379, 380, 381, 382, 383, 384, 385, 386, 387, 388,
+                                        389, 390
                                     ],
                                     "starting_column": 1,
                                     "ending_column": 2
@@ -1489,10 +1513,10 @@
                 }
             }
         ],
-        "description": "AuctionHouse._crate(uint256,address,address,uint256,uint256,uint256,uint256,uint256,address[],uint256[]) (contracts/auction-house/AuctionHouse.sol#188-231) uses timestamp for comparisons\n\tDangerous comparisons:\n\t- ! (endTime > block.timestamp) (contracts/auction-house/AuctionHouse.sol#204)\n",
-        "markdown": "[AuctionHouse._crate(uint256,address,address,uint256,uint256,uint256,uint256,uint256,address[],uint256[])](contracts/auction-house/AuctionHouse.sol#L188-L231) uses timestamp for comparisons\n\tDangerous comparisons:\n\t- [! (endTime > block.timestamp)](contracts/auction-house/AuctionHouse.sol#L204)\n",
-        "first_markdown_element": "contracts/auction-house/AuctionHouse.sol#L188-L231",
-        "id": "8417597564ff78240fccc50587db5b25c9ee94fb9aa0cae034041a32ec9b8807",
+        "description": "AuctionHouse._crate(uint256,address,address,uint256,uint256,uint256,uint256,uint256,address[],uint256[]) (contracts/auction-house/AuctionHouse.sol#236-279) uses timestamp for comparisons\n\tDangerous comparisons:\n\t- ! (endTime > block.timestamp) (contracts/auction-house/AuctionHouse.sol#252)\n",
+        "markdown": "[AuctionHouse._crate(uint256,address,address,uint256,uint256,uint256,uint256,uint256,address[],uint256[])](contracts/auction-house/AuctionHouse.sol#L236-L279) uses timestamp for comparisons\n\tDangerous comparisons:\n\t- [! (endTime > block.timestamp)](contracts/auction-house/AuctionHouse.sol#L252)\n",
+        "first_markdown_element": "contracts/auction-house/AuctionHouse.sol#L236-L279",
+        "id": "86d30ec259cbce340753c220cb3b47855cfadd7dbc8446b38e1800c7fb5ad045",
         "check": "timestamp",
         "impact": "Low",
         "confidence": "Medium"

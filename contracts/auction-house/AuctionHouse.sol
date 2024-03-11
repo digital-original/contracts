@@ -27,6 +27,17 @@ contract AuctionHouse is IAuctionHouse, TokenHolder, EIP712 {
             ")"
         );
 
+    bytes32 public constant AUCTION_RAISE_PERMIT_TYPE_HASH =
+        // prettier-ignore
+        keccak256(
+            "AuctionRaisePermit("
+                "uint256 auctionId,"
+                "uint256 price,"
+                "uint256 fee,"
+                "uint256 deadline"
+            ")"
+        );
+
     address public immutable AUCTION_SIGNER;
     address public immutable PLATFORM;
 
@@ -89,37 +100,72 @@ contract AuctionHouse is IAuctionHouse, TokenHolder, EIP712 {
 
     function raise(
         uint256 auctionId,
-        bool /* initial */
+        uint256 price,
+        uint256 fee,
+        uint256 deadline,
+        bool /* initial */,
+        bytes memory signature
     ) external payable auctionOngoing(auctionId) withoutBuyer(auctionId) {
+        _validateSignature(
+            AUCTION_SIGNER,
+            keccak256(abi.encode(AUCTION_RAISE_PERMIT_TYPE_HASH, auctionId, price, fee, deadline)),
+            deadline,
+            signature
+        );
+
+        if (msg.value != price + fee) {
+            revert AuctionHouseWrongPayment(msg.value, price + fee);
+        }
+
         AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
 
-        if (msg.value < $.auctions[auctionId].price) {
-            revert AuctionHouseRaiseTooSmall(msg.value, $.auctions[auctionId].price);
+        if (price < $.auctions[auctionId].price) {
+            revert AuctionHouseRaiseTooSmall(price, $.auctions[auctionId].price);
         }
 
         $.auctions[auctionId].buyer = msg.sender;
-        $.auctions[auctionId].price = msg.value;
+        $.auctions[auctionId].price = price;
+        $.auctions[auctionId].fee = fee;
 
-        emit Raised(auctionId, msg.sender, msg.value);
+        emit Raised(auctionId, msg.sender, price);
     }
 
-    function raise(uint256 auctionId) external payable auctionOngoing(auctionId) withBuyer(auctionId) {
+    function raise(
+        uint256 auctionId,
+        uint256 price,
+        uint256 fee,
+        uint256 deadline,
+        bytes memory signature
+    ) external payable auctionOngoing(auctionId) withBuyer(auctionId) {
+        _validateSignature(
+            AUCTION_SIGNER,
+            keccak256(abi.encode(AUCTION_RAISE_PERMIT_TYPE_HASH, auctionId, price, fee, deadline)),
+            deadline,
+            signature
+        );
+
+        if (msg.value != price + fee) {
+            revert AuctionHouseWrongPayment(msg.value, price + fee);
+        }
+
         AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
 
-        uint256 price = $.auctions[auctionId].price;
+        uint256 prevPrice = $.auctions[auctionId].price;
 
-        if (msg.value < price + $.auctions[auctionId].step) {
-            revert AuctionHouseRaiseTooSmall(msg.value, price + $.auctions[auctionId].step);
+        if (price < prevPrice + $.auctions[auctionId].step) {
+            revert AuctionHouseRaiseTooSmall(price, prevPrice + $.auctions[auctionId].step);
         }
 
         address prevBuyer = $.auctions[auctionId].buyer;
+        uint256 prevFee = $.auctions[auctionId].fee;
 
         $.auctions[auctionId].buyer = msg.sender;
-        $.auctions[auctionId].price = msg.value;
+        $.auctions[auctionId].price = price;
+        $.auctions[auctionId].fee = fee;
 
-        emit Raised(auctionId, msg.sender, msg.value);
+        emit Raised(auctionId, msg.sender, price);
 
-        Address.sendValue(payable(prevBuyer), price);
+        Address.sendValue(payable(prevBuyer), prevPrice + prevFee);
     }
 
     function take(uint256 auctionId) external payable auctionEnded(auctionId) withBuyer(auctionId) {
@@ -130,6 +176,8 @@ contract AuctionHouse is IAuctionHouse, TokenHolder, EIP712 {
         emit Completed(auctionId, CompletionWay.Taken);
 
         _transferToken($.auctions[auctionId].buyer, $.auctions[auctionId].tokenId);
+
+        Address.sendValue(payable(PLATFORM), $.auctions[auctionId].fee);
 
         Distribution.distribute(
             $.auctions[auctionId].price,
@@ -159,7 +207,7 @@ contract AuctionHouse is IAuctionHouse, TokenHolder, EIP712 {
         AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
 
         if (msg.value != $.auctions[auctionId].penalty) {
-            revert AuctionHouseWrongPenalty(msg.value, $.auctions[auctionId].penalty);
+            revert AuctionHouseWrongPayment(msg.value, $.auctions[auctionId].penalty);
         }
 
         $.auctions[auctionId].completed = true;
@@ -219,7 +267,7 @@ contract AuctionHouse is IAuctionHouse, TokenHolder, EIP712 {
             price: price,
             step: step,
             penalty: penalty,
-            platformFee: 0,
+            fee: 0,
             startTime: startTime,
             endTime: endTime,
             participants: participants,
