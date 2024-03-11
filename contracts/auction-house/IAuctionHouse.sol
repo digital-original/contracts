@@ -19,7 +19,7 @@ interface IAuctionHouse {
         uint256 price;
         uint256 step;
         uint256 penalty;
-        uint256 platformFee;
+        uint256 fee;
         uint256 startTime;
         uint256 endTime;
         bool completed;
@@ -57,9 +57,22 @@ interface IAuctionHouse {
         Unlocked
     }
 
-    function raise(uint256 auctionId, bool initial) external payable;
+    function raise(
+        uint256 auctionId,
+        uint256 price,
+        uint256 fee,
+        uint256 deadline,
+        bool initial,
+        bytes memory signature
+    ) external payable;
 
-    function raise(uint256 auctionId) external payable;
+    function raise(
+        uint256 auctionId,
+        uint256 price,
+        uint256 fee,
+        uint256 deadline,
+        bytes memory signature
+    ) external payable;
 
     function take(uint256 auctionId) external payable;
 
@@ -87,5 +100,4 @@ interface IAuctionHouse {
 
     error AuctionHouseRaiseTooSmall(uint256 received, uint256 min);
     error AuctionHouseWrongPayment(uint256 received, uint256 needed);
-    error AuctionHouseWrongPenalty(uint256 received, uint256 needed);
 }
