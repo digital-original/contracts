@@ -15,7 +15,6 @@ interface IAuctionHouse {
         uint256 tokenId;
         address seller;
         address buyer;
-        address asset;
         uint256 price;
         uint256 step;
         uint256 penalty;
@@ -34,7 +33,6 @@ interface IAuctionHouse {
         uint256 indexed auctionId,
         uint256 indexed tokenId,
         address indexed seller,
-        address asset,
         uint256 price,
         uint256 step,
         uint256 startTime,

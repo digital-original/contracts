@@ -551,11 +551,6 @@
                 "type": "uint256"
             },
             {
-                "internalType": "address",
-                "name": "",
-                "type": "address"
-            },
-            {
                 "internalType": "string",
                 "name": "_tokenURI",
                 "type": "string"

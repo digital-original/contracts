@@ -25,17 +25,21 @@ contract CollabToken is ERC721Enumerable, ICollabToken {
         _;
     }
 
-    function mint(address to, uint256 tokenId, uint256 artTokenId, uint256 guarantee) external payable onlyArtToken {
-        _mint(to, tokenId);
-
-        agreements[tokenId] = Agreement(artTokenId, guarantee, address(0));
-    }
-
-    function burn(uint256 tokenId) external {
+    modifier onlyOwner(uint256 tokenId) {
         if (msg.sender != ownerOf(tokenId)) {
             revert CollabTokenUnauthorizedAccount(msg.sender);
         }
 
+        _;
+    }
+
+    function mint(address to, uint256 tokenId, uint256 artTokenId, uint256 guarantee) external payable onlyArtToken {
+        _mint(to, tokenId);
+
+        agreements[tokenId] = Agreement(artTokenId, guarantee);
+    }
+
+    function burn(uint256 tokenId) external onlyOwner(tokenId) {
         uint256 artTokenId = agreements[tokenId].artTokenId;
 
         if (ERC721(ART_TOKEN).ownerOf(artTokenId) == AUCTION_HOUSE) {

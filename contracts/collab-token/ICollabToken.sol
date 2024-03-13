@@ -5,7 +5,6 @@ interface ICollabToken {
     struct Agreement {
         uint256 artTokenId;
         uint256 guarantee;
-        address asset;
     }
 
     function mint(address to, uint256 tokenId, uint256 artTokenId, uint256 guarantee) external payable;

@@ -20,7 +20,6 @@ export const COLLAB_PERMIT_TYPE = {
         { name: 'tokenId', type: 'uint256' },
         { name: 'tokenURI', type: 'string' },
         { name: 'guarantee', type: 'uint256' },
-        { name: 'asset', type: 'address' },
         { name: 'deadline', type: 'uint256' },
         { name: 'data', type: 'bytes' },
     ],

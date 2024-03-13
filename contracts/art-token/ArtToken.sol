@@ -34,7 +34,6 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
                 "uint256 tokenId,"
                 "string tokenURI,"
                 "uint256 guarantee,"
-                "address asset,"
                 "uint256 deadline,"
                 "bytes data"
             ")"
@@ -125,7 +124,6 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
         uint256 tokenId,
         uint256 guarantee,
         uint256 deadline,
-        address /* asset */,
         string memory _tokenURI,
         bytes memory data,
         bytes memory signature
@@ -136,7 +134,6 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
                 tokenId,
                 keccak256(bytes(_tokenURI)),
                 guarantee,
-                address(0), // asset
                 deadline,
                 keccak256(data)
             )

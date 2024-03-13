@@ -304,11 +304,6 @@
                         "internalType": "uint256",
                         "name": "guarantee",
                         "type": "uint256"
-                    },
-                    {
-                        "internalType": "address",
-                        "name": "asset",
-                        "type": "address"
                     }
                 ],
                 "internalType": "struct ICollabToken.Agreement",
