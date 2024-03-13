@@ -5,7 +5,6 @@ export const AUCTION_PERMIT_TYPE = {
     AuctionPermit: [
         { name: 'tokenId', type: 'uint256' },
         { name: 'seller', type: 'address' },
-        { name: 'asset', type: 'address' },
         { name: 'price', type: 'uint256' },
         { name: 'step', type: 'uint256' },
         { name: 'penalty', type: 'uint256' },

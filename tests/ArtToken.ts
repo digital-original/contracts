@@ -381,7 +381,6 @@ describe('ArtToken', function () {
         const collabTokenId = tokenId;
         const guarantee = 1000n;
         const data = '0xff';
-        const asset = ethers.ZeroAddress;
 
         beforeEach(() => {
             token = token.connect(partner);
@@ -441,24 +440,14 @@ describe('ArtToken', function () {
                 tokenURI: tokenUriMock,
                 guarantee,
                 deadline,
-                asset,
                 data,
             };
 
             const signature = await signCollabPermit(chainId, tokenAddr, permit, _minter);
 
-            return token.collaborate(
-                tokenId,
-                guarantee,
-                deadline,
-                asset,
-                tokenUriMock,
-                data,
-                signature,
-                {
-                    value: _guarantee,
-                },
-            );
+            return token.collaborate(tokenId, guarantee, deadline, tokenUriMock, data, signature, {
+                value: _guarantee,
+            });
         }
     });
 });

@@ -11,7 +11,6 @@ export type CollabPermitStruct = {
     tokenId: bigint;
     tokenURI: string;
     guarantee: bigint;
-    asset: string;
     deadline: number;
     data: string;
 };

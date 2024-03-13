@@ -94,7 +94,6 @@ describe('AuctionHouse', function () {
             expect(auction.tokenId).equal(tokenId);
             expect(auction.seller).equal(sellerAddr);
             expect(auction.buyer).equal(ethers.ZeroAddress);
-            expect(auction.asset).equal(ethers.ZeroAddress);
             expect(auction.price).equal(price);
             expect(auction.step).equal(step);
             expect(auction.penalty).equal(penalty);
@@ -117,16 +116,7 @@ describe('AuctionHouse', function () {
         it(`should emit created event`, async () => {
             await expect(create())
                 .to.be.emit(auctionHouse, 'Created')
-                .withArgs(
-                    0n,
-                    tokenId,
-                    sellerAddr,
-                    ethers.ZeroAddress,
-                    price,
-                    step,
-                    BigInt(startTime),
-                    BigInt(endTime),
-                );
+                .withArgs(0n, tokenId, sellerAddr, price, step, BigInt(startTime), BigInt(endTime));
         });
 
         it(`should fail if caller is not token contract`, async () => {
@@ -163,7 +153,6 @@ describe('AuctionHouse', function () {
             const permit: AuctionPermitStruct = {
                 tokenId: wrongTokenId,
                 seller: sellerAddr,
-                asset: ethers.ZeroAddress,
                 price,
                 step,
                 penalty,
@@ -705,7 +694,6 @@ describe('AuctionHouse', function () {
             _tokenId?: bigint;
             _dataTokenId?: bigint;
             _seller?: string;
-            _asset?: string;
             _price?: bigint;
             _step?: bigint;
             _penalty?: bigint;
@@ -725,7 +713,6 @@ describe('AuctionHouse', function () {
             _tokenId = tokenId,
             _dataTokenId = tokenId,
             _seller = sellerAddr,
-            _asset = ethers.ZeroAddress,
             _price = price,
             _step = step,
             _penalty = penalty,
@@ -744,7 +731,6 @@ describe('AuctionHouse', function () {
         const permit: AuctionPermitStruct = _permit || {
             tokenId: _tokenId,
             seller: _seller,
-            asset: _asset,
             price: _price,
             step: _step,
             penalty: _penalty,
@@ -767,7 +753,6 @@ describe('AuctionHouse', function () {
             encodeAuctionHouseCreateParams(
                 _dataTokenId,
                 _seller,
-                _asset,
                 _price,
                 _step,
                 _penalty,

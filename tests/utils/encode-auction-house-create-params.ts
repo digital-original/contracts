@@ -3,7 +3,6 @@ import { AbiCoder } from 'ethers';
 export function encodeAuctionHouseCreateParams(
     tokenId: bigint,
     seller: string,
-    asset: string,
     price: bigint,
     step: bigint,
     penalty: bigint,
@@ -18,7 +17,6 @@ export function encodeAuctionHouseCreateParams(
         [
             'uint256',
             'address',
-            'address',
             'uint256',
             'uint256',
             'uint256',
@@ -32,7 +30,6 @@ export function encodeAuctionHouseCreateParams(
         [
             tokenId,
             seller,
-            asset,
             price,
             step,
             penalty,

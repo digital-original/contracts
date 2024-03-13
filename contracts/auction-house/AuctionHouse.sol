@@ -15,7 +15,6 @@ contract AuctionHouse is IAuctionHouse, TokenHolder, EIP712 {
             "AuctionPermit("
                 "uint256 tokenId,"
                 "address seller,"
-                "address asset,"
                 "uint256 price,"
                 "uint256 step,"
                 "uint256 penalty,"
@@ -233,10 +232,9 @@ contract AuctionHouse is IAuctionHouse, TokenHolder, EIP712 {
         return $.auctions[auctionId];
     }
 
-    function _crate(
+    function _create(
         uint256 tokenId,
         address seller,
-        address asset,
         uint256 price,
         uint256 step,
         uint256 penalty,
@@ -263,7 +261,6 @@ contract AuctionHouse is IAuctionHouse, TokenHolder, EIP712 {
             tokenId: tokenId,
             seller: seller,
             buyer: address(0),
-            asset: asset,
             price: price,
             step: step,
             penalty: penalty,
@@ -275,7 +272,7 @@ contract AuctionHouse is IAuctionHouse, TokenHolder, EIP712 {
             shares: shares
         });
 
-        emit Created(auctionId, tokenId, seller, asset, price, step, startTime, endTime);
+        emit Created(auctionId, tokenId, seller, price, step, startTime, endTime);
     }
 
     /**
@@ -286,7 +283,6 @@ contract AuctionHouse is IAuctionHouse, TokenHolder, EIP712 {
      * @param data AuctionData - abi.encode(
      *     uint256   tokenId
      *     address   seller
-     *     address   asset
      *     uint256   price
      *     uint256   step
      *     uint256   penalty
@@ -308,7 +304,6 @@ contract AuctionHouse is IAuctionHouse, TokenHolder, EIP712 {
         (
             uint256 tokenId,
             address seller,
-            address asset,
             uint256 price,
             uint256 step,
             uint256 penalty,
@@ -320,20 +315,7 @@ contract AuctionHouse is IAuctionHouse, TokenHolder, EIP712 {
             bytes memory signature
         ) = abi.decode(
                 data,
-                (
-                    uint256,
-                    address,
-                    address,
-                    uint256,
-                    uint256,
-                    uint256,
-                    uint256,
-                    uint256,
-                    uint256,
-                    address[],
-                    uint256[],
-                    bytes
-                )
+                (uint256, address, uint256, uint256, uint256, uint256, uint256, uint256, address[], uint256[], bytes)
             );
 
         if (tokenId != _tokenId) {
@@ -345,7 +327,6 @@ contract AuctionHouse is IAuctionHouse, TokenHolder, EIP712 {
                 AUCTION_PERMIT_TYPE_HASH,
                 tokenId,
                 seller,
-                address(0), // asset
                 price,
                 step,
                 penalty,
@@ -359,10 +340,9 @@ contract AuctionHouse is IAuctionHouse, TokenHolder, EIP712 {
 
         _validateSignature(AUCTION_SIGNER, auctionPermitHash, deadline, signature);
 
-        _crate(
+        _create(
             tokenId,
             seller,
-            asset,
             price,
             step,
             penalty,
