@@ -17,13 +17,12 @@ export type ChainConfig = {
         proxyAdminOwner: WalletConfig;
         minter: WalletConfig;
         auctionSigner: WalletConfig;
-        marketSigner: WalletConfig;
         platform: WalletConfig;
     };
     contracts: {
         artToken: UpgradeableContractConfig;
-        market: UpgradeableContractConfig;
         auctionHouse: UpgradeableContractConfig;
+        collabToken: string;
     };
 };
 

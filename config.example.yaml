@@ -16,19 +16,12 @@ sepolia:
                 auctionSigner:
                     public: ''
                     private: ''
-                marketSigner:
-                    public: ''
-                    private: ''
                 platform:
                     public: ''
                     private: ''
 
             contract:
                 artToken:
-                    proxy: ''
-                    impl: ''
-                    admin: ''
-                market:
                     proxy: ''
                     impl: ''
                     admin: ''
@@ -52,19 +45,12 @@ sepolia:
                 auctionSigner:
                     public: ''
                     private: ''
-                marketSigner:
-                    public: ''
-                    private: ''
                 platform:
                     public: ''
                     private: ''
 
             contract:
                 artToken:
-                    proxy: ''
-                    impl: ''
-                    admin: ''
-                market:
                     proxy: ''
                     impl: ''
                     admin: ''
@@ -92,24 +78,17 @@ ethereum:
                 auctionSigner:
                     public: ''
                     private: ''
-                marketSigner:
-                    public: ''
-                    private: ''
                 platform:
                     public: ''
                     private: ''
 
-        contract:
-            artToken:
-                proxy: ''
-                impl: ''
-                admin: ''
-            market:
-                proxy: ''
-                impl: ''
-                admin: ''
-            auctionHouse:
-                proxy: ''
-                impl: ''
-                admin: ''
-            collabToken: ''
+            contract:
+                artToken:
+                    proxy: ''
+                    impl: ''
+                    admin: ''
+                auctionHouse:
+                    proxy: ''
+                    impl: ''
+                    admin: ''
+                collabToken: ''

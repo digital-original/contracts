@@ -2,10 +2,9 @@ import { expect } from 'chai';
 import { setNextBlockTimestamp } from '@nomicfoundation/hardhat-network-helpers/dist/src/helpers/time';
 import { ART_TOKEN_NAME, ART_TOKEN_SYMBOL } from '../constants/art-token';
 import { ZERO_BYTES } from './utils/constants';
-import { deployMarketMock } from './utils/deploy-market-mock';
 import { deployArtTokenUpgradeable } from './utils/deploy-art-token-upgradeable';
 import { getSigners } from './utils/get-signers';
-import { MarketMock, ArtToken, CollabTokenMock } from '../typechain-types';
+import { ArtToken, AuctionHouseMock, CollabTokenMock } from '../typechain-types';
 import { AddressParam, Signer } from '../types/environment';
 import { signBuyPermit } from './utils/sign-buy-permit';
 import { getChainId } from './utils/get-chain-id';
@@ -30,10 +29,9 @@ describe('ArtToken', function () {
     let tokenReceiver: Signer, tokenReceiverAddr: string;
     let randomAccount: Signer, randomAccountAddr: string;
 
-    let marketMock: MarketMock, marketMockAddr: string;
-    let auctionMock: MarketMock, auctionMockAddr: string;
+    let auctionHouseMock: AuctionHouseMock, auctionHouseMockAddr: string;
     let collabTokenMock: CollabTokenMock, collabTokenMockAddr: string;
-    let randomMarketMock: MarketMock, randomMarketMockAddr: string;
+    let randomContract: AuctionHouseMock, randomContractAddr: string;
 
     const tokenId = 0;
     const tokenUriMock = 'ipfs://Q...';
@@ -59,9 +57,8 @@ describe('ArtToken', function () {
             ],
         ] = await getSigners();
 
-        [marketMock, marketMockAddr] = await deployMarketMock();
-        [auctionMock, auctionMockAddr] = await deployAuctionHouseMock();
-        [randomMarketMock, randomMarketMockAddr] = await deployMarketMock();
+        [auctionHouseMock, auctionHouseMockAddr] = await deployAuctionHouseMock();
+        [randomContract, randomContractAddr] = await deployAuctionHouseMock();
     });
 
     beforeEach(async () => {
@@ -69,8 +66,7 @@ describe('ArtToken', function () {
 
         [token, tokenAddr] = await deployArtTokenUpgradeable(
             minter,
-            marketMock,
-            auctionMock,
+            auctionHouseMock,
             collabTokenMock,
         );
 
@@ -81,12 +77,8 @@ describe('ArtToken', function () {
         await expect(token.MINTER()).to.eventually.equal(minterAddr);
     });
 
-    it(`should have right market`, async () => {
-        await expect(token.MARKET()).to.eventually.equal(marketMockAddr);
-    });
-
     it(`should have right auction house`, async () => {
-        await expect(token.AUCTION_HOUSE()).to.eventually.equal(auctionMockAddr);
+        await expect(token.AUCTION_HOUSE()).to.eventually.equal(auctionHouseMockAddr);
     });
 
     it(`should have right collab token`, async () => {
@@ -112,21 +104,12 @@ describe('ArtToken', function () {
             ]);
         });
 
-        it(`should mint for trusted market if caller is minter`, async () => {
-            await safeMint({ to: marketMock });
-
-            await Promise.all([
-                expect(token.ownerOf(tokenId)).to.eventually.equal(marketMockAddr),
-                expect(token.balanceOf(marketMock)).to.eventually.equal(1n),
-            ]);
-        });
-
         it(`should mint for trusted auction if caller is minter`, async () => {
-            await safeMint({ to: auctionMock });
+            await safeMint({ to: auctionHouseMock });
 
             await Promise.all([
-                expect(token.ownerOf(tokenId)).to.eventually.equal(auctionMockAddr),
-                expect(token.balanceOf(auctionMock)).to.eventually.equal(1n),
+                expect(token.ownerOf(tokenId)).to.eventually.equal(auctionHouseMockAddr),
+                expect(token.balanceOf(auctionHouseMock)).to.eventually.equal(1n),
             ]);
         });
 
@@ -139,8 +122,8 @@ describe('ArtToken', function () {
         });
 
         it(`should fail if receiver is not trusted contract`, async () => {
-            await expect(safeMint({ to: randomMarketMock })).to.be.rejectedWith(
-                'NotTrustedReceiver',
+            await expect(safeMint({ to: randomContract })).to.be.rejectedWith(
+                'ArtTokenNotTrustedReceiver',
             );
         });
     });
@@ -318,21 +301,15 @@ describe('ArtToken', function () {
             await expect(token.ownerOf(tokenId)).to.eventually.equal(tokenReceiverAddr);
         });
 
-        it(`should transfer to trusted market`, async () => {
-            await safeTransferFrom({ from: tokenOwner, to: marketMock });
-
-            await expect(token.ownerOf(tokenId)).to.eventually.equal(marketMockAddr);
-        });
-
         it(`should transfer to trusted auction`, async () => {
-            await safeTransferFrom({ from: tokenOwner, to: auctionMock });
+            await safeTransferFrom({ from: tokenOwner, to: auctionHouseMock });
 
-            await expect(token.ownerOf(tokenId)).to.eventually.equal(auctionMockAddr);
+            await expect(token.ownerOf(tokenId)).to.eventually.equal(auctionHouseMockAddr);
         });
 
         it(`should fail if receiver is not trusted contract`, async () => {
             await expect(
-                safeTransferFrom({ from: tokenOwner, to: randomMarketMock }),
+                safeTransferFrom({ from: tokenOwner, to: randomContract }),
             ).to.be.rejectedWith('NotTrustedReceiver');
         });
 
@@ -389,7 +366,7 @@ describe('ArtToken', function () {
         it(`should mint token for particular address`, async () => {
             await expect(collaborate())
                 .to.be.emit(token, 'Transfer')
-                .withArgs(ethers.ZeroAddress, auctionMockAddr, tokenId);
+                .withArgs(ethers.ZeroAddress, auctionHouseMockAddr, tokenId);
         });
 
         it(`should mint collab token for caller`, async () => {

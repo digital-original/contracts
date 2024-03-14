@@ -40,7 +40,6 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
         );
 
     address public immutable MINTER;
-    address public immutable MARKET;
     address public immutable AUCTION_HOUSE;
     address public immutable COLLAB_TOKEN;
 
@@ -57,12 +56,10 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
 
     /**
      * @param minter Minter address.
-     * @param market TODO_DOC
      * @param auctionHouse TODO_DOC
      */
-    constructor(address minter, address market, address auctionHouse, address collabToken) EIP712("ArtToken", "1") {
+    constructor(address minter, address auctionHouse, address collabToken) EIP712("ArtToken", "1") {
         MINTER = minter;
-        MARKET = market;
         AUCTION_HOUSE = auctionHouse;
         COLLAB_TOKEN = collabToken;
     }
@@ -84,6 +81,7 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
      * @param data Bytes optional data to send along with the call.
      */
     function safeMint(address to, uint256 tokenId, string memory _tokenURI, bytes memory data) external onlyMinter {
+        // TODO: Remove this function
         _safeMintAndSetTokenUri(to, tokenId, _tokenURI, data);
     }
 
@@ -179,7 +177,6 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
     function _validateTransfer(address to) internal view {
         if (to.code.length == 0) return;
         if (to == AUCTION_HOUSE) return;
-        if (to == MARKET) return;
 
         revert ArtTokenNotTrustedReceiver(to);
     }
