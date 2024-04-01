@@ -6,10 +6,10 @@ import { deployArtTokenUpgradeable } from './utils/deploy-art-token-upgradeable'
 import { getSigners } from './utils/get-signers';
 import { ArtToken, AuctionHouseMock, CollabTokenMock } from '../typechain-types';
 import { AddressParam, Signer } from '../types/environment';
-import { signBuyPermit } from './utils/sign-buy-permit';
+import { signBuyPermit } from './utils/sign-art-token-buy-permit';
 import { getChainId } from './utils/get-chain-id';
 import { BuyPermitStruct, CollabPermitStruct } from '../types/art-token';
-import { MAX_TOTAL_SHARE } from '../constants/distribution';
+import { TOTAL_SHARE } from '../constants/distribution';
 import { getSigDeadline } from './utils/get-sig-deadline';
 import { deployAuctionHouseMock } from './utils/deploy-auction-house-mock';
 import { deployCollabTokenMock } from './utils/deploy-collab-token-mock';
@@ -137,7 +137,7 @@ describe('ArtToken', function () {
         beforeEach(async () => {
             price = 5123430n;
             participants = [platformAddr, partnerAddr];
-            shares = [MAX_TOTAL_SHARE / 5n, (MAX_TOTAL_SHARE / 5n) * 4n];
+            shares = [TOTAL_SHARE / 5n, (TOTAL_SHARE / 5n) * 4n];
             deadline = await getSigDeadline();
         });
 
@@ -185,7 +185,7 @@ describe('ArtToken', function () {
                         _value: _price - 1n,
                         _token,
                     }),
-                ).to.be.rejectedWith('ArtTokenInsufficientPayment'),
+                ).to.be.rejectedWith('ArtTokenWrongPayment'),
             ]);
         });
 
@@ -195,13 +195,13 @@ describe('ArtToken', function () {
 
             await expect(() => buy({ _token })).to.be.changeEtherBalances(
                 [_to, ...participants],
-                [price * -1n, ...shares.map((share) => (price * share) / MAX_TOTAL_SHARE)],
+                [price * -1n, ...shares.map((share) => (price * share) / TOTAL_SHARE)],
             );
         });
 
         it(`should fail if number of shares is not equal number of participants`, async () => {
             const _participants = [platformAddr];
-            const _shares = [MAX_TOTAL_SHARE / 2n, MAX_TOTAL_SHARE / 2n];
+            const _shares = [TOTAL_SHARE / 2n, TOTAL_SHARE / 2n];
             const _token = token.connect(randomAccount);
 
             await expect(
@@ -215,7 +215,7 @@ describe('ArtToken', function () {
 
         it(`should fail if total shares is not equal maximum total share`, async () => {
             const _participants = [platformAddr, partnerAddr];
-            const _shares = [MAX_TOTAL_SHARE, 1n];
+            const _shares = [TOTAL_SHARE, 1n];
             const _token = token.connect(randomAccount);
 
             await expect(
@@ -383,7 +383,7 @@ describe('ArtToken', function () {
 
         it(`should fail if insufficient guarantee`, async () => {
             await expect(collaborate({ _guarantee: guarantee - 1n })).to.eventually.rejectedWith(
-                'ArtTokenInsufficientPayment',
+                'ArtTokenWrongPayment',
             );
         });
 

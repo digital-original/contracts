@@ -2,37 +2,35 @@
 pragma solidity ^0.8.20;
 
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ArtToken} from "../art-token/ArtToken.sol";
 import {AuctionHouse} from "../auction-house/AuctionHouse.sol";
-import {CollabToken} from "../collab-token/CollabToken.sol";
 
 contract Deployer {
-    event Deployed(address artToken, address auctionHouse, address collabToken);
+    event Deployed(address artToken, address auctionHouse);
 
-    error DeployerIncorrectArtTokenAddress();
+    error DeployerIncorrectAddress();
 
-    constructor(address platform, address minter, address auctionSigner, address proxyAdminOwner) {
-        address artToken = _contractAddressFrom(address(this), 5);
+    constructor(address proxyAdminOwner, address admin, address platform, IERC20 usdc) {
+        address artToken = _contractAddressFrom(address(this), 4);
 
         address auctionHouse = _deployUpgradeable(
-            address(new AuctionHouse(artToken, platform, auctionSigner)),
+            address(new AuctionHouse(admin, platform, ArtToken(artToken), usdc)),
             proxyAdminOwner
         );
 
-        address collabToken = address(new CollabToken(artToken, auctionHouse));
-
         address artToken_ = _deployUpgradeable(
-            address(new ArtToken(minter, auctionHouse, collabToken)),
+            address(new ArtToken(admin, platform, auctionHouse, usdc)),
             proxyAdminOwner
         );
 
         if (artToken != artToken_) {
-            revert DeployerIncorrectArtTokenAddress();
+            revert DeployerIncorrectAddress();
         }
 
         ArtToken(artToken).initialize();
 
-        emit Deployed(artToken, auctionHouse, collabToken);
+        emit Deployed(artToken, auctionHouse);
     }
 
     function _deployUpgradeable(address impl, address owner) private returns (address) {

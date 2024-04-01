@@ -61,42 +61,71 @@ function buildHardhatConfig(): HardhatUserConfig {
         return { ...hardhatBaseConfig, ...hardhatTestConfig };
     }
 
+    const ethereumUrl = config.ethereum.url;
+    const ethereumId = config.ethereum.id;
+    const ethereum: ChainConfig = {
+        wallets: config.ethereum.env[ENV_MODE]?.wallet,
+        contracts: config.ethereum.env[ENV_MODE]?.contract,
+        usdc: config.ethereum.usdc,
+    };
+
     const sepoliaUrl = config.sepolia.url;
     const sepoliaId = config.sepolia.id;
     const sepolia: ChainConfig = {
-        wallets: config.sepolia.env[ENV_MODE].wallet,
-        contracts: config.sepolia.env[ENV_MODE].contract,
+        wallets: config.sepolia.env[ENV_MODE]?.wallet,
+        contracts: config.sepolia.env[ENV_MODE]?.contract,
+        usdc: config.sepolia.usdc,
     };
 
     const forkUrl = FORKED_CHAIN_URL;
     const forkId = FORKED_CHAIN_ID;
     const fork: ChainConfig = {
-        wallets: config[FORKED_CHAIN].env[ENV_MODE].wallet,
-        contracts: config[FORKED_CHAIN].env[ENV_MODE].contract,
+        wallets: config[FORKED_CHAIN].env[ENV_MODE]?.wallet,
+        contracts: config[FORKED_CHAIN].env[ENV_MODE]?.contract,
+        usdc: config[FORKED_CHAIN].usdc,
+    };
+
+    const chainToForkUrl = config[CHAIN_TO_FORK].url;
+    const chainToFork: Pick<ChainConfig, 'wallets'> = {
+        wallets: config[CHAIN_TO_FORK].env[ENV_MODE]?.wallet,
     };
 
     const hardhatNetworksConfig: HardhatUserConfig = {
         networks: {
             hardhat: {
-                forking: { url: config[CHAIN_TO_FORK].url },
-                accounts: [
-                    {
-                        privateKey: fork.wallets.deployer.private,
-                        balance: ethers.parseEther('100').toString(),
-                    },
-                ],
+                forking: { url: chainToForkUrl },
+                ...(chainToFork.wallets?.deployer.private && {
+                    accounts: [
+                        {
+                            privateKey: chainToFork.wallets.deployer.private,
+                            balance: ethers.parseEther('100').toString(),
+                        },
+                    ],
+                }),
             },
             fork: {
                 url: forkUrl,
                 chainId: forkId,
-                accounts: [fork.wallets.deployer.private],
+                ...(fork.wallets?.deployer.private && {
+                    accounts: [fork.wallets.deployer.private],
+                }),
                 ...fork,
             },
             sepolia: {
                 url: sepoliaUrl,
                 chainId: sepoliaId,
-                accounts: [sepolia.wallets.deployer.private],
+                ...(sepolia.wallets?.deployer.private && {
+                    accounts: [sepolia.wallets.deployer.private],
+                }),
                 ...sepolia,
+            },
+            ethereum: {
+                url: ethereumUrl,
+                chainId: ethereumId,
+                ...(ethereum.wallets?.deployer.private && {
+                    accounts: [ethereum.wallets.deployer.private],
+                }),
+                ...ethereum,
             },
         },
     };

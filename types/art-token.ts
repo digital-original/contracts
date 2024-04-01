@@ -2,15 +2,8 @@ export type BuyPermitStruct = {
     tokenId: number;
     tokenURI: string;
     price: bigint;
+    fee: bigint;
     participants: string[];
     shares: bigint[];
     deadline: number;
-};
-
-export type CollabPermitStruct = {
-    tokenId: bigint;
-    tokenURI: string;
-    guarantee: bigint;
-    deadline: number;
-    data: string;
 };

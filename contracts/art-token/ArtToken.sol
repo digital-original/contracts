@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {EIP712} from "../utils/EIP712.sol";
 import {Distribution} from "../utils/Distribution.sol";
 import {ArtTokenBase} from "./ArtTokenBase.sol";
 import {IArtToken} from "./IArtToken.sol";
-import {ICollabToken} from "../collab-token/ICollabToken.sol";
 
 /**
  * @title Token
@@ -14,6 +15,8 @@ import {ICollabToken} from "../collab-token/ICollabToken.sol";
  * @notice Contract based on [OpenZeppelin](https://docs.openzeppelin.com/) library.
  */
 contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
+    using SafeERC20 for IERC20;
+
     bytes32 public constant BUY_PERMIT_TYPE_HASH =
         // prettier-ignore
         keccak256(
@@ -21,33 +24,23 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
                 "uint256 tokenId,"
                 "string tokenURI,"
                 "uint256 price,"
+                "uint256 fee,"
                 "address[] participants,"
                 "uint256[] shares,"
                 "uint256 deadline"
             ")"
         );
 
-    bytes32 public constant COLLAB_PERMIT_TYPE_HASH =
-        // prettier-ignore
-        keccak256(
-            "CollabPermit("
-                "uint256 tokenId,"
-                "string tokenURI,"
-                "uint256 guarantee,"
-                "uint256 deadline,"
-                "bytes data"
-            ")"
-        );
-
-    address public immutable MINTER;
+    address public immutable ADMIN;
+    address public immutable PLATFORM;
     address public immutable AUCTION_HOUSE;
-    address public immutable COLLAB_TOKEN;
+    IERC20 public immutable USDC;
 
     /**
      * @dev Throws if called by any account other than the minter.
      */
-    modifier onlyMinter() {
-        if (msg.sender != MINTER) {
+    modifier canMint() {
+        if (msg.sender != AUCTION_HOUSE) {
             revert ArtTokenUnauthorizedAccount(msg.sender);
         }
 
@@ -55,13 +48,14 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
     }
 
     /**
-     * @param minter Minter address.
+     * @param admin Minter address.
      * @param auctionHouse TODO_DOC
      */
-    constructor(address minter, address auctionHouse, address collabToken) EIP712("ArtToken", "1") {
-        MINTER = minter;
+    constructor(address admin, address platform, address auctionHouse, IERC20 usdc) EIP712("ArtToken", "1") {
+        ADMIN = admin;
+        PLATFORM = platform;
         AUCTION_HOUSE = auctionHouse;
-        COLLAB_TOKEN = collabToken;
+        USDC = usdc;
     }
 
     function initialize() external {
@@ -78,106 +72,52 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
      * @param to Mint to address.
      * @param tokenId Token ID.
      * @param _tokenURI Token metadata uri.
-     * @param data Bytes optional data to send along with the call.
      */
-    function safeMint(address to, uint256 tokenId, string memory _tokenURI, bytes memory data) external onlyMinter {
-        // TODO: Remove this function
-        _safeMintAndSetTokenUri(to, tokenId, _tokenURI, data);
+    function mint(address to, uint256 tokenId, string memory _tokenURI) external canMint {
+        _mintAndSetTokenUri(to, tokenId, _tokenURI);
     }
 
-    function buy(
-        uint256 tokenId,
-        uint256 price,
-        uint256 deadline,
-        string memory _tokenURI,
-        address[] memory participants,
-        uint256[] memory shares,
-        bytes memory signature
-    ) external payable {
+    function buy(BuyParams calldata params) external {
         bytes32 structHash = keccak256(
             abi.encode(
                 BUY_PERMIT_TYPE_HASH,
-                tokenId,
-                keccak256(bytes(_tokenURI)),
-                price,
-                keccak256(abi.encodePacked(participants)),
-                keccak256(abi.encodePacked(shares)),
-                deadline
+                params.tokenId,
+                keccak256(bytes(params.tokenURI)),
+                params.price,
+                params.fee,
+                keccak256(abi.encodePacked(params.participants)),
+                keccak256(abi.encodePacked(params.shares)),
+                params.deadline
             )
         );
 
-        _validateSignature(MINTER, structHash, deadline, signature);
+        _requireValidSignature(ADMIN, structHash, params.deadline, params.signature);
 
-        if (msg.value != price) {
-            revert ArtTokenInsufficientPayment(msg.value);
+        uint256 payment = params.price + params.fee;
+
+        if (payment != 0) {
+            USDC.safeTransferFrom(msg.sender, address(this), payment);
         }
 
-        _mintAndSetTokenUri(msg.sender, tokenId, _tokenURI);
-
-        Distribution.validateShares(participants, shares);
-        Distribution.distribute(price, participants, shares);
-    }
-
-    function collaborate(
-        uint256 tokenId,
-        uint256 guarantee,
-        uint256 deadline,
-        string memory _tokenURI,
-        bytes memory data,
-        bytes memory signature
-    ) external payable {
-        bytes32 structHash = keccak256(
-            abi.encode(
-                COLLAB_PERMIT_TYPE_HASH,
-                tokenId,
-                keccak256(bytes(_tokenURI)),
-                guarantee,
-                deadline,
-                keccak256(data)
-            )
-        );
-
-        _validateSignature(MINTER, structHash, deadline, signature);
-
-        if (msg.value != guarantee) {
-            revert ArtTokenInsufficientPayment(msg.value);
+        if (params.price != 0) {
+            Distribution.safeDistribute(USDC, params.price, params.participants, params.shares);
         }
 
-        _safeMintAndSetTokenUri(AUCTION_HOUSE, tokenId, _tokenURI, data);
+        if (params.fee != 0) {
+            USDC.safeTransfer(PLATFORM, params.fee);
+        }
 
-        ICollabToken(COLLAB_TOKEN).mint{value: guarantee}(
-            msg.sender,
-            tokenId, // collabTokenId
-            tokenId, // artTokenId
-            guarantee
-        );
-    }
-
-    /**
-     * @notice Burn a token.
-     *
-     * @dev Only owner can invoke the method.
-     * @dev This method provides the ability to burn a token during 7 days after the token creation.
-     *
-     * @param tokenId Token ID.
-     */
-    function rollback(uint256 tokenId) external onlyMinter {
-        _burn(tokenId);
+        _mintAndSetTokenUri(msg.sender, params.tokenId, params.tokenURI);
     }
 
     /**
      * @dev Hook that is called during any token transfer.
      */
     function _update(address to, uint256 tokenId, address auth) internal override(ArtTokenBase) returns (address) {
-        _validateTransfer(to);
+        if (to.code.length != 0) {
+            revert ArtTokenNotTrustedReceiver(to);
+        }
 
         return ArtTokenBase._update(to, tokenId, auth);
-    }
-
-    function _validateTransfer(address to) internal view {
-        if (to.code.length == 0) return;
-        if (to == AUCTION_HOUSE) return;
-
-        revert ArtTokenNotTrustedReceiver(to);
     }
 }

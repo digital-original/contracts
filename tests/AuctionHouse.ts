@@ -6,10 +6,10 @@ import { Signer } from '../types/environment';
 import { deployArtTokenMock } from './utils/deploy-art-token-mock';
 import { getChainId } from './utils/get-chain-id';
 import { getSigners } from './utils/get-signers';
-import { signAuctionPermit } from './utils/sign-auction-permit';
+import { signAuctionPermit } from './utils/sign-auction-house-create-permit';
 import { AuctionPermitStruct, AuctionRaisePermitStruct } from '../types/auction-house';
 import { encodeAuctionHouseCreateParams } from './utils/encode-auction-house-create-params';
-import { MAX_TOTAL_SHARE } from '../constants/distribution';
+import { TOTAL_SHARE } from '../constants/distribution';
 import { getSigDeadline } from './utils/get-sig-deadline';
 import { deployAuctionHouseUpgradeable } from './utils/deploy-auction-house-upgradeable';
 import { getLatestBlockTimestamp } from './utils/get-latest-block-timestamp';
@@ -68,7 +68,7 @@ describe('AuctionHouse', function () {
         endTime = blockTimestamp + 60 * 60 * 5;
         deadline = await getSigDeadline();
         participants = [sellerAddr, platformAddr];
-        shares = [MAX_TOTAL_SHARE / 2n, MAX_TOTAL_SHARE / 2n];
+        shares = [TOTAL_SHARE / 2n, TOTAL_SHARE / 2n];
 
         fee = 1234n;
     });
@@ -190,14 +190,14 @@ describe('AuctionHouse', function () {
 
         it(`should fail if number of shares is not equal number of participants`, async () => {
             await expect(
-                create({ _shares: [MAX_TOTAL_SHARE], _participants: [sellerAddr, platformAddr] }),
+                create({ _shares: [TOTAL_SHARE], _participants: [sellerAddr, platformAddr] }),
             ).to.eventually.rejectedWith('DistributionInvalidSharesCount');
         });
 
         it(`should fail if total shares is not equal maximum total share`, async () => {
             await expect(
                 create({
-                    _shares: [MAX_TOTAL_SHARE, MAX_TOTAL_SHARE],
+                    _shares: [TOTAL_SHARE, TOTAL_SHARE],
                     _participants: [sellerAddr, platformAddr],
                 }),
             ).to.eventually.rejectedWith('DistributionInvalidSharesSum');
@@ -492,7 +492,7 @@ describe('AuctionHouse', function () {
                 [
                     (price + fee) * -1n,
                     ...shares
-                        .map((share) => (price * share) / MAX_TOTAL_SHARE)
+                        .map((share) => (price * share) / TOTAL_SHARE)
                         .map((value, i) => (i == platformIndex ? value + fee : value)),
                 ],
             );
@@ -564,7 +564,7 @@ describe('AuctionHouse', function () {
 
             await expect(() => buy()).to.be.changeEtherBalances(
                 [buyer, ...participants],
-                [price * -1n, ...shares.map((share) => (price * share) / MAX_TOTAL_SHARE)],
+                [price * -1n, ...shares.map((share) => (price * share) / TOTAL_SHARE)],
             );
         });
 
@@ -766,12 +766,9 @@ describe('AuctionHouse', function () {
 
         return _tokenMock
             .connect(_signer)
-            ['safeTransferFrom(address,address,uint256,bytes)'](
-                _seller,
-                auctionHouse,
-                _tokenId,
-                data,
-            );
+            [
+                'safeTransferFrom(address,address,uint256,bytes)'
+            ](_seller, auctionHouse, _tokenId, data);
     }
 
     async function raiseInitial(
@@ -813,15 +810,9 @@ describe('AuctionHouse', function () {
 
         return auctionHouse
             .connect(_buyer)
-            ['raise(uint256,uint256,uint256,uint256,bool,bytes)'](
-                _auctionId,
-                _price,
-                _fee,
-                _deadline,
-                true,
-                signature,
-                { value: _value },
-            );
+            [
+                'raise(uint256,uint256,uint256,uint256,bool,bytes)'
+            ](_auctionId, _price, _fee, _deadline, true, signature, { value: _value });
     }
 
     async function raise(
@@ -863,14 +854,9 @@ describe('AuctionHouse', function () {
 
         return auctionHouse
             .connect(_buyer)
-            ['raise(uint256,uint256,uint256,uint256,bytes)'](
-                _auctionId,
-                _price,
-                _fee,
-                _deadline,
-                signature,
-                { value: _value },
-            );
+            [
+                'raise(uint256,uint256,uint256,uint256,bytes)'
+            ](_auctionId, _price, _fee, _deadline, signature, { value: _value });
     }
 
     async function take(auctionId = 0n) {

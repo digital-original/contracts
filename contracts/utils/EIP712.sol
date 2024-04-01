@@ -27,7 +27,7 @@ abstract contract EIP712 {
         HASHED_VERSION = keccak256(bytes(version));
     }
 
-    function _validateSignature(
+    function _requireValidSignature(
         address signer,
         bytes32 structHash,
         uint256 deadline,

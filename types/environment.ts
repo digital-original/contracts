@@ -12,18 +12,17 @@ export type UpgradeableContractConfig = {
 };
 
 export type ChainConfig = {
-    wallets: {
+    wallets?: {
         deployer: WalletConfig;
         proxyAdminOwner: WalletConfig;
-        minter: WalletConfig;
-        auctionSigner: WalletConfig;
+        admin: WalletConfig;
         platform: WalletConfig;
     };
-    contracts: {
+    contracts?: {
         artToken: UpgradeableContractConfig;
         auctionHouse: UpgradeableContractConfig;
-        collabToken: string;
     };
+    usdc?: string;
 };
 
 export type ContractConstructorArgs = (string | Uint8Array | Addressable)[];
