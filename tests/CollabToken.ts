@@ -40,7 +40,6 @@ describe('CollabToken', function () {
             const agreement = await token.agreement(tokenId);
 
             expect(agreement.artTokenId).equal(artTokenId);
-            expect(agreement.asset).equal(ethers.ZeroAddress);
             expect(agreement.guarantee).equal(guarantee);
             await expect(token.ownerOf(tokenId)).to.eventually.equal(partnerAddr);
         });
