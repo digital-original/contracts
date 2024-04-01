@@ -67,6 +67,10 @@ interface IAuctionHouse {
 
     function unlock(uint256 auctionId) external payable;
 
+    function auctionsCount() external view returns (uint256 count);
+
+    function auction(uint256 auctionId) external view returns (Auction memory);
+
     error AuctionHouseWrongData();
 
     error AuctionHouseInvalidStartTime(uint256 startTime, uint256 endTime);

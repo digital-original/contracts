@@ -10,7 +10,7 @@ import { signAuctionPermit } from './utils/sign-auction-permit';
 import { AuctionPermitStruct } from '../types/auction-house';
 import { encodeAuctionHouseCreateParams } from './utils/encode-auction-house-create-params';
 import { MAX_TOTAL_SHARE } from '../constants/distribution';
-import { getSignDeadline } from './utils/get-sign-deadline';
+import { getSigDeadline } from './utils/get-sig-deadline';
 import { deployAuctionHouseUpgradeable } from './utils/deploy-auction-house-upgradeable';
 import { getLatestBlockTimestamp } from './utils/get-latest-block-timestamp';
 
@@ -63,7 +63,7 @@ describe('AuctionHouse', function () {
         penalty = 500n;
         startTime = blockTimestamp + 60 * 60;
         endTime = blockTimestamp + 60 * 60 * 5;
-        deadline = await getSignDeadline();
+        deadline = await getSigDeadline();
         participants = [sellerAddr, platformAddr];
         shares = [MAX_TOTAL_SHARE / 2n, MAX_TOTAL_SHARE / 2n];
     });

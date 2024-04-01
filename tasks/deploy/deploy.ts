@@ -129,6 +129,9 @@ task('deploy').setAction(async (taskArgs: Record<string, string>, hardhat) => {
         `Market Proxy Admin Owner - ${Market_ProxyAdmin_OwnershipTransferredEvent.args.newOwner}`,
     );
 
+    console.log('\n');
+    console.log(`CollabToken - ${Deployer_DeployedEvent.args.collabToken}`);
+
     console.groupEnd();
     console.log('-'.repeat(process.stdout.columns));
 });

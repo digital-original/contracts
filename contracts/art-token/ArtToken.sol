@@ -5,6 +5,7 @@ import {EIP712} from "../utils/EIP712.sol";
 import {Distribution} from "../utils/Distribution.sol";
 import {ArtTokenBase} from "./ArtTokenBase.sol";
 import {IArtToken} from "./IArtToken.sol";
+import {ICollabToken} from "../collab-token/ICollabToken.sol";
 
 /**
  * @title Token
@@ -17,7 +18,6 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
         // prettier-ignore
         keccak256(
             "BuyPermit("
-                "address to,"
                 "uint256 tokenId,"
                 "string tokenURI,"
                 "uint256 price,"
@@ -27,9 +27,23 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
             ")"
         );
 
+    bytes32 public constant COLLAB_PERMIT_TYPE_HASH =
+        // prettier-ignore
+        keccak256(
+            "CollabPermit("
+                "uint256 tokenId,"
+                "string tokenURI,"
+                "uint256 guarantee,"
+                "address asset,"
+                "uint256 deadline,"
+                "bytes data"
+            ")"
+        );
+
     address public immutable MINTER;
     address public immutable MARKET;
     address public immutable AUCTION_HOUSE;
+    address public immutable COLLAB_TOKEN;
 
     /**
      * @dev Throws if called by any account other than the minter.
@@ -47,10 +61,11 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
      * @param market TODO_DOC
      * @param auctionHouse TODO_DOC
      */
-    constructor(address minter, address market, address auctionHouse) EIP712("ArtToken", "1") {
+    constructor(address minter, address market, address auctionHouse, address collabToken) EIP712("ArtToken", "1") {
         MINTER = minter;
         MARKET = market;
         AUCTION_HOUSE = auctionHouse;
+        COLLAB_TOKEN = collabToken;
     }
 
     function initialize() external {
@@ -73,11 +88,7 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
         _safeMintAndSetTokenUri(to, tokenId, _tokenURI, data);
     }
 
-    /**
-     * @dev `to` should be EOA
-     */
     function buy(
-        address to,
         uint256 tokenId,
         uint256 price,
         uint256 deadline,
@@ -89,7 +100,6 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
         bytes32 structHash = keccak256(
             abi.encode(
                 BUY_PERMIT_TYPE_HASH,
-                to,
                 tokenId,
                 keccak256(bytes(_tokenURI)),
                 price,
@@ -101,18 +111,51 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
 
         _validateSignature(MINTER, structHash, deadline, signature);
 
-        if (msg.sender != to) {
-            revert ArtTokenUnauthorizedAccount(msg.sender);
-        }
-
         if (msg.value != price) {
             revert ArtTokenInsufficientPayment(msg.value);
         }
 
-        _mintAndSetTokenUri(to, tokenId, _tokenURI);
+        _mintAndSetTokenUri(msg.sender, tokenId, _tokenURI);
 
         Distribution.validateShares(participants, shares);
         Distribution.distribute(price, participants, shares);
+    }
+
+    function collaborate(
+        uint256 tokenId,
+        uint256 guarantee,
+        uint256 deadline,
+        address /* asset */,
+        string memory _tokenURI,
+        bytes memory data,
+        bytes memory signature
+    ) external payable {
+        bytes32 structHash = keccak256(
+            abi.encode(
+                COLLAB_PERMIT_TYPE_HASH,
+                tokenId,
+                keccak256(bytes(_tokenURI)),
+                guarantee,
+                address(0), // asset
+                deadline,
+                keccak256(data)
+            )
+        );
+
+        _validateSignature(MINTER, structHash, deadline, signature);
+
+        if (msg.value != guarantee) {
+            revert ArtTokenInsufficientPayment(msg.value);
+        }
+
+        _safeMintAndSetTokenUri(AUCTION_HOUSE, tokenId, _tokenURI, data);
+
+        ICollabToken(COLLAB_TOKEN).mint{value: guarantee}(
+            msg.sender,
+            tokenId, // collabTokenId
+            tokenId, // artTokenId
+            guarantee
+        );
     }
 
     /**
