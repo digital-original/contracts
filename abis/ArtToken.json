@@ -8,11 +8,6 @@
             },
             {
                 "internalType": "address",
-                "name": "market",
-                "type": "address"
-            },
-            {
-                "internalType": "address",
                 "name": "auctionHouse",
                 "type": "address"
             },
@@ -417,19 +412,6 @@
     {
         "inputs": [],
         "name": "COLLAB_TOKEN",
-        "outputs": [
-            {
-                "internalType": "address",
-                "name": "",
-                "type": "address"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "MARKET",
         "outputs": [
             {
                 "internalType": "address",

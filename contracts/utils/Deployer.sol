@@ -4,34 +4,25 @@ pragma solidity ^0.8.20;
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import {ArtToken} from "../art-token/ArtToken.sol";
 import {AuctionHouse} from "../auction-house/AuctionHouse.sol";
-import {Market} from "../market/Market.sol";
 import {CollabToken} from "../collab-token/CollabToken.sol";
 
 contract Deployer {
-    event Deployed(address artToken, address auctionHouse, address market, address collabToken);
+    event Deployed(address artToken, address auctionHouse, address collabToken);
 
     error DeployerIncorrectArtTokenAddress();
 
-    constructor(
-        address platform,
-        address minter,
-        address auctionSigner,
-        address marketSigner,
-        address proxyAdminOwner
-    ) {
-        address artToken = _contractAddressFrom(address(this), 7);
+    constructor(address platform, address minter, address auctionSigner, address proxyAdminOwner) {
+        address artToken = _contractAddressFrom(address(this), 5);
 
         address auctionHouse = _deployUpgradeable(
             address(new AuctionHouse(artToken, platform, auctionSigner)),
             proxyAdminOwner
         );
 
-        address market = _deployUpgradeable(address(new Market(artToken, marketSigner)), proxyAdminOwner);
-
         address collabToken = address(new CollabToken(artToken, auctionHouse));
 
         address artToken_ = _deployUpgradeable(
-            address(new ArtToken(minter, market, auctionHouse, collabToken)),
+            address(new ArtToken(minter, auctionHouse, collabToken)),
             proxyAdminOwner
         );
 
@@ -41,7 +32,7 @@ contract Deployer {
 
         ArtToken(artToken).initialize();
 
-        emit Deployed(artToken, auctionHouse, market, collabToken);
+        emit Deployed(artToken, auctionHouse, collabToken);
     }
 
     function _deployUpgradeable(address impl, address owner) private returns (address) {
