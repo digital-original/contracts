@@ -1,0 +1,115 @@
+sepolia:
+    id: 11155111
+    url:
+    env:
+        dev:
+            wallet:
+                deployer:
+                    public: ''
+                    private: ''
+                proxyAdminOwner:
+                    public: ''
+                    private: ''
+                minter:
+                    public: ''
+                    private: ''
+                auctionSigner:
+                    public: ''
+                    private: ''
+                marketSigner:
+                    public: ''
+                    private: ''
+                platform:
+                    public: ''
+                    private: ''
+
+            contract:
+                artToken:
+                    proxy: ''
+                    impl: ''
+                    admin: ''
+                market:
+                    proxy: ''
+                    impl: ''
+                    admin: ''
+                auctionHouse:
+                    proxy: ''
+                    impl: ''
+                    admin: ''
+                collabToken: ''
+
+        local:
+            wallet:
+                deployer:
+                    public: ''
+                    private: ''
+                proxyAdminOwner:
+                    public: ''
+                    private: ''
+                minter:
+                    public: ''
+                    private: ''
+                auctionSigner:
+                    public: ''
+                    private: ''
+                marketSigner:
+                    public: ''
+                    private: ''
+                platform:
+                    public: ''
+                    private: ''
+
+            contract:
+                artToken:
+                    proxy: ''
+                    impl: ''
+                    admin: ''
+                market:
+                    proxy: ''
+                    impl: ''
+                    admin: ''
+                auctionHouse:
+                    proxy: ''
+                    impl: ''
+                    admin: ''
+                collabToken: ''
+
+ethereum:
+    id: 1
+    url:
+    env:
+        prod:
+            wallet:
+                deployer:
+                    public: ''
+                    private: ''
+                proxyAdminOwner:
+                    public: ''
+                    private: ''
+                minter:
+                    public: ''
+                    private: ''
+                auctionSigner:
+                    public: ''
+                    private: ''
+                marketSigner:
+                    public: ''
+                    private: ''
+                platform:
+                    public: ''
+                    private: ''
+
+        contract:
+            artToken:
+                proxy: ''
+                impl: ''
+                admin: ''
+            market:
+                proxy: ''
+                impl: ''
+                admin: ''
+            auctionHouse:
+                proxy: ''
+                impl: ''
+                admin: ''
+            collabToken: ''

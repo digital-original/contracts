@@ -1,4 +1,3 @@
-import { ethers } from 'hardhat';
 import { deployClassic } from './deploy-classic';
 import { AddressParam, ContractConstructorArgs, Signer } from '../types/environment';
 
@@ -11,6 +10,8 @@ interface Params {
 }
 
 export async function deployUpgrade(params: Params, deployer?: Signer) {
+    const { ethers } = await import('hardhat');
+
     const implName = params.implName;
     const implConstructorArgs = params.implConstructorArgs;
 
@@ -22,13 +23,13 @@ export async function deployUpgrade(params: Params, deployer?: Signer) {
         deployer,
     );
 
-    const proxyAdminAddress = params.proxyAdminAddr;
+    const proxyAdminAddr = params.proxyAdminAddr;
     const proxyAdminOwner = params.proxyAdminOwner;
-    const proxyAdmin = await ethers.getContractAt('ProxyAdmin', proxyAdminAddress, proxyAdminOwner);
+    const proxyAdmin = await ethers.getContractAt('ProxyAdmin', proxyAdminAddr, proxyAdminOwner);
 
-    const proxyAddress = params.proxyAddr;
-    const response = await proxyAdmin.upgradeAndCall(proxyAddress, impl, new Uint8Array(0));
-    const receipt = await response.wait();
+    const proxyAddr = params.proxyAddr;
+    const response = await proxyAdmin.upgradeAndCall(proxyAddr, impl, new Uint8Array(0));
+    const receipt = (await response.wait())!;
 
     return {
         impl,

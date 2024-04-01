@@ -1,0 +1,601 @@
+[
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "token",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "platform",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "auctionSigner",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "account",
+                "type": "address"
+            }
+        ],
+        "name": "AddressInsufficientBalance",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "AuctionHouseAuctionCompleted",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "endTime",
+                "type": "uint256"
+            }
+        ],
+        "name": "AuctionHouseAuctionEnded",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "endTime",
+                "type": "uint256"
+            }
+        ],
+        "name": "AuctionHouseAuctionNotEnded",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "auctionId",
+                "type": "uint256"
+            }
+        ],
+        "name": "AuctionHouseAuctionNotExist",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "startTime",
+                "type": "uint256"
+            }
+        ],
+        "name": "AuctionHouseAuctionNotStarted",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "buyer",
+                "type": "address"
+            }
+        ],
+        "name": "AuctionHouseBuyerExists",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "AuctionHouseBuyerNotExists",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "endTime",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "currentTime",
+                "type": "uint256"
+            }
+        ],
+        "name": "AuctionHouseInvalidEndTime",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "startTime",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "endTime",
+                "type": "uint256"
+            }
+        ],
+        "name": "AuctionHouseInvalidStartTime",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "received",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "min",
+                "type": "uint256"
+            }
+        ],
+        "name": "AuctionHouseRaiseTooSmall",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "AuctionHouseWrongData",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "received",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "needed",
+                "type": "uint256"
+            }
+        ],
+        "name": "AuctionHouseWrongPayment",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "received",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "needed",
+                "type": "uint256"
+            }
+        ],
+        "name": "AuctionHouseWrongPenalty",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "DistributionInvalidSharesCount",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "DistributionInvalidSharesSum",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "ECDSAInvalidSignature",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "length",
+                "type": "uint256"
+            }
+        ],
+        "name": "ECDSAInvalidSignatureLength",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "s",
+                "type": "bytes32"
+            }
+        ],
+        "name": "ECDSAInvalidSignatureS",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "EIP712ExpiredSignature",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "EIP712InvalidSignature",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "FailedInnerCall",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "account",
+                "type": "address"
+            }
+        ],
+        "name": "TokenHolderUnauthorizedAccount",
+        "type": "error"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "uint256",
+                "name": "auctionId",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "enum IAuctionHouse.CompletionWay",
+                "name": "way",
+                "type": "uint8"
+            }
+        ],
+        "name": "Completed",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "uint256",
+                "name": "auctionId",
+                "type": "uint256"
+            },
+            {
+                "indexed": true,
+                "internalType": "uint256",
+                "name": "tokenId",
+                "type": "uint256"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "seller",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "asset",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "price",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "step",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "startTime",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "endTime",
+                "type": "uint256"
+            }
+        ],
+        "name": "Created",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "uint256",
+                "name": "auctionId",
+                "type": "uint256"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "buyer",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "price",
+                "type": "uint256"
+            }
+        ],
+        "name": "Raised",
+        "type": "event"
+    },
+    {
+        "inputs": [],
+        "name": "AUCTION_PERMIT_TYPE_HASH",
+        "outputs": [
+            {
+                "internalType": "bytes32",
+                "name": "",
+                "type": "bytes32"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "AUCTION_SIGNER",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "PLATFORM",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "TOKEN",
+        "outputs": [
+            {
+                "internalType": "contract IERC721",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "auctionId",
+                "type": "uint256"
+            }
+        ],
+        "name": "auction",
+        "outputs": [
+            {
+                "components": [
+                    {
+                        "internalType": "uint256",
+                        "name": "tokenId",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "seller",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "buyer",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "asset",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "price",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "step",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "penalty",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "platformFee",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "startTime",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "endTime",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "bool",
+                        "name": "completed",
+                        "type": "bool"
+                    },
+                    {
+                        "internalType": "address[]",
+                        "name": "participants",
+                        "type": "address[]"
+                    },
+                    {
+                        "internalType": "uint256[]",
+                        "name": "shares",
+                        "type": "uint256[]"
+                    }
+                ],
+                "internalType": "struct IAuctionHouse.Auction",
+                "name": "",
+                "type": "tuple"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "auctionsCount",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "count",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "auctionId",
+                "type": "uint256"
+            }
+        ],
+        "name": "buy",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "operator",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "from",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "tokenId",
+                "type": "uint256"
+            },
+            {
+                "internalType": "bytes",
+                "name": "data",
+                "type": "bytes"
+            }
+        ],
+        "name": "onERC721Received",
+        "outputs": [
+            {
+                "internalType": "bytes4",
+                "name": "",
+                "type": "bytes4"
+            }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "auctionId",
+                "type": "uint256"
+            }
+        ],
+        "name": "raise",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "auctionId",
+                "type": "uint256"
+            },
+            {
+                "internalType": "bool",
+                "name": "",
+                "type": "bool"
+            }
+        ],
+        "name": "raise",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "auctionId",
+                "type": "uint256"
+            }
+        ],
+        "name": "take",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "auctionId",
+                "type": "uint256"
+            }
+        ],
+        "name": "unlock",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function"
+    }
+]

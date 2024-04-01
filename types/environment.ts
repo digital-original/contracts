@@ -7,6 +7,7 @@ export type WalletConfig = {
 
 export type UpgradeableContractConfig = {
     proxy: string;
+    impl: string;
     admin: string;
 };
 
@@ -15,13 +16,14 @@ export type ChainConfig = {
         deployer: WalletConfig;
         proxyAdminOwner: WalletConfig;
         minter: WalletConfig;
+        auctionSigner: WalletConfig;
         marketSigner: WalletConfig;
         platform: WalletConfig;
     };
     contracts: {
-        token: UpgradeableContractConfig;
+        artToken: UpgradeableContractConfig;
         market: UpgradeableContractConfig;
-        auction: UpgradeableContractConfig;
+        auctionHouse: UpgradeableContractConfig;
     };
 };
 

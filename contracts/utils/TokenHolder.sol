@@ -16,7 +16,10 @@ abstract contract TokenHolder is IERC721Receiver {
      * @dev Throws if called by any account other than the minter.
      */
     modifier onlyToken() {
-        if (msg.sender != address(TOKEN)) revert TokenHolderUnauthorizedAccount(msg.sender);
+        if (msg.sender != address(TOKEN)) {
+            revert TokenHolderUnauthorizedAccount(msg.sender);
+        }
+
         _;
     }
 
@@ -51,12 +54,11 @@ abstract contract TokenHolder is IERC721Receiver {
     /**
      * @dev Transfers token `tokenId` from `from` to `to`.
      *
-     * @param from Address from.
      * @param to Address to.
      * @param tokenId Token ID, token must be owned by `from`.
      */
-    function _transferToken(address from, address to, uint256 tokenId) internal {
-        TOKEN.transferFrom(from, to, tokenId);
+    function _transferToken(address to, uint256 tokenId) internal {
+        TOKEN.transferFrom(address(this), to, tokenId);
     }
 
     /**
@@ -68,9 +70,4 @@ abstract contract TokenHolder is IERC721Receiver {
      * @param data Depends on implementation.
      */
     function _onReceived(address operator, address from, uint256 tokenId, bytes calldata data) internal virtual;
-
-    /**
-     * @dev This empty reserved space.
-     */
-    uint256[20] private __gap;
 }

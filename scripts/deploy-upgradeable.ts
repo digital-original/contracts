@@ -5,6 +5,7 @@ interface Params {
     implName: string;
     implConstructorArgs: ContractConstructorArgs;
     proxyAdminOwnerAddr: AddressParam;
+    initialize?: boolean;
 }
 
 export async function deployUpgradeable(params: Params, deployer?: Signer) {
@@ -21,10 +22,13 @@ export async function deployUpgradeable(params: Params, deployer?: Signer) {
 
     const proxyName = `TransparentUpgradeableProxy`;
     const proxyAdminOwner = params.proxyAdminOwnerAddr;
+    const initializationData = params.initialize
+        ? impl.interface.encodeFunctionData('initialize')
+        : new Uint8Array(0);
     const proxyConstructorArgs: ContractConstructorArgs = [
         impl,
         proxyAdminOwner,
-        new Uint8Array(0),
+        initializationData,
     ];
 
     const proxy = await deployClassic(

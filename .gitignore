@@ -11,6 +11,6 @@ artifacts
 
 venv
 docs
-config.json
+config.yaml
 
 TODO.md
