@@ -10,7 +10,7 @@ abstract contract ArtTokenBase is ERC721Enumerable, ERC721URIStorage {
         __ERC721_init(_name, _symbol);
     }
 
-    function _mintAndSetTokenUri(address to, uint256 tokenId, string memory _tokenURI) internal {
+    function _mintAndSetTokenURI(address to, uint256 tokenId, string memory _tokenURI) internal {
         _mint(to, tokenId);
         _setTokenURI(tokenId, _tokenURI);
     }

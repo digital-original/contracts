@@ -1,4 +1,4 @@
-export type AuctionPermitStruct = {
+export type CreatePermitStruct = {
     auctionId: bigint;
     tokenId: bigint;
     tokenURI: string;

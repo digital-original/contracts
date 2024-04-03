@@ -14,6 +14,7 @@ import {IArtToken} from "./IArtToken.sol";
  * @notice Token is ERC721(Enumerable, URIStorage) contract.
  * @notice Contract based on [OpenZeppelin](https://docs.openzeppelin.com/) library.
  */
+// TODO: Implement blacklist logic for unreliable markets
 contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
     using SafeERC20 for IERC20;
 
@@ -74,7 +75,7 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
      * @param _tokenURI Token metadata uri.
      */
     function mint(address to, uint256 tokenId, string memory _tokenURI) external canMint {
-        _mintAndSetTokenUri(to, tokenId, _tokenURI);
+        _mintAndSetTokenURI(to, tokenId, _tokenURI);
     }
 
     function buy(BuyParams calldata params) external {
@@ -107,17 +108,6 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
             USDC.safeTransfer(PLATFORM, params.fee);
         }
 
-        _mintAndSetTokenUri(msg.sender, params.tokenId, params.tokenURI);
-    }
-
-    /**
-     * @dev Hook that is called during any token transfer.
-     */
-    function _update(address to, uint256 tokenId, address auth) internal override(ArtTokenBase) returns (address) {
-        if (to.code.length != 0) {
-            revert ArtTokenNotTrustedReceiver(to);
-        }
-
-        return ArtTokenBase._update(to, tokenId, auth);
+        _mintAndSetTokenURI(msg.sender, params.tokenId, params.tokenURI);
     }
 }

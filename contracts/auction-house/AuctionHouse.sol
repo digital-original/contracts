@@ -36,7 +36,7 @@ contract AuctionHouse is IAuctionHouse, EIP712 {
 
     modifier auctionExists(uint256 auctionId) {
         if (!_auctionExists(auctionId)) {
-            revert AuctionHouseAuctionNotExist();
+            revert AuctionHouseAuctionNotExist(auctionId);
         }
 
         _;
@@ -44,7 +44,7 @@ contract AuctionHouse is IAuctionHouse, EIP712 {
 
     modifier auctionNotExist(uint256 auctionId) {
         if (_auctionExists(auctionId)) {
-            revert AuctionHouseAuctionExists();
+            revert AuctionHouseAuctionExists(auctionId);
         }
 
         _;
@@ -52,7 +52,9 @@ contract AuctionHouse is IAuctionHouse, EIP712 {
 
     modifier auctionEnded(uint256 auctionId) {
         if (!_auctionEnded(auctionId)) {
-            revert AuctionHouseAuctionNotEnded();
+            AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
+
+            revert AuctionHouseAuctionNotEnded(auctionId, block.timestamp, $.auctions[auctionId].endTime);
         }
 
         _;
@@ -60,7 +62,9 @@ contract AuctionHouse is IAuctionHouse, EIP712 {
 
     modifier auctionNotEnded(uint256 auctionId) {
         if (_auctionEnded(auctionId)) {
-            revert AuctionHouseAuctionEnded();
+            AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
+
+            revert AuctionHouseAuctionEnded(auctionId, block.timestamp, $.auctions[auctionId].endTime);
         }
 
         _;
@@ -70,7 +74,7 @@ contract AuctionHouse is IAuctionHouse, EIP712 {
         AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
 
         if ($.auctions[auctionId].sold) {
-            revert AuctionHouseAuctionSold();
+            revert AuctionHouseAuctionSold(auctionId);
         }
 
         _;
@@ -80,7 +84,7 @@ contract AuctionHouse is IAuctionHouse, EIP712 {
         AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
 
         if ($.auctions[auctionId].buyer == address(0)) {
-            revert AuctionHouseBuyerNotExists();
+            revert AuctionHouseBuyerNotExists(auctionId);
         }
 
         _;
@@ -90,7 +94,7 @@ contract AuctionHouse is IAuctionHouse, EIP712 {
         AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
 
         if ($.auctions[auctionId].buyer != address(0)) {
-            revert AuctionHouseBuyerExists();
+            revert AuctionHouseBuyerExists(auctionId, $.auctions[auctionId].buyer);
         }
 
         _;
@@ -114,8 +118,8 @@ contract AuctionHouse is IAuctionHouse, EIP712 {
                 params.fee,
                 params.step,
                 params.endTime,
-                params.participants,
-                params.shares,
+                keccak256(abi.encodePacked(params.participants)),
+                keccak256(abi.encodePacked(params.shares)),
                 params.deadline
             )
         );
@@ -124,17 +128,19 @@ contract AuctionHouse is IAuctionHouse, EIP712 {
 
         _requireValidEndTime(params.endTime);
 
+        Distribution.requireValidConditions(params.participants, params.shares);
+
         AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
 
         $.auctions[params.auctionId] = Auction({
             tokenId: params.tokenId,
-            tokenURI: params.tokenURI,
-            buyer: address(0),
             price: params.price,
             fee: params.fee,
             step: params.step,
             endTime: params.endTime,
+            buyer: address(0),
             sold: false,
+            tokenURI: params.tokenURI,
             participants: params.participants,
             shares: params.shares
         });
@@ -142,37 +148,33 @@ contract AuctionHouse is IAuctionHouse, EIP712 {
         emit Created(params.auctionId, params.tokenId, params.price, params.endTime);
     }
 
-    function raise(
+    function raiseInitial(
         uint256 auctionId,
-        uint256 price,
-        bool /* initial */
+        uint256 price
     ) external auctionNotEnded(auctionId) withoutBuyer(auctionId) {
         AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
 
         _requireValidRaise(price, $.auctions[auctionId].price, 0);
 
+        _raise(auctionId, msg.sender, price);
+
         USDC.safeTransferFrom(msg.sender, address(this), price + $.auctions[auctionId].fee);
-
-        _updateAuction(auctionId, msg.sender, price);
-
-        emit Raised(auctionId, msg.sender, price);
     }
 
     function raise(uint256 auctionId, uint256 price) external auctionNotEnded(auctionId) withBuyer(auctionId) {
         AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
 
         uint256 oldPrice = $.auctions[auctionId].price;
+        address oldBuyer = $.auctions[auctionId].buyer;
 
         _requireValidRaise(price, oldPrice, $.auctions[auctionId].step);
+
+        _raise(auctionId, msg.sender, price);
 
         uint256 fee = $.auctions[auctionId].fee;
 
         USDC.safeTransferFrom(msg.sender, address(this), price + fee);
-        USDC.safeTransfer($.auctions[auctionId].buyer, oldPrice + fee);
-
-        _updateAuction(auctionId, msg.sender, price);
-
-        emit Raised(auctionId, msg.sender, price);
+        USDC.safeTransfer(oldBuyer, oldPrice + fee);
     }
 
     function finish(uint256 auctionId) external auctionEnded(auctionId) notSold(auctionId) withBuyer(auctionId) {
@@ -214,20 +216,22 @@ contract AuctionHouse is IAuctionHouse, EIP712 {
 
     function _requireValidEndTime(uint256 endTime) private view {
         if (endTime <= block.timestamp) {
-            revert AuctionHouseInvalidEndTime();
+            revert AuctionHouseInvalidEndTime(block.timestamp, endTime);
         }
     }
 
     function _requireValidRaise(uint256 newPrice, uint256 oldPrice, uint256 step) private pure {
         if (newPrice < oldPrice + step) {
-            revert AuctionHouseRaiseTooSmall();
+            revert AuctionHouseRaiseTooSmall(oldPrice + step, newPrice);
         }
     }
 
-    function _updateAuction(uint256 auctionId, address buyer, uint256 price) private {
+    function _raise(uint256 auctionId, address buyer, uint256 price) private {
         AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
 
         $.auctions[auctionId].buyer = buyer;
         $.auctions[auctionId].price = price;
+
+        emit Raised(auctionId, buyer, price);
     }
 }

@@ -20,5 +20,4 @@ interface IArtToken {
     function buy(BuyParams calldata params) external;
 
     error ArtTokenUnauthorizedAccount(address account);
-    error ArtTokenNotTrustedReceiver(address account);
 }

@@ -1,5 +1,5 @@
 export type BuyPermitStruct = {
-    tokenId: number;
+    tokenId: bigint;
     tokenURI: string;
     price: bigint;
     fee: bigint;

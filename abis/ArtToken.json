@@ -55,17 +55,6 @@
                 "type": "address"
             }
         ],
-        "name": "ArtTokenNotTrustedReceiver",
-        "type": "error"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "account",
-                "type": "address"
-            }
-        ],
         "name": "ArtTokenUnauthorizedAccount",
         "type": "error"
     },

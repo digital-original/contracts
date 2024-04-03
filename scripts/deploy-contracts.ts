@@ -17,10 +17,10 @@ type Params = {
 // prettier-ignore
 export async function deployContracts(params: Params, deployer?: Signer) {
     const {
-        proxyAdminOwner: proxyAdminOwnerAddr,
-        admin: adminAddr,
-        platform: platformAddr,
-        usdc: usdcAddr,
+        proxyAdminOwner,
+        admin,
+        platform,
+        usdc,
     } = params;
 
     const { ethers } = await import('hardhat');
@@ -28,7 +28,7 @@ export async function deployContracts(params: Params, deployer?: Signer) {
     const deployerContract = await deployClassic(
         {
             name: 'Deployer',
-            constructorArgs: [proxyAdminOwnerAddr, adminAddr, platformAddr, usdcAddr],
+            constructorArgs: [proxyAdminOwner, admin, platform, usdc],
         },
         deployer,
     );
@@ -88,20 +88,18 @@ export async function deployContracts(params: Params, deployer?: Signer) {
     return {
         receipt,
 
+        artToken,
         artTokenAddr,
-        artTokenImplAddr,
+        artTokenProxyAdmin,
         artTokenProxyAdminAddr,
         artTokenProxyAdminOwner,
-
-        artToken,
-        artTokenProxyAdmin,
-
-        auctionHouseAddr,
-        auctionHouseImplAddr,
-        auctionHouseProxyAdminAddr,
-        auctionHouseProxyAdminOwner,
+        artTokenImplAddr,
 
         auctionHouse,
+        auctionHouseAddr,
         auctionHouseProxyAdmin,
+        auctionHouseProxyAdminAddr,
+        auctionHouseProxyAdminOwner,
+        auctionHouseImplAddr,
     };
 }

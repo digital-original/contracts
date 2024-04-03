@@ -1,16 +1,16 @@
 import { TypedDataDomain } from 'ethers';
 import { Signer } from '../../types/environment';
-import { AuctionPermitStruct } from '../../types/auction-house';
+import { CreatePermitStruct } from '../../types/auction-house';
 import {
     AUCTION_HOUSE_DOMAIN_NAME,
     AUCTION_HOUSE_DOMAIN_VERSION,
-    AUCTION_PERMIT_TYPE,
+    CREATE_PERMIT_TYPE,
 } from '../../constants/auction-house';
 
-export function signAuctionPermit(
+export function signCreatePermit(
     chainId: number,
     verifyingContract: string,
-    value: AuctionPermitStruct,
+    value: CreatePermitStruct,
     signer: Signer,
 ) {
     const domain: TypedDataDomain = {
@@ -20,5 +20,5 @@ export function signAuctionPermit(
         verifyingContract,
     };
 
-    return signer.signTypedData(domain, AUCTION_PERMIT_TYPE, value);
+    return signer.signTypedData(domain, CREATE_PERMIT_TYPE, value);
 }

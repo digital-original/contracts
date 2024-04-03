@@ -14,13 +14,13 @@ interface IAuctionHouse {
 
     struct Auction {
         uint256 tokenId;
-        string tokenURI;
-        address buyer;
         uint256 price;
         uint256 fee;
         uint256 step;
         uint256 endTime;
+        address buyer;
         bool sold;
+        string tokenURI;
         address[] participants;
         uint256[] shares;
     }
@@ -56,7 +56,7 @@ interface IAuctionHouse {
 
     function create(CreateParams calldata params) external;
 
-    function raise(uint256 auctionId, uint256 price, bool initial) external;
+    function raiseInitial(uint256 auctionId, uint256 price) external;
 
     function raise(uint256 auctionId, uint256 price) external;
 
@@ -64,15 +64,15 @@ interface IAuctionHouse {
 
     function auction(uint256 auctionId) external view returns (Auction memory);
 
-    error AuctionHouseInvalidEndTime();
+    error AuctionHouseInvalidEndTime(uint256 currentTime, uint256 givenTime);
 
-    error AuctionHouseBuyerExists();
-    error AuctionHouseBuyerNotExists();
-    error AuctionHouseAuctionExists();
-    error AuctionHouseAuctionNotExist();
-    error AuctionHouseAuctionEnded();
-    error AuctionHouseAuctionNotEnded();
-    error AuctionHouseAuctionSold();
+    error AuctionHouseBuyerExists(uint256 auctionId, address buyer);
+    error AuctionHouseBuyerNotExists(uint256 auctionId);
+    error AuctionHouseAuctionExists(uint256 auctionId);
+    error AuctionHouseAuctionNotExist(uint256 auctionId);
+    error AuctionHouseAuctionEnded(uint256 auctionId, uint256 currentTime, uint256 endTime);
+    error AuctionHouseAuctionNotEnded(uint256 auctionId, uint256 currentTime, uint256 endTime);
+    error AuctionHouseAuctionSold(uint256 auctionId);
 
-    error AuctionHouseRaiseTooSmall();
+    error AuctionHouseRaiseTooSmall(uint256 minNeededAmount, uint256 givenAmount);
 }

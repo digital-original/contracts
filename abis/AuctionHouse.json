@@ -48,48 +48,147 @@
         "type": "error"
     },
     {
-        "inputs": [],
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "auctionId",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "currentTime",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "endTime",
+                "type": "uint256"
+            }
+        ],
         "name": "AuctionHouseAuctionEnded",
         "type": "error"
     },
     {
-        "inputs": [],
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "auctionId",
+                "type": "uint256"
+            }
+        ],
         "name": "AuctionHouseAuctionExists",
         "type": "error"
     },
     {
-        "inputs": [],
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "auctionId",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "currentTime",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "endTime",
+                "type": "uint256"
+            }
+        ],
         "name": "AuctionHouseAuctionNotEnded",
         "type": "error"
     },
     {
-        "inputs": [],
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "auctionId",
+                "type": "uint256"
+            }
+        ],
         "name": "AuctionHouseAuctionNotExist",
         "type": "error"
     },
     {
-        "inputs": [],
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "auctionId",
+                "type": "uint256"
+            }
+        ],
         "name": "AuctionHouseAuctionSold",
         "type": "error"
     },
     {
-        "inputs": [],
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "auctionId",
+                "type": "uint256"
+            },
+            {
+                "internalType": "address",
+                "name": "buyer",
+                "type": "address"
+            }
+        ],
         "name": "AuctionHouseBuyerExists",
         "type": "error"
     },
     {
-        "inputs": [],
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "auctionId",
+                "type": "uint256"
+            }
+        ],
         "name": "AuctionHouseBuyerNotExists",
         "type": "error"
     },
     {
-        "inputs": [],
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "currentTime",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "givenTime",
+                "type": "uint256"
+            }
+        ],
         "name": "AuctionHouseInvalidEndTime",
         "type": "error"
     },
     {
-        "inputs": [],
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "minNeededAmount",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "givenAmount",
+                "type": "uint256"
+            }
+        ],
         "name": "AuctionHouseRaiseTooSmall",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "DistributionInvalidSharesCount",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "DistributionInvalidSharesSum",
         "type": "error"
     },
     {
@@ -297,16 +396,6 @@
                         "type": "uint256"
                     },
                     {
-                        "internalType": "string",
-                        "name": "tokenURI",
-                        "type": "string"
-                    },
-                    {
-                        "internalType": "address",
-                        "name": "buyer",
-                        "type": "address"
-                    },
-                    {
                         "internalType": "uint256",
                         "name": "price",
                         "type": "uint256"
@@ -327,9 +416,19 @@
                         "type": "uint256"
                     },
                     {
+                        "internalType": "address",
+                        "name": "buyer",
+                        "type": "address"
+                    },
+                    {
                         "internalType": "bool",
                         "name": "sold",
                         "type": "bool"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "tokenURI",
+                        "type": "string"
                     },
                     {
                         "internalType": "address[]",
@@ -462,14 +561,9 @@
                 "internalType": "uint256",
                 "name": "price",
                 "type": "uint256"
-            },
-            {
-                "internalType": "bool",
-                "name": "",
-                "type": "bool"
             }
         ],
-        "name": "raise",
+        "name": "raiseInitial",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"

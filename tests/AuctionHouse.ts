@@ -1,319 +1,250 @@
 import { expect } from 'chai';
 import { ethers } from 'ethers';
-import { ArtTokenMock, AuctionHouse } from '../typechain-types';
+import { ArtToken, AuctionHouse, USDC } from '../typechain-types';
 import { setNextBlockTimestamp } from '@nomicfoundation/hardhat-network-helpers/dist/src/helpers/time';
 import { Signer } from '../types/environment';
-import { deployArtTokenMock } from './utils/deploy-art-token-mock';
 import { getChainId } from './utils/get-chain-id';
 import { getSigners } from './utils/get-signers';
-import { signAuctionPermit } from './utils/sign-auction-house-create-permit';
-import { AuctionPermitStruct, AuctionRaisePermitStruct } from '../types/auction-house';
-import { encodeAuctionHouseCreateParams } from './utils/encode-auction-house-create-params';
 import { TOTAL_SHARE } from '../constants/distribution';
-import { getSigDeadline } from './utils/get-sig-deadline';
-import { deployAuctionHouseUpgradeable } from './utils/deploy-auction-house-upgradeable';
+import { getValidDeadline } from './utils/get-valid-deadline';
 import { getLatestBlockTimestamp } from './utils/get-latest-block-timestamp';
-import { signAuctionRaisePermit } from './utils/sign-auction-raise-permit';
+import { deployContracts } from '../scripts/deploy-contracts';
+import { deployUsdc } from './utils/deploy-usdc';
+import { CreatePermitStruct } from '../types/auction-house';
+import { signCreatePermit } from './utils/sign-auction-house-create-permit';
 
 describe('AuctionHouse', function () {
     let auctionHouse: AuctionHouse, auctionHouseAddr: string;
+    let artToken: ArtToken, artTokenAddr: string;
+    let usdc: USDC, usdcAddr: string;
 
     let chainId: number;
 
+    let proxyAdminOwner: Signer, proxyAdminOwnerAddr: string;
+    let admin: Signer, adminAddr: string;
     let platform: Signer, platformAddr: string;
-    let auctionSigner: Signer, auctionSignerAddr: string;
-    let seller: Signer, sellerAddr: string;
+    let partner: Signer, partnerAddr: string;
     let buyer: Signer, buyerAddr: string;
     let randomAccount: Signer, randomAccountAddr: string;
-
-    let tokenMock: ArtTokenMock, tokenMockAddr: string;
 
     before(async () => {
         chainId = await getChainId();
 
+        [usdc, usdcAddr] = await deployUsdc();
+
         [
-            [platform, auctionSigner, seller, buyer, randomAccount],
-            [platformAddr, auctionSignerAddr, sellerAddr, buyerAddr, randomAccountAddr],
+            [proxyAdminOwner, admin, platform, partner, buyer, buyer, randomAccount],
+            [
+                proxyAdminOwnerAddr,
+                adminAddr,
+                platformAddr,
+                partnerAddr,
+                buyerAddr,
+                buyerAddr,
+                randomAccountAddr,
+            ],
         ] = await getSigners();
-
-        [tokenMock, tokenMockAddr] = await deployArtTokenMock();
     });
-
-    let blockTimestamp: number;
-
-    let tokenId: bigint;
-    let price: bigint;
-    let step: bigint;
-    let penalty: bigint;
-    let startTime: number;
-    let endTime: number;
-    let deadline: number;
-    let participants: string[];
-    let shares: bigint[];
-
-    let fee: bigint;
 
     beforeEach(async () => {
-        [[auctionHouse, auctionHouseAddr], tokenId] = await Promise.all([
-            deployAuctionHouseUpgradeable(tokenMock, platform, auctionSigner),
-            mintToken(),
+        const {
+            auctionHouse: _auctionHouse,
+            auctionHouseAddr: _auctionHouseAddr,
+            artToken: _artToken,
+            artTokenAddr: _artTokenAddr,
+        } = await deployContracts({
+            proxyAdminOwner,
+            admin,
+            platform,
+            usdc,
+        });
+
+        await Promise.all([usdc.connect(buyer).mint(), usdc.connect(randomAccount).mint()]);
+        await Promise.all([
+            usdc.connect(buyer).approve(_auctionHouse, ethers.MaxInt256),
+            usdc.connect(randomAccount).approve(_auctionHouse, ethers.MaxInt256),
         ]);
 
-        blockTimestamp = await getLatestBlockTimestamp();
-
-        price = 100000n;
-        step = 100n;
-        penalty = 500n;
-        startTime = blockTimestamp + 60 * 60;
-        endTime = blockTimestamp + 60 * 60 * 5;
-        deadline = await getSigDeadline();
-        participants = [sellerAddr, platformAddr];
-        shares = [TOTAL_SHARE / 2n, TOTAL_SHARE / 2n];
-
-        fee = 1234n;
+        auctionHouse = _auctionHouse;
+        auctionHouseAddr = _auctionHouseAddr;
+        artToken = _artToken;
+        artTokenAddr = _artTokenAddr;
     });
 
-    it(`should have correct token`, async () => {
-        await expect(auctionHouse.TOKEN()).to.eventually.equal(tokenMockAddr);
+    let auctionId: bigint;
+    let tokenId: bigint;
+    let tokenURI: string;
+    let price: bigint;
+    let fee: bigint;
+    let step: bigint;
+    let endTime: number;
+    let participants: string[];
+    let shares: bigint[];
+    let deadline: number;
+
+    beforeEach(async () => {
+        auctionId = 3n;
+        tokenId = 4n;
+        tokenURI = 'ipfs://Q...';
+        price = 54321n;
+        fee = 321n;
+        step = 111n;
+        endTime = await getValidDeadline();
+        participants = [platformAddr, partnerAddr];
+        shares = [TOTAL_SHARE / 5n, (TOTAL_SHARE / 5n) * 4n];
+        deadline = await getValidDeadline();
     });
 
-    it(`should have correct initial auction count`, async () => {
-        await expect(auctionHouse.auctionsCount()).to.eventually.equal(0n);
-    });
-
-    it(`should have correct auction signer`, async () => {
-        await expect(auctionHouse.AUCTION_SIGNER()).to.eventually.equal(auctionSignerAddr);
-    });
-
-    describe(`method 'onERC721Received'`, () => {
+    describe(`method 'create'`, () => {
         it(`should create correct auction`, async () => {
             await create();
 
-            const auction = await auctionHouse.auction(0);
+            const auction = await getAuction();
 
             expect(auction.tokenId).equal(tokenId);
-            expect(auction.seller).equal(sellerAddr);
+            expect(auction.tokenURI).equal(tokenURI);
             expect(auction.buyer).equal(ethers.ZeroAddress);
             expect(auction.price).equal(price);
+            expect(auction.fee).equal(fee);
             expect(auction.step).equal(step);
-            expect(auction.penalty).equal(penalty);
-            expect(auction.fee).equal(0n);
-            expect(auction.startTime).equal(startTime);
             expect(auction.endTime).equal(endTime);
-            expect(auction.completed).equal(false);
+            expect(auction.sold).equal(false);
             expect(auction.participants).to.deep.equal(participants);
             expect(auction.shares).to.deep.equal(shares);
         });
 
-        it(`should increase auction count`, async () => {
-            await create();
-
-            const count = await auctionHouse.auctionsCount();
-
-            expect(count).equal(1n);
-        });
-
         it(`should emit created event`, async () => {
-            await expect(create())
+            const transaction = await create();
+
+            await expect(transaction)
                 .to.be.emit(auctionHouse, 'Created')
-                .withArgs(0n, tokenId, sellerAddr, price, step, BigInt(startTime), BigInt(endTime));
-        });
-
-        it(`should fail if caller is not token contract`, async () => {
-            let [randomCaller] = await deployArtTokenMock();
-
-            await randomCaller.mint(seller, tokenId);
-
-            await expect(create({ _tokenMock: randomCaller })).to.eventually.rejectedWith(
-                'TokenHolderUnauthorizedAccount',
-            );
-        });
-
-        it(`should fail if data is wrong`, async () => {
-            const wrongTokenId = tokenId + 1n;
-
-            await expect(create({ _dataTokenId: wrongTokenId })).to.eventually.rejectedWith(
-                'AuctionHouseWrongData',
-            );
-
-            await expect(create({ _data: '0xff' })).to.eventually.rejectedWith(
-                'ERC721InvalidReceiver',
-            );
-        });
-
-        it(`should fail if signature is expired`, async () => {
-            await expect(
-                create({ _deadline: await getLatestBlockTimestamp() }),
-            ).to.eventually.rejectedWith('EIP712ExpiredSignature');
-        });
-
-        it(`should fail if signature is invalid`, async () => {
-            const wrongTokenId = tokenId + 1n;
-
-            const permit: AuctionPermitStruct = {
-                tokenId: wrongTokenId,
-                seller: sellerAddr,
-                price,
-                step,
-                penalty,
-                startTime,
-                endTime,
-                deadline,
-                participants,
-                shares,
-            };
-
-            await expect(create({ _permit: permit })).to.eventually.rejectedWith(
-                'EIP712InvalidSignature',
-            );
-        });
-
-        it(`should fail if auction signer is invalid`, async () => {
-            await expect(create({ _auctionSigner: randomAccount })).to.eventually.rejectedWith(
-                'EIP712InvalidSignature',
-            );
-        });
-
-        it(`should fail if start time bigger than end time`, async () => {
-            await expect(create({ _startTime: 20, _endTime: 10 })).to.eventually.rejectedWith(
-                'AuctionHouseInvalidStartTime',
-            );
+                .withArgs(auctionId, tokenId, price, endTime);
         });
 
         it(`should fail if end time lass than block time `, async () => {
             const blockTimestamp = await getLatestBlockTimestamp();
 
-            await expect(
-                create({ _startTime: blockTimestamp - 1, _endTime: blockTimestamp }),
-            ).to.eventually.rejectedWith('AuctionHouseInvalidEndTime');
-        });
+            const _endTime = blockTimestamp + 100;
 
-        it(`should fail if number of shares is not equal number of participants`, async () => {
-            await expect(
-                create({ _shares: [TOTAL_SHARE], _participants: [sellerAddr, platformAddr] }),
-            ).to.eventually.rejectedWith('DistributionInvalidSharesCount');
-        });
+            await setNextBlockTimestamp(_endTime);
 
-        it(`should fail if total shares is not equal maximum total share`, async () => {
-            await expect(
-                create({
-                    _shares: [TOTAL_SHARE, TOTAL_SHARE],
-                    _participants: [sellerAddr, platformAddr],
-                }),
-            ).to.eventually.rejectedWith('DistributionInvalidSharesSum');
-        });
-
-        it(`should fail if shares and participants are empty`, async () => {
-            await expect(
-                create({
-                    _shares: [],
-                    _participants: [],
-                }),
-            ).to.eventually.rejectedWith('DistributionInvalidSharesSum');
-        });
-    });
-
-    describe(`method 'raise' initial`, () => {
-        beforeEach(create);
-
-        it(`should set buyer and fee if new price is equal initial price and payment includes fee`, async () => {
-            await start();
-            await raiseInitial();
-
-            const auction = await auctionHouse.auction(0);
-
-            expect(auction.buyer).equal(buyerAddr);
-            expect(auction.fee).equal(fee);
-            expect(auction.price).equal(price);
-        });
-
-        it(`should set buyer, price and fee if new price is more than initial price and payment is correct`, async () => {
-            const _price = price + 1n;
-
-            await start();
-            await raiseInitial({ _price });
-
-            const auction = await auctionHouse.auction(0);
-
-            expect(auction.buyer).equal(buyerAddr);
-            expect(auction.fee).equal(fee);
-            expect(auction.price).equal(_price);
-        });
-
-        it(`should increase contract balance by price plus fee`, async () => {
-            await start();
-
-            await expect(() => raiseInitial()).to.be.changeEtherBalances(
-                [buyer, auctionHouse],
-                [(price + fee) * -1n, price + fee],
+            await expect(create({ _endTime })).to.eventually.rejectedWith(
+                'AuctionHouseInvalidEndTime',
             );
         });
 
-        it(`should emit raised event`, async () => {
-            await start();
+        it(`should fail if auction already exists `, async () => {
+            await create();
 
-            await expect(raiseInitial())
+            await expect(create()).to.eventually.rejectedWith('AuctionHouseAuctionExists');
+        });
+
+        describe(`permit logic`, () => {
+            it(`should fail if permit signer is not admin`, async () => {
+                const _admin = randomAccount;
+
+                await expect(create({ _admin })).to.be.rejectedWith('EIP712InvalidSignature');
+            });
+
+            it(`should fail if permit is expired`, async () => {
+                const _deadline = await getLatestBlockTimestamp();
+
+                expect(create({ _deadline })).to.be.rejectedWith('EIP712ExpiredSignature');
+            });
+        });
+
+        describe(`distribution logic`, () => {
+            it(`should fail if number of shares is not equal number of participants`, async () => {
+                const _participants = [platformAddr];
+                const _shares = [TOTAL_SHARE / 2n, TOTAL_SHARE / 2n];
+
+                await expect(create({ _participants, _shares })).to.be.rejectedWith(
+                    'DistributionInvalidSharesCount',
+                );
+            });
+
+            it(`should fail if total shares is not equal TOTAL_SHARE`, async () => {
+                const _participants = [platformAddr, partnerAddr];
+                const _shares = [TOTAL_SHARE, 1n];
+
+                await expect(create({ _participants, _shares })).to.be.rejectedWith(
+                    'DistributionInvalidSharesSum',
+                );
+            });
+
+            it(`should fail if shares and participants are empty`, async () => {
+                const _participants: string[] = [];
+                const _shares: bigint[] = [];
+
+                await expect(create({ _participants, _shares })).to.be.rejectedWith(
+                    'DistributionInvalidSharesSum',
+                );
+            });
+        });
+    });
+
+    describe(`method 'raiseInitial'`, () => {
+        beforeEach(async () => {
+            await create();
+            auctionHouse = auctionHouse.connect(buyer);
+        });
+
+        it(`should set buyer if new price is equal initial price`, async () => {
+            await raiseInitial();
+
+            const auction = await getAuction();
+
+            expect(auction.buyer).equal(buyerAddr);
+            expect(auction.price).equal(price);
+        });
+
+        it(`should set buyer and change price if new price is more than initial price`, async () => {
+            const _price = price + 1n;
+
+            await raiseInitial({ _price });
+
+            const auction = await getAuction();
+
+            expect(auction.buyer).equal(buyerAddr);
+            expect(auction.price).equal(_price);
+        });
+
+        it(`should emit raised event`, async () => {
+            const transaction = await raiseInitial();
+
+            await expect(transaction)
                 .to.be.emit(auctionHouse, 'Raised')
-                .withArgs(0n, buyerAddr, price);
+                .withArgs(auctionId, buyerAddr, price);
+        });
+
+        it(`should transfer price and fee from buyer to contract`, async () => {
+            const transaction = await raiseInitial();
+
+            await expect(transaction)
+                .to.be.emit(usdc, 'Transfer')
+                .withArgs(buyerAddr, auctionHouseAddr, price + fee);
         });
 
         it(`should fail if new price is less than initial price`, async () => {
-            await start();
+            const _price = price - 1n;
 
-            await expect(raiseInitial({ _price: price - 1n })).to.eventually.rejectedWith(
+            await expect(raiseInitial({ _price })).to.eventually.rejectedWith(
                 'AuctionHouseRaiseTooSmall',
             );
         });
 
-        it(`should fail if payment is not equal price plus fee`, async () => {
-            await start();
-
-            await expect(raiseInitial({ _value: price })).to.eventually.rejectedWith(
-                'AuctionHouseWrongPayment',
-            );
-        });
-
-        it(`should fail if signature is expired`, async () => {
-            await start();
-
-            await expect(
-                raiseInitial({ _deadline: await getLatestBlockTimestamp() }),
-            ).to.eventually.rejectedWith('EIP712ExpiredSignature');
-        });
-
-        it(`should fail if signature is invalid`, async () => {
-            await start();
-
-            const permit: AuctionRaisePermitStruct = {
-                auctionId: 0n,
-                price: 100n,
-                fee: 100n,
-                deadline,
-            };
-
-            await expect(raiseInitial({ _permit: permit })).to.eventually.rejectedWith(
-                'EIP712InvalidSignature',
-            );
-        });
-
-        it(`should fail if auction signer is invalid`, async () => {
-            await start();
-
-            await expect(
-                raiseInitial({ _auctionSigner: randomAccount }),
-            ).to.eventually.rejectedWith('EIP712InvalidSignature');
-        });
-
         it(`should fail if auction does not exist`, async () => {
-            await expect(raiseInitial({ _auctionId: 1n })).to.eventually.rejectedWith(
+            const _auctionId = auctionId + 123n;
+
+            await expect(raiseInitial({ _auctionId })).to.eventually.rejectedWith(
                 'AuctionHouseAuctionNotExist',
             );
         });
 
-        it(`should fail if auction has not started`, async () => {
-            await expect(raiseInitial()).to.eventually.rejectedWith(
-                'AuctionHouseAuctionNotStarted',
-            );
+        it(`should fail if auction has buyer`, async () => {
+            await raiseInitial();
+
+            await expect(raiseInitial()).to.eventually.rejectedWith('AuctionHouseBuyerExists');
         });
 
         it(`should fail if auction has ended`, async () => {
@@ -321,129 +252,82 @@ describe('AuctionHouse', function () {
 
             await expect(raiseInitial()).to.eventually.rejectedWith('AuctionHouseAuctionEnded');
         });
-
-        it(`should fail if auction has buyer`, async () => {
-            await startWithBuyer();
-
-            await expect(raiseInitial({ _buyer: randomAccount })).to.eventually.rejectedWith(
-                'AuctionHouseBuyerExists',
-            );
-        });
     });
 
     describe(`method 'raise'`, () => {
-        beforeEach(create);
+        beforeEach(async () => {
+            await create();
+        });
 
-        it(`should change buyer, price and fee if new price is equal sum of old price plus step and payment includes fee`, async () => {
-            const _fee = fee + 30n;
+        it(`should change buyer and price if new price is equal sum of old price plus step`, async () => {
+            await raiseInitial({ _auctionHouse: auctionHouse.connect(randomAccount) });
+            await raise({ _auctionHouse: auctionHouse.connect(buyer) });
 
-            await startWithBuyer({ _buyer: randomAccount });
-            await raise({ _fee });
-
-            const auction = await auctionHouse.auction(0);
+            const auction = await getAuction();
 
             expect(auction.buyer).equal(buyerAddr);
             expect(auction.price).equal(price + step);
-            expect(auction.fee).equal(_fee);
         });
 
-        it(`should change buyer, price and fee if new price is more than sum of old price plus step and payment includes fee`, async () => {
-            const _price = price + step + 1n;
-            const _fee = fee + 30n;
+        it(`should change buyer and price if new price is more than sum of old price plus step`, async () => {
+            await raiseInitial({ _auctionHouse: auctionHouse.connect(randomAccount) });
 
-            await startWithBuyer({ _buyer: randomAccount });
-            await raise({ _price, _fee });
+            const _step = step + 55n;
 
-            const auction = await auctionHouse.auction(0);
+            await raise({ _step, _auctionHouse: auctionHouse.connect(buyer) });
+
+            const auction = await getAuction();
 
             expect(auction.buyer).equal(buyerAddr);
-            expect(auction.price).equal(_price);
-            expect(auction.fee).equal(_fee);
+            expect(auction.price).equal(price + _step);
         });
 
-        it(`should increase contract balance by diff new and old price, new fee and old fee`, async () => {
-            const _fee = fee + 30n;
+        it(`should transfer price and fee from buyer to contract`, async () => {
+            await raiseInitial({ _auctionHouse: auctionHouse.connect(randomAccount) });
 
-            await startWithBuyer({ _buyer: randomAccount });
+            const transaction = await raise({ _auctionHouse: auctionHouse.connect(buyer) });
 
-            await expect(() => raise({ _fee })).to.be.changeEtherBalances(
-                [buyer, auctionHouse],
-                [(price + step + _fee) * -1n, step - fee + _fee],
-            );
+            await expect(transaction)
+                .to.be.emit(usdc, 'Transfer')
+                .withArgs(buyerAddr, auctionHouseAddr, price + step + fee);
         });
 
-        it(`should transfer old price and old fee to old buyer`, async () => {
-            await startWithBuyer({ _buyer: randomAccount });
+        it(`should transfer old price and fee to old buyer`, async () => {
+            await raiseInitial({ _auctionHouse: auctionHouse.connect(randomAccount) });
 
-            await expect(() => raise()).to.be.changeEtherBalances(
-                [randomAccountAddr],
-                [price + fee],
-            );
+            const transaction = await raise({ _auctionHouse: auctionHouse.connect(buyer) });
+
+            await expect(transaction)
+                .to.be.emit(usdc, 'Transfer')
+                .withArgs(auctionHouseAddr, randomAccountAddr, price + fee);
         });
 
         it(`should emit raised event`, async () => {
-            await startWithBuyer({ _buyer: randomAccount });
+            await raiseInitial({ _auctionHouse: auctionHouse.connect(randomAccount) });
 
-            await expect(raise())
+            const transaction = await raise({ _auctionHouse: auctionHouse.connect(buyer) });
+
+            await expect(transaction)
                 .to.be.emit(auctionHouse, 'Raised')
-                .withArgs(0n, buyerAddr, price + step);
+                .withArgs(auctionId, buyerAddr, price + step);
         });
 
         it(`should fail if new price is less than sum of old price plus step`, async () => {
-            const _price = price + step - 1n;
+            await raiseInitial({ _auctionHouse: auctionHouse.connect(randomAccount) });
 
-            await startWithBuyer({ _buyer: randomAccount });
-
-            await expect(raise({ _price })).to.eventually.rejectedWith('AuctionHouseRaiseTooSmall');
-        });
-
-        it(`should fail if payment is not equal price plus fee`, async () => {
-            await startWithBuyer({ _buyer: randomAccount });
-
-            await expect(raise({ _value: price + step })).to.eventually.rejectedWith(
-                'AuctionHouseWrongPayment',
-            );
-        });
-
-        it(`should fail if signature is expired`, async () => {
-            await startWithBuyer({ _buyer: randomAccount });
+            const _step = step - 1n;
 
             await expect(
-                raise({ _deadline: await getLatestBlockTimestamp() }),
-            ).to.eventually.rejectedWith('EIP712ExpiredSignature');
-        });
-
-        it(`should fail if signature is invalid`, async () => {
-            await startWithBuyer({ _buyer: randomAccount });
-
-            const permit: AuctionRaisePermitStruct = {
-                auctionId: 0n,
-                price: 100n,
-                fee: 100n,
-                deadline,
-            };
-
-            await expect(raise({ _permit: permit })).to.eventually.rejectedWith(
-                'EIP712InvalidSignature',
-            );
-        });
-
-        it(`should fail if auction signer is invalid`, async () => {
-            await startWithBuyer({ _buyer: randomAccount });
-
-            await expect(raise({ _auctionSigner: randomAccount })).to.eventually.rejectedWith(
-                'EIP712InvalidSignature',
-            );
+                raise({ _step, _auctionHouse: auctionHouse.connect(buyer) }),
+            ).to.eventually.rejectedWith('AuctionHouseRaiseTooSmall');
         });
 
         it(`should fail if auction does not exist`, async () => {
-            await expect(raise({ _auctionId: 1n })).to.eventually.rejectedWith(
+            const _auctionId = auctionId + 123n;
+
+            await expect(raise({ _auctionId })).to.eventually.rejectedWith(
                 'AuctionHouseAuctionNotExist',
             );
-        });
-
-        it(`should fail if auction has not started`, async () => {
-            await expect(raise()).to.eventually.rejectedWith('AuctionHouseAuctionNotStarted');
         });
 
         it(`should fail if auction has ended`, async () => {
@@ -453,481 +337,210 @@ describe('AuctionHouse', function () {
         });
 
         it(`should fail if auction does not have buyer`, async () => {
-            await start();
-
             await expect(raise()).to.eventually.rejectedWith('AuctionHouseBuyerNotExists');
         });
     });
 
-    describe(`method 'take'`, async () => {
-        beforeEach(create);
-
-        it(`should mark auction as completed`, async () => {
-            await endWithBuyer();
-
-            await take();
-
-            const auction = await auctionHouse.auction(0);
-
-            expect(auction.completed).equal(true);
+    describe(`method 'finish'`, async () => {
+        beforeEach(async () => {
+            await create();
         });
 
-        it(`should transfer token to buyer`, async () => {
+        it(`should mark auction as sold`, async () => {
             await endWithBuyer();
 
-            await expect(take())
-                .to.be.emit(tokenMock, 'Transfer')
-                .withArgs(auctionHouseAddr, buyerAddr, tokenId);
+            await finish();
 
-            await expect(tokenMock.ownerOf(tokenId)).to.eventually.equal(buyerAddr);
+            const auction = await getAuction();
+
+            expect(auction.sold).equal(true);
         });
 
-        it(`should distribute rewards between participants according to shares`, async () => {
+        it(`should mint art-token for buyer`, async () => {
             await endWithBuyer();
 
-            const platformIndex = participants.findIndex((a) => a == platformAddr);
+            const transaction = await finish();
 
-            await expect(() => take()).to.be.changeEtherBalances(
-                [auctionHouse, ...participants],
-                [
-                    (price + fee) * -1n,
-                    ...shares
-                        .map((share) => (price * share) / TOTAL_SHARE)
-                        .map((value, i) => (i == platformIndex ? value + fee : value)),
-                ],
-            );
+            await Promise.all([
+                expect(transaction)
+                    .to.be.emit(artToken, 'Transfer')
+                    .withArgs(ethers.ZeroAddress, buyerAddr, tokenId),
+                expect(artToken.ownerOf(tokenId)).to.eventually.equal(buyerAddr),
+            ]);
         });
 
-        it(`should emit completed event`, async () => {
+        it(`should emit sold event`, async () => {
             await endWithBuyer();
 
-            await expect(take()).to.be.emit(auctionHouse, 'Completed').withArgs(0n, 0n);
+            const transaction = await finish();
+
+            await expect(transaction).to.be.emit(auctionHouse, 'Sold').withArgs(auctionId);
+        });
+
+        it(`should transfer fee to platform`, async () => {
+            await endWithBuyer();
+
+            const transaction = await finish();
+
+            await expect(transaction)
+                .to.be.emit(usdc, 'Transfer')
+                .withArgs(auctionHouseAddr, platformAddr, fee);
         });
 
         it(`should fail if auction does not exist`, async () => {
-            await expect(take(1n)).to.eventually.rejectedWith('AuctionHouseAuctionNotExist');
+            const _auctionId = auctionId + 123n;
+
+            await expect(finish(_auctionId)).to.eventually.rejectedWith(
+                'AuctionHouseAuctionNotExist',
+            );
         });
 
-        it(`should fail if auction has completed`, async () => {
+        it(`should fail if auction has sold`, async () => {
             await endWithBuyer();
-            await take();
+            await finish();
 
-            await expect(take()).to.eventually.rejectedWith('AuctionHouseAuctionCompleted');
+            await expect(finish()).to.eventually.rejectedWith('AuctionHouseAuctionSold');
         });
 
         it(`should fail if auction has not ended`, async () => {
-            await start();
-
-            await expect(take()).to.eventually.rejectedWith('AuctionHouseAuctionNotEnded');
+            await expect(finish()).to.eventually.rejectedWith('AuctionHouseAuctionNotEnded');
         });
 
         it(`should fail if auction does not have buyer`, async () => {
             await end();
 
-            await expect(take()).to.eventually.rejectedWith('AuctionHouseBuyerNotExists');
-        });
-    });
-
-    describe(`method 'buy'`, async () => {
-        beforeEach(create);
-
-        it(`should set new buyer`, async () => {
-            await end();
-            await buy();
-
-            const auction = await auctionHouse.auction(0);
-
-            expect(auction.buyer).equal(buyerAddr);
+            await expect(finish()).to.eventually.rejectedWith('AuctionHouseBuyerNotExists');
         });
 
-        it(`should mark auction as completed`, async () => {
-            await end();
-            await buy();
-
-            const auction = await auctionHouse.auction(0);
-
-            expect(auction.completed).equal(true);
-        });
-
-        it(`should transfer token to buyer`, async () => {
+        it(`should fail if auction does not have buyer`, async () => {
             await end();
 
-            await expect(buy())
-                .to.be.emit(tokenMock, 'Transfer')
-                .withArgs(auctionHouseAddr, buyerAddr, tokenId);
-
-            await expect(tokenMock.ownerOf(tokenId)).to.eventually.equal(buyerAddr);
+            await expect(finish()).to.eventually.rejectedWith('AuctionHouseBuyerNotExists');
         });
 
-        it(`should distribute rewards between participants according to shares`, async () => {
-            await end();
+        describe(`distribution logic`, () => {
+            it(`should distribute reward between participants according to shares`, async () => {
+                await endWithBuyer();
 
-            await expect(() => buy()).to.be.changeEtherBalances(
-                [buyer, ...participants],
-                [price * -1n, ...shares.map((share) => (price * share) / TOTAL_SHARE)],
-            );
-        });
+                const transaction = await finish();
 
-        it(`should emit completed event`, async () => {
-            await end();
-
-            await expect(buy()).to.be.emit(auctionHouse, 'Completed').withArgs(0n, 1n);
-        });
-
-        it(`should fail if sent value is not equal price`, async () => {
-            await end();
-
-            await expect(buy({ _price: price - 1n })).to.eventually.rejectedWith(
-                'AuctionHouseWrongPayment',
-            );
-            await expect(buy({ _price: price + 1n })).to.eventually.rejectedWith(
-                'AuctionHouseWrongPayment',
-            );
-        });
-
-        it(`should fail if auction does not exist`, async () => {
-            await expect(buy({ _auctionId: 1n })).to.eventually.rejectedWith(
-                'AuctionHouseAuctionNotExist',
-            );
-        });
-
-        it(`should fail if auction has completed`, async () => {
-            await endWithBuyer();
-            await take();
-
-            await expect(buy()).to.eventually.rejectedWith('AuctionHouseAuctionCompleted');
-        });
-
-        it(`should fail if auction has not ended`, async () => {
-            await start();
-
-            await expect(buy()).to.eventually.rejectedWith('AuctionHouseAuctionNotEnded');
-        });
-
-        it(`should fail if auction has buyer`, async () => {
-            await endWithBuyer();
-
-            await expect(buy()).to.eventually.rejectedWith('AuctionHouseBuyerExists');
-        });
-    });
-
-    describe(`method 'unlock'`, async () => {
-        beforeEach(create);
-
-        it(`should mark auction as completed`, async () => {
-            await end();
-
-            await unlock();
-
-            const auction = await auctionHouse.auction(0);
-
-            expect(auction.completed).equal(true);
-        });
-
-        it(`should transfer token to seller`, async () => {
-            await end();
-
-            await expect(unlock())
-                .to.be.emit(tokenMock, 'Transfer')
-                .withArgs(auctionHouseAddr, sellerAddr, tokenId);
-
-            await expect(tokenMock.ownerOf(tokenId)).to.eventually.equal(sellerAddr);
-        });
-
-        it(`should transfer penalty to platform`, async () => {
-            await end();
-
-            await expect(() => unlock({ _singer: randomAccount })).to.be.changeEtherBalances(
-                [randomAccount, platform],
-                [penalty * -1n, penalty],
-            );
-        });
-
-        it(`should emit completed event`, async () => {
-            await end();
-
-            await expect(unlock()).to.be.emit(auctionHouse, 'Completed').withArgs(0n, 2n);
-        });
-
-        it(`should fail if sent value is not equal penalty`, async () => {
-            await end();
-
-            await expect(
-                unlock({
-                    _penalty: penalty - 1n,
-                }),
-            ).to.eventually.rejectedWith('AuctionHouseWrongPayment');
-        });
-
-        it(`should fail if auction does not exist`, async () => {
-            await end();
-
-            await expect(
-                unlock({
-                    _auctionId: 1n,
-                }),
-            ).to.eventually.rejectedWith('AuctionHouseAuctionNotExist');
-        });
-
-        it(`should fail if auction has completed`, async () => {
-            await endWithBuyer();
-            await take();
-
-            await expect(unlock()).to.eventually.rejectedWith('AuctionHouseAuctionCompleted');
-        });
-
-        it(`should fail if auction has not ended`, async () => {
-            await start();
-
-            await expect(unlock()).to.eventually.rejectedWith('AuctionHouseAuctionNotEnded');
-        });
-
-        it(`should fail if auction has buyer`, async () => {
-            await endWithBuyer();
-
-            await expect(unlock()).to.eventually.rejectedWith('AuctionHouseBuyerExists');
+                expect(transaction)
+                    .to.be.emit(usdc, 'Transfer')
+                    .withArgs(artTokenAddr, participants[0], (price * shares[0]) / TOTAL_SHARE);
+                expect(transaction)
+                    .to.be.emit(usdc, 'Transfer')
+                    .withArgs(artTokenAddr, participants[1], (price * shares[1]) / TOTAL_SHARE);
+            });
         });
     });
 
     async function create(
         params: {
+            _auctionId?: bigint;
             _tokenId?: bigint;
-            _dataTokenId?: bigint;
-            _seller?: string;
+            _tokenURI?: string;
             _price?: bigint;
+            _fee?: bigint;
             _step?: bigint;
-            _penalty?: bigint;
-            _startTime?: number;
             _endTime?: number;
-            _deadline?: number;
             _participants?: string[];
             _shares?: bigint[];
-            _auctionSigner?: Signer;
-            _tokenMock?: ArtTokenMock;
-            _signer?: Signer;
-            _permit?: AuctionPermitStruct;
-            _data?: string;
+            _deadline?: number;
+            _admin?: Signer;
+            _auctionHouse?: AuctionHouse;
         } = {},
     ) {
         const {
+            _auctionId = auctionId,
             _tokenId = tokenId,
-            _dataTokenId = tokenId,
-            _seller = sellerAddr,
+            _tokenURI = tokenURI,
             _price = price,
+            _fee = fee,
             _step = step,
-            _penalty = penalty,
-            _startTime = startTime,
             _endTime = endTime,
-            _deadline = deadline,
             _participants = participants,
             _shares = shares,
-            _auctionSigner = auctionSigner,
-            _tokenMock = tokenMock,
-            _signer = seller,
-            _permit,
-            _data,
+            _deadline = deadline,
+            _admin = admin,
+            _auctionHouse = auctionHouse,
         } = params;
 
-        const permit: AuctionPermitStruct = _permit || {
+        const permit: CreatePermitStruct = {
+            auctionId: _auctionId,
             tokenId: _tokenId,
-            seller: _seller,
+            tokenURI: _tokenURI,
             price: _price,
+            fee: _fee,
             step: _step,
-            penalty: _penalty,
-            startTime: _startTime,
             endTime: _endTime,
-            deadline: _deadline,
             participants: _participants,
             shares: _shares,
+            deadline: _deadline,
         };
 
-        const signature = await signAuctionPermit(
-            chainId,
-            auctionHouseAddr,
-            permit,
-            _auctionSigner,
-        );
+        const signature = await signCreatePermit(chainId, auctionHouseAddr, permit, _admin);
 
-        const data =
-            _data ||
-            encodeAuctionHouseCreateParams(
-                _dataTokenId,
-                _seller,
-                _price,
-                _step,
-                _penalty,
-                _startTime,
-                _endTime,
-                _deadline,
-                _participants,
-                _shares,
-                signature,
-            );
-
-        return _tokenMock
-            .connect(_signer)
-            [
-                'safeTransferFrom(address,address,uint256,bytes)'
-            ](_seller, auctionHouse, _tokenId, data);
+        return _auctionHouse.create({
+            auctionId: _auctionId,
+            tokenId: _tokenId,
+            tokenURI: _tokenURI,
+            price: _price,
+            fee: _fee,
+            step: _step,
+            endTime: _endTime,
+            participants: _participants,
+            shares: _shares,
+            signature,
+            deadline: _deadline,
+        });
     }
 
     async function raiseInitial(
         params: {
             _auctionId?: bigint;
             _price?: bigint;
-            _fee?: bigint;
-            _deadline?: number;
-            _auctionSigner?: Signer;
-            _permit?: AuctionRaisePermitStruct;
-            _buyer?: Signer;
-            _value?: bigint;
+            _auctionHouse?: AuctionHouse;
         } = {},
     ) {
-        const {
-            _auctionId = 0n,
-            _price = price,
-            _fee = fee,
-            _deadline = deadline,
-            _auctionSigner = auctionSigner,
-            _buyer = buyer,
-            _value = _price + _fee,
-            _permit,
-        } = params;
+        const { _auctionId = auctionId, _price = price, _auctionHouse = auctionHouse } = params;
 
-        const permit: AuctionRaisePermitStruct = _permit || {
-            auctionId: _auctionId,
-            price: _price,
-            fee: _fee,
-            deadline: _deadline,
-        };
-
-        const signature = await signAuctionRaisePermit(
-            chainId,
-            auctionHouseAddr,
-            permit,
-            _auctionSigner,
-        );
-
-        return auctionHouse
-            .connect(_buyer)
-            [
-                'raise(uint256,uint256,uint256,uint256,bool,bytes)'
-            ](_auctionId, _price, _fee, _deadline, true, signature, { value: _value });
+        return _auctionHouse.raiseInitial(_auctionId, _price);
     }
 
     async function raise(
         params: {
             _auctionId?: bigint;
             _price?: bigint;
-            _fee?: bigint;
-            _deadline?: number;
-            _auctionSigner?: Signer;
-            _permit?: AuctionRaisePermitStruct;
-            _buyer?: Signer;
-            _value?: bigint;
+            _step?: bigint;
+            _auctionHouse?: AuctionHouse;
         } = {},
     ) {
         const {
-            _auctionId = 0n,
-            _price = price + step,
-            _fee = fee,
-            _deadline = deadline,
-            _auctionSigner = auctionSigner,
-            _buyer = buyer,
-            _value = _price + _fee,
-            _permit,
+            _auctionId = auctionId,
+            _price = price,
+            _step = step,
+            _auctionHouse = auctionHouse,
         } = params;
 
-        const permit: AuctionRaisePermitStruct = _permit || {
-            auctionId: _auctionId,
-            price: _price,
-            fee: _fee,
-            deadline: _deadline,
-        };
-
-        const signature = await signAuctionRaisePermit(
-            chainId,
-            auctionHouseAddr,
-            permit,
-            _auctionSigner,
-        );
-
-        return auctionHouse
-            .connect(_buyer)
-            [
-                'raise(uint256,uint256,uint256,uint256,bytes)'
-            ](_auctionId, _price, _fee, _deadline, signature, { value: _value });
+        return _auctionHouse.raise(_auctionId, _price + _step);
     }
 
-    async function take(auctionId = 0n) {
-        return auctionHouse.take(auctionId);
+    async function finish(_auctionId: bigint = auctionId) {
+        return auctionHouse.finish(_auctionId);
     }
 
-    async function buy(
-        params: {
-            _auctionId?: bigint;
-            _price?: bigint;
-            _buyer?: Signer;
-        } = {},
-    ) {
-        const { _auctionId = 0n, _price = price, _buyer = buyer } = params;
-
-        return auctionHouse.connect(_buyer).buy(_auctionId, { value: _price });
+    async function getAuction() {
+        return auctionHouse.auction(auctionId);
     }
 
-    async function unlock(
-        params: {
-            _auctionId?: bigint;
-            _penalty?: bigint;
-            _singer?: Signer;
-        } = {},
-    ) {
-        const { _auctionId = 0n, _penalty = penalty, _singer = randomAccount } = params;
+    async function end() {
+        const auction = await getAuction();
 
-        return auctionHouse.connect(_singer).unlock(_auctionId, { value: _penalty });
+        await setNextBlockTimestamp(auction.endTime + 1n);
     }
 
-    async function mintToken() {
-        const tokenId = await tokenMock.totalSupply();
-
-        await tokenMock.mint(seller, tokenId);
-
-        return tokenId;
-    }
-
-    async function start(auctionId = 0n) {
-        const auction = await auctionHouse.auction(auctionId);
-
-        await setNextBlockTimestamp(auction.startTime);
-    }
-
-    async function startWithBuyer(
-        params: {
-            _auctionId?: bigint;
-            _buyer?: Signer;
-        } = {},
-    ) {
-        const { _auctionId = 0n, _buyer = buyer } = params;
-
-        await start(_auctionId);
-        await raiseInitial({ _buyer });
-    }
-
-    async function endWithBuyer(
-        params: {
-            _auctionId?: bigint;
-            _buyer?: Signer;
-        } = {},
-    ) {
-        const { _auctionId = 0n, _buyer = buyer } = params;
-
-        await startWithBuyer({ _auctionId, _buyer });
-        await end(_auctionId);
-    }
-
-    async function end(auctionId = 0n) {
-        const auction = await auctionHouse.auction(auctionId);
-
-        await setNextBlockTimestamp(auction.endTime);
+    async function endWithBuyer(_buyer: Signer = buyer) {
+        await raiseInitial({ _auctionHouse: auctionHouse.connect(_buyer) });
+        await end();
     }
 });

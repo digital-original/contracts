@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "license": "UNLICENSED",
     "scripts": {
-        "test": "npm run compile && ENV_MODE=test hardhat test",
+        "test": "ENV_MODE=test hardhat test",
         "compile": "hardhat clean && hardhat compile",
         "fork": "hardhat node",
         "lint": "solhint 'contracts/**'",

@@ -33,7 +33,7 @@ abstract contract EIP712 {
         uint256 deadline,
         bytes memory signature
     ) internal view {
-        if (deadline <= block.timestamp) {
+        if (deadline < block.timestamp) {
             revert EIP712ExpiredSignature();
         }
 
