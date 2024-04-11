@@ -4,17 +4,30 @@ pragma solidity ^0.8.20;
 import {IERC20 as ERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+/**
+ * @title Distribution
+ *
+ * @notice Distribution library provides functionality to distribute reward
+ * and validate distribution conditions.
+ */
 library Distribution {
     using SafeERC20 for ERC20;
-
-    error DistributionInvalidSharesCount();
-    error DistributionInvalidSharesSum();
 
     /**
      * @dev Maximum total share.
      */
     uint256 internal constant TOTAL_SHARE = 10_000;
 
+    /**
+     * @notice Distributes reward between participants according to shares.
+     *
+     * @dev Validates conditions before distribution.
+     *
+     * @param asset ERC20 asset address.
+     * @param reward Amount to distribute.
+     * @param participants Array with participants address.
+     * @param shares Array with shares.
+     */
     function safeDistribute(
         ERC20 asset,
         uint256 reward,
@@ -26,18 +39,19 @@ library Distribution {
     }
 
     /**
-     * @dev Distributes reward between participants according to shares.
+     * @notice Distributes reward between participants according to shares.
      *
-     * @param amount Ether amount to distribute.
+     * @param asset ERC20 asset address.
+     * @param reward Amount to distribute.
      * @param participants Array with participants address.
      * @param shares Array with shares.
      */
-    function distribute(ERC20 asset, uint256 amount, address[] memory participants, uint256[] memory shares) internal {
+    function distribute(ERC20 asset, uint256 reward, address[] memory participants, uint256[] memory shares) internal {
         uint256 lastShareIndex = shares.length - 1;
         uint256 distributed;
 
         for (uint256 i = 0; i < lastShareIndex; ) {
-            uint256 value = (amount * shares[i]) / TOTAL_SHARE;
+            uint256 value = (reward * shares[i]) / TOTAL_SHARE;
 
             distributed += value;
 
@@ -49,12 +63,12 @@ library Distribution {
         }
 
         // calculates last share out of loop not to lose wei after division
-        asset.safeTransfer(participants[lastShareIndex], amount - distributed);
+        asset.safeTransfer(participants[lastShareIndex], reward - distributed);
     }
 
     /**
-     * @dev Checks that number of participants is equal number of shares,
-     *   and sum of shares is equal maximum total share. Throws if data is wrong.
+     * @notice Checks that shares count is equal participants count,
+     *   and sum of shares is equal maximum share. Throws if data is wrong.
      *
      * @param participants Array with participants address.
      * @param shares Array with shares.
@@ -78,4 +92,14 @@ library Distribution {
             revert DistributionInvalidSharesSum();
         }
     }
+
+    /**
+     * @dev Shares count is not equal participants count.
+     */
+    error DistributionInvalidSharesCount();
+
+    /**
+     * @dev Shares sum is not equal maximum share.
+     */
+    error DistributionInvalidSharesSum();
 }
