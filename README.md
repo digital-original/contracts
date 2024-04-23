@@ -2,10 +2,10 @@
 The repository contains two core smart contracts: [`ArtToken`](https://github.com/digital-original/contracts/blob/master/contracts/art-token/ArtToken.sol) and [`AuctionHouse`](https://github.com/digital-original/contracts/blob/master/contracts/auction-house/AuctionHouse.sol). Development takes place in the [Hardhat](https://hardhat.org/) environment, utilizing [OpenZeppelin](https://www.openzeppelin.com/) as the main smart contract library.
 
 ### ArtToken
-The contract provides functionality to track, transfer and sell Digital Original NFTs.
+Upgradable contract. The contract provides functionality to track, transfer and sell Digital Original NFTs.
 
 ### AuctionHouse
-AuctionHouse contract provides functionality to sell Digital Original NFTs according to auction rules.
+Upgradable contract. The contract provides functionality to sell Digital Original NFTs according to auction rules.
 
 ## Get Started
 1. Install dependencies
