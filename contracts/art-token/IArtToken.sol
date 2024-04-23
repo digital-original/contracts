@@ -38,4 +38,9 @@ interface IArtToken is IERC721 {
      * @dev The caller account is not authorized.
      */
     error ArtTokenUnauthorizedAccount(address account);
+
+    /**
+     * @dev The token receiver is not valid.
+     */
+    error ArtTokenInvalidReceiver(address receiver);
 }
