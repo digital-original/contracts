@@ -1,72 +1,80 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {EIP712} from "../utils/EIP712.sol";
 import {Distribution} from "../utils/Distribution.sol";
-import {TokenHolder} from "../utils/TokenHolder.sol";
+import {IArtToken} from "../art-token/IArtToken.sol";
 import {AuctionHouseStorage} from "./AuctionHouseStorage.sol";
 import {IAuctionHouse} from "./IAuctionHouse.sol";
 
-contract AuctionHouse is IAuctionHouse, TokenHolder, EIP712 {
-    bytes32 public constant AUCTION_PERMIT_TYPE_HASH =
-        // prettier-ignore
-        keccak256(
-            "AuctionPermit("
-                "uint256 tokenId,"
-                "address seller,"
-                "uint256 price,"
-                "uint256 step,"
-                "uint256 penalty,"
-                "uint256 startTime,"
-                "uint256 endTime,"
-                "uint256 deadline,"
-                "address[] participants,"
-                "uint256[] shares"
-            ")"
-        );
+contract AuctionHouse is IAuctionHouse, EIP712 {
+    using SafeERC20 for IERC20;
 
-    bytes32 public constant AUCTION_RAISE_PERMIT_TYPE_HASH =
+    bytes32 public constant CREATE_PERMIT_TYPE_HASH =
         // prettier-ignore
         keccak256(
-            "AuctionRaisePermit("
+            "CreatePermit("
                 "uint256 auctionId,"
+                "uint256 tokenId,"
+                "string tokenURI,"
                 "uint256 price,"
                 "uint256 fee,"
+                "uint256 step,"
+                "uint256 endTime,"
+                "address[] participants,"
+                "uint256[] shares,"
                 "uint256 deadline"
             ")"
         );
 
-    address public immutable AUCTION_SIGNER;
+    address public immutable ADMIN;
     address public immutable PLATFORM;
+    IArtToken public immutable TOKEN;
+    IERC20 public immutable USDC;
 
-    modifier auctionOngoing(uint256 auctionId) {
-        AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
-
-        _requireExist(auctionId);
-
-        if (!($.auctions[auctionId].startTime <= block.timestamp)) {
-            revert AuctionHouseAuctionNotStarted($.auctions[auctionId].startTime);
+    modifier auctionExists(uint256 auctionId) {
+        if (!_auctionExists(auctionId)) {
+            revert AuctionHouseAuctionNotExist(auctionId);
         }
 
-        if (!($.auctions[auctionId].endTime > block.timestamp)) {
-            revert AuctionHouseAuctionEnded($.auctions[auctionId].endTime);
+        _;
+    }
+
+    modifier auctionNotExist(uint256 auctionId) {
+        if (_auctionExists(auctionId)) {
+            revert AuctionHouseAuctionExists(auctionId);
         }
 
         _;
     }
 
     modifier auctionEnded(uint256 auctionId) {
-        AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
+        if (!_auctionEnded(auctionId)) {
+            AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
 
-        _requireExist(auctionId);
-
-        if ($.auctions[auctionId].completed) {
-            revert AuctionHouseAuctionCompleted();
+            revert AuctionHouseAuctionNotEnded(auctionId, block.timestamp, $.auctions[auctionId].endTime);
         }
 
-        if (!($.auctions[auctionId].endTime <= block.timestamp)) {
-            revert AuctionHouseAuctionNotEnded($.auctions[auctionId].endTime);
+        _;
+    }
+
+    modifier auctionNotEnded(uint256 auctionId) {
+        if (_auctionEnded(auctionId)) {
+            AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
+
+            revert AuctionHouseAuctionEnded(auctionId, block.timestamp, $.auctions[auctionId].endTime);
+        }
+
+        _;
+    }
+
+    modifier notSold(uint256 auctionId) {
+        AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
+
+        if ($.auctions[auctionId].sold) {
+            revert AuctionHouseAuctionSold(auctionId);
         }
 
         _;
@@ -76,7 +84,7 @@ contract AuctionHouse is IAuctionHouse, TokenHolder, EIP712 {
         AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
 
         if ($.auctions[auctionId].buyer == address(0)) {
-            revert AuctionHouseBuyerNotExists();
+            revert AuctionHouseBuyerNotExists(auctionId);
         }
 
         _;
@@ -86,285 +94,144 @@ contract AuctionHouse is IAuctionHouse, TokenHolder, EIP712 {
         AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
 
         if ($.auctions[auctionId].buyer != address(0)) {
-            revert AuctionHouseBuyerExists($.auctions[auctionId].buyer);
+            revert AuctionHouseBuyerExists(auctionId, $.auctions[auctionId].buyer);
         }
 
         _;
     }
 
-    constructor(address token, address platform, address auctionSigner) TokenHolder(token) EIP712("AuctionHouse", "1") {
+    constructor(address admin, address platform, IArtToken token, IERC20 usdc) EIP712("AuctionHouse", "1") {
+        ADMIN = admin;
         PLATFORM = platform;
-        AUCTION_SIGNER = auctionSigner;
+        TOKEN = token;
+        USDC = usdc;
     }
 
-    function raise(
-        uint256 auctionId,
-        uint256 price,
-        uint256 fee,
-        uint256 deadline,
-        bool /* initial */,
-        bytes memory signature
-    ) external payable auctionOngoing(auctionId) withoutBuyer(auctionId) {
-        _validateSignature(
-            AUCTION_SIGNER,
-            keccak256(abi.encode(AUCTION_RAISE_PERMIT_TYPE_HASH, auctionId, price, fee, deadline)),
-            deadline,
-            signature
+    function create(CreateParams calldata params) external auctionNotExist(params.auctionId) {
+        bytes32 structHash = keccak256(
+            abi.encode(
+                CREATE_PERMIT_TYPE_HASH,
+                params.auctionId,
+                params.tokenId,
+                keccak256(bytes(params.tokenURI)),
+                params.price,
+                params.fee,
+                params.step,
+                params.endTime,
+                keccak256(abi.encodePacked(params.participants)),
+                keccak256(abi.encodePacked(params.shares)),
+                params.deadline
+            )
         );
 
-        if (msg.value != price + fee) {
-            revert AuctionHouseWrongPayment(msg.value, price + fee);
-        }
+        _requireValidSignature(ADMIN, structHash, params.deadline, params.signature);
+
+        _requireValidEndTime(params.endTime);
+
+        Distribution.requireValidConditions(params.participants, params.shares);
 
         AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
 
-        if (price < $.auctions[auctionId].price) {
-            revert AuctionHouseRaiseTooSmall(price, $.auctions[auctionId].price);
-        }
+        $.auctions[params.auctionId] = Auction({
+            tokenId: params.tokenId,
+            price: params.price,
+            fee: params.fee,
+            step: params.step,
+            endTime: params.endTime,
+            buyer: address(0),
+            sold: false,
+            tokenURI: params.tokenURI,
+            participants: params.participants,
+            shares: params.shares
+        });
 
-        $.auctions[auctionId].buyer = msg.sender;
-        $.auctions[auctionId].price = price;
-        $.auctions[auctionId].fee = fee;
-
-        emit Raised(auctionId, msg.sender, price);
+        emit Created(params.auctionId, params.tokenId, params.price, params.endTime);
     }
 
-    function raise(
+    function raiseInitial(
         uint256 auctionId,
-        uint256 price,
-        uint256 fee,
-        uint256 deadline,
-        bytes memory signature
-    ) external payable auctionOngoing(auctionId) withBuyer(auctionId) {
-        _validateSignature(
-            AUCTION_SIGNER,
-            keccak256(abi.encode(AUCTION_RAISE_PERMIT_TYPE_HASH, auctionId, price, fee, deadline)),
-            deadline,
-            signature
-        );
-
-        if (msg.value != price + fee) {
-            revert AuctionHouseWrongPayment(msg.value, price + fee);
-        }
-
+        uint256 price
+    ) external auctionNotEnded(auctionId) withoutBuyer(auctionId) {
         AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
 
-        uint256 prevPrice = $.auctions[auctionId].price;
+        _requireValidRaise(price, $.auctions[auctionId].price, 0);
 
-        if (price < prevPrice + $.auctions[auctionId].step) {
-            revert AuctionHouseRaiseTooSmall(price, prevPrice + $.auctions[auctionId].step);
-        }
+        _raise(auctionId, msg.sender, price);
 
-        address prevBuyer = $.auctions[auctionId].buyer;
-        uint256 prevFee = $.auctions[auctionId].fee;
-
-        $.auctions[auctionId].buyer = msg.sender;
-        $.auctions[auctionId].price = price;
-        $.auctions[auctionId].fee = fee;
-
-        emit Raised(auctionId, msg.sender, price);
-
-        Address.sendValue(payable(prevBuyer), prevPrice + prevFee);
+        USDC.safeTransferFrom(msg.sender, address(this), price + $.auctions[auctionId].fee);
     }
 
-    function take(uint256 auctionId) external payable auctionEnded(auctionId) withBuyer(auctionId) {
+    function raise(uint256 auctionId, uint256 price) external auctionNotEnded(auctionId) withBuyer(auctionId) {
         AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
 
-        $.auctions[auctionId].completed = true;
+        uint256 oldPrice = $.auctions[auctionId].price;
+        address oldBuyer = $.auctions[auctionId].buyer;
 
-        emit Completed(auctionId, CompletionWay.Taken);
+        _requireValidRaise(price, oldPrice, $.auctions[auctionId].step);
 
-        _transferToken($.auctions[auctionId].buyer, $.auctions[auctionId].tokenId);
+        _raise(auctionId, msg.sender, price);
 
-        Address.sendValue(payable(PLATFORM), $.auctions[auctionId].fee);
+        uint256 fee = $.auctions[auctionId].fee;
+
+        USDC.safeTransferFrom(msg.sender, address(this), price + fee);
+        USDC.safeTransfer(oldBuyer, oldPrice + fee);
+    }
+
+    function finish(uint256 auctionId) external auctionEnded(auctionId) notSold(auctionId) withBuyer(auctionId) {
+        AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
+
+        $.auctions[auctionId].sold = true;
+
+        emit Sold(auctionId);
+
+        TOKEN.mint($.auctions[auctionId].buyer, $.auctions[auctionId].tokenId, $.auctions[auctionId].tokenURI);
+
+        USDC.safeTransfer(PLATFORM, $.auctions[auctionId].fee);
 
         Distribution.distribute(
+            USDC,
             $.auctions[auctionId].price,
             $.auctions[auctionId].participants,
             $.auctions[auctionId].shares
         );
     }
 
-    function buy(uint256 auctionId) external payable auctionEnded(auctionId) withoutBuyer(auctionId) {
-        AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
-
-        if (msg.value != $.auctions[auctionId].price) {
-            revert AuctionHouseWrongPayment(msg.value, $.auctions[auctionId].price);
-        }
-
-        $.auctions[auctionId].buyer = msg.sender;
-        $.auctions[auctionId].completed = true;
-
-        emit Completed(auctionId, CompletionWay.Bought);
-
-        _transferToken(msg.sender, $.auctions[auctionId].tokenId);
-
-        Distribution.distribute(msg.value, $.auctions[auctionId].participants, $.auctions[auctionId].shares);
-    }
-
-    function unlock(uint256 auctionId) external payable auctionEnded(auctionId) withoutBuyer(auctionId) {
-        AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
-
-        if (msg.value != $.auctions[auctionId].penalty) {
-            revert AuctionHouseWrongPayment(msg.value, $.auctions[auctionId].penalty);
-        }
-
-        $.auctions[auctionId].completed = true;
-
-        emit Completed(auctionId, CompletionWay.Unlocked);
-
-        _transferToken($.auctions[auctionId].seller, $.auctions[auctionId].tokenId);
-
-        Address.sendValue(payable(PLATFORM), msg.value);
-    }
-
-    function auctionsCount() external view returns (uint256 count) {
-        AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
-
-        return $.auctionsCount;
-    }
-
-    function auction(uint256 auctionId) external view returns (Auction memory) {
-        _requireExist(auctionId);
-
+    function auction(uint256 auctionId) external view auctionExists(auctionId) returns (Auction memory) {
         AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
 
         return $.auctions[auctionId];
     }
 
-    function _create(
-        uint256 tokenId,
-        address seller,
-        uint256 price,
-        uint256 step,
-        uint256 penalty,
-        uint256 startTime,
-        uint256 endTime,
-        address[] memory participants,
-        uint256[] memory shares
-    ) private {
-        if (!(startTime < endTime)) {
-            revert AuctionHouseInvalidStartTime(startTime, endTime);
-        }
-
-        if (!(endTime > block.timestamp)) {
-            revert AuctionHouseInvalidEndTime(endTime, block.timestamp);
-        }
-
-        Distribution.validateShares(participants, shares);
-
-        uint256 auctionId = _useAuctionId();
-
+    function _auctionEnded(uint256 auctionId) private view auctionExists(auctionId) returns (bool) {
         AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
 
-        $.auctions[auctionId] = Auction({
-            tokenId: tokenId,
-            seller: seller,
-            buyer: address(0),
-            price: price,
-            step: step,
-            penalty: penalty,
-            fee: 0,
-            startTime: startTime,
-            endTime: endTime,
-            participants: participants,
-            completed: false,
-            shares: shares
-        });
-
-        emit Created(auctionId, tokenId, seller, price, step, startTime, endTime);
+        return $.auctions[auctionId].endTime < block.timestamp;
     }
 
-    /**
-     * @inheritdoc TokenHolder
-     *
-     * @dev Method overrides `TokenHolder::_onReceived.`
-     *
-     * @param data AuctionData - abi.encode(
-     *     uint256   tokenId
-     *     address   seller
-     *     uint256   price
-     *     uint256   step
-     *     uint256   penalty
-     *     uint256   startTime
-     *     uint256   endTime
-     *     uint256   deadline
-     *     address[] participants
-     *     uint256[] shares
-     *     bytes     signature
-     *   ).
-     *   See `_place` method.
-     */
-    function _onReceived(
-        address /* operator */,
-        address /* from */,
-        uint256 _tokenId,
-        bytes calldata data
-    ) internal override(TokenHolder) {
-        (
-            uint256 tokenId,
-            address seller,
-            uint256 price,
-            uint256 step,
-            uint256 penalty,
-            uint256 startTime,
-            uint256 endTime,
-            uint256 deadline,
-            address[] memory participants,
-            uint256[] memory shares,
-            bytes memory signature
-        ) = abi.decode(
-                data,
-                (uint256, address, uint256, uint256, uint256, uint256, uint256, uint256, address[], uint256[], bytes)
-            );
-
-        if (tokenId != _tokenId) {
-            revert AuctionHouseWrongData();
-        }
-
-        bytes32 auctionPermitHash = keccak256(
-            abi.encode(
-                AUCTION_PERMIT_TYPE_HASH,
-                tokenId,
-                seller,
-                price,
-                step,
-                penalty,
-                startTime,
-                endTime,
-                deadline,
-                keccak256(abi.encodePacked(participants)),
-                keccak256(abi.encodePacked(shares))
-            )
-        );
-
-        _validateSignature(AUCTION_SIGNER, auctionPermitHash, deadline, signature);
-
-        _create(
-            tokenId,
-            seller,
-            price,
-            step,
-            penalty,
-            startTime,
-            endTime,
-            participants,
-            shares
-            //
-        );
-    }
-
-    function _useAuctionId() private returns (uint256) {
+    function _auctionExists(uint256 auctionId) private view returns (bool) {
         AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
 
-        return $.auctionsCount++;
+        return $.auctions[auctionId].endTime != 0;
     }
 
-    function _requireExist(uint256 auctionId) private view {
+    function _requireValidEndTime(uint256 endTime) private view {
+        if (endTime <= block.timestamp) {
+            revert AuctionHouseInvalidEndTime(block.timestamp, endTime);
+        }
+    }
+
+    function _requireValidRaise(uint256 newPrice, uint256 oldPrice, uint256 step) private pure {
+        if (newPrice < oldPrice + step) {
+            revert AuctionHouseRaiseTooSmall(oldPrice + step, newPrice);
+        }
+    }
+
+    function _raise(uint256 auctionId, address buyer, uint256 price) private {
         AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
 
-        if (!(auctionId < $.auctionsCount)) {
-            revert AuctionHouseAuctionNotExist(auctionId);
-        }
+        $.auctions[auctionId].buyer = buyer;
+        $.auctions[auctionId].price = price;
+
+        emit Raised(auctionId, buyer, price);
     }
 }

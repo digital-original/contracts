@@ -11,17 +11,16 @@ interface IAuctionHouse {
     /**
      * @dev Auction auction struct
      */
+
     struct Auction {
         uint256 tokenId;
-        address seller;
-        address buyer;
         uint256 price;
-        uint256 step;
-        uint256 penalty;
         uint256 fee;
-        uint256 startTime;
+        uint256 step;
         uint256 endTime;
-        bool completed;
+        address buyer;
+        bool sold;
+        string tokenURI;
         address[] participants;
         uint256[] shares;
     }
@@ -29,15 +28,7 @@ interface IAuctionHouse {
     /**
      * @dev Triggered when auction was placed.
      */
-    event Created(
-        uint256 indexed auctionId,
-        uint256 indexed tokenId,
-        address indexed seller,
-        uint256 price,
-        uint256 step,
-        uint256 startTime,
-        uint256 endTime
-    );
+    event Created(uint256 indexed auctionId, uint256 indexed tokenId, uint256 price, uint256 endTime);
 
     /**
      * @dev Triggered when auction price was raised.
@@ -45,57 +36,43 @@ interface IAuctionHouse {
     event Raised(uint256 indexed auctionId, address indexed buyer, uint256 price);
 
     /**
-     * @dev Triggered when auction was completed.
+     * @dev Triggered when auction was sold.
      */
-    event Completed(uint256 indexed auctionId, CompletionWay way);
+    event Sold(uint256 indexed auctionId);
 
-    enum CompletionWay {
-        Taken,
-        Bought,
-        Unlocked
+    struct CreateParams {
+        uint256 auctionId;
+        uint256 tokenId;
+        string tokenURI;
+        uint256 price;
+        uint256 fee;
+        uint256 step;
+        uint256 endTime;
+        address[] participants;
+        uint256[] shares;
+        bytes signature;
+        uint256 deadline;
     }
 
-    function raise(
-        uint256 auctionId,
-        uint256 price,
-        uint256 fee,
-        uint256 deadline,
-        bool initial,
-        bytes memory signature
-    ) external payable;
+    function create(CreateParams calldata params) external;
 
-    function raise(
-        uint256 auctionId,
-        uint256 price,
-        uint256 fee,
-        uint256 deadline,
-        bytes memory signature
-    ) external payable;
+    function raiseInitial(uint256 auctionId, uint256 price) external;
 
-    function take(uint256 auctionId) external payable;
+    function raise(uint256 auctionId, uint256 price) external;
 
-    function buy(uint256 auctionId) external payable;
-
-    function unlock(uint256 auctionId) external payable;
-
-    function auctionsCount() external view returns (uint256 count);
+    function finish(uint256 auctionId) external;
 
     function auction(uint256 auctionId) external view returns (Auction memory);
 
-    error AuctionHouseWrongData();
+    error AuctionHouseInvalidEndTime(uint256 currentTime, uint256 givenTime);
 
-    error AuctionHouseInvalidStartTime(uint256 startTime, uint256 endTime);
-    error AuctionHouseInvalidEndTime(uint256 endTime, uint256 currentTime);
-
-    error AuctionHouseBuyerExists(address buyer);
-    error AuctionHouseBuyerNotExists();
-
+    error AuctionHouseBuyerExists(uint256 auctionId, address buyer);
+    error AuctionHouseBuyerNotExists(uint256 auctionId);
+    error AuctionHouseAuctionExists(uint256 auctionId);
     error AuctionHouseAuctionNotExist(uint256 auctionId);
-    error AuctionHouseAuctionNotStarted(uint256 startTime);
-    error AuctionHouseAuctionEnded(uint256 endTime);
-    error AuctionHouseAuctionNotEnded(uint256 endTime);
-    error AuctionHouseAuctionCompleted();
+    error AuctionHouseAuctionEnded(uint256 auctionId, uint256 currentTime, uint256 endTime);
+    error AuctionHouseAuctionNotEnded(uint256 auctionId, uint256 currentTime, uint256 endTime);
+    error AuctionHouseAuctionSold(uint256 auctionId);
 
-    error AuctionHouseRaiseTooSmall(uint256 received, uint256 min);
-    error AuctionHouseWrongPayment(uint256 received, uint256 needed);
+    error AuctionHouseRaiseTooSmall(uint256 minNeededAmount, uint256 givenAmount);
 }

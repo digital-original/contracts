@@ -27,13 +27,13 @@ abstract contract EIP712 {
         HASHED_VERSION = keccak256(bytes(version));
     }
 
-    function _validateSignature(
+    function _requireValidSignature(
         address signer,
         bytes32 structHash,
         uint256 deadline,
         bytes memory signature
     ) internal view {
-        if (deadline <= block.timestamp) {
+        if (deadline < block.timestamp) {
             revert EIP712ExpiredSignature();
         }
 

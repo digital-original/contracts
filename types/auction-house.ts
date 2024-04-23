@@ -1,19 +1,12 @@
-export type AuctionPermitStruct = {
-    tokenId: bigint;
-    seller: string;
-    price: bigint;
-    step: bigint;
-    penalty: bigint;
-    startTime: number;
-    endTime: number;
-    deadline: number;
-    participants: string[];
-    shares: bigint[];
-};
-
-export type AuctionRaisePermitStruct = {
+export type CreatePermitStruct = {
     auctionId: bigint;
+    tokenId: bigint;
+    tokenURI: string;
     price: bigint;
     fee: bigint;
+    step: bigint;
+    endTime: number;
+    participants: string[];
+    shares: bigint[];
     deadline: number;
 };

@@ -1,6 +1,6 @@
 import { task } from 'hardhat/config';
-import { ChainConfig } from '../../types/environment';
-import { deployContracts } from '../../scripts/deploy-contracts';
+import { ChainConfig } from '../types/environment';
+import { deployContracts } from '../scripts/deploy-contracts';
 
 /*
 npx hardhat deploy --network fork
@@ -22,18 +22,18 @@ task('deploy').setAction(async (taskArgs: Record<string, string>, hardhat) => {
     console.groupEnd();
     console.log('-'.repeat(process.stdout.columns));
 
-    const platformAddr = config.wallets.platform.public;
-    const minterAddr = config.wallets.minter.public;
-    const auctionSignerAddr = config.wallets.auctionSigner.public;
-    const proxyAdminOwnerAddr = config.wallets.proxyAdminOwner.public;
+    const proxyAdminOwnerAddr = config.wallets!.proxyAdminOwner.public;
+    const adminAddr = config.wallets!.admin.public;
+    const platformAddr = config.wallets!.platform.public;
+    const usdcAddr = config.usdc!;
 
     console.log(`Deploying contracts...`);
     console.log(`\n`);
     console.group('Params:');
-    console.log(`platform: ${platformAddr}`);
-    console.log(`minter: ${minterAddr}`);
-    console.log(`auctionSigner: ${auctionSignerAddr}`);
     console.log(`proxyAdminOwner: ${proxyAdminOwnerAddr}`);
+    console.log(`admin: ${adminAddr}`);
+    console.log(`platform: ${platformAddr}`);
+    console.log(`usdc: ${usdcAddr}`);
     console.groupEnd();
     console.log(`\n`);
     console.log(`Transaction broadcasting...`);
@@ -50,13 +50,11 @@ task('deploy').setAction(async (taskArgs: Record<string, string>, hardhat) => {
         auctionHouseImplAddr,
         auctionHouseProxyAdminAddr,
         auctionHouseProxyAdminOwner,
-
-        collabTokenAddr,
     } = await deployContracts({
-        platform: platformAddr,
-        minter: minterAddr,
-        auctionSigner: auctionSignerAddr,
         proxyAdminOwner: proxyAdminOwnerAddr,
+        admin: adminAddr,
+        platform: platformAddr,
+        usdc: usdcAddr,
     });
 
     console.log(`Transaction broadcasted`);
@@ -74,9 +72,6 @@ task('deploy').setAction(async (taskArgs: Record<string, string>, hardhat) => {
     console.log(`AuctionHouse Impl - ${auctionHouseImplAddr}`);
     console.log(`AuctionHouse Proxy Admin - ${auctionHouseProxyAdminAddr}`);
     console.log(`AuctionHouse Proxy Admin Owner - ${auctionHouseProxyAdminOwner}`);
-
-    console.log('\n');
-    console.log(`CollabToken - ${collabTokenAddr}`);
 
     console.groupEnd();
     console.log('-'.repeat(process.stdout.columns));

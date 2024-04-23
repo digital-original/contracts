@@ -1,14 +1,14 @@
 import { ethers } from 'hardhat';
 import { deployClassic } from '../../scripts/deploy-classic';
 
-export async function deployCollabTokenMock() {
+export async function deployUsdc() {
     const deployedContract = await deployClassic({
-        name: 'CollabTokenMock',
+        name: 'USDC',
         constructorArgs: [],
     });
 
     return Promise.all([
-        ethers.getContractAt('CollabTokenMock', deployedContract),
+        ethers.getContractAt('USDC', deployedContract),
         deployedContract.getAddress(),
     ]);
 }

@@ -9,18 +9,9 @@ export const BUY_PERMIT_TYPE = {
         { name: 'tokenId', type: 'uint256' },
         { name: 'tokenURI', type: 'string' },
         { name: 'price', type: 'uint256' },
+        { name: 'fee', type: 'uint256' },
         { name: 'participants', type: 'address[]' },
         { name: 'shares', type: 'uint256[]' },
         { name: 'deadline', type: 'uint256' },
-    ],
-};
-
-export const COLLAB_PERMIT_TYPE = {
-    CollabPermit: [
-        { name: 'tokenId', type: 'uint256' },
-        { name: 'tokenURI', type: 'string' },
-        { name: 'guarantee', type: 'uint256' },
-        { name: 'deadline', type: 'uint256' },
-        { name: 'data', type: 'bytes' },
     ],
 };

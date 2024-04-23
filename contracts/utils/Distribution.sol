@@ -1,38 +1,55 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {IERC20 as ERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 library Distribution {
+    using SafeERC20 for ERC20;
+
     error DistributionInvalidSharesCount();
     error DistributionInvalidSharesSum();
 
     /**
      * @dev Maximum total share.
      */
-    uint256 internal constant MAX_TOTAL_SHARE = 10_000;
+    uint256 internal constant TOTAL_SHARE = 10_000;
+
+    function safeDistribute(
+        ERC20 asset,
+        uint256 reward,
+        address[] memory participants,
+        uint256[] memory shares
+    ) internal {
+        requireValidConditions(participants, shares);
+        distribute(asset, reward, participants, shares);
+    }
 
     /**
      * @dev Distributes reward between participants according to shares.
      *
-     * @param reward Ether amount to distribute.
+     * @param amount Ether amount to distribute.
      * @param participants Array with participants address.
      * @param shares Array with shares.
      */
-    function distribute(uint256 reward, address[] memory participants, uint256[] memory shares) internal {
+    function distribute(ERC20 asset, uint256 amount, address[] memory participants, uint256[] memory shares) internal {
         uint256 lastShareIndex = shares.length - 1;
-        uint256 released;
+        uint256 distributed;
 
-        for (uint256 i = 0; i < lastShareIndex; i++) {
-            uint256 value = (reward * shares[i]) / MAX_TOTAL_SHARE;
+        for (uint256 i = 0; i < lastShareIndex; ) {
+            uint256 value = (amount * shares[i]) / TOTAL_SHARE;
 
-            released += value;
+            distributed += value;
 
-            Address.sendValue(payable(participants[i]), value);
+            asset.safeTransfer(participants[i], value);
+
+            unchecked {
+                i++;
+            }
         }
 
         // calculates last share out of loop not to lose wei after division
-        Address.sendValue(payable(participants[lastShareIndex]), reward - released);
+        asset.safeTransfer(participants[lastShareIndex], amount - distributed);
     }
 
     /**
@@ -42,28 +59,23 @@ library Distribution {
      * @param participants Array with participants address.
      * @param shares Array with shares.
      */
-    function validateShares(address[] memory participants, uint256[] memory shares) internal pure {
+    function requireValidConditions(address[] memory participants, uint256[] memory shares) internal pure {
         if (shares.length != participants.length) {
             revert DistributionInvalidSharesCount();
         }
 
-        if (_sumShares(shares) != MAX_TOTAL_SHARE) {
-            revert DistributionInvalidSharesSum();
-        }
-    }
+        uint256 sharesSum;
 
-    /**
-     * @param shares Array with shares.
-     *
-     * @return totalShare Sum of shares.
-     */
-    function _sumShares(uint256[] memory shares) private pure returns (uint256 totalShare) {
         for (uint256 i = 0; i < shares.length; ) {
-            totalShare += shares[i];
+            sharesSum += shares[i];
 
             unchecked {
                 i++;
             }
+        }
+
+        if (sharesSum != TOTAL_SHARE) {
+            revert DistributionInvalidSharesSum();
         }
     }
 }

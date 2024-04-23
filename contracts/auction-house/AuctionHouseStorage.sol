@@ -12,7 +12,6 @@ library AuctionHouseStorage {
      * @custom:storage-location erc7201:digital-original.storage.AuctionHouse
      */
     struct Layout {
-        uint256 auctionsCount;
         mapping(uint256 auctionId => IAuctionHouse.Auction) auctions;
     }
 

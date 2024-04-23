@@ -1,6 +1,7 @@
 sepolia:
     id: 11155111
-    url:
+    url: ''
+    usdc: '0x622333D6627BaE0a7e76F507f8E21aAed577Dd57'
     env:
         dev:
             wallet:
@@ -10,10 +11,7 @@ sepolia:
                 proxyAdminOwner:
                     public: ''
                     private: ''
-                minter:
-                    public: ''
-                    private: ''
-                auctionSigner:
+                admin:
                     public: ''
                     private: ''
                 platform:
@@ -29,7 +27,6 @@ sepolia:
                     proxy: ''
                     impl: ''
                     admin: ''
-                collabToken: ''
 
         local:
             wallet:
@@ -39,10 +36,7 @@ sepolia:
                 proxyAdminOwner:
                     public: ''
                     private: ''
-                minter:
-                    public: ''
-                    private: ''
-                auctionSigner:
+                admin:
                     public: ''
                     private: ''
                 platform:
@@ -58,11 +52,11 @@ sepolia:
                     proxy: ''
                     impl: ''
                     admin: ''
-                collabToken: ''
 
 ethereum:
     id: 1
-    url:
+    url: ''
+    usdc: ''
     env:
         prod:
             wallet:
@@ -72,10 +66,7 @@ ethereum:
                 proxyAdminOwner:
                     public: ''
                     private: ''
-                minter:
-                    public: ''
-                    private: ''
-                auctionSigner:
+                admin:
                     public: ''
                     private: ''
                 platform:
@@ -91,4 +82,3 @@ ethereum:
                     proxy: ''
                     impl: ''
                     admin: ''
-                collabToken: ''

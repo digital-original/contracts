@@ -4,21 +4,20 @@ pragma solidity ^0.8.20;
 interface IArtToken {
     function initialize() external;
 
-    function safeMint(address to, uint256 tokenId, string memory _tokenURI, bytes memory data) external;
+    function mint(address to, uint256 tokenId, string calldata tokenURI) external;
 
-    function buy(
-        uint256 tokenId,
-        uint256 price,
-        uint256 deadline,
-        string memory _tokenURI,
-        address[] memory participants,
-        uint256[] memory shares,
-        bytes memory signature
-    ) external payable;
+    struct BuyParams {
+        uint256 tokenId;
+        string tokenURI;
+        uint256 price;
+        uint256 fee;
+        address[] participants;
+        uint256[] shares;
+        bytes signature;
+        uint256 deadline;
+    }
 
-    function rollback(uint256 tokenId) external;
+    function buy(BuyParams calldata params) external;
 
     error ArtTokenUnauthorizedAccount(address account);
-    error ArtTokenNotTrustedReceiver(address receiver);
-    error ArtTokenInsufficientPayment(uint256 amount);
 }
