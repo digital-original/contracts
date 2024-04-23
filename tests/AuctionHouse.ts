@@ -399,7 +399,7 @@ describe('AuctionHouse', function () {
             await endWithBuyer();
             await finish();
 
-            await expect(finish()).to.eventually.rejectedWith('AuctionHouseAuctionSold');
+            await expect(finish()).to.eventually.rejectedWith('AuctionHouseTokenSold');
         });
 
         it(`should fail if auction has not ended`, async () => {

@@ -3,6 +3,11 @@ pragma solidity ^0.8.20;
 
 import {IAuctionHouse} from "./IAuctionHouse.sol";
 
+/**
+ * @title AuctionHouseStorage.
+ *
+ * @notice AuctionHouseStorage library provides access to AuctionHouse storage layout.
+ */
 library AuctionHouseStorage {
     bytes32 private constant STORAGE_SLOT =
         keccak256(abi.encode(uint256(keccak256("digital-original.storage.AuctionHouse")) - 1)) &
@@ -15,6 +20,9 @@ library AuctionHouseStorage {
         mapping(uint256 auctionId => IAuctionHouse.Auction) auctions;
     }
 
+    /**
+     * @dev Returns storage layout
+     */
     function layout() internal pure returns (Layout storage $) {
         bytes32 slot = STORAGE_SLOT;
 

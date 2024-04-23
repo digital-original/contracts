@@ -9,13 +9,14 @@ import {ArtTokenBase} from "./ArtTokenBase.sol";
 import {IArtToken} from "./IArtToken.sol";
 
 /**
- * @title Token
+ * @title ArtToken
  *
- * @notice Token is ERC721(Enumerable, URIStorage) contract.
- * @notice Contract based on [OpenZeppelin](https://docs.openzeppelin.com/) library.
+ * @notice ArtToken contract extends ERC721 standard.
+ * The contract provides functionality to track and transfer Digital Original NFTs.
  */
-// TODO: Implement blacklist logic for unreliable markets
 contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
+    // TODO: Implement blacklist logic for unreliable markets
+
     using SafeERC20 for IERC20;
 
     bytes32 public constant BUY_PERMIT_TYPE_HASH =
@@ -32,13 +33,13 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
             ")"
         );
 
-    address public immutable ADMIN;
-    address public immutable PLATFORM;
-    address public immutable AUCTION_HOUSE;
-    IERC20 public immutable USDC;
+    address public immutable ADMIN; // Admin address
+    address public immutable PLATFORM; // Platform address
+    address public immutable AUCTION_HOUSE; // AuctionHouse contract address
+    IERC20 public immutable USDC; // USDC asset contract address
 
     /**
-     * @dev Throws if called by any account other than the minter.
+     * @dev Throws if called by any account without a minting permission.
      */
     modifier canMint() {
         if (msg.sender != AUCTION_HOUSE) {
@@ -49,8 +50,10 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
     }
 
     /**
-     * @param admin Minter address.
-     * @param auctionHouse TODO_DOC
+     * @param admin Admin address.
+     * @param platform Platform address.
+     * @param auctionHouse AuctionHouse contract address.
+     * @param usdc USDC asset contract address.
      */
     constructor(address admin, address platform, address auctionHouse, IERC20 usdc) EIP712("ArtToken", "1") {
         ADMIN = admin;
@@ -59,25 +62,29 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
         USDC = usdc;
     }
 
+    /**
+     * @dev Initializes the contract by setting a `name` and a `symbol`.
+     */
     function initialize() external {
         _initialize("Digital Original", "DO");
     }
 
     /**
-     * @notice Mints new token.
+     * @inheritdoc IArtToken
      *
-     * @dev Only minter can invoke the method.
-     * @dev Method invokes `onERC721Received` if `to` is contract.
-     *   See <https://docs.openzeppelin.com/contracts/2.x/api/token/erc721#IERC721Receiver>.
-     *
-     * @param to Mint to address.
-     * @param tokenId Token ID.
-     * @param _tokenURI Token metadata uri.
+     * @dev Mints `tokenId` and transfers it to `to`. Sets `_tokenURI` as the tokenURI of `tokenId`.
+     * @dev Only account with a minting permission can invoke the method.
      */
     function mint(address to, uint256 tokenId, string memory _tokenURI) external canMint {
         _mintAndSetTokenURI(to, tokenId, _tokenURI);
     }
 
+    /**
+     * @inheritdoc IArtToken
+     *
+     * @dev Mints `tokenId` and transfers it to `msg.sender` (buyer), charges `price` and `fee` from `msg.sender`,
+     * distributes `price` between `participants` according to `shares`, and sends `fee` to a platform account.
+     */
     function buy(BuyParams calldata params) external {
         bytes32 structHash = keccak256(
             abi.encode(
