@@ -12,11 +12,9 @@ import {IArtToken} from "./IArtToken.sol";
  * @title ArtToken
  *
  * @notice ArtToken contract extends ERC721 standard.
- * The contract provides functionality to track and transfer Digital Original NFTs.
+ * The contract provides functionality to track, transfer and sell Digital Original NFTs.
  */
 contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
-    // TODO: Implement blacklist logic for unreliable markets
-
     using SafeERC20 for IERC20;
 
     bytes32 public constant BUY_PERMIT_TYPE_HASH =
@@ -66,7 +64,7 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
      * @dev Initializes the contract by setting a `name` and a `symbol`.
      */
     function initialize() external {
-        _initialize("Digital Original", "DO");
+        _initialize("DigitalOriginal", "DO");
     }
 
     /**
@@ -116,5 +114,26 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
         }
 
         _mintAndSetTokenURI(msg.sender, params.tokenId, params.tokenURI);
+    }
+
+    /**
+     * @notice Adds logic to restrict token transfers to smart contracts.
+     * This restriction is necessary to prevent sales via smart contracts wherein Digital Original™ cannot
+     * assure compliance with the terms of sale of DO NFT for authors, galleries, and art institutions.
+     * This restriction will be changed after the launch of a contract developed by Digital Original™
+     * with secondary market functionality.
+     *
+     * @dev Extends `ERC20::_update` method.
+     */
+    function _update(
+        address to,
+        uint256 tokenId,
+        address auth
+    ) internal virtual override(ArtTokenBase) returns (address) {
+        if (to.code.length > 0) {
+            revert ArtTokenInvalidReceiver(to);
+        }
+
+        return ArtTokenBase._update(to, tokenId, auth);
     }
 }

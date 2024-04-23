@@ -9,6 +9,11 @@ import {IArtToken} from "../art-token/IArtToken.sol";
 import {AuctionHouseStorage} from "./AuctionHouseStorage.sol";
 import {IAuctionHouse} from "./IAuctionHouse.sol";
 
+/**
+ * @title AuctionHouse
+ *
+ * @notice AuctionHouse contract provides functionality to sell Digital Original NFTs according to auction rules.
+ */
 contract AuctionHouse is IAuctionHouse, EIP712 {
     using SafeERC20 for IERC20;
 
