@@ -24,6 +24,7 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
             "BuyPermit("
                 "uint256 tokenId,"
                 "string tokenURI,"
+                "address sender,"
                 "uint256 price,"
                 "uint256 fee,"
                 "address[] participants,"
@@ -90,6 +91,7 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
                 BUY_PERMIT_TYPE_HASH,
                 params.tokenId,
                 keccak256(bytes(params.tokenURI)),
+                msg.sender,
                 params.price,
                 params.fee,
                 keccak256(abi.encodePacked(params.participants)),
