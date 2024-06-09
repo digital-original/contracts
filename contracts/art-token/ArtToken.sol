@@ -7,6 +7,7 @@ import {EIP712} from "../utils/EIP712.sol";
 import {Distribution} from "../utils/Distribution.sol";
 import {ArtTokenBase} from "./ArtTokenBase.sol";
 import {IArtToken} from "./IArtToken.sol";
+import {IAuctionHouse} from "../auction-house/IAuctionHouse.sol";
 
 /**
  * @title ArtToken
@@ -33,14 +34,14 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
 
     address public immutable ADMIN; // Admin address
     address public immutable PLATFORM; // Platform address
-    address public immutable AUCTION_HOUSE; // AuctionHouse contract address
+    IAuctionHouse public immutable AUCTION_HOUSE; // AuctionHouse contract address
     IERC20 public immutable USDC; // USDC asset contract address
 
     /**
      * @dev Throws if called by any account without a minting permission.
      */
     modifier canMint() {
-        if (msg.sender != AUCTION_HOUSE) {
+        if (msg.sender != address(AUCTION_HOUSE)) {
             revert ArtTokenUnauthorizedAccount(msg.sender);
         }
 
@@ -53,7 +54,7 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
      * @param auctionHouse AuctionHouse contract address.
      * @param usdc USDC asset contract address.
      */
-    constructor(address admin, address platform, address auctionHouse, IERC20 usdc) EIP712("ArtToken", "1") {
+    constructor(address admin, address platform, IAuctionHouse auctionHouse, IERC20 usdc) EIP712("ArtToken", "1") {
         ADMIN = admin;
         PLATFORM = platform;
         AUCTION_HOUSE = auctionHouse;
@@ -99,6 +100,10 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
 
         _requireValidSignature(ADMIN, structHash, params.deadline, params.signature);
 
+        if (AUCTION_HOUSE.tokenReserved(params.tokenId)) {
+            revert ArtTokenReserved(params.tokenId);
+        }
+
         uint256 payment = params.price + params.fee;
 
         if (payment != 0) {
@@ -114,6 +119,13 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
         }
 
         _mintAndSetTokenURI(msg.sender, params.tokenId, params.tokenURI);
+    }
+
+    /**
+     * @inheritdoc IArtToken
+     */
+    function tokenReserved(uint256 tokenId) external view returns (bool) {
+        return _ownerOf(tokenId) != address(0);
     }
 
     /**

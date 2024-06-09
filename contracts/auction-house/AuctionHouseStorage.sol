@@ -18,6 +18,7 @@ library AuctionHouseStorage {
      */
     struct Layout {
         mapping(uint256 auctionId => IAuctionHouse.Auction) auctions;
+        mapping(uint256 tokenId => uint256 auctionId) tokenAuctionIds;
     }
 
     /**

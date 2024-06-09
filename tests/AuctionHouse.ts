@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import { ethers } from 'ethers';
 import { ArtToken, AuctionHouse, USDC } from '../typechain-types';
 import { setNextBlockTimestamp } from '@nomicfoundation/hardhat-network-helpers/dist/src/helpers/time';
+import { mine } from '@nomicfoundation/hardhat-network-helpers/dist/src/helpers/mine';
 import { Signer } from '../types/environment';
 import { getChainId } from './utils/get-chain-id';
 import { getSigners } from './utils/get-signers';
@@ -12,6 +13,8 @@ import { deployContracts } from '../scripts/deploy-contracts';
 import { deployUsdc } from './utils/deploy-usdc';
 import { CreatePermitStruct } from '../types/auction-house';
 import { signCreatePermit } from './utils/sign-auction-house-create-permit';
+import { BuyPermitStruct } from '../types/art-token';
+import { signBuyPermit } from './utils/sign-art-token-buy-permit';
 
 describe('AuctionHouse', function () {
     let auctionHouse: AuctionHouse, auctionHouseAddr: string;
@@ -113,6 +116,34 @@ describe('AuctionHouse', function () {
             expect(auction.shares).to.deep.equal(shares);
         });
 
+        it(`should create new auction for token that was not sold at the previous auction`, async () => {
+            await create();
+            await end();
+
+            const _auctionId = 5n;
+            const _endTime = await getValidDeadline();
+            const _deadline = await getValidDeadline();
+
+            await create({
+                _auctionId,
+                _endTime,
+                _deadline,
+            });
+
+            const auction = await getAuction(_auctionId);
+
+            expect(auction.tokenId).equal(tokenId);
+            expect(auction.tokenURI).equal(tokenURI);
+            expect(auction.buyer).equal(ethers.ZeroAddress);
+            expect(auction.price).equal(price);
+            expect(auction.fee).equal(fee);
+            expect(auction.step).equal(step);
+            expect(auction.endTime).equal(_endTime);
+            expect(auction.sold).equal(false);
+            expect(auction.participants).to.deep.equal(participants);
+            expect(auction.shares).to.deep.equal(shares);
+        });
+
         it(`should emit created event`, async () => {
             const transaction = await create();
 
@@ -121,7 +152,7 @@ describe('AuctionHouse', function () {
                 .withArgs(auctionId, tokenId, price, endTime);
         });
 
-        it(`should fail if end time lass than block time `, async () => {
+        it(`should fail if end time lass than block time`, async () => {
             const blockTimestamp = await getLatestBlockTimestamp();
 
             const _endTime = blockTimestamp + 100;
@@ -133,10 +164,60 @@ describe('AuctionHouse', function () {
             );
         });
 
-        it(`should fail if auction already exists `, async () => {
+        it(`should fail if auction already exists`, async () => {
             await create();
 
             await expect(create()).to.eventually.rejectedWith('AuctionHouseAuctionExists');
+        });
+
+        it(`should fail if token is already at active auction`, async () => {
+            await create();
+
+            const _auctionId = 5n;
+
+            await expect(create({ _auctionId })).to.eventually.rejectedWith(
+                'AuctionHouseTokenReserved',
+            );
+        });
+
+        it(`should fail if token is at auction with buyer`, async () => {
+            await create();
+            await endWithBuyer();
+
+            const _auctionId = 5n;
+            const _endTime = await getValidDeadline();
+            const _deadline = await getValidDeadline();
+
+            await expect(create({ _auctionId, _endTime, _deadline })).to.eventually.rejectedWith(
+                'AuctionHouseTokenReserved',
+            );
+        });
+
+        it(`should fail if token is already minted`, async () => {
+            const buyPermit: BuyPermitStruct = {
+                tokenId,
+                tokenURI,
+                price: 0n,
+                fee: 0n,
+                participants: [],
+                shares: [],
+                deadline,
+            };
+
+            const signature = await signBuyPermit(chainId, artTokenAddr, buyPermit, admin);
+
+            await artToken.buy({
+                tokenId,
+                tokenURI,
+                price: buyPermit.price,
+                fee: buyPermit.fee,
+                participants: buyPermit.participants,
+                shares: buyPermit.shares,
+                signature,
+                deadline,
+            });
+
+            await expect(create()).to.eventually.rejectedWith('AuctionHouseTokenReserved');
         });
 
         describe(`permit logic`, () => {
@@ -149,7 +230,7 @@ describe('AuctionHouse', function () {
             it(`should fail if permit is expired`, async () => {
                 const _deadline = await getLatestBlockTimestamp();
 
-                expect(create({ _deadline })).to.be.rejectedWith('EIP712ExpiredSignature');
+                await expect(create({ _deadline })).to.be.rejectedWith('EIP712ExpiredSignature');
             });
         });
 
@@ -180,6 +261,32 @@ describe('AuctionHouse', function () {
                     'DistributionInvalidSharesSum',
                 );
             });
+        });
+    });
+
+    describe(`method 'tokenReserved'`, () => {
+        it(`should return 'true' for token that is at active auction`, async () => {
+            await create();
+
+            await expect(auctionHouse.tokenReserved(tokenId)).to.eventually.equal(true);
+        });
+
+        it(`should return 'true' for token that is at auction with buyer`, async () => {
+            await create();
+            await endWithBuyer();
+
+            await expect(auctionHouse.tokenReserved(tokenId)).to.eventually.equal(true);
+        });
+
+        it(`should return 'false' for token that was not sold at the previous auction`, async () => {
+            await create();
+            await end();
+
+            await expect(auctionHouse.tokenReserved(tokenId)).to.eventually.equal(false);
+        });
+
+        it(`should return 'false' for token that has never been put at auction`, async () => {
+            await expect(auctionHouse.tokenReserved(tokenId)).to.eventually.equal(false);
         });
     });
 
@@ -525,18 +632,20 @@ describe('AuctionHouse', function () {
         return _auctionHouse.raise(_auctionId, _price + _step);
     }
 
-    async function finish(_auctionId: bigint = auctionId) {
+    async function finish(_auctionId = auctionId) {
         return auctionHouse.finish(_auctionId);
     }
 
-    async function getAuction() {
-        return auctionHouse.auction(auctionId);
+    async function getAuction(_auctionId = auctionId) {
+        return auctionHouse.auction(_auctionId);
     }
 
     async function end() {
         const auction = await getAuction();
 
         await setNextBlockTimestamp(auction.endTime + 1n);
+
+        await mine();
     }
 
     async function endWithBuyer(_buyer: Signer = buyer) {

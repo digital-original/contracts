@@ -104,9 +104,7 @@ contract AuctionHouse is IAuctionHouse, EIP712 {
      * @dev Throws if the auction does not have a buyer.
      */
     modifier withBuyer(uint256 auctionId) {
-        AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
-
-        if ($.auctions[auctionId].buyer == address(0)) {
+        if (!_auctionWithBuyer(auctionId)) {
             revert AuctionHouseBuyerNotExists(auctionId);
         }
 
@@ -117,9 +115,9 @@ contract AuctionHouse is IAuctionHouse, EIP712 {
      * @dev Throws if the auction has a buyer.
      */
     modifier withoutBuyer(uint256 auctionId) {
-        AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
+        if (_auctionWithBuyer(auctionId)) {
+            AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
 
-        if ($.auctions[auctionId].buyer != address(0)) {
             revert AuctionHouseBuyerExists(auctionId, $.auctions[auctionId].buyer);
         }
 
@@ -166,6 +164,8 @@ contract AuctionHouse is IAuctionHouse, EIP712 {
 
         _requireValidEndTime(params.endTime);
 
+        _requireNotReservedToken(params.tokenId);
+
         Distribution.requireValidConditions(params.participants, params.shares);
 
         AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
@@ -183,6 +183,8 @@ contract AuctionHouse is IAuctionHouse, EIP712 {
             shares: params.shares
         });
 
+        $.tokenAuctionIds[params.tokenId] = params.auctionId;
+
         emit Created(params.auctionId, params.tokenId, params.price, params.endTime);
     }
 
@@ -197,7 +199,7 @@ contract AuctionHouse is IAuctionHouse, EIP712 {
     function raiseInitial(
         uint256 auctionId,
         uint256 price
-    ) external auctionNotEnded(auctionId) withoutBuyer(auctionId) {
+    ) external auctionExists(auctionId) auctionNotEnded(auctionId) withoutBuyer(auctionId) {
         AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
 
         _requireValidRaise(price, $.auctions[auctionId].price, 0);
@@ -215,7 +217,10 @@ contract AuctionHouse is IAuctionHouse, EIP712 {
      *
      * @dev `price` must be greater than or equal to previous `price` plus `step`.
      */
-    function raise(uint256 auctionId, uint256 price) external auctionNotEnded(auctionId) withBuyer(auctionId) {
+    function raise(
+        uint256 auctionId,
+        uint256 price
+    ) external auctionExists(auctionId) auctionNotEnded(auctionId) withBuyer(auctionId) {
         AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
 
         uint256 oldPrice = $.auctions[auctionId].price;
@@ -237,7 +242,9 @@ contract AuctionHouse is IAuctionHouse, EIP712 {
      * @dev Mints a new token for `buyer`. Distributes reward according to `participants` and `shares`.
      * Transfers `fee` to platform address. Marks the auction as sold. Emits `Sold` event.
      */
-    function finish(uint256 auctionId) external auctionEnded(auctionId) notSold(auctionId) withBuyer(auctionId) {
+    function finish(
+        uint256 auctionId
+    ) external auctionExists(auctionId) auctionEnded(auctionId) withBuyer(auctionId) notSold(auctionId) {
         AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
 
         $.auctions[auctionId].sold = true;
@@ -266,9 +273,36 @@ contract AuctionHouse is IAuctionHouse, EIP712 {
     }
 
     /**
+     * @inheritdoc IAuctionHouse
+     */
+    function tokenReserved(uint256 tokenId) public view returns (bool) {
+        AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
+
+        uint256 auctionId = $.tokenAuctionIds[tokenId];
+
+        if (auctionId == 0) {
+            // The auction does not exist
+            return false;
+        }
+
+        if (!_auctionEnded(auctionId)) {
+            // The auction has not ended
+            return true;
+        }
+
+        if (_auctionWithBuyer(auctionId)) {
+            // The auction has a buyer
+            return true;
+        }
+
+        // The auction has ended without a buyer
+        return false;
+    }
+
+    /**
      * @dev Returns true if the auction has ended.
      */
-    function _auctionEnded(uint256 auctionId) private view auctionExists(auctionId) returns (bool) {
+    function _auctionEnded(uint256 auctionId) private view returns (bool) {
         AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
 
         return $.auctions[auctionId].endTime < block.timestamp;
@@ -278,9 +312,20 @@ contract AuctionHouse is IAuctionHouse, EIP712 {
      * @dev Returns true if the auction exists.
      */
     function _auctionExists(uint256 auctionId) private view returns (bool) {
+        _requireNotZeroId(auctionId);
+
         AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
 
         return $.auctions[auctionId].endTime != 0;
+    }
+
+    /**
+     * @dev Returns true if the auction is with a buyer.
+     */
+    function _auctionWithBuyer(uint256 auctionId) private view returns (bool) {
+        AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
+
+        return $.auctions[auctionId].buyer != address(0);
     }
 
     /**
@@ -289,6 +334,24 @@ contract AuctionHouse is IAuctionHouse, EIP712 {
     function _requireValidEndTime(uint256 endTime) private view {
         if (endTime <= block.timestamp) {
             revert AuctionHouseInvalidEndTime(endTime, block.timestamp);
+        }
+    }
+
+    /**
+     * @dev Throws if the token is reserved.
+     */
+    function _requireNotReservedToken(uint256 tokenId) private view {
+        if (tokenReserved(tokenId) || TOKEN.tokenReserved(tokenId)) {
+            revert AuctionHouseTokenReserved(tokenId);
+        }
+    }
+
+    /**
+     * @dev Throws if the auction id is zero.
+     */
+    function _requireNotZeroId(uint256 auctionId) private pure {
+        if (auctionId == 0) {
+            revert AuctionHouseZeroId();
         }
     }
 

@@ -81,9 +81,24 @@ interface IAuctionHouse {
     function auction(uint256 auctionId) external view returns (Auction memory);
 
     /**
+     * @dev Returns true if an auction has reserved the token.
+     */
+    function tokenReserved(uint256 tokenId) external view returns (bool);
+
+    /**
      * @dev The auction end time is less than block time.
      */
     error AuctionHouseInvalidEndTime(uint256 endTime, uint256 blockTime);
+
+    /**
+     * @dev The token is reserved.
+     */
+    error AuctionHouseTokenReserved(uint256 tokenId);
+
+    /**
+     * @dev The auction id is zero.
+     */
+    error AuctionHouseZeroId();
 
     /**
      * @dev The token buyer must not exist.

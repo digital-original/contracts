@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import { getSigners } from './utils/get-signers';
-import { ArtToken, USDC } from '../typechain-types';
+import { ArtToken, AuctionHouse, USDC } from '../typechain-types';
 import { Signer } from '../types/environment';
 import { signBuyPermit } from './utils/sign-art-token-buy-permit';
 import { getChainId } from './utils/get-chain-id';
@@ -11,9 +11,12 @@ import { getValidDeadline } from './utils/get-valid-deadline';
 import { getLatestBlockTimestamp } from './utils/get-latest-block-timestamp';
 import { deployContracts } from '../scripts/deploy-contracts';
 import { deployUsdc } from './utils/deploy-usdc';
+import { signCreatePermit } from './utils/sign-auction-house-create-permit';
+import { CreatePermitStruct } from '../types/auction-house';
 
 describe('ArtToken', function () {
     let artToken: ArtToken, artTokenAddr: string;
+    let auctionHouse: AuctionHouse, auctionHouseAddr: string;
     let usdc: USDC, usdcAddr: string;
 
     let chainId: number;
@@ -45,7 +48,12 @@ describe('ArtToken', function () {
     });
 
     beforeEach(async () => {
-        const { artToken: _artToken, artTokenAddr: _artTokenAddr } = await deployContracts({
+        const {
+            artToken: _artToken,
+            artTokenAddr: _artTokenAddr,
+            auctionHouse: _auctionHouse,
+            auctionHouseAddr: _auctionHouseAddr,
+        } = await deployContracts({
             proxyAdminOwner,
             admin,
             platform,
@@ -57,6 +65,8 @@ describe('ArtToken', function () {
 
         artToken = _artToken.connect(buyer);
         artTokenAddr = _artTokenAddr;
+        auctionHouse = _auctionHouse;
+        auctionHouseAddr = _auctionHouseAddr;
     });
 
     describe(`method 'buy'`, () => {
@@ -104,17 +114,55 @@ describe('ArtToken', function () {
                 .withArgs(buyerAddr, artTokenAddr, price + fee);
         });
 
+        it(`should fail if token is reserved by auction`, async () => {
+            const createPermit: CreatePermitStruct = {
+                auctionId: 1n,
+                tokenId,
+                tokenURI,
+                price,
+                fee,
+                step: 1n,
+                endTime: deadline,
+                participants,
+                shares,
+                deadline,
+            };
+
+            const signature = await signCreatePermit(
+                chainId,
+                auctionHouseAddr,
+                createPermit,
+                admin,
+            );
+
+            await auctionHouse.create({
+                auctionId: createPermit.auctionId,
+                tokenId,
+                tokenURI,
+                price,
+                fee,
+                step: createPermit.step,
+                endTime: createPermit.endTime,
+                participants,
+                shares,
+                signature,
+                deadline,
+            });
+
+            await expect(buy()).to.be.rejectedWith('ArtTokenReserved');
+        });
+
         describe(`permit logic`, () => {
             it(`should fail if permit signer is not admin`, async () => {
                 const _admin = randomAccount;
 
-                expect(buy({ _admin })).to.be.rejectedWith('EIP712InvalidSignature');
+                await expect(buy({ _admin })).to.be.rejectedWith('EIP712InvalidSignature');
             });
 
             it(`should fail if permit is expired`, async () => {
                 const _deadline = await getLatestBlockTimestamp();
 
-                expect(buy({ _deadline })).to.be.rejectedWith('EIP712ExpiredSignature');
+                await expect(buy({ _deadline })).to.be.rejectedWith('EIP712ExpiredSignature');
             });
         });
 
