@@ -47,6 +47,10 @@ abstract contract EIP712 {
         uint256 deadline,
         bytes memory signature
     ) internal view {
+        if (signer == address(0)) {
+            revert EIP712SignerZeroAddress();
+        }
+
         if (deadline < block.timestamp) {
             revert EIP712ExpiredSignature();
         }
@@ -75,4 +79,9 @@ abstract contract EIP712 {
      * @dev The signature derives an invalid signer.
      */
     error EIP712InvalidSignature();
+
+    /**
+     * @dev The signer is invalid.
+     */
+    error EIP712SignerZeroAddress();
 }

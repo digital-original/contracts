@@ -130,11 +130,16 @@ contract AuctionHouse is IAuctionHouse, EIP712 {
      * @param token ArtToken contract address.
      * @param usdc USDC asset contract address.
      */
-    constructor(address admin, address platform, IArtToken token, IERC20 usdc) EIP712("AuctionHouse", "1") {
+    constructor(address admin, address platform, address token, address usdc) EIP712("AuctionHouse", "1") {
+        if (admin == address(0)) revert AuctionHouseZeroAddress();
+        if (platform == address(0)) revert AuctionHouseZeroAddress();
+        if (token == address(0)) revert AuctionHouseZeroAddress();
+        if (usdc == address(0)) revert AuctionHouseZeroAddress();
+
         ADMIN = admin;
         PLATFORM = platform;
-        TOKEN = token;
-        USDC = usdc;
+        TOKEN = IArtToken(token);
+        USDC = IERC20(usdc);
     }
 
     /**
@@ -161,6 +166,8 @@ contract AuctionHouse is IAuctionHouse, EIP712 {
         );
 
         _requireValidSignature(ADMIN, structHash, params.deadline, params.signature);
+
+        _requireNotEmptyTokenURI(params.tokenURI);
 
         _requireValidEndTime(params.endTime);
 
@@ -326,6 +333,15 @@ contract AuctionHouse is IAuctionHouse, EIP712 {
         AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
 
         return $.auctions[auctionId].buyer != address(0);
+    }
+
+    /**
+     * @dev Throws if the tokenURI is an empty string.
+     */
+    function _requireNotEmptyTokenURI(string memory tokenURI) private pure {
+        if (bytes(tokenURI).length == 0) {
+            revert AuctionHouseEmptyTokenURI();
+        }
     }
 
     /**

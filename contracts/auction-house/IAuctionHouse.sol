@@ -86,6 +86,11 @@ interface IAuctionHouse {
     function tokenReserved(uint256 tokenId) external view returns (bool);
 
     /**
+     * @dev The token uri is an empty string.
+     */
+    error AuctionHouseEmptyTokenURI();
+
+    /**
      * @dev The auction end time is less than block time.
      */
     error AuctionHouseInvalidEndTime(uint256 endTime, uint256 blockTime);
@@ -139,4 +144,9 @@ interface IAuctionHouse {
      * @dev The raise amount is less than minimum raise amount.
      */
     error AuctionHouseRaiseTooSmall(uint256 amount, uint256 minAmount);
+
+    /**
+     * @dev An address is zero.
+     */
+    error AuctionHouseZeroAddress();
 }
