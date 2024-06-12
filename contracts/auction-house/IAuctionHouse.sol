@@ -116,6 +116,11 @@ interface IAuctionHouse {
     error AuctionHouseBuyerNotExists(uint256 auctionId);
 
     /**
+     * @dev The token buyer is invalid.
+     */
+    error AuctionHouseInvalidBuyer(address buyer);
+
+    /**
      * @dev The auction already exists.
      */
     error AuctionHouseAuctionExists(uint256 auctionId);
