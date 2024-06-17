@@ -59,12 +59,19 @@ describe('AuctionHouse', function () {
             admin,
             platform,
             usdc,
+            minAuctionDurationHours: 1,
         });
 
-        await Promise.all([usdc.connect(buyer).mint(), usdc.connect(randomAccount).mint()]);
+        await Promise.all([
+            usdc.connect(buyer).mint(),
+            usdc.connect(randomAccount).mint(),
+            usdc.connect(platform).mint(),
+        ]);
+
         await Promise.all([
             usdc.connect(buyer).approve(_auctionHouse, ethers.MaxInt256),
             usdc.connect(randomAccount).approve(_auctionHouse, ethers.MaxInt256),
+            usdc.connect(platform).approve(_artToken, ethers.MaxInt256),
         ]);
 
         auctionHouse = _auctionHouse;
@@ -88,9 +95,9 @@ describe('AuctionHouse', function () {
         auctionId = 3n;
         tokenId = 4n;
         tokenURI = 'ipfs://Q...';
-        price = 54321n;
-        fee = 321n;
-        step = 111n;
+        price = 100_000_000n;
+        fee = 100_000_000n;
+        step = 1_000_000n;
         endTime = await getValidDeadline();
         participants = [platformAddr, partnerAddr];
         shares = [TOTAL_SHARE / 5n, (TOTAL_SHARE / 5n) * 4n];
@@ -197,10 +204,10 @@ describe('AuctionHouse', function () {
                 tokenId,
                 tokenURI,
                 sender: platformAddr,
-                price: 0n,
-                fee: 0n,
-                participants: [],
-                shares: [],
+                price: 100_000_001n,
+                fee: 100_000_001n,
+                participants: [platformAddr],
+                shares: [TOTAL_SHARE],
                 deadline,
             };
 

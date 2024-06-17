@@ -12,6 +12,7 @@ type Params = {
     admin: AddressParam;
     platform: AddressParam;
     usdc: AddressParam;
+    minAuctionDurationHours: number;
 };
 
 // prettier-ignore
@@ -21,14 +22,17 @@ export async function deployContracts(params: Params, deployer?: Signer) {
         admin,
         platform,
         usdc,
+        minAuctionDurationHours,
     } = params;
 
     const { ethers } = await import('hardhat');
 
+    const minAuctionDurationSeconds = minAuctionDurationHours * 60 * 60;
+
     const deployerContract = await deployClassic(
         {
             name: 'Deployer',
-            constructorArgs: [proxyAdminOwner, admin, platform, usdc],
+            constructorArgs: [proxyAdminOwner, admin, platform, usdc, minAuctionDurationSeconds],
         },
         deployer,
     );

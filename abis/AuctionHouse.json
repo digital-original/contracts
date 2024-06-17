@@ -12,14 +12,19 @@
                 "type": "address"
             },
             {
-                "internalType": "contract IArtToken",
+                "internalType": "address",
                 "name": "token",
                 "type": "address"
             },
             {
-                "internalType": "contract IERC20",
+                "internalType": "address",
                 "name": "usdc",
                 "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "minAuctionDuration",
+                "type": "uint256"
             }
         ],
         "stateMutability": "nonpayable",
@@ -139,6 +144,22 @@
         "type": "error"
     },
     {
+        "inputs": [],
+        "name": "AuctionHouseEmptyTokenURI",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "buyer",
+                "type": "address"
+            }
+        ],
+        "name": "AuctionHouseInvalidBuyer",
+        "type": "error"
+    },
+    {
         "inputs": [
             {
                 "internalType": "uint256",
@@ -152,6 +173,39 @@
             }
         ],
         "name": "AuctionHouseInvalidEndTime",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "value",
+                "type": "uint256"
+            }
+        ],
+        "name": "AuctionHouseInvalidFee",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "value",
+                "type": "uint256"
+            }
+        ],
+        "name": "AuctionHouseInvalidPrice",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "paramNumber",
+                "type": "uint256"
+            }
+        ],
+        "name": "AuctionHouseMisconfiguration",
         "type": "error"
     },
     {
@@ -174,11 +228,27 @@
         "inputs": [
             {
                 "internalType": "uint256",
+                "name": "tokenId",
+                "type": "uint256"
+            }
+        ],
+        "name": "AuctionHouseTokenReserved",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
                 "name": "auctionId",
                 "type": "uint256"
             }
         ],
         "name": "AuctionHouseTokenSold",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "AuctionHouseZeroId",
         "type": "error"
     },
     {
@@ -189,6 +259,11 @@
     {
         "inputs": [],
         "name": "DistributionInvalidSharesSum",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "DistributionZeroAddress",
         "type": "error"
     },
     {
@@ -226,6 +301,11 @@
     {
         "inputs": [],
         "name": "EIP712InvalidSignature",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "EIP712SignerZeroAddress",
         "type": "error"
     },
     {
@@ -334,6 +414,58 @@
                 "internalType": "bytes32",
                 "name": "",
                 "type": "bytes32"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "MAX_DURATION",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "MIN_DURATION",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "MIN_FEE",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "MIN_PRICE",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
             }
         ],
         "stateMutability": "view",
@@ -566,6 +698,25 @@
         "name": "raiseInitial",
         "outputs": [],
         "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "tokenId",
+                "type": "uint256"
+            }
+        ],
+        "name": "tokenReserved",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "",
+                "type": "bool"
+            }
+        ],
+        "stateMutability": "view",
         "type": "function"
     }
 ]

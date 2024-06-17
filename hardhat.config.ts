@@ -67,6 +67,7 @@ function buildHardhatConfig(): HardhatUserConfig {
         wallets: config.ethereum.env[ENV_MODE]?.wallet,
         contracts: config.ethereum.env[ENV_MODE]?.contract,
         usdc: config.ethereum.usdc,
+        minAuctionDurationHours: config.ethereum.env[ENV_MODE]?.minAuctionDurationHours,
     };
 
     const sepoliaUrl = config.sepolia.url;
@@ -75,6 +76,7 @@ function buildHardhatConfig(): HardhatUserConfig {
         wallets: config.sepolia.env[ENV_MODE]?.wallet,
         contracts: config.sepolia.env[ENV_MODE]?.contract,
         usdc: config.sepolia.usdc,
+        minAuctionDurationHours: config.sepolia.env[ENV_MODE]?.minAuctionDurationHours,
     };
 
     const forkUrl = FORKED_CHAIN_URL;
@@ -83,6 +85,7 @@ function buildHardhatConfig(): HardhatUserConfig {
         wallets: config[FORKED_CHAIN].env[ENV_MODE]?.wallet,
         contracts: config[FORKED_CHAIN].env[ENV_MODE]?.contract,
         usdc: config[FORKED_CHAIN].usdc,
+        minAuctionDurationHours: config[FORKED_CHAIN].env[ENV_MODE]?.minAuctionDurationHours,
     };
 
     const chainToForkUrl = config[CHAIN_TO_FORK].url;

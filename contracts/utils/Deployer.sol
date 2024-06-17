@@ -10,11 +10,11 @@ contract Deployer {
 
     error DeployerIncorrectAddress();
 
-    constructor(address proxyAdminOwner, address admin, address platform, address usdc) {
+    constructor(address proxyAdminOwner, address admin, address platform, address usdc, uint256 minAuctionDuration) {
         address artToken = _contractAddressFrom(address(this), 4);
 
         address auctionHouse = _deployUpgradeable(
-            address(new AuctionHouse(admin, platform, artToken, usdc)),
+            address(new AuctionHouse(admin, platform, artToken, usdc, minAuctionDuration)),
             proxyAdminOwner
         );
 
