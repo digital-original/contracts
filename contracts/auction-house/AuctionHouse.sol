@@ -185,6 +185,8 @@ contract AuctionHouse is IAuctionHouse, EIP712 {
 
         _requireValidFee(params.fee);
 
+        _requireValidStep(params.step);
+
         _requireValidEndTime(params.endTime);
 
         _requireNotReservedToken(params.tokenId);
@@ -379,6 +381,15 @@ contract AuctionHouse is IAuctionHouse, EIP712 {
     function _requireValidFee(uint256 fee) private pure {
         if (fee < MIN_FEE) {
             revert AuctionHouseInvalidFee(fee);
+        }
+    }
+
+    /**
+     * @dev Throws if the step is zero.
+     */
+    function _requireValidStep(uint256 step) private pure {
+        if (step == 0) {
+            revert AuctionHouseInvalidStep();
         }
     }
 

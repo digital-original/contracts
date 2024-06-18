@@ -101,6 +101,11 @@ interface IAuctionHouse {
     error AuctionHouseInvalidFee(uint256 value);
 
     /**
+     * @dev The step is zero.
+     */
+    error AuctionHouseInvalidStep();
+
+    /**
      * @dev The auction end time is less than block time.
      */
     error AuctionHouseInvalidEndTime(uint256 endTime, uint256 blockTime);
