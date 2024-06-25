@@ -34,10 +34,14 @@ contract AuctionHouse is IAuctionHouse, EIP712 {
             ")"
         );
 
-    address public immutable ADMIN; // Admin address.
-    address public immutable PLATFORM; // Platform address.
-    IArtToken public immutable TOKEN; // ArtToken contract address.
-    IERC20 public immutable USDC; // USDC asset contract address.
+    address public immutable ADMIN; // Admin address
+    address public immutable PLATFORM; // Platform address
+    IArtToken public immutable TOKEN; // ArtToken contract address
+    IERC20 public immutable USDC; // USDC asset contract address
+    uint256 public immutable MIN_DURATION; // Minimum auction duration
+    uint256 public constant MAX_DURATION = 21 days; // Maximum auction duration
+    uint256 public constant MIN_PRICE = 100_000_000; // Minimum auction price value
+    uint256 public constant MIN_FEE = 100_000_000; // Minimum auction fee value
 
     /**
      * @dev Throws if the auction does not exist.
@@ -130,16 +134,24 @@ contract AuctionHouse is IAuctionHouse, EIP712 {
      * @param token ArtToken contract address.
      * @param usdc USDC asset contract address.
      */
-    constructor(address admin, address platform, address token, address usdc) EIP712("AuctionHouse", "1") {
-        if (admin == address(0)) revert AuctionHouseZeroAddress();
-        if (platform == address(0)) revert AuctionHouseZeroAddress();
-        if (token == address(0)) revert AuctionHouseZeroAddress();
-        if (usdc == address(0)) revert AuctionHouseZeroAddress();
+    constructor(
+        address admin,
+        address platform,
+        address token,
+        address usdc,
+        uint256 minAuctionDuration
+    ) EIP712("AuctionHouse", "1") {
+        if (admin == address(0)) revert AuctionHouseMisconfiguration(1);
+        if (platform == address(0)) revert AuctionHouseMisconfiguration(2);
+        if (token == address(0)) revert AuctionHouseMisconfiguration(3);
+        if (usdc == address(0)) revert AuctionHouseMisconfiguration(4);
+        if (minAuctionDuration == 0) revert AuctionHouseMisconfiguration(5);
 
         ADMIN = admin;
         PLATFORM = platform;
         TOKEN = IArtToken(token);
         USDC = IERC20(usdc);
+        MIN_DURATION = minAuctionDuration;
     }
 
     /**
@@ -168,6 +180,12 @@ contract AuctionHouse is IAuctionHouse, EIP712 {
         _requireValidSignature(ADMIN, structHash, params.deadline, params.signature);
 
         _requireNotEmptyTokenURI(params.tokenURI);
+
+        _requireValidPrice(params.price);
+
+        _requireValidFee(params.fee);
+
+        _requireValidStep(params.step);
 
         _requireValidEndTime(params.endTime);
 
@@ -349,10 +367,41 @@ contract AuctionHouse is IAuctionHouse, EIP712 {
     }
 
     /**
+     * @dev Throws if the price is less than min value.
+     */
+    function _requireValidPrice(uint256 price) private pure {
+        if (price < MIN_PRICE) {
+            revert AuctionHouseInvalidPrice(price);
+        }
+    }
+
+    /**
+     * @dev Throws if the fee is less than min value.
+     */
+    function _requireValidFee(uint256 fee) private pure {
+        if (fee < MIN_FEE) {
+            revert AuctionHouseInvalidFee(fee);
+        }
+    }
+
+    /**
+     * @dev Throws if the step is zero.
+     */
+    function _requireValidStep(uint256 step) private pure {
+        if (step == 0) {
+            revert AuctionHouseInvalidStep();
+        }
+    }
+
+    /**
      * @dev Throws if the auction end time is invalid.
      */
     function _requireValidEndTime(uint256 endTime) private view {
-        if (endTime <= block.timestamp) {
+        if (endTime <= block.timestamp + MIN_DURATION) {
+            revert AuctionHouseInvalidEndTime(endTime, block.timestamp);
+        }
+
+        if (endTime > block.timestamp + MAX_DURATION) {
             revert AuctionHouseInvalidEndTime(endTime, block.timestamp);
         }
     }

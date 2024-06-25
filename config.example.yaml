@@ -4,6 +4,8 @@ sepolia:
     usdc: '0x622333D6627BaE0a7e76F507f8E21aAed577Dd57'
     env:
         dev:
+            minAuctionDurationHours: 24
+
             wallet:
                 deployer:
                     public: ''
@@ -29,6 +31,8 @@ sepolia:
                     admin: ''
 
         local:
+            minAuctionDurationHours: 24
+
             wallet:
                 deployer:
                     public: ''
@@ -59,6 +63,8 @@ ethereum:
     usdc: ''
     env:
         prod:
+            minAuctionDurationHours: 24
+
             wallet:
                 deployer:
                     public: ''

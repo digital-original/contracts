@@ -58,6 +58,7 @@ describe('ArtToken', function () {
             admin,
             platform,
             usdc,
+            minAuctionDurationHours: 1,
         });
 
         await usdc.connect(buyer).mint();
@@ -81,8 +82,8 @@ describe('ArtToken', function () {
         beforeEach(async () => {
             tokenId = 0n;
             tokenURI = 'ipfs://Q...';
-            price = 54321n;
-            fee = 321n;
+            price = 100_000_000n;
+            fee = 100_000_000n;
             participants = [platformAddr, partnerAddr];
             shares = [TOTAL_SHARE / 5n, (TOTAL_SHARE / 5n) * 4n];
             deadline = await getValidDeadline();
@@ -119,9 +120,9 @@ describe('ArtToken', function () {
                 auctionId: 1n,
                 tokenId,
                 tokenURI,
-                price,
-                fee,
-                step: 1n,
+                price: 100_000_001n,
+                fee: 100_000_001n,
+                step: 1_000_001n,
                 endTime: deadline,
                 participants,
                 shares,
@@ -139,8 +140,8 @@ describe('ArtToken', function () {
                 auctionId: createPermit.auctionId,
                 tokenId,
                 tokenURI,
-                price,
-                fee,
+                price: createPermit.price,
+                fee: createPermit.fee,
                 step: createPermit.step,
                 endTime: createPermit.endTime,
                 participants,
@@ -165,7 +166,7 @@ describe('ArtToken', function () {
                 await expect(buy({ _deadline })).to.be.rejectedWith('EIP712ExpiredSignature');
             });
 
-            it(`should fail if the sender is wrong`, async () => {
+            it(`should fail if the sender is invalid`, async () => {
                 const _artToken = artToken.connect(randomAccount);
 
                 await expect(buy({ _artToken })).to.be.rejectedWith('EIP712InvalidSignature');

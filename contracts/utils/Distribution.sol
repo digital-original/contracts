@@ -68,12 +68,22 @@ library Distribution {
 
     /**
      * @notice Checks that shares count is equal participants count,
-     *   and sum of shares is equal maximum share. Throws if data is wrong.
+     *   and sum of shares is equal maximum share. Throws if data is invalid.
      *
      * @param participants Array with participants address.
      * @param shares Array with shares.
      */
     function requireValidConditions(address[] memory participants, uint256[] memory shares) internal pure {
+        for (uint256 i = 0; i < participants.length; ) {
+            if (participants[i] == address(0)) {
+                revert DistributionZeroAddress();
+            }
+
+            unchecked {
+                i++;
+            }
+        }
+
         if (shares.length != participants.length) {
             revert DistributionInvalidSharesCount();
         }
@@ -102,4 +112,9 @@ library Distribution {
      * @dev Shares sum is not equal maximum share.
      */
     error DistributionInvalidSharesSum();
+
+    /**
+     * @dev Zero address among participants.
+     */
+    error DistributionZeroAddress();
 }

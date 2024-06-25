@@ -50,6 +50,16 @@ interface IArtToken is IERC721 {
     error ArtTokenEmptyTokenURI();
 
     /**
+     * @dev The price is less than min value.
+     */
+    error ArtTokenInvalidPrice(uint256 value);
+
+    /**
+     * @dev The fee is less than min value.
+     */
+    error ArtTokenInvalidFee(uint256 value);
+
+    /**
      * @dev The token receiver is not valid.
      */
     error ArtTokenInvalidReceiver(address receiver);
@@ -60,7 +70,7 @@ interface IArtToken is IERC721 {
     error ArtTokenReserved(uint256 tokenId);
 
     /**
-     * @dev An address is zero.
+     * @dev The constructor parameter number `paramNumber` is invalid.
      */
-    error ArtTokenZeroAddress();
+    error ArtTokenMisconfiguration(uint256 paramNumber);
 }

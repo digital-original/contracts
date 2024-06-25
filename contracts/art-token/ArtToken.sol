@@ -37,6 +37,8 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
     address public immutable PLATFORM; // Platform address
     IAuctionHouse public immutable AUCTION_HOUSE; // AuctionHouse contract address
     IERC20 public immutable USDC; // USDC asset contract address
+    uint256 public constant MIN_PRICE = 100_000_000; // Minimum price value
+    uint256 public constant MIN_FEE = 100_000_000; // Minimum fee value
 
     /**
      * @dev Throws if called by any account without a minting permission.
@@ -56,10 +58,10 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
      * @param usdc USDC asset contract address.
      */
     constructor(address admin, address platform, address auctionHouse, address usdc) EIP712("ArtToken", "1") {
-        if (admin == address(0)) revert ArtTokenZeroAddress();
-        if (platform == address(0)) revert ArtTokenZeroAddress();
-        if (auctionHouse == address(0)) revert ArtTokenZeroAddress();
-        if (usdc == address(0)) revert ArtTokenZeroAddress();
+        if (admin == address(0)) revert ArtTokenMisconfiguration(1);
+        if (platform == address(0)) revert ArtTokenMisconfiguration(2);
+        if (auctionHouse == address(0)) revert ArtTokenMisconfiguration(3);
+        if (usdc == address(0)) revert ArtTokenMisconfiguration(4);
 
         ADMIN = admin;
         PLATFORM = platform;
@@ -111,23 +113,25 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
             revert ArtTokenEmptyTokenURI();
         }
 
+        if (params.price < MIN_PRICE) {
+            revert ArtTokenInvalidPrice(params.price);
+        }
+
+        if (params.fee < MIN_FEE) {
+            revert ArtTokenInvalidFee(params.fee);
+        }
+
         if (AUCTION_HOUSE.tokenReserved(params.tokenId)) {
             revert ArtTokenReserved(params.tokenId);
         }
 
         uint256 payment = params.price + params.fee;
 
-        if (payment != 0) {
-            USDC.safeTransferFrom(msg.sender, address(this), payment);
-        }
+        USDC.safeTransferFrom(msg.sender, address(this), payment);
 
-        if (params.price != 0) {
-            Distribution.safeDistribute(USDC, params.price, params.participants, params.shares);
-        }
+        Distribution.safeDistribute(USDC, params.price, params.participants, params.shares);
 
-        if (params.fee != 0) {
-            USDC.safeTransfer(PLATFORM, params.fee);
-        }
+        USDC.safeTransfer(PLATFORM, params.fee);
 
         _mintAndSetTokenURI(msg.sender, params.tokenId, params.tokenURI);
     }

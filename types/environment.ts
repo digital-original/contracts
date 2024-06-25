@@ -23,9 +23,10 @@ export type ChainConfig = {
         auctionHouse: UpgradeableContractConfig;
     };
     usdc?: string;
+    minAuctionDurationHours?: number;
 };
 
-export type ContractConstructorArgs = (string | Uint8Array | Addressable)[];
+export type ContractConstructorArgs = (string | number | Uint8Array | Addressable)[];
 
 export type AddressParam = string | Addressable;
 

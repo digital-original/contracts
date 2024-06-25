@@ -91,6 +91,21 @@ interface IAuctionHouse {
     error AuctionHouseEmptyTokenURI();
 
     /**
+     * @dev The price is less than min value.
+     */
+    error AuctionHouseInvalidPrice(uint256 value);
+
+    /**
+     * @dev The fee is less than min value.
+     */
+    error AuctionHouseInvalidFee(uint256 value);
+
+    /**
+     * @dev The step is zero.
+     */
+    error AuctionHouseInvalidStep();
+
+    /**
      * @dev The auction end time is less than block time.
      */
     error AuctionHouseInvalidEndTime(uint256 endTime, uint256 blockTime);
@@ -151,7 +166,7 @@ interface IAuctionHouse {
     error AuctionHouseRaiseTooSmall(uint256 amount, uint256 minAmount);
 
     /**
-     * @dev An address is zero.
+     * @dev The constructor parameter number `paramNumber` is invalid.
      */
-    error AuctionHouseZeroAddress();
+    error AuctionHouseMisconfiguration(uint256 paramNumber);
 }

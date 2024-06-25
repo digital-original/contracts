@@ -26,6 +26,7 @@ task('deploy').setAction(async (taskArgs: Record<string, string>, hardhat) => {
     const adminAddr = config.wallets!.admin.public;
     const platformAddr = config.wallets!.platform.public;
     const usdcAddr = config.usdc!;
+    const minAuctionDurationHours = config.minAuctionDurationHours!;
 
     console.log(`Deploying contracts...`);
     console.log(`\n`);
@@ -34,6 +35,7 @@ task('deploy').setAction(async (taskArgs: Record<string, string>, hardhat) => {
     console.log(`admin: ${adminAddr}`);
     console.log(`platform: ${platformAddr}`);
     console.log(`usdc: ${usdcAddr}`);
+    console.log(`minAuctionDurationHours: ${minAuctionDurationHours}`);
     console.groupEnd();
     console.log(`\n`);
     console.log(`Transaction broadcasting...`);
@@ -55,6 +57,7 @@ task('deploy').setAction(async (taskArgs: Record<string, string>, hardhat) => {
         admin: adminAddr,
         platform: platformAddr,
         usdc: usdcAddr,
+        minAuctionDurationHours: minAuctionDurationHours,
     });
 
     console.log(`Transaction broadcasted`);
