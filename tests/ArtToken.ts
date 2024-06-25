@@ -164,6 +164,12 @@ describe('ArtToken', function () {
 
                 await expect(buy({ _deadline })).to.be.rejectedWith('EIP712ExpiredSignature');
             });
+
+            it(`should fail if the sender is wrong`, async () => {
+                const _artToken = artToken.connect(randomAccount);
+
+                await expect(buy({ _artToken })).to.be.rejectedWith('EIP712InvalidSignature');
+            });
         });
 
         describe(`distribution logic`, () => {
@@ -210,6 +216,7 @@ describe('ArtToken', function () {
             params: {
                 _tokenId?: bigint;
                 _tokenURI?: string;
+                _sender?: string;
                 _price?: bigint;
                 _fee?: bigint;
                 _participants?: string[];
@@ -222,6 +229,7 @@ describe('ArtToken', function () {
             const {
                 _tokenId = tokenId,
                 _tokenURI = tokenURI,
+                _sender = buyerAddr,
                 _price = price,
                 _fee = fee,
                 _participants = participants,
@@ -234,6 +242,7 @@ describe('ArtToken', function () {
             const permit: BuyPermitStruct = {
                 tokenId: _tokenId,
                 tokenURI: _tokenURI,
+                sender: _sender,
                 price: _price,
                 fee: _fee,
                 participants: _participants,

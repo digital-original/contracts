@@ -36,13 +36,12 @@ describe('AuctionHouse', function () {
         [usdc, usdcAddr] = await deployUsdc();
 
         [
-            [proxyAdminOwner, admin, platform, partner, buyer, buyer, randomAccount],
+            [proxyAdminOwner, admin, platform, partner, buyer, randomAccount],
             [
                 proxyAdminOwnerAddr,
                 adminAddr,
                 platformAddr,
                 partnerAddr,
-                buyerAddr,
                 buyerAddr,
                 randomAccountAddr,
             ],
@@ -197,6 +196,7 @@ describe('AuctionHouse', function () {
             const buyPermit: BuyPermitStruct = {
                 tokenId,
                 tokenURI,
+                sender: platformAddr,
                 price: 0n,
                 fee: 0n,
                 participants: [],
@@ -206,7 +206,7 @@ describe('AuctionHouse', function () {
 
             const signature = await signBuyPermit(chainId, artTokenAddr, buyPermit, admin);
 
-            await artToken.buy({
+            await artToken.connect(platform).buy({
                 tokenId,
                 tokenURI,
                 price: buyPermit.price,

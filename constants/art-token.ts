@@ -8,6 +8,7 @@ export const BUY_PERMIT_TYPE = {
     BuyPermit: [
         { name: 'tokenId', type: 'uint256' },
         { name: 'tokenURI', type: 'string' },
+        { name: 'sender', type: 'address' },
         { name: 'price', type: 'uint256' },
         { name: 'fee', type: 'uint256' },
         { name: 'participants', type: 'address[]' },
