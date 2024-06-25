@@ -211,6 +211,8 @@ contract AuctionHouse is IAuctionHouse, EIP712 {
 
         _requireValidRaise(price, $.auctions[auctionId].price, 0);
 
+        _requireValidBuyer(msg.sender);
+
         _raise(auctionId, msg.sender, price);
 
         USDC.safeTransferFrom(msg.sender, address(this), price + $.auctions[auctionId].fee);
@@ -234,6 +236,8 @@ contract AuctionHouse is IAuctionHouse, EIP712 {
         address oldBuyer = $.auctions[auctionId].buyer;
 
         _requireValidRaise(price, oldPrice, $.auctions[auctionId].step);
+
+        _requireValidBuyer(msg.sender);
 
         _raise(auctionId, msg.sender, price);
 
@@ -359,6 +363,15 @@ contract AuctionHouse is IAuctionHouse, EIP712 {
     function _requireNotReservedToken(uint256 tokenId) private view {
         if (tokenReserved(tokenId) || TOKEN.tokenReserved(tokenId)) {
             revert AuctionHouseTokenReserved(tokenId);
+        }
+    }
+
+    /**
+     * @dev Throws if the buyer is invalid.
+     */
+    function _requireValidBuyer(address buyer) private view {
+        if (buyer.code.length > 0) {
+            revert AuctionHouseInvalidBuyer(buyer);
         }
     }
 
