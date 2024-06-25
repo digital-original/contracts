@@ -20,7 +20,7 @@ contract Deployer {
         );
 
         address artToken_ = _deployUpgradeable(
-            address(new ArtToken(admin, platform, auctionHouse, usdc)),
+            address(new ArtToken(admin, platform, AuctionHouse(auctionHouse), usdc)),
             proxyAdminOwner
         );
 

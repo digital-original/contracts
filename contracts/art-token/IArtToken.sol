@@ -35,6 +35,11 @@ interface IArtToken is IERC721 {
     function buy(BuyParams calldata params) external;
 
     /**
+     * @dev Returns true if the token is reserved.
+     */
+    function tokenReserved(uint256 tokenId) external view returns (bool);
+
+    /**
      * @dev The caller account is not authorized.
      */
     error ArtTokenUnauthorizedAccount(address account);
@@ -43,4 +48,9 @@ interface IArtToken is IERC721 {
      * @dev The token receiver is not valid.
      */
     error ArtTokenInvalidReceiver(address receiver);
+
+    /**
+     * @dev The token is reserved.
+     */
+    error ArtTokenReserved(uint256 tokenId);
 }
