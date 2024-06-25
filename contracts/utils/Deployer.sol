@@ -2,7 +2,6 @@
 pragma solidity ^0.8.20;
 
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ArtToken} from "../art-token/ArtToken.sol";
 import {AuctionHouse} from "../auction-house/AuctionHouse.sol";
 
@@ -11,16 +10,16 @@ contract Deployer {
 
     error DeployerIncorrectAddress();
 
-    constructor(address proxyAdminOwner, address admin, address platform, IERC20 usdc) {
+    constructor(address proxyAdminOwner, address admin, address platform, address usdc) {
         address artToken = _contractAddressFrom(address(this), 4);
 
         address auctionHouse = _deployUpgradeable(
-            address(new AuctionHouse(admin, platform, ArtToken(artToken), usdc)),
+            address(new AuctionHouse(admin, platform, artToken, usdc)),
             proxyAdminOwner
         );
 
         address artToken_ = _deployUpgradeable(
-            address(new ArtToken(admin, platform, AuctionHouse(auctionHouse), usdc)),
+            address(new ArtToken(admin, platform, auctionHouse, usdc)),
             proxyAdminOwner
         );
 

@@ -45,6 +45,11 @@ interface IArtToken is IERC721 {
     error ArtTokenUnauthorizedAccount(address account);
 
     /**
+     * @dev The token uri is an empty string.
+     */
+    error ArtTokenEmptyTokenURI();
+
+    /**
      * @dev The token receiver is not valid.
      */
     error ArtTokenInvalidReceiver(address receiver);
@@ -53,4 +58,9 @@ interface IArtToken is IERC721 {
      * @dev The token is reserved.
      */
     error ArtTokenReserved(uint256 tokenId);
+
+    /**
+     * @dev An address is zero.
+     */
+    error ArtTokenZeroAddress();
 }

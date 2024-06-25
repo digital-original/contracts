@@ -55,11 +55,16 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
      * @param auctionHouse AuctionHouse contract address.
      * @param usdc USDC asset contract address.
      */
-    constructor(address admin, address platform, IAuctionHouse auctionHouse, IERC20 usdc) EIP712("ArtToken", "1") {
+    constructor(address admin, address platform, address auctionHouse, address usdc) EIP712("ArtToken", "1") {
+        if (admin == address(0)) revert ArtTokenZeroAddress();
+        if (platform == address(0)) revert ArtTokenZeroAddress();
+        if (auctionHouse == address(0)) revert ArtTokenZeroAddress();
+        if (usdc == address(0)) revert ArtTokenZeroAddress();
+
         ADMIN = admin;
         PLATFORM = platform;
-        AUCTION_HOUSE = auctionHouse;
-        USDC = usdc;
+        AUCTION_HOUSE = IAuctionHouse(auctionHouse);
+        USDC = IERC20(usdc);
     }
 
     /**
@@ -101,6 +106,10 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
         );
 
         _requireValidSignature(ADMIN, structHash, params.deadline, params.signature);
+
+        if (bytes(params.tokenURI).length == 0) {
+            revert ArtTokenEmptyTokenURI();
+        }
 
         if (AUCTION_HOUSE.tokenReserved(params.tokenId)) {
             revert ArtTokenReserved(params.tokenId);
