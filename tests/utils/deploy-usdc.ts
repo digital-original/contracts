@@ -2,13 +2,12 @@ import { ethers } from 'hardhat';
 import { deployClassic } from '../../scripts/deploy-classic';
 
 export async function deployUsdc() {
-    const deployedContract = await deployClassic({
+    const { contractAddr } = await deployClassic({
         name: 'USDC',
         constructorArgs: [],
     });
 
-    return Promise.all([
-        ethers.getContractAt('USDC', deployedContract),
-        deployedContract.getAddress(),
-    ]);
+    const contract = await ethers.getContractAt('USDC', contractAddr);
+
+    return [contract, contractAddr] as const;
 }

@@ -15,7 +15,7 @@ export async function deployUpgrade(params: Params, deployer?: Signer) {
     const implName = params.implName;
     const implConstructorArgs = params.implConstructorArgs;
 
-    const impl = await deployClassic(
+    const { contract: impl, contractAddr: implAddr } = await deployClassic(
         {
             name: implName,
             constructorArgs: implConstructorArgs,
@@ -32,8 +32,7 @@ export async function deployUpgrade(params: Params, deployer?: Signer) {
     const receipt = (await response.wait())!;
 
     return {
-        impl,
-        response,
         receipt,
+        implAddr,
     };
 }

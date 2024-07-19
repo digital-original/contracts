@@ -1,12 +1,12 @@
 import { task } from 'hardhat/config';
 import { ChainConfig } from '../types/environment';
-import { deployContracts } from '../scripts/deploy-contracts';
+import { deployClassic } from '../scripts/deploy-classic';
 
 /*
-npx hardhat deploy --network fork
+npx hardhat deploy-auction-house-impl --network fork
 */
 
-task('deploy').setAction(async (taskArgs: Record<string, string>, hardhat) => {
+task('deploy-auction-house-impl').setAction(async (taskArgs: Record<string, string>, hardhat) => {
     const ethers = hardhat.ethers;
     const chain = hardhat.network;
     const chainId = chain.config.chainId;
@@ -22,42 +22,35 @@ task('deploy').setAction(async (taskArgs: Record<string, string>, hardhat) => {
     console.groupEnd();
     console.log('-'.repeat(process.stdout.columns));
 
-    const proxyAdminOwnerAddr = config.wallets!.proxyAdminOwner.public;
     const adminAddr = config.wallets!.admin.public;
     const platformAddr = config.wallets!.platform.public;
+    const artTokenAddr = config.contracts!.artToken.proxy;
     const usdcAddr = config.usdc!;
     const minAuctionDurationHours = config.minAuctionDurationHours!;
 
-    console.log(`Deploying contracts...`);
+    console.log(`Deploying AuctionHouse Impl...`);
     console.log(`\n`);
     console.group('Params:');
-    console.log(`proxyAdminOwner: ${proxyAdminOwnerAddr}`);
     console.log(`admin: ${adminAddr}`);
     console.log(`platform: ${platformAddr}`);
+    console.log(`artToken: ${artTokenAddr}`);
     console.log(`usdc: ${usdcAddr}`);
     console.log(`minAuctionDurationHours: ${minAuctionDurationHours}`);
     console.groupEnd();
     console.log(`\n`);
     console.log(`Transaction broadcasting...`);
 
-    const {
-        receipt,
+    const minAuctionDurationSeconds = minAuctionDurationHours * 60 * 60;
 
-        artTokenAddr,
-        artTokenImplAddr,
-        artTokenProxyAdminAddr,
-        artTokenProxyAdminOwner,
-
-        auctionHouseAddr,
-        auctionHouseImplAddr,
-        auctionHouseProxyAdminAddr,
-        auctionHouseProxyAdminOwner,
-    } = await deployContracts({
-        proxyAdminOwner: proxyAdminOwnerAddr,
-        admin: adminAddr,
-        platform: platformAddr,
-        usdc: usdcAddr,
-        minAuctionDurationHours: minAuctionDurationHours,
+    const { receipt, contractAddr: auctionHouseImplAddr } = await deployClassic({
+        name: 'AuctionHouse',
+        constructorArgs: [
+            adminAddr,
+            platformAddr,
+            artTokenAddr,
+            usdcAddr,
+            minAuctionDurationSeconds,
+        ],
     });
 
     console.log(`Transaction broadcasted`);
@@ -65,17 +58,7 @@ task('deploy').setAction(async (taskArgs: Record<string, string>, hardhat) => {
     console.log('-'.repeat(process.stdout.columns));
 
     console.group('Result:');
-    console.log(`ArtToken Proxy - ${artTokenAddr}`);
-    console.log(`ArtToken Impl - ${artTokenImplAddr}`);
-    console.log(`ArtToken Proxy Admin - ${artTokenProxyAdminAddr}`);
-    console.log(`ArtToken Proxy Admin Owner - ${artTokenProxyAdminOwner}`);
-
-    console.log('\n');
-    console.log(`AuctionHouse Proxy - ${auctionHouseAddr}`);
     console.log(`AuctionHouse Impl - ${auctionHouseImplAddr}`);
-    console.log(`AuctionHouse Proxy Admin - ${auctionHouseProxyAdminAddr}`);
-    console.log(`AuctionHouse Proxy Admin Owner - ${auctionHouseProxyAdminOwner}`);
-
     console.groupEnd();
     console.log('-'.repeat(process.stdout.columns));
 });

@@ -1,36 +1,9 @@
 sepolia:
     id: 11155111
     url: ''
-    usdc: '0x622333D6627BaE0a7e76F507f8E21aAed577Dd57'
+    usdc: ''
     env:
         dev:
-            minAuctionDurationHours: 24
-
-            wallet:
-                deployer:
-                    public: ''
-                    private: ''
-                proxyAdminOwner:
-                    public: ''
-                    private: ''
-                admin:
-                    public: ''
-                    private: ''
-                platform:
-                    public: ''
-                    private: ''
-
-            contract:
-                artToken:
-                    proxy: ''
-                    impl: ''
-                    admin: ''
-                auctionHouse:
-                    proxy: ''
-                    impl: ''
-                    admin: ''
-
-        local:
             minAuctionDurationHours: 24
 
             wallet:
@@ -60,7 +33,7 @@ sepolia:
 ethereum:
     id: 1
     url: ''
-    usdc: ''
+    usdc: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'
     env:
         prod:
             minAuctionDurationHours: 24
@@ -81,10 +54,10 @@ ethereum:
 
             contract:
                 artToken:
-                    proxy: ''
-                    impl: ''
-                    admin: ''
+                    proxy: '0x653cdB21a83b59374C194002Da332D683F5678aA'
+                    impl: '0x4BC036cB6f5B0003e38F152171912B62406373E6'
+                    admin: '0x6c54061AC5c758B12453558c846c570842B82A13'
                 auctionHouse:
-                    proxy: ''
-                    impl: ''
-                    admin: ''
+                    proxy: '0x7bb8807250928FC57c1eb01A4B65860439F94e36'
+                    impl: '0x284Da9A69d4b869eEB203ecF92a906cE98F3F7b1'
+                    admin: '0xA6D10309e4dbC8259a80e37eeF09eAd6D08f92c9'

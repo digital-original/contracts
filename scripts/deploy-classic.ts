@@ -12,5 +12,16 @@ export async function deployClassic(params: Params, deployer?: Signer) {
 
     const contract = await ethers.deployContract(name, constructorArgs, deployer);
 
-    return contract.waitForDeployment();
+    const [_receipt, contractAddr] = await Promise.all([
+        contract.deploymentTransaction()?.wait(),
+        contract.getAddress(),
+    ]);
+
+    const receipt = _receipt!;
+
+    return {
+        receipt,
+        contract,
+        contractAddr,
+    };
 }
