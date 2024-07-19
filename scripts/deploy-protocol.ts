@@ -5,7 +5,7 @@ import {
 } from '../typechain-types/@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol/TransparentUpgradeableProxy';
 import { OwnershipTransferredEvent } from '../typechain-types/@openzeppelin/contracts/proxy/transparent/ProxyAdmin';
 import { DeployedEvent } from '../typechain-types/contracts/utils/Deployer';
-import { deployClassic } from '../scripts/deploy-classic';
+import { deployClassic } from './deploy-classic';
 
 type Params = {
     proxyAdminOwner: AddressParam;
@@ -16,7 +16,7 @@ type Params = {
 };
 
 // prettier-ignore
-export async function deployContracts(params: Params, deployer?: Signer) {
+export async function deployProtocol(params: Params, deployer?: Signer) {
     const {
         proxyAdminOwner,
         admin,
@@ -29,15 +29,13 @@ export async function deployContracts(params: Params, deployer?: Signer) {
 
     const minAuctionDurationSeconds = minAuctionDurationHours * 60 * 60;
 
-    const deployerContract = await deployClassic(
+    const { receipt } = await deployClassic(
         {
             name: 'Deployer',
             constructorArgs: [proxyAdminOwner, admin, platform, usdc, minAuctionDurationSeconds],
         },
         deployer,
     );
-
-    const receipt = (await deployerContract.deploymentTransaction()?.wait())!;
 
     const Proxy = await ethers.getContractFactory('TransparentUpgradeableProxy');
     const ProxyAdmin = await ethers.getContractFactory('ProxyAdmin');

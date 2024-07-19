@@ -12,7 +12,7 @@ export async function deployUpgradeable(params: Params, deployer?: Signer) {
     const implName = params.implName;
     const implConstructorArgs = params.implConstructorArgs;
 
-    const impl = await deployClassic(
+    const { contract: impl, contractAddr: implAddr } = await deployClassic(
         {
             name: implName,
             constructorArgs: implConstructorArgs,
@@ -31,7 +31,11 @@ export async function deployUpgradeable(params: Params, deployer?: Signer) {
         initializationData,
     ];
 
-    const proxy = await deployClassic(
+    const {
+        receipt,
+        contract: proxy,
+        contractAddr: proxyAddr,
+    } = await deployClassic(
         {
             name: proxyName,
             constructorArgs: proxyConstructorArgs,
@@ -39,5 +43,10 @@ export async function deployUpgradeable(params: Params, deployer?: Signer) {
         deployer,
     );
 
-    return { impl, proxy, proxyConstructorArgs };
+    return {
+        receipt,
+        proxy,
+        proxyAddr,
+        implAddr,
+    };
 }

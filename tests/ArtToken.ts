@@ -9,7 +9,7 @@ import { BuyPermitStruct } from '../types/art-token';
 import { TOTAL_SHARE } from '../constants/distribution';
 import { getValidDeadline } from './utils/get-valid-deadline';
 import { getLatestBlockTimestamp } from './utils/get-latest-block-timestamp';
-import { deployContracts } from '../scripts/deploy-contracts';
+import { deployProtocol } from '../scripts/deploy-protocol';
 import { deployUsdc } from './utils/deploy-usdc';
 import { signCreatePermit } from './utils/sign-auction-house-create-permit';
 import { CreatePermitStruct } from '../types/auction-house';
@@ -53,7 +53,7 @@ describe('ArtToken', function () {
             artTokenAddr: _artTokenAddr,
             auctionHouse: _auctionHouse,
             auctionHouseAddr: _auctionHouseAddr,
-        } = await deployContracts({
+        } = await deployProtocol({
             proxyAdminOwner,
             admin,
             platform,

@@ -33,9 +33,9 @@ $ npm run fork
 $ npx hardhat run <path-to-script> --network fork
 ```
 
-## Deploy contracts
+## Deploy protocol
 ```
-$ npx hardhat deploy --network fork
+$ npx hardhat deploy-protocol --network fork
 ```
 
 ## Run slither
