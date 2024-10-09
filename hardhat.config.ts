@@ -1,9 +1,12 @@
 import fs from 'fs';
 import yaml from 'js-yaml';
 import dotenv from 'dotenv';
-import * as ethers from 'ethers';
+
+import { ethers } from 'ethers';
 import '@nomicfoundation/hardhat-toolbox';
+
 import './tasks';
+
 import type { HardhatUserConfig } from 'hardhat/config';
 import type { ChainConfig } from './types/environment';
 
@@ -14,11 +17,11 @@ const config: any = yaml.load(fs.readFileSync('./config.yaml', 'utf8'));
 const ENV_MODE = <'local' | 'dev' | 'prod' | 'test'>process.env.ENV_MODE;
 const CHAIN_TO_FORK = <'sepolia' | 'ethereum'>process.env.CHAIN_TO_FORK;
 const FORKED_CHAIN = <'sepolia' | 'ethereum'>process.env.FORKED_CHAIN;
-const FORKED_CHAIN_URL = process.env.FORKED_CHAIN_URL!;
+const FORKED_CHAIN_URL = String(process.env.FORKED_CHAIN_URL);
 const FORKED_CHAIN_ID = Number(process.env.FORKED_CHAIN_ID);
-const REPORT_GAS = process.env.REPORT_GAS === 'true';
-const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY!;
-const COINMARKETCAP_API_KEY = process.env.COINMARKETCAP_API_KEY!;
+const REPORT_GAS = Boolean(process.env.REPORT_GAS === 'true');
+const ETHERSCAN_API_KEY = String(process.env.ETHERSCAN_API_KEY);
+const COINMARKETCAP_API_KEY = String(process.env.COINMARKETCAP_API_KEY);
 
 const hardhatBaseConfig: HardhatUserConfig = {
     solidity: {

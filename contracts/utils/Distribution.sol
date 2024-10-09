@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.20;
 
-import {IERC20 as ERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /**
@@ -11,7 +11,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
  * and validate distribution conditions.
  */
 library Distribution {
-    using SafeERC20 for ERC20;
+    using SafeERC20 for IERC20;
 
     /**
      * @dev Maximum total share.
@@ -29,7 +29,7 @@ library Distribution {
      * @param shares Array with shares.
      */
     function safeDistribute(
-        ERC20 asset,
+        IERC20 asset,
         uint256 reward,
         address[] memory participants,
         uint256[] memory shares
@@ -46,7 +46,7 @@ library Distribution {
      * @param participants Array with participants address.
      * @param shares Array with shares.
      */
-    function distribute(ERC20 asset, uint256 reward, address[] memory participants, uint256[] memory shares) internal {
+    function distribute(IERC20 asset, uint256 reward, address[] memory participants, uint256[] memory shares) internal {
         uint256 lastShareIndex = shares.length - 1;
         uint256 distributed;
 

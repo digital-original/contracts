@@ -23,12 +23,15 @@ describe('AuctionHouse', function () {
 
     let chainId: number;
 
-    let proxyAdminOwner: Signer, proxyAdminOwnerAddr: string;
+    let main: Signer, mainAddr: string;
     let admin: Signer, adminAddr: string;
-    let platform: Signer, platformAddr: string;
-    let partner: Signer, partnerAddr: string;
+    let financier: Signer, financierAddr: string;
+    let institution: Signer, institutionAddr: string;
     let buyer: Signer, buyerAddr: string;
     let randomAccount: Signer, randomAccountAddr: string;
+
+    const adminRole = ethers.keccak256(Buffer.from('ADMIN_ROLE'));
+    const financialRole = ethers.keccak256(Buffer.from('FINANCIAL_ROLE'));
 
     before(async () => {
         chainId = await getChainId();
@@ -36,15 +39,8 @@ describe('AuctionHouse', function () {
         [usdc, usdcAddr] = await deployUsdc();
 
         [
-            [proxyAdminOwner, admin, platform, partner, buyer, randomAccount],
-            [
-                proxyAdminOwnerAddr,
-                adminAddr,
-                platformAddr,
-                partnerAddr,
-                buyerAddr,
-                randomAccountAddr,
-            ],
+            [main, admin, financier, institution, buyer, randomAccount],
+            [mainAddr, adminAddr, financierAddr, institutionAddr, buyerAddr, randomAccountAddr],
         ] = await getSigners();
     });
 
@@ -55,23 +51,22 @@ describe('AuctionHouse', function () {
             artToken: _artToken,
             artTokenAddr: _artTokenAddr,
         } = await deployProtocol({
-            proxyAdminOwner,
-            admin,
-            platform,
+            main,
             usdc,
             minAuctionDurationHours: 1,
         });
 
-        await Promise.all([
-            usdc.connect(buyer).mint(),
-            usdc.connect(randomAccount).mint(),
-            usdc.connect(platform).mint(),
-        ]);
+        await _artToken.connect(main).transferUniqueRole(adminRole, admin);
+        await _artToken.connect(main).transferUniqueRole(financialRole, financier);
+        await _auctionHouse.connect(main).transferUniqueRole(adminRole, admin);
+        await _auctionHouse.connect(main).transferUniqueRole(financialRole, financier);
+
+        await Promise.all([usdc.connect(buyer).mint(), usdc.connect(randomAccount).mint()]);
 
         await Promise.all([
             usdc.connect(buyer).approve(_auctionHouse, ethers.MaxInt256),
+            usdc.connect(buyer).approve(_artToken, ethers.MaxInt256),
             usdc.connect(randomAccount).approve(_auctionHouse, ethers.MaxInt256),
-            usdc.connect(platform).approve(_artToken, ethers.MaxInt256),
         ]);
 
         auctionHouse = _auctionHouse;
@@ -99,7 +94,7 @@ describe('AuctionHouse', function () {
         fee = 100_000_000n;
         step = 1_000_000n;
         endTime = await getValidDeadline();
-        participants = [platformAddr, partnerAddr];
+        participants = [financierAddr, institutionAddr];
         shares = [TOTAL_SHARE / 5n, (TOTAL_SHARE / 5n) * 4n];
         deadline = await getValidDeadline();
     });
@@ -203,17 +198,17 @@ describe('AuctionHouse', function () {
             const buyPermit: BuyPermitStruct = {
                 tokenId,
                 tokenURI,
-                sender: platformAddr,
+                sender: buyerAddr,
                 price: 100_000_001n,
                 fee: 100_000_001n,
-                participants: [platformAddr],
+                participants: [financierAddr],
                 shares: [TOTAL_SHARE],
                 deadline,
             };
 
             const signature = await signBuyPermit(chainId, artTokenAddr, buyPermit, admin);
 
-            await artToken.connect(platform).buy({
+            await artToken.connect(buyer).buy({
                 tokenId,
                 tokenURI,
                 price: buyPermit.price,
@@ -243,7 +238,7 @@ describe('AuctionHouse', function () {
 
         describe(`distribution logic`, () => {
             it(`should fail if number of shares is not equal number of participants`, async () => {
-                const _participants = [platformAddr];
+                const _participants = [financierAddr];
                 const _shares = [TOTAL_SHARE / 2n, TOTAL_SHARE / 2n];
 
                 await expect(create({ _participants, _shares })).to.be.rejectedWith(
@@ -252,7 +247,7 @@ describe('AuctionHouse', function () {
             });
 
             it(`should fail if total shares is not equal TOTAL_SHARE`, async () => {
-                const _participants = [platformAddr, partnerAddr];
+                const _participants = [financierAddr, institutionAddr];
                 const _shares = [TOTAL_SHARE, 1n];
 
                 await expect(create({ _participants, _shares })).to.be.rejectedWith(
@@ -470,7 +465,7 @@ describe('AuctionHouse', function () {
             expect(auction.sold).equal(true);
         });
 
-        it(`should mint art-token for buyer`, async () => {
+        it(`should mint token for buyer`, async () => {
             await endWithBuyer();
 
             const transaction = await finish();
@@ -491,14 +486,14 @@ describe('AuctionHouse', function () {
             await expect(transaction).to.be.emit(auctionHouse, 'Sold').withArgs(auctionId);
         });
 
-        it(`should transfer fee to platform`, async () => {
+        it(`should transfer fee to financier`, async () => {
             await endWithBuyer();
 
             const transaction = await finish();
 
             await expect(transaction)
                 .to.be.emit(usdc, 'Transfer')
-                .withArgs(auctionHouseAddr, platformAddr, fee);
+                .withArgs(auctionHouseAddr, financierAddr, fee);
         });
 
         it(`should fail if auction does not exist`, async () => {
@@ -526,24 +521,28 @@ describe('AuctionHouse', function () {
             await expect(finish()).to.eventually.rejectedWith('AuctionHouseBuyerNotExists');
         });
 
-        it(`should fail if auction does not have buyer`, async () => {
-            await end();
-
-            await expect(finish()).to.eventually.rejectedWith('AuctionHouseBuyerNotExists');
-        });
-
         describe(`distribution logic`, () => {
             it(`should distribute reward between participants according to shares`, async () => {
                 await endWithBuyer();
 
                 const transaction = await finish();
 
-                expect(transaction)
-                    .to.be.emit(usdc, 'Transfer')
-                    .withArgs(artTokenAddr, participants[0], (price * shares[0]) / TOTAL_SHARE);
-                expect(transaction)
-                    .to.be.emit(usdc, 'Transfer')
-                    .withArgs(artTokenAddr, participants[1], (price * shares[1]) / TOTAL_SHARE);
+                await Promise.all([
+                    expect(transaction)
+                        .to.be.emit(usdc, 'Transfer')
+                        .withArgs(
+                            auctionHouseAddr,
+                            participants[0],
+                            (price * shares[0]) / TOTAL_SHARE,
+                        ),
+                    expect(transaction)
+                        .to.be.emit(usdc, 'Transfer')
+                        .withArgs(
+                            auctionHouseAddr,
+                            participants[1],
+                            (price * shares[1]) / TOTAL_SHARE,
+                        ),
+                ]);
             });
         });
     });

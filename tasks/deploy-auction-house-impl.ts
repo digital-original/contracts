@@ -22,8 +22,7 @@ task('deploy-auction-house-impl').setAction(async (taskArgs: Record<string, stri
     console.groupEnd();
     console.log('-'.repeat(process.stdout.columns));
 
-    const adminAddr = config.wallets!.admin.public;
-    const platformAddr = config.wallets!.platform.public;
+    const mainAddr = config.wallets!.main.public;
     const artTokenAddr = config.contracts!.artToken.proxy;
     const usdcAddr = config.usdc!;
     const minAuctionDurationHours = config.minAuctionDurationHours!;
@@ -31,8 +30,7 @@ task('deploy-auction-house-impl').setAction(async (taskArgs: Record<string, stri
     console.log(`Deploying AuctionHouse Impl...`);
     console.log(`\n`);
     console.group('Params:');
-    console.log(`admin: ${adminAddr}`);
-    console.log(`platform: ${platformAddr}`);
+    console.log(`main: ${mainAddr}`);
     console.log(`artToken: ${artTokenAddr}`);
     console.log(`usdc: ${usdcAddr}`);
     console.log(`minAuctionDurationHours: ${minAuctionDurationHours}`);
@@ -44,13 +42,7 @@ task('deploy-auction-house-impl').setAction(async (taskArgs: Record<string, stri
 
     const { receipt, contractAddr: auctionHouseImplAddr } = await deployClassic({
         name: 'AuctionHouse',
-        constructorArgs: [
-            adminAddr,
-            platformAddr,
-            artTokenAddr,
-            usdcAddr,
-            minAuctionDurationSeconds,
-        ],
+        constructorArgs: [mainAddr, artTokenAddr, usdcAddr, minAuctionDurationSeconds],
     });
 
     console.log(`Transaction broadcasted`);

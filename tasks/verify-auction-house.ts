@@ -25,14 +25,13 @@ task('verify-auction-house').setAction(async (taskArgs: Record<string, string>, 
     // TransparentUpgradeableProxy
     const proxyAddr = config.contracts!.auctionHouse.proxy;
     const implAddr = config.contracts!.auctionHouse.impl;
-    const proxyAdminOwnerAddr = config.wallets!.proxyAdminOwner.public;
+    const proxyAdminOwnerAddr = config.wallets!.main.public;
 
     // ProxyAdmin
     const proxyAdminAddr = config.contracts!.auctionHouse.admin;
 
     // AuctionHouse
-    const adminAddr = config.wallets!.admin.public;
-    const platformAddr = config.wallets!.platform.public;
+    const mainAddr = config.wallets!.main.public;
     const artTokenAddr = config.contracts!.artToken.proxy;
     const usdcAddr = config.usdc!;
     const minAuctionDurationHours = config.minAuctionDurationHours!;
@@ -53,8 +52,7 @@ task('verify-auction-house').setAction(async (taskArgs: Record<string, string>, 
     console.groupEnd();
 
     console.group(`ArtToken:`);
-    console.log(`admin: ${adminAddr}`);
-    console.log(`platform: ${platformAddr}`);
+    console.log(`main: ${mainAddr}`);
     console.log(`artToken: ${artTokenAddr}`);
     console.log(`usdc: ${usdcAddr}`);
     console.log(`minAuctionDurationHours: ${minAuctionDurationHours}`);
@@ -83,14 +81,7 @@ task('verify-auction-house').setAction(async (taskArgs: Record<string, string>, 
     await hardhat.run('verify:verify', {
         contract: 'contracts/auction-house/AuctionHouse.sol:AuctionHouse',
         address: implAddr,
-        constructorArguments: [
-            adminAddr,
-            platformAddr,
-            artTokenAddr,
-            usdcAddr,
-            minAuctionDurationSeconds,
-        ],
+        constructorArguments: [mainAddr, artTokenAddr, usdcAddr, minAuctionDurationSeconds],
     });
-
     console.log('-'.repeat(process.stdout.columns));
 });

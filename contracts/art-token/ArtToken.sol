@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.20;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {RoleSystem} from "../utils/role-system/RoleSystem.sol";
 import {EIP712} from "../utils/EIP712.sol";
 import {Distribution} from "../utils/Distribution.sol";
+import {IAuctionHouse} from "../auction-house/IAuctionHouse.sol";
 import {ArtTokenBase} from "./ArtTokenBase.sol";
 import {IArtToken} from "./IArtToken.sol";
-import {IAuctionHouse} from "../auction-house/IAuctionHouse.sol";
 
 /**
  * @title ArtToken
@@ -15,7 +16,7 @@ import {IAuctionHouse} from "../auction-house/IAuctionHouse.sol";
  * @notice ArtToken contract extends ERC721 standard.
  * The contract provides functionality to track, transfer and sell Digital Original NFTs.
  */
-contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
+contract ArtToken is IArtToken, ArtTokenBase, RoleSystem, EIP712("ArtToken", "1") {
     using SafeERC20 for IERC20;
 
     bytes32 public constant BUY_PERMIT_TYPE_HASH =
@@ -33,10 +34,13 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
             ")"
         );
 
-    address public immutable ADMIN; // Admin address
-    address public immutable PLATFORM; // Platform address
     IAuctionHouse public immutable AUCTION_HOUSE; // AuctionHouse contract address
     IERC20 public immutable USDC; // USDC asset contract address
+
+    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+    bytes32 public constant FINANCIAL_ROLE = keccak256("FINANCIAL_ROLE");
+    bytes32 public constant PARTNER_ROLE = keccak256("PARTNER_ROLE");
+
     uint256 public constant MIN_PRICE = 100_000_000; // Minimum price value
     uint256 public constant MIN_FEE = 100_000_000; // Minimum fee value
 
@@ -52,19 +56,14 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
     }
 
     /**
-     * @param admin Admin address.
-     * @param platform Platform address.
+     * @param main The main account for managing the role system.
      * @param auctionHouse AuctionHouse contract address.
      * @param usdc USDC asset contract address.
      */
-    constructor(address admin, address platform, address auctionHouse, address usdc) EIP712("ArtToken", "1") {
-        if (admin == address(0)) revert ArtTokenMisconfiguration(1);
-        if (platform == address(0)) revert ArtTokenMisconfiguration(2);
-        if (auctionHouse == address(0)) revert ArtTokenMisconfiguration(3);
-        if (usdc == address(0)) revert ArtTokenMisconfiguration(4);
+    constructor(address main, address auctionHouse, address usdc) RoleSystem(main) {
+        if (auctionHouse == address(0)) revert ArtTokenMisconfiguration(1);
+        if (usdc == address(0)) revert ArtTokenMisconfiguration(2);
 
-        ADMIN = admin;
-        PLATFORM = platform;
         AUCTION_HOUSE = IAuctionHouse(auctionHouse);
         USDC = IERC20(usdc);
     }
@@ -83,7 +82,7 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
      * @dev Only account with a minting permission can invoke the method.
      */
     function mint(address to, uint256 tokenId, string memory _tokenURI) external canMint {
-        _mintAndSetTokenURI(to, tokenId, _tokenURI);
+        _safeMintAndSetTokenURI(to, tokenId, _tokenURI);
     }
 
     /**
@@ -107,7 +106,7 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
             )
         );
 
-        _requireValidSignature(ADMIN, structHash, params.deadline, params.signature);
+        _requireValidSignature(uniqueRoleAccount(ADMIN_ROLE), structHash, params.deadline, params.signature);
 
         if (bytes(params.tokenURI).length == 0) {
             revert ArtTokenEmptyTokenURI();
@@ -131,9 +130,9 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
 
         Distribution.safeDistribute(USDC, params.price, params.participants, params.shares);
 
-        USDC.safeTransfer(PLATFORM, params.fee);
+        USDC.safeTransfer(uniqueRoleAccount(FINANCIAL_ROLE), params.fee);
 
-        _mintAndSetTokenURI(msg.sender, params.tokenId, params.tokenURI);
+        _safeMintAndSetTokenURI(msg.sender, params.tokenId, params.tokenURI);
     }
 
     /**
@@ -144,23 +143,40 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712 {
     }
 
     /**
-     * @notice Adds logic to restrict token transfers to smart contracts.
-     * This restriction is necessary to prevent sales via smart contracts wherein Digital Original™ cannot
-     * assure compliance with the terms of sale of DO NFT for authors, galleries, and art institutions.
-     * This restriction will be changed after the launch of a contract developed by Digital Original™
-     * with secondary market functionality.
-     *
-     * @dev Extends `ERC20::_update` method.
+     * @inheritdoc IArtToken
      */
-    function _update(
-        address to,
-        uint256 tokenId,
-        address auth
-    ) internal virtual override(ArtTokenBase) returns (address) {
-        if (to.code.length > 0) {
-            revert ArtTokenInvalidReceiver(to);
-        }
+    function recipientAuthorized(address account) external view returns (bool) {
+        return account.code.length == 0 || hasRole(PARTNER_ROLE, account);
+    }
 
-        return ArtTokenBase._update(to, tokenId, auth);
+    /**
+     * @dev Throws if the account is not authorized.
+     */
+    function _requireAuthorizedRecipient(address account) private view {
+        if (account.code.length != 0) _requireRole(PARTNER_ROLE, account);
+    }
+
+    /**
+     * @dev Overriding the hook. Extends the token-transferring logic,
+     *  checks if a token recipient is authorized.
+     */
+    function _beforeTransfer(address to, uint256 /* tokenId */) internal view override {
+        _requireAuthorizedRecipient(to);
+    }
+
+    /**
+     * @dev Overriding the hook. Extends the approval-providing logic,
+     *  checks if an approval recipient is authorized.
+     */
+    function _beforeApprove(address to, uint256 /* tokenId */) internal view override {
+        _requireAuthorizedRecipient(to);
+    }
+
+    /**
+     * @dev Overriding the hook. Extends the logic of approval-providing for all tokens,
+     *  checks if an approval recipient is authorized.
+     */
+    function _beforeSetApprovalForAll(address operator, bool approved) internal view override {
+        if (approved) _requireAuthorizedRecipient(operator);
     }
 }
