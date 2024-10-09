@@ -40,6 +40,11 @@ interface IArtToken is IERC721 {
     function tokenReserved(uint256 tokenId) external view returns (bool);
 
     /**
+     * @dev Returns true if the account is authorized.
+     */
+    function recipientAuthorized(address account) external view returns (bool);
+
+    /**
      * @dev The caller account is not authorized.
      */
     error ArtTokenUnauthorizedAccount(address account);
@@ -70,7 +75,7 @@ interface IArtToken is IERC721 {
     error ArtTokenReserved(uint256 tokenId);
 
     /**
-     * @dev The constructor parameter number `paramNumber` is invalid.
+     * @dev The constructor argument under index `argIndex` is invalid.
      */
-    error ArtTokenMisconfiguration(uint256 paramNumber);
+    error ArtTokenMisconfiguration(uint256 argIndex);
 }

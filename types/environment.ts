@@ -14,9 +14,7 @@ export type UpgradeableContractConfig = {
 export type ChainConfig = {
     wallets?: {
         deployer: WalletConfig;
-        proxyAdminOwner: WalletConfig;
-        admin: WalletConfig;
-        platform: WalletConfig;
+        main: WalletConfig;
     };
     contracts?: {
         artToken: UpgradeableContractConfig;

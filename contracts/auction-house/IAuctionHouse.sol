@@ -166,7 +166,7 @@ interface IAuctionHouse {
     error AuctionHouseRaiseTooSmall(uint256 amount, uint256 minAmount);
 
     /**
-     * @dev The constructor parameter number `paramNumber` is invalid.
+     * @dev The constructor argument under index `argIndex` is invalid.
      */
-    error AuctionHouseMisconfiguration(uint256 paramNumber);
+    error AuctionHouseMisconfiguration(uint256 argIndex);
 }

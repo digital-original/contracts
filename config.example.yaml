@@ -1,7 +1,7 @@
 sepolia:
     id: 11155111
     url: ''
-    usdc: ''
+    usdc: '0x622333D6627BaE0a7e76F507f8E21aAed577Dd57'
     env:
         dev:
             minAuctionDurationHours: 24
@@ -10,13 +10,7 @@ sepolia:
                 deployer:
                     public: ''
                     private: ''
-                proxyAdminOwner:
-                    public: ''
-                    private: ''
-                admin:
-                    public: ''
-                    private: ''
-                platform:
+                main:
                     public: ''
                     private: ''
 
@@ -42,14 +36,8 @@ ethereum:
                 deployer:
                     public: ''
                     private: ''
-                proxyAdminOwner:
-                    public: ''
-                    private: ''
-                admin:
-                    public: ''
-                    private: ''
-                platform:
-                    public: ''
+                main:
+                    public: '0x445458607007b26dB4f80DcF0f26bd6e1A4af8A5'
                     private: ''
 
             contract:
