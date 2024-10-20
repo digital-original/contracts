@@ -9,14 +9,15 @@ import './tasks';
 
 import type { HardhatUserConfig } from 'hardhat/config';
 import type { ChainConfig } from './types/environment';
+import { NetworksUserConfig } from 'hardhat/types';
 
 dotenv.config();
 
-const config: any = yaml.load(fs.readFileSync('./config.yaml', 'utf8'));
+const config = <Record<string, ChainConfig>>yaml.load(fs.readFileSync('./config.yaml', 'utf8'));
 
-const ENV_MODE = <'local' | 'dev' | 'prod' | 'test'>process.env.ENV_MODE;
-const CHAIN_TO_FORK = <'sepolia' | 'ethereum'>process.env.CHAIN_TO_FORK;
-const FORKED_CHAIN = <'sepolia' | 'ethereum'>process.env.FORKED_CHAIN;
+const ENV_MODE = String(process.env.ENV_MODE);
+const CHAIN_TO_FORK = String(process.env.CHAIN_TO_FORK);
+const FORKED_CHAIN = String(process.env.FORKED_CHAIN);
 const FORKED_CHAIN_URL = String(process.env.FORKED_CHAIN_URL);
 const FORKED_CHAIN_ID = Number(process.env.FORKED_CHAIN_ID);
 const REPORT_GAS = Boolean(process.env.REPORT_GAS === 'true');
@@ -60,86 +61,68 @@ const hardhatEtherscanConfig: HardhatUserConfig = {
 };
 
 function buildHardhatConfig(): HardhatUserConfig {
-    if (ENV_MODE === 'test' || !ENV_MODE) {
+    if (ENV_MODE === 'test') {
         return { ...hardhatBaseConfig, ...hardhatTestConfig };
     }
 
-    const ethereumUrl = config.ethereum.url;
-    const ethereumId = config.ethereum.id;
-    const ethereum: ChainConfig = {
-        wallets: config.ethereum.env[ENV_MODE]?.wallet,
-        contracts: config.ethereum.env[ENV_MODE]?.contract,
-        usdc: config.ethereum.usdc,
-        minAuctionDurationHours: config.ethereum.env[ENV_MODE]?.minAuctionDurationHours,
-    };
+    const hardhatNetworksConfig: NetworksUserConfig = {};
 
-    const sepoliaUrl = config.sepolia.url;
-    const sepoliaId = config.sepolia.id;
-    const sepolia: ChainConfig = {
-        wallets: config.sepolia.env[ENV_MODE]?.wallet,
-        contracts: config.sepolia.env[ENV_MODE]?.contract,
-        usdc: config.sepolia.usdc,
-        minAuctionDurationHours: config.sepolia.env[ENV_MODE]?.minAuctionDurationHours,
-    };
+    for (const [chainName, chainConfig] of Object.entries(config)) {
+        const {
+            chainId,
+            url,
+            usdc,
+            minAuctionDurationHours,
+            deployerPrivateKey,
+            main,
+            artToken,
+            auctionHouse,
+        } = chainConfig;
 
-    const forkUrl = FORKED_CHAIN_URL;
-    const forkId = FORKED_CHAIN_ID;
-    const fork: ChainConfig = {
-        wallets: config[FORKED_CHAIN].env[ENV_MODE]?.wallet,
-        contracts: config[FORKED_CHAIN].env[ENV_MODE]?.contract,
-        usdc: config[FORKED_CHAIN].usdc,
-        minAuctionDurationHours: config[FORKED_CHAIN].env[ENV_MODE]?.minAuctionDurationHours,
-    };
+        const extra = {
+            usdc,
+            minAuctionDurationHours,
+            main,
+            artToken,
+            auctionHouse,
+        };
 
-    const chainToForkUrl = config[CHAIN_TO_FORK].url;
-    const chainToFork: Pick<ChainConfig, 'wallets'> = {
-        wallets: config[CHAIN_TO_FORK].env[ENV_MODE]?.wallet,
-    };
+        hardhatNetworksConfig[chainName] = {
+            chainId,
+            url,
+            accounts: [deployerPrivateKey],
+            ...extra,
+        };
+    }
 
-    const hardhatNetworksConfig: HardhatUserConfig = {
-        networks: {
-            hardhat: {
-                forking: { url: chainToForkUrl },
-                ...(chainToFork.wallets?.deployer.private && {
-                    accounts: [
-                        {
-                            privateKey: chainToFork.wallets.deployer.private,
-                            balance: ethers.parseEther('100').toString(),
-                        },
-                    ],
-                }),
-            },
-            fork: {
-                url: forkUrl,
-                chainId: forkId,
-                ...(fork.wallets?.deployer.private && {
-                    accounts: [fork.wallets.deployer.private],
-                }),
-                ...fork,
-            },
-            sepolia: {
-                url: sepoliaUrl,
-                chainId: sepoliaId,
-                ...(sepolia.wallets?.deployer.private && {
-                    accounts: [sepolia.wallets.deployer.private],
-                }),
-                ...sepolia,
-            },
-            ethereum: {
-                url: ethereumUrl,
-                chainId: ethereumId,
-                ...(ethereum.wallets?.deployer.private && {
-                    accounts: [ethereum.wallets.deployer.private],
-                }),
-                ...ethereum,
-            },
-        },
+    if (FORKED_CHAIN_ID && FORKED_CHAIN_URL && FORKED_CHAIN) {
+        hardhatNetworksConfig['fork'] = {
+            ...hardhatNetworksConfig[FORKED_CHAIN],
+            chainId: FORKED_CHAIN_ID,
+            url: FORKED_CHAIN_URL,
+        };
+    }
+
+    if (CHAIN_TO_FORK) {
+        hardhatNetworksConfig['hardhat'] = {
+            forking: { url: config[CHAIN_TO_FORK].url },
+            accounts: [
+                {
+                    privateKey: config[CHAIN_TO_FORK].deployerPrivateKey,
+                    balance: ethers.parseEther('100').toString(),
+                },
+            ],
+        };
+    }
+
+    const hardhatConfig: HardhatUserConfig = {
+        networks: hardhatNetworksConfig,
     };
 
     return {
         ...hardhatBaseConfig,
         ...hardhatEtherscanConfig,
-        ...hardhatNetworksConfig,
+        ...hardhatConfig,
     };
 }
 

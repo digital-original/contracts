@@ -22,9 +22,9 @@ task('deploy-protocol').setAction(async (taskArgs: Record<string, string>, hardh
     console.groupEnd();
     console.log('-'.repeat(process.stdout.columns));
 
-    const mainAddr = config.wallets!.main.public;
-    const usdcAddr = config.usdc!;
-    const minAuctionDurationHours = config.minAuctionDurationHours!;
+    const mainAddr = config.main;
+    const usdcAddr = config.usdc;
+    const minAuctionDurationHours = config.minAuctionDurationHours;
 
     console.log(`Deploying protocol...`);
     console.log(`\n`);

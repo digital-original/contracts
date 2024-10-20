@@ -22,9 +22,9 @@ task('deploy-art-token-impl').setAction(async (taskArgs: Record<string, string>,
     console.groupEnd();
     console.log('-'.repeat(process.stdout.columns));
 
-    const mainAddr = config.wallets!.main.public;
-    const auctionHouseAddr = config.contracts!.auctionHouse.proxy;
-    const usdcAddr = config.usdc!;
+    const mainAddr = config.main;
+    const auctionHouseAddr = config.auctionHouse.proxy;
+    const usdcAddr = config.usdc;
 
     console.log(`Deploying ArtToken Impl...`);
     console.log(`\n`);

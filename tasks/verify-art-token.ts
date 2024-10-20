@@ -22,17 +22,17 @@ task('verify-art-token').setAction(async (taskArgs: Record<string, string>, hard
     console.log('-'.repeat(process.stdout.columns));
 
     // TransparentUpgradeableProxy
-    const proxyAddr = config.contracts!.artToken.proxy;
-    const implAddr = config.contracts!.artToken.impl;
-    const proxyAdminOwnerAddr = config.wallets!.main.public;
+    const proxyAddr = config.artToken.proxy;
+    const implAddr = config.artToken.impl;
+    const proxyAdminOwnerAddr = config.main;
 
     // ProxyAdmin
-    const proxyAdminAddr = config.contracts!.artToken.admin;
+    const proxyAdminAddr = config.artToken.admin;
 
     // ArtToken
-    const mainAddr = config.wallets!.main.public;
-    const auctionHouseAddr = config.contracts!.auctionHouse.proxy;
-    const usdcAddr = config.usdc!;
+    const mainAddr = config.main;
+    const auctionHouseAddr = config.auctionHouse.proxy;
+    const usdcAddr = config.usdc;
 
     console.log(`Verify ArtToken...`);
     console.log(`\n`);

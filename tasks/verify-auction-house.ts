@@ -23,18 +23,18 @@ task('verify-auction-house').setAction(async (taskArgs: Record<string, string>, 
     console.log('-'.repeat(process.stdout.columns));
 
     // TransparentUpgradeableProxy
-    const proxyAddr = config.contracts!.auctionHouse.proxy;
-    const implAddr = config.contracts!.auctionHouse.impl;
-    const proxyAdminOwnerAddr = config.wallets!.main.public;
+    const proxyAddr = config.auctionHouse.proxy;
+    const implAddr = config.auctionHouse.impl;
+    const proxyAdminOwnerAddr = config.main;
 
     // ProxyAdmin
-    const proxyAdminAddr = config.contracts!.auctionHouse.admin;
+    const proxyAdminAddr = config.auctionHouse.admin;
 
     // AuctionHouse
-    const mainAddr = config.wallets!.main.public;
-    const artTokenAddr = config.contracts!.artToken.proxy;
-    const usdcAddr = config.usdc!;
-    const minAuctionDurationHours = config.minAuctionDurationHours!;
+    const mainAddr = config.main;
+    const artTokenAddr = config.artToken.proxy;
+    const usdcAddr = config.usdc;
+    const minAuctionDurationHours = config.minAuctionDurationHours;
 
     console.log(`Verify AuctionHouse...`);
     console.log(`\n`);

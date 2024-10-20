@@ -22,10 +22,10 @@ task('deploy-auction-house-impl').setAction(async (taskArgs: Record<string, stri
     console.groupEnd();
     console.log('-'.repeat(process.stdout.columns));
 
-    const mainAddr = config.wallets!.main.public;
-    const artTokenAddr = config.contracts!.artToken.proxy;
-    const usdcAddr = config.usdc!;
-    const minAuctionDurationHours = config.minAuctionDurationHours!;
+    const mainAddr = config.main;
+    const artTokenAddr = config.artToken.proxy;
+    const usdcAddr = config.usdc;
+    const minAuctionDurationHours = config.minAuctionDurationHours;
 
     console.log(`Deploying AuctionHouse Impl...`);
     console.log(`\n`);
