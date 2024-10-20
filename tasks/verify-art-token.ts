@@ -17,7 +17,6 @@ task('verify-art-token').setAction(async (taskArgs: Record<string, string>, hard
     console.group('Conditions:');
     console.log(`Chain - ${chain.name}`);
     console.log(`Chain ID - ${chainId}`);
-    console.log(`Environment Mode - ${process.env.ENV_MODE}`);
     console.groupEnd();
     console.log('-'.repeat(process.stdout.columns));
 

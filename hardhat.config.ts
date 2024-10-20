@@ -48,7 +48,7 @@ const hardhatBaseConfig: HardhatUserConfig = {
         enabled: REPORT_GAS,
         token: 'eth',
         currency: 'usd',
-        gasPrice: 60,
+        gasPrice: 10,
         src: 'contracts',
         coinmarketcap: COINMARKETCAP_API_KEY,
     },
