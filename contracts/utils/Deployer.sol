@@ -10,26 +10,22 @@ contract Deployer {
 
     error DeployerIncorrectAddress();
 
-    constructor(address proxyAdminOwner, address admin, address platform, address usdc, uint256 minAuctionDuration) {
-        address artToken = _contractAddressFrom(address(this), 4);
+    constructor(address main, address usdc, uint256 minAuctionDuration) {
+        address _artToken = _contractAddressFrom(address(this), 4);
 
-        address auctionHouse = _deployUpgradeable(
-            address(new AuctionHouse(admin, platform, artToken, usdc, minAuctionDuration)),
-            proxyAdminOwner
-        );
+        address auctionHouseImpl = address(new AuctionHouse(main, _artToken, usdc, minAuctionDuration));
+        address auctionHouse = _deployUpgradeable(auctionHouseImpl, main);
 
-        address artToken_ = _deployUpgradeable(
-            address(new ArtToken(admin, platform, auctionHouse, usdc)),
-            proxyAdminOwner
-        );
+        address artTokenImpl = address(new ArtToken(main, auctionHouse, usdc));
+        address artToken = _deployUpgradeable(artTokenImpl, main);
 
-        if (artToken != artToken_) {
+        if (_artToken != artToken) {
             revert DeployerIncorrectAddress();
         }
 
-        ArtToken(artToken).initialize();
+        ArtToken(_artToken).initialize();
 
-        emit Deployed(artToken, auctionHouse);
+        emit Deployed(_artToken, auctionHouse);
     }
 
     function _deployUpgradeable(address impl, address owner) private returns (address) {

@@ -18,20 +18,17 @@ task('deploy-art-token-impl').setAction(async (taskArgs: Record<string, string>,
     console.group('Conditions:');
     console.log(`Chain - ${chain.name}`);
     console.log(`Chain ID - ${chainId}`);
-    console.log(`Environment Mode - ${process.env.ENV_MODE}`);
     console.groupEnd();
     console.log('-'.repeat(process.stdout.columns));
 
-    const adminAddr = config.wallets!.admin.public;
-    const platformAddr = config.wallets!.platform.public;
-    const auctionHouseAddr = config.contracts!.auctionHouse.proxy;
-    const usdcAddr = config.usdc!;
+    const mainAddr = config.main;
+    const auctionHouseAddr = config.auctionHouse.proxy;
+    const usdcAddr = config.usdc;
 
     console.log(`Deploying ArtToken Impl...`);
     console.log(`\n`);
     console.group('Params:');
-    console.log(`admin: ${adminAddr}`);
-    console.log(`platform: ${platformAddr}`);
+    console.log(`main: ${mainAddr}`);
     console.log(`auctionHouse: ${auctionHouseAddr}`);
     console.log(`usdc: ${usdcAddr}`);
     console.groupEnd();
@@ -40,7 +37,7 @@ task('deploy-art-token-impl').setAction(async (taskArgs: Record<string, string>,
 
     const { receipt, contractAddr: artTokenImplAddr } = await deployClassic({
         name: 'ArtToken',
-        constructorArgs: [adminAddr, platformAddr, auctionHouseAddr, usdcAddr],
+        constructorArgs: [mainAddr, auctionHouseAddr, usdcAddr],
     });
 
     console.log(`Transaction broadcasted`);

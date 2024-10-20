@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {IAuctionHouse} from "./IAuctionHouse.sol";
 
 /**
- * @title AuctionHouseStorage.
+ * @title AuctionHouseStorage
  *
  * @notice AuctionHouseStorage library provides access to AuctionHouse storage layout.
  */

@@ -1,10 +1,5 @@
 import type { Addressable, Signer as EthersSigner } from 'ethers';
 
-export type WalletConfig = {
-    public: string;
-    private: string;
-};
-
 export type UpgradeableContractConfig = {
     proxy: string;
     impl: string;
@@ -12,18 +7,14 @@ export type UpgradeableContractConfig = {
 };
 
 export type ChainConfig = {
-    wallets?: {
-        deployer: WalletConfig;
-        proxyAdminOwner: WalletConfig;
-        admin: WalletConfig;
-        platform: WalletConfig;
-    };
-    contracts?: {
-        artToken: UpgradeableContractConfig;
-        auctionHouse: UpgradeableContractConfig;
-    };
-    usdc?: string;
-    minAuctionDurationHours?: number;
+    chainId: number;
+    url: string;
+    usdc: string;
+    minAuctionDurationHours: number;
+    deployerPrivateKey: string;
+    main: string;
+    artToken: UpgradeableContractConfig;
+    auctionHouse: UpgradeableContractConfig;
 };
 
 export type ContractConstructorArgs = (string | number | Uint8Array | Addressable)[];
