@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 /**
- * @title IAuctionHouse.
+ * @title IAuctionHouse
  *
  * @notice AuctionHouse contract interface.
  */

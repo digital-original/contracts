@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 /**
- * @title IRoleSystem.
+ * @title IRoleSystem
  *
  * @notice RoleSystem contract interface.
  */

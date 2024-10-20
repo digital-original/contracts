@@ -211,9 +211,8 @@ contract AuctionHouse is IAuctionHouse, RoleSystem, EIP712("AuctionHouse", "1") 
      * @inheritdoc IAuctionHouse
      *
      * @dev Charges `price` and `fee` from `msg.sender`, updates `buyer` and `price`.
-     * Emits `Raised` event.
-     *
-     * @dev `price` must be greater than or equal to initial `price`.
+     *  Emits `Raised` event.
+     *  New `price` must be greater than or equal to initial `price`.
      */
     function raiseInitial(
         uint256 auctionId,
@@ -234,9 +233,8 @@ contract AuctionHouse is IAuctionHouse, RoleSystem, EIP712("AuctionHouse", "1") 
      * @inheritdoc IAuctionHouse
      *
      * @dev Charges `price` and `fee` from `msg.sender`, updates `buyer` and `price`.
-     * Refunds old `price` and `fee` to the previous `buyer`. Emits `Raised` event.
-     *
-     * @dev `price` must be greater than or equal to previous `price` plus `step`.
+     *  Refunds old `price` and `fee` to the previous `buyer`. Emits `Raised` event.
+     *  New `price` must be greater than or equal to previous `price` plus `step`.
      */
     function raise(
         uint256 auctionId,

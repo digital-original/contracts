@@ -304,34 +304,28 @@ describe('ArtToken', function () {
     });
 
     describe(`method 'setApprovalForAll'`, () => {
-        it(`should provide the approval to a non-contract account`, async () => {
-            await buy();
-
-            const transaction = await artToken.setApprovalForAll(randomAccountAddr, true);
-
-            await expect(transaction)
-                .to.be.emit(artToken, 'ApprovalForAll')
-                .withArgs(buyerAddr, randomAccountAddr, true);
-        });
-
-        it(`should provide the approval to a partner contract`, async () => {
-            await buy();
-
-            await artToken.connect(main).grandRole(partnerRole, auctionHouse);
-
-            const transaction = await artToken.setApprovalForAll(auctionHouse, true);
-
-            await expect(transaction)
-                .to.be.emit(artToken, 'ApprovalForAll')
-                .withArgs(buyerAddr, auctionHouseAddr, true);
-        });
-
-        it(`should fail if the approval is tried to provide to a non-partner contract`, async () => {
+        it(`should fail`, async () => {
             await buy();
 
             await expect(artToken.setApprovalForAll(auctionHouse, true)).to.eventually.rejectedWith(
-                'RoleSystemUnauthorizedAccount',
+                'ArtTokenForbiddenAction',
             );
+        });
+    });
+
+    describe(`method 'recipientAuthorized'`, () => {
+        it(`should return 'true' for a non-contract account`, async () => {
+            await expect(artToken.recipientAuthorized(randomAccount)).to.eventually.equal(true);
+        });
+
+        it(`should return 'true' for a partner contract`, async () => {
+            await artToken.connect(main).grandRole(partnerRole, auctionHouse);
+
+            await expect(artToken.recipientAuthorized(auctionHouse)).to.eventually.equal(true);
+        });
+
+        it(`should return 'false' for a non-partner contract`, async () => {
+            await expect(artToken.recipientAuthorized(auctionHouse)).to.eventually.equal(false);
         });
     });
 

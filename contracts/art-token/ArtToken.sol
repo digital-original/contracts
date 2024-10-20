@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.20;
 
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {RoleSystem} from "../utils/role-system/RoleSystem.sol";
 import {EIP712} from "../utils/EIP712.sol";
 import {Distribution} from "../utils/Distribution.sol";
@@ -79,7 +79,7 @@ contract ArtToken is IArtToken, ArtTokenBase, RoleSystem, EIP712("ArtToken", "1"
      * @inheritdoc IArtToken
      *
      * @dev Mints `tokenId` and transfers it to `to`. Sets `_tokenURI` as the tokenURI of `tokenId`.
-     * @dev Only account with a minting permission can invoke the method.
+     *  Only account with a minting permission can invoke the method.
      */
     function mint(address to, uint256 tokenId, string memory _tokenURI) external canMint {
         _safeMintAndSetTokenURI(to, tokenId, _tokenURI);
@@ -173,10 +173,9 @@ contract ArtToken is IArtToken, ArtTokenBase, RoleSystem, EIP712("ArtToken", "1"
     }
 
     /**
-     * @dev Overriding the hook. Extends the logic of approval-providing for all tokens,
-     *  checks if an approval recipient is authorized.
+     * @dev Overriding the hook. Forbids the logic of approval-providing for all tokens.
      */
-    function _beforeSetApprovalForAll(address operator, bool approved) internal view override {
-        if (approved) _requireAuthorizedRecipient(operator);
+    function _beforeSetApprovalForAll(address /* operator */, bool /* approved */) internal pure override {
+        revert ArtTokenForbiddenAction();
     }
 }

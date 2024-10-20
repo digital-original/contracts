@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 /**
- * @title RoleSystemStorage.
+ * @title RoleSystemStorage
  *
  * @notice The library provides access to RoleSystem storage layout.
  */

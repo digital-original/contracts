@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 /**
- * @title IArtToken.
+ * @title IArtToken
  *
  * @notice ArtToken contract interface.
  * @notice The interface extends ERC721 standard.
@@ -73,6 +73,11 @@ interface IArtToken is IERC721 {
      * @dev The token is reserved.
      */
     error ArtTokenReserved(uint256 tokenId);
+
+    /**
+     * @dev The action is forbidden.
+     */
+    error ArtTokenForbiddenAction();
 
     /**
      * @dev The constructor argument under index `argIndex` is invalid.
