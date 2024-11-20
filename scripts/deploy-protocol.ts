@@ -8,9 +8,7 @@ import { DeployedEvent } from '../typechain-types/contracts/utils/Deployer';
 import { deployClassic } from './deploy-classic';
 
 type Params = {
-    proxyAdminOwner: AddressParam;
-    admin: AddressParam;
-    platform: AddressParam;
+    main: AddressParam;
     usdc: AddressParam;
     minAuctionDurationHours: number;
 };
@@ -18,9 +16,7 @@ type Params = {
 // prettier-ignore
 export async function deployProtocol(params: Params, deployer?: Signer) {
     const {
-        proxyAdminOwner,
-        admin,
-        platform,
+        main,
         usdc,
         minAuctionDurationHours,
     } = params;
@@ -32,7 +28,7 @@ export async function deployProtocol(params: Params, deployer?: Signer) {
     const { receipt } = await deployClassic(
         {
             name: 'Deployer',
-            constructorArgs: [proxyAdminOwner, admin, platform, usdc, minAuctionDurationSeconds],
+            constructorArgs: [main, usdc, minAuctionDurationSeconds],
         },
         deployer,
     );

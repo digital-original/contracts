@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.20;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {RoleSystem} from "../utils/role-system/RoleSystem.sol";
 import {EIP712} from "../utils/EIP712.sol";
 import {Distribution} from "../utils/Distribution.sol";
 import {IArtToken} from "../art-token/IArtToken.sol";
@@ -14,7 +15,7 @@ import {IAuctionHouse} from "./IAuctionHouse.sol";
  *
  * @notice AuctionHouse contract provides functionality to sell Digital Original NFTs according to auction rules.
  */
-contract AuctionHouse is IAuctionHouse, EIP712 {
+contract AuctionHouse is IAuctionHouse, RoleSystem, EIP712("AuctionHouse", "1") {
     using SafeERC20 for IERC20;
 
     bytes32 public constant CREATE_PERMIT_TYPE_HASH =
@@ -34,12 +35,15 @@ contract AuctionHouse is IAuctionHouse, EIP712 {
             ")"
         );
 
-    address public immutable ADMIN; // Admin address
-    address public immutable PLATFORM; // Platform address
-    IArtToken public immutable TOKEN; // ArtToken contract address
+    IArtToken public immutable ART_TOKEN; // ArtToken contract address
     IERC20 public immutable USDC; // USDC asset contract address
+
+    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+    bytes32 public constant FINANCIAL_ROLE = keccak256("FINANCIAL_ROLE");
+
     uint256 public immutable MIN_DURATION; // Minimum auction duration
     uint256 public constant MAX_DURATION = 21 days; // Maximum auction duration
+
     uint256 public constant MIN_PRICE = 100_000_000; // Minimum auction price value
     uint256 public constant MIN_FEE = 100_000_000; // Minimum auction fee value
 
@@ -129,27 +133,17 @@ contract AuctionHouse is IAuctionHouse, EIP712 {
     }
 
     /**
-     * @param admin Admin address.
-     * @param platform Platform address.
-     * @param token ArtToken contract address.
+     * @param main The main account for managing the role system.
+     * @param artToken ArtToken contract address.
      * @param usdc USDC asset contract address.
+     * @param minAuctionDuration Minimum auction duration in seconds.
      */
-    constructor(
-        address admin,
-        address platform,
-        address token,
-        address usdc,
-        uint256 minAuctionDuration
-    ) EIP712("AuctionHouse", "1") {
-        if (admin == address(0)) revert AuctionHouseMisconfiguration(1);
-        if (platform == address(0)) revert AuctionHouseMisconfiguration(2);
-        if (token == address(0)) revert AuctionHouseMisconfiguration(3);
-        if (usdc == address(0)) revert AuctionHouseMisconfiguration(4);
-        if (minAuctionDuration == 0) revert AuctionHouseMisconfiguration(5);
+    constructor(address main, address artToken, address usdc, uint256 minAuctionDuration) RoleSystem(main) {
+        if (artToken == address(0)) revert AuctionHouseMisconfiguration(1);
+        if (usdc == address(0)) revert AuctionHouseMisconfiguration(2);
+        if (minAuctionDuration == 0) revert AuctionHouseMisconfiguration(3);
 
-        ADMIN = admin;
-        PLATFORM = platform;
-        TOKEN = IArtToken(token);
+        ART_TOKEN = IArtToken(artToken);
         USDC = IERC20(usdc);
         MIN_DURATION = minAuctionDuration;
     }
@@ -177,7 +171,7 @@ contract AuctionHouse is IAuctionHouse, EIP712 {
             )
         );
 
-        _requireValidSignature(ADMIN, structHash, params.deadline, params.signature);
+        _requireValidSignature(uniqueRoleAccount(ADMIN_ROLE), structHash, params.deadline, params.signature);
 
         _requireNotEmptyTokenURI(params.tokenURI);
 
@@ -217,9 +211,8 @@ contract AuctionHouse is IAuctionHouse, EIP712 {
      * @inheritdoc IAuctionHouse
      *
      * @dev Charges `price` and `fee` from `msg.sender`, updates `buyer` and `price`.
-     * Emits `Raised` event.
-     *
-     * @dev `price` must be greater than or equal to initial `price`.
+     *  Emits `Raised` event.
+     *  New `price` must be greater than or equal to initial `price`.
      */
     function raiseInitial(
         uint256 auctionId,
@@ -240,9 +233,8 @@ contract AuctionHouse is IAuctionHouse, EIP712 {
      * @inheritdoc IAuctionHouse
      *
      * @dev Charges `price` and `fee` from `msg.sender`, updates `buyer` and `price`.
-     * Refunds old `price` and `fee` to the previous `buyer`. Emits `Raised` event.
-     *
-     * @dev `price` must be greater than or equal to previous `price` plus `step`.
+     *  Refunds old `price` and `fee` to the previous `buyer`. Emits `Raised` event.
+     *  New `price` must be greater than or equal to previous `price` plus `step`.
      */
     function raise(
         uint256 auctionId,
@@ -280,9 +272,9 @@ contract AuctionHouse is IAuctionHouse, EIP712 {
 
         emit Sold(auctionId);
 
-        TOKEN.mint($.auctions[auctionId].buyer, $.auctions[auctionId].tokenId, $.auctions[auctionId].tokenURI);
+        ART_TOKEN.mint($.auctions[auctionId].buyer, $.auctions[auctionId].tokenId, $.auctions[auctionId].tokenURI);
 
-        USDC.safeTransfer(PLATFORM, $.auctions[auctionId].fee);
+        USDC.safeTransfer(uniqueRoleAccount(FINANCIAL_ROLE), $.auctions[auctionId].fee);
 
         Distribution.distribute(
             USDC,
@@ -410,7 +402,7 @@ contract AuctionHouse is IAuctionHouse, EIP712 {
      * @dev Throws if the token is reserved.
      */
     function _requireNotReservedToken(uint256 tokenId) private view {
-        if (tokenReserved(tokenId) || TOKEN.tokenReserved(tokenId)) {
+        if (tokenReserved(tokenId) || ART_TOKEN.tokenReserved(tokenId)) {
             revert AuctionHouseTokenReserved(tokenId);
         }
     }
@@ -419,7 +411,7 @@ contract AuctionHouse is IAuctionHouse, EIP712 {
      * @dev Throws if the buyer is invalid.
      */
     function _requireValidBuyer(address buyer) private view {
-        if (buyer.code.length > 0) {
+        if (!ART_TOKEN.recipientAuthorized(buyer)) {
             revert AuctionHouseInvalidBuyer(buyer);
         }
     }

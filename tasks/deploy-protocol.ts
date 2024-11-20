@@ -18,22 +18,17 @@ task('deploy-protocol').setAction(async (taskArgs: Record<string, string>, hardh
     console.group('Conditions:');
     console.log(`Chain - ${chain.name}`);
     console.log(`Chain ID - ${chainId}`);
-    console.log(`Environment Mode - ${process.env.ENV_MODE}`);
     console.groupEnd();
     console.log('-'.repeat(process.stdout.columns));
 
-    const proxyAdminOwnerAddr = config.wallets!.proxyAdminOwner.public;
-    const adminAddr = config.wallets!.admin.public;
-    const platformAddr = config.wallets!.platform.public;
-    const usdcAddr = config.usdc!;
-    const minAuctionDurationHours = config.minAuctionDurationHours!;
+    const mainAddr = config.main;
+    const usdcAddr = config.usdc;
+    const minAuctionDurationHours = config.minAuctionDurationHours;
 
     console.log(`Deploying protocol...`);
     console.log(`\n`);
     console.group('Params:');
-    console.log(`proxyAdminOwner: ${proxyAdminOwnerAddr}`);
-    console.log(`admin: ${adminAddr}`);
-    console.log(`platform: ${platformAddr}`);
+    console.log(`main: ${mainAddr}`);
     console.log(`usdc: ${usdcAddr}`);
     console.log(`minAuctionDurationHours: ${minAuctionDurationHours}`);
     console.groupEnd();
@@ -53,9 +48,7 @@ task('deploy-protocol').setAction(async (taskArgs: Record<string, string>, hardh
         auctionHouseProxyAdminAddr,
         auctionHouseProxyAdminOwner,
     } = await deployProtocol({
-        proxyAdminOwner: proxyAdminOwnerAddr,
-        admin: adminAddr,
-        platform: platformAddr,
+        main: mainAddr,
         usdc: usdcAddr,
         minAuctionDurationHours: minAuctionDurationHours,
     });

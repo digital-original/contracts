@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 /**
- * @title IArtToken.
+ * @title IArtToken
  *
  * @notice ArtToken contract interface.
  * @notice The interface extends ERC721 standard.
@@ -40,6 +40,11 @@ interface IArtToken is IERC721 {
     function tokenReserved(uint256 tokenId) external view returns (bool);
 
     /**
+     * @dev Returns true if the account is authorized.
+     */
+    function recipientAuthorized(address account) external view returns (bool);
+
+    /**
      * @dev The caller account is not authorized.
      */
     error ArtTokenUnauthorizedAccount(address account);
@@ -70,7 +75,12 @@ interface IArtToken is IERC721 {
     error ArtTokenReserved(uint256 tokenId);
 
     /**
-     * @dev The constructor parameter number `paramNumber` is invalid.
+     * @dev The action is forbidden.
      */
-    error ArtTokenMisconfiguration(uint256 paramNumber);
+    error ArtTokenForbiddenAction();
+
+    /**
+     * @dev The constructor argument under index `argIndex` is invalid.
+     */
+    error ArtTokenMisconfiguration(uint256 argIndex);
 }

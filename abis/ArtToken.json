@@ -3,12 +3,7 @@
         "inputs": [
             {
                 "internalType": "address",
-                "name": "admin",
-                "type": "address"
-            },
-            {
-                "internalType": "address",
-                "name": "platform",
+                "name": "main",
                 "type": "address"
             },
             {
@@ -53,6 +48,11 @@
         "type": "error"
     },
     {
+        "inputs": [],
+        "name": "ArtTokenForbiddenAction",
+        "type": "error"
+    },
+    {
         "inputs": [
             {
                 "internalType": "uint256",
@@ -89,7 +89,7 @@
         "inputs": [
             {
                 "internalType": "uint256",
-                "name": "paramNumber",
+                "name": "argIndex",
                 "type": "uint256"
             }
         ],
@@ -317,6 +317,43 @@
     {
         "inputs": [
             {
+                "internalType": "uint256",
+                "name": "argIndex",
+                "type": "uint256"
+            }
+        ],
+        "name": "RoleSystemMisconfiguration",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "RoleSystemNotMain",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "account",
+                "type": "address"
+            },
+            {
+                "internalType": "bytes32",
+                "name": "neededRole",
+                "type": "bytes32"
+            }
+        ],
+        "name": "RoleSystemUnauthorizedAccount",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "RoleSystemZeroAddress",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
                 "internalType": "address",
                 "name": "token",
                 "type": "address"
@@ -425,6 +462,44 @@
         "inputs": [
             {
                 "indexed": true,
+                "internalType": "bytes32",
+                "name": "role",
+                "type": "bytes32"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "account",
+                "type": "address"
+            }
+        ],
+        "name": "RoleGranted",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "bytes32",
+                "name": "role",
+                "type": "bytes32"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "account",
+                "type": "address"
+            }
+        ],
+        "name": "RoleRevoked",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
                 "internalType": "address",
                 "name": "from",
                 "type": "address"
@@ -446,13 +521,38 @@
         "type": "event"
     },
     {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "from",
+                "type": "address"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "to",
+                "type": "address"
+            },
+            {
+                "indexed": true,
+                "internalType": "bytes32",
+                "name": "role",
+                "type": "bytes32"
+            }
+        ],
+        "name": "UniqueRoleTransferred",
+        "type": "event"
+    },
+    {
         "inputs": [],
-        "name": "ADMIN",
+        "name": "ADMIN_ROLE",
         "outputs": [
             {
-                "internalType": "address",
+                "internalType": "bytes32",
                 "name": "",
-                "type": "address"
+                "type": "bytes32"
             }
         ],
         "stateMutability": "view",
@@ -486,6 +586,32 @@
     },
     {
         "inputs": [],
+        "name": "FINANCIAL_ROLE",
+        "outputs": [
+            {
+                "internalType": "bytes32",
+                "name": "",
+                "type": "bytes32"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "MAIN",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
         "name": "MIN_FEE",
         "outputs": [
             {
@@ -512,12 +638,12 @@
     },
     {
         "inputs": [],
-        "name": "PLATFORM",
+        "name": "PARTNER_ROLE",
         "outputs": [
             {
-                "internalType": "address",
+                "internalType": "bytes32",
                 "name": "",
-                "type": "address"
+                "type": "bytes32"
             }
         ],
         "stateMutability": "view",
@@ -648,6 +774,48 @@
         "type": "function"
     },
     {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "role",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "address",
+                "name": "account",
+                "type": "address"
+            }
+        ],
+        "name": "grandRole",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "role",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "address",
+                "name": "account",
+                "type": "address"
+            }
+        ],
+        "name": "hasRole",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "",
+                "type": "bool"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
         "inputs": [],
         "name": "initialize",
         "outputs": [],
@@ -731,6 +899,43 @@
             }
         ],
         "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "account",
+                "type": "address"
+            }
+        ],
+        "name": "recipientAuthorized",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "",
+                "type": "bool"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "role",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "address",
+                "name": "account",
+                "type": "address"
+            }
+        ],
+        "name": "revokeRole",
+        "outputs": [],
+        "stateMutability": "nonpayable",
         "type": "function"
     },
     {
@@ -949,6 +1154,43 @@
         "name": "transferFrom",
         "outputs": [],
         "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "uniqueRole",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "address",
+                "name": "to",
+                "type": "address"
+            }
+        ],
+        "name": "transferUniqueRole",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "uniqueRole",
+                "type": "bytes32"
+            }
+        ],
+        "name": "uniqueRoleAccount",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "account",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
         "type": "function"
     }
 ]

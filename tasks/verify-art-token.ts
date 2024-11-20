@@ -1,6 +1,5 @@
 import { task } from 'hardhat/config';
 import { ChainConfig } from '../types/environment';
-import { deployClassic } from '../scripts/deploy-classic';
 
 /*
 npx hardhat verify-art-token --network fork
@@ -18,23 +17,21 @@ task('verify-art-token').setAction(async (taskArgs: Record<string, string>, hard
     console.group('Conditions:');
     console.log(`Chain - ${chain.name}`);
     console.log(`Chain ID - ${chainId}`);
-    console.log(`Environment Mode - ${process.env.ENV_MODE}`);
     console.groupEnd();
     console.log('-'.repeat(process.stdout.columns));
 
     // TransparentUpgradeableProxy
-    const proxyAddr = config.contracts!.artToken.proxy;
-    const implAddr = config.contracts!.artToken.impl;
-    const proxyAdminOwnerAddr = config.wallets!.proxyAdminOwner.public;
+    const proxyAddr = config.artToken.proxy;
+    const implAddr = config.artToken.impl;
+    const proxyAdminOwnerAddr = config.main;
 
     // ProxyAdmin
-    const proxyAdminAddr = config.contracts!.artToken.admin;
+    const proxyAdminAddr = config.artToken.admin;
 
     // ArtToken
-    const adminAddr = config.wallets!.admin.public;
-    const platformAddr = config.wallets!.platform.public;
-    const auctionHouseAddr = config.contracts!.auctionHouse.proxy;
-    const usdcAddr = config.usdc!;
+    const mainAddr = config.main;
+    const auctionHouseAddr = config.auctionHouse.proxy;
+    const usdcAddr = config.usdc;
 
     console.log(`Verify ArtToken...`);
     console.log(`\n`);
@@ -52,8 +49,7 @@ task('verify-art-token').setAction(async (taskArgs: Record<string, string>, hard
     console.groupEnd();
 
     console.group(`ArtToken:`);
-    console.log(`admin: ${adminAddr}`);
-    console.log(`platform: ${platformAddr}`);
+    console.log(`main: ${mainAddr}`);
     console.log(`auctionHouse: ${auctionHouseAddr}`);
     console.log(`usdc: ${usdcAddr}`);
     console.groupEnd();
@@ -79,8 +75,7 @@ task('verify-art-token').setAction(async (taskArgs: Record<string, string>, hard
     await hardhat.run('verify:verify', {
         contract: 'contracts/art-token/ArtToken.sol:ArtToken',
         address: implAddr,
-        constructorArguments: [adminAddr, platformAddr, auctionHouseAddr, usdcAddr],
+        constructorArguments: [mainAddr, auctionHouseAddr, usdcAddr],
     });
-
     console.log('-'.repeat(process.stdout.columns));
 });
