@@ -62,9 +62,9 @@ interface IRoleSystem {
      * @dev Transfer a unique role to zero account to revoke the role.
      *
      * @param uniqueRole The role to be transferred.
-     * @param account The account of the new role owner.
+     * @param to The account of the new role owner.
      */
-    function transferUniqueRole(bytes32 uniqueRole, address account) external;
+    function transferUniqueRole(bytes32 uniqueRole, address to) external;
 
     /**
      * @notice Returns the account of the unique role owner.
