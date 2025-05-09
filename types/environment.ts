@@ -6,18 +6,36 @@ export type UpgradeableContractConfig = {
     admin: string;
 };
 
-export type ChainConfig = {
+export type ConfigEnv = {
     chainId: number;
     url: string;
-    usdc: string;
-    minAuctionDurationHours: number;
     deployerPrivateKey: string;
+    usdc: string;
     main: string;
+};
+
+export type RecordConfigEnv = Record<string, ConfigEnv>;
+
+export type CollectionData = {
+    name: string;
+    symbol: string;
+};
+
+export type ConfigCollection = CollectionData & {
+    minPriceUsd: number;
+    minFeeUsd: number;
+    regulated: boolean;
+    minAuctionDurationHours: number;
     artToken: UpgradeableContractConfig;
     auctionHouse: UpgradeableContractConfig;
 };
 
-export type ContractConstructorArgs = (string | number | Uint8Array | Addressable)[];
+export type RecordConfigCollection = CollectionData &
+    Record<string, Omit<ConfigCollection, keyof CollectionData>>;
+
+export type ChainConfig = ConfigEnv & ConfigCollection;
+
+export type ContractConstructorArgs = (string | number | boolean | Uint8Array | Addressable)[];
 
 export type AddressParam = string | Addressable;
 

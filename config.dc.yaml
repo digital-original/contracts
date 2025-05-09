@@ -1,0 +1,30 @@
+name: 'DigitalCommon'
+symbol: 'DC'
+
+sepolia:
+    minPriceUsd: 0
+    minFeeUsd: 0
+    regulated: false
+    minAuctionDurationHours: 0
+    artToken:
+        proxy: ''
+        impl: ''
+        admin: ''
+    auctionHouse:
+        proxy: ''
+        impl: ''
+        admin: ''
+
+ethereum:
+    minPriceUsd: 0
+    minFeeUsd: 0
+    regulated: false
+    minAuctionDurationHours: 0
+    artToken:
+        proxy: ''
+        impl: ''
+        admin: ''
+    auctionHouse:
+        proxy: ''
+        impl: ''
+        admin: ''

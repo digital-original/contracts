@@ -21,15 +21,19 @@ task('deploy-protocol').setAction(async (taskArgs: Record<string, string>, hardh
     console.groupEnd();
     console.log('-'.repeat(process.stdout.columns));
 
-    const mainAddr = config.main;
-    const usdcAddr = config.usdc;
-    const minAuctionDurationHours = config.minAuctionDurationHours;
+    const { usdc, main, name, symbol, minPriceUsd, minFeeUsd, regulated, minAuctionDurationHours } =
+        config;
 
     console.log(`Deploying protocol...`);
     console.log(`\n`);
     console.group('Params:');
-    console.log(`main: ${mainAddr}`);
-    console.log(`usdc: ${usdcAddr}`);
+    console.log(`name: ${name}`);
+    console.log(`symbol: ${symbol}`);
+    console.log(`usdc: ${usdc}`);
+    console.log(`main: ${main}`);
+    console.log(`minPriceUsd: ${minPriceUsd}`);
+    console.log(`minFeeUsd: ${minFeeUsd}`);
+    console.log(`regulated: ${regulated}`);
     console.log(`minAuctionDurationHours: ${minAuctionDurationHours}`);
     console.groupEnd();
     console.log(`\n`);
@@ -48,9 +52,14 @@ task('deploy-protocol').setAction(async (taskArgs: Record<string, string>, hardh
         auctionHouseProxyAdminAddr,
         auctionHouseProxyAdminOwner,
     } = await deployProtocol({
-        main: mainAddr,
-        usdc: usdcAddr,
-        minAuctionDurationHours: minAuctionDurationHours,
+        usdc,
+        main,
+        name,
+        symbol,
+        minPriceUsd,
+        minFeeUsd,
+        regulated,
+        minAuctionDurationHours,
     });
 
     console.log(`Transaction broadcasted`);

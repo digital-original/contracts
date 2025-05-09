@@ -19,9 +19,14 @@ describe('RoleSystem', function () {
 
     beforeEach(async () => {
         const { artToken: _artToken, artTokenAddr: _artTokenAddr } = await deployProtocol({
+            name: 'TestToken',
+            symbol: 'TT',
             main,
             usdc: '0xffffffffffffffffffffffffffffffffffffffff',
+            minPriceUsd: 10,
+            minFeeUsd: 10,
             minAuctionDurationHours: 1,
+            regulated: true,
         });
 
         roleSystem = _artToken.connect(main);

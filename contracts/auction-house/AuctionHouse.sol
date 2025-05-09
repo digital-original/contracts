@@ -44,8 +44,8 @@ contract AuctionHouse is IAuctionHouse, RoleSystem, EIP712("AuctionHouse", "1") 
     uint256 public immutable MIN_DURATION; // Minimum auction duration
     uint256 public constant MAX_DURATION = 21 days; // Maximum auction duration
 
-    uint256 public constant MIN_PRICE = 100_000_000; // Minimum auction price value
-    uint256 public constant MIN_FEE = 100_000_000; // Minimum auction fee value
+    uint256 public immutable MIN_PRICE; // Minimum auction price value
+    uint256 public immutable MIN_FEE; // Minimum auction fee value
 
     /**
      * @dev Throws if the auction does not exist.
@@ -138,14 +138,25 @@ contract AuctionHouse is IAuctionHouse, RoleSystem, EIP712("AuctionHouse", "1") 
      * @param usdc USDC asset contract address.
      * @param minAuctionDuration Minimum auction duration in seconds.
      */
-    constructor(address main, address artToken, address usdc, uint256 minAuctionDuration) RoleSystem(main) {
+    constructor(
+        address main,
+        address artToken,
+        address usdc,
+        uint256 minAuctionDuration,
+        uint256 minPrice,
+        uint256 minFee
+    ) RoleSystem(main) {
         if (artToken == address(0)) revert AuctionHouseMisconfiguration(1);
         if (usdc == address(0)) revert AuctionHouseMisconfiguration(2);
         if (minAuctionDuration == 0) revert AuctionHouseMisconfiguration(3);
+        if (minPrice == 0) revert AuctionHouseMisconfiguration(4);
+        if (minFee == 0) revert AuctionHouseMisconfiguration(5);
 
         ART_TOKEN = IArtToken(artToken);
         USDC = IERC20(usdc);
         MIN_DURATION = minAuctionDuration;
+        MIN_PRICE = minPrice;
+        MIN_FEE = minFee;
     }
 
     /**
@@ -361,7 +372,7 @@ contract AuctionHouse is IAuctionHouse, RoleSystem, EIP712("AuctionHouse", "1") 
     /**
      * @dev Throws if the price is less than min value.
      */
-    function _requireValidPrice(uint256 price) private pure {
+    function _requireValidPrice(uint256 price) private view {
         if (price < MIN_PRICE) {
             revert AuctionHouseInvalidPrice(price);
         }
@@ -370,7 +381,7 @@ contract AuctionHouse is IAuctionHouse, RoleSystem, EIP712("AuctionHouse", "1") 
     /**
      * @dev Throws if the fee is less than min value.
      */
-    function _requireValidFee(uint256 fee) private pure {
+    function _requireValidFee(uint256 fee) private view {
         if (fee < MIN_FEE) {
             revert AuctionHouseInvalidFee(fee);
         }

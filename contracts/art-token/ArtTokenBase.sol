@@ -17,7 +17,7 @@ abstract contract ArtTokenBase is ERC721EnumerableUpgradeable, ERC721URIStorageU
     /**
      * @dev Initializes the contract by setting a `name` and a `symbol`.
      */
-    function _initialize(string memory _name, string memory _symbol) internal initializer {
+    function initialize(string memory _name, string memory _symbol) external initializer {
         __ERC721_init(_name, _symbol);
     }
 

@@ -10,20 +10,31 @@ contract Deployer {
 
     error DeployerIncorrectAddress();
 
-    constructor(address main, address usdc, uint256 minAuctionDuration) {
+    constructor(
+        string memory name,
+        string memory symbol,
+        address main,
+        address usdc,
+        uint256 minPrice,
+        uint256 minFee,
+        uint256 minAuctionDuration,
+        bool regulated
+    ) {
         address _artToken = _contractAddressFrom(address(this), 4);
 
-        address auctionHouseImpl = address(new AuctionHouse(main, _artToken, usdc, minAuctionDuration));
+        address auctionHouseImpl = address(
+            new AuctionHouse(main, _artToken, usdc, minAuctionDuration, minPrice, minFee)
+        );
         address auctionHouse = _deployUpgradeable(auctionHouseImpl, main);
 
-        address artTokenImpl = address(new ArtToken(main, auctionHouse, usdc));
+        address artTokenImpl = address(new ArtToken(main, auctionHouse, usdc, minPrice, minFee, regulated));
         address artToken = _deployUpgradeable(artTokenImpl, main);
 
         if (_artToken != artToken) {
             revert DeployerIncorrectAddress();
         }
 
-        ArtToken(_artToken).initialize();
+        ArtToken(_artToken).initialize(name, symbol);
 
         emit Deployed(_artToken, auctionHouse);
     }
