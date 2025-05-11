@@ -2,18 +2,18 @@ name: 'DigitalCommon'
 symbol: 'DC'
 
 sepolia:
-    minPriceUsd: 0
-    minFeeUsd: 0
+    minPriceUsd: 50
+    minFeeUsd: 50
     regulated: false
-    minAuctionDurationHours: 0
+    minAuctionDurationHours: 0.25
     artToken:
-        proxy: ''
-        impl: ''
-        admin: ''
+        proxy: '0xf048e2A207f384998BBC063A85BB59550b6b9721'
+        impl: '0x1e6b581F60dd8495900701e50B48BF20630331F7'
+        admin: '0xaCB27D0692B723600b9AdFD3f91507A8a10Cf4eA'
     auctionHouse:
-        proxy: ''
-        impl: ''
-        admin: ''
+        proxy: '0x58Bb53C2aDd8e468538122c434CD3D57bd9Aa93D'
+        impl: '0x88C539cd819F0734D249Da4cC10AA6D018bC4845'
+        admin: '0x444d63843B8787F36c966435A4a8398eBB0eb362'
 
 ethereum:
     minPriceUsd: 0
