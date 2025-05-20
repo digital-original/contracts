@@ -6,6 +6,8 @@ sepolia:
     minFeeUsd: 50
     regulated: false
     minAuctionDurationHours: 0.25
+
+    # dev
     artToken:
         proxy: '0xf048e2A207f384998BBC063A85BB59550b6b9721'
         impl: '0x1e6b581F60dd8495900701e50B48BF20630331F7'
@@ -14,6 +16,16 @@ sepolia:
         proxy: '0x58Bb53C2aDd8e468538122c434CD3D57bd9Aa93D'
         impl: '0x88C539cd819F0734D249Da4cC10AA6D018bC4845'
         admin: '0x444d63843B8787F36c966435A4a8398eBB0eb362'
+
+    # local
+    # artToken:
+    #     proxy: '0x3dB89e927b1EA33bAD00a24d3d962c9BCe224714'
+    #     impl: '0x54e82eC58A90785032AD9ba6d6bfD2007b927Cc4'
+    #     admin: '0xaAF46D91FDE570427ccB22c22f91ABB335DAb2cD'
+    # auctionHouse:
+    #     proxy: '0x07FB267bcec6485B1a9b8e5d1F95E5974566a5fE'
+    #     impl: '0xD7669Df7C0F99ae50b102A7e42fCfB11334600dA'
+    #     admin: '0xDdc680Aa4852dA4a43198e7c1FF3d04bA53f8910'
 
 ethereum:
     minPriceUsd: 0
