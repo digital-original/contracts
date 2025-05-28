@@ -1,6 +1,7 @@
 import { task } from 'hardhat/config';
 import { ChainConfig } from '../types/environment';
 import { deployClassic } from '../scripts/deploy-classic';
+import { USDC_DECIMALS } from '../constants/usdc';
 
 /*
 npx hardhat deploy-art-token-impl --network fork
@@ -21,23 +22,27 @@ task('deploy-art-token-impl').setAction(async (taskArgs: Record<string, string>,
     console.groupEnd();
     console.log('-'.repeat(process.stdout.columns));
 
-    const mainAddr = config.main;
-    const auctionHouseAddr = config.auctionHouse.proxy;
-    const usdcAddr = config.usdc;
+    const { usdc, main, minPriceUsd, minFeeUsd, regulated, auctionHouse } = config;
+
+    const minPrice = minPriceUsd * 10 ** USDC_DECIMALS;
+    const minFee = minFeeUsd * 10 ** USDC_DECIMALS;
 
     console.log(`Deploying ArtToken Impl...`);
     console.log(`\n`);
     console.group('Params:');
-    console.log(`main: ${mainAddr}`);
-    console.log(`auctionHouse: ${auctionHouseAddr}`);
-    console.log(`usdc: ${usdcAddr}`);
+    console.log(`main: ${main}`);
+    console.log(`auctionHouse: ${auctionHouse.proxy}`);
+    console.log(`usdc: ${usdc}`);
+    console.log(`minPrice: ${minPrice}`);
+    console.log(`minFee: ${minFee}`);
+    console.log(`regulated: ${regulated}`);
     console.groupEnd();
     console.log(`\n`);
     console.log(`Transaction broadcasting...`);
 
     const { receipt, contractAddr: artTokenImplAddr } = await deployClassic({
         name: 'ArtToken',
-        constructorArgs: [mainAddr, auctionHouseAddr, usdcAddr],
+        constructorArgs: [main, auctionHouse.proxy, usdc, minPrice, minFee, regulated],
     });
 
     console.log(`Transaction broadcasted`);

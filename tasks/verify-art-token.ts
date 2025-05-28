@@ -1,5 +1,6 @@
 import { task } from 'hardhat/config';
 import { ChainConfig } from '../types/environment';
+import { USDC_DECIMALS } from '../constants/usdc';
 
 /*
 npx hardhat verify-art-token --network fork
@@ -21,37 +22,43 @@ task('verify-art-token').setAction(async (taskArgs: Record<string, string>, hard
     console.log('-'.repeat(process.stdout.columns));
 
     // TransparentUpgradeableProxy
-    const proxyAddr = config.artToken.proxy;
-    const implAddr = config.artToken.impl;
-    const proxyAdminOwnerAddr = config.main;
+    const proxy = config.artToken.proxy;
+    const impl = config.artToken.impl;
+    const proxyAdminOwner = config.main;
 
     // ProxyAdmin
-    const proxyAdminAddr = config.artToken.admin;
+    const proxyAdmin = config.artToken.admin;
 
     // ArtToken
-    const mainAddr = config.main;
-    const auctionHouseAddr = config.auctionHouse.proxy;
-    const usdcAddr = config.usdc;
+    const main = config.main;
+    const auctionHouse = config.auctionHouse.proxy;
+    const usdc = config.usdc;
+    const minPrice = config.minPriceUsd * 10 ** USDC_DECIMALS;
+    const minFee = config.minFeeUsd * 10 ** USDC_DECIMALS;
+    const regulated = config.regulated;
 
     console.log(`Verify ArtToken...`);
     console.log(`\n`);
     console.group('Params:');
 
     console.group(`TransparentUpgradeableProxy:`);
-    console.log(`proxy: ${proxyAddr}`);
-    console.log(`impl: ${implAddr}`);
-    console.log(`proxyAdminOwner: ${proxyAdminOwnerAddr}`);
+    console.log(`proxy: ${proxy}`);
+    console.log(`impl: ${impl}`);
+    console.log(`proxyAdminOwner: ${proxyAdminOwner}`);
     console.groupEnd();
 
     console.group(`ProxyAdmin:`);
-    console.log(`proxyAdmin: ${proxyAdminAddr}`);
-    console.log(`proxyAdminOwner: ${proxyAdminOwnerAddr}`);
+    console.log(`proxyAdmin: ${proxyAdmin}`);
+    console.log(`proxyAdminOwner: ${proxyAdminOwner}`);
     console.groupEnd();
 
     console.group(`ArtToken:`);
-    console.log(`main: ${mainAddr}`);
-    console.log(`auctionHouse: ${auctionHouseAddr}`);
-    console.log(`usdc: ${usdcAddr}`);
+    console.log(`main: ${main}`);
+    console.log(`auctionHouse: ${auctionHouse}`);
+    console.log(`usdc: ${usdc}`);
+    console.log(`minPrice: ${minPrice}`);
+    console.log(`minFee: ${minFee}`);
+    console.log(`regulated: ${regulated}`);
     console.groupEnd();
 
     console.groupEnd();
@@ -60,22 +67,22 @@ task('verify-art-token').setAction(async (taskArgs: Record<string, string>, hard
     await hardhat.run('verify:verify', {
         contract:
             '@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol:TransparentUpgradeableProxy',
-        address: proxyAddr,
-        constructorArguments: [implAddr, proxyAdminOwnerAddr, new Uint8Array(0)],
+        address: proxy,
+        constructorArguments: [impl, proxyAdminOwner, new Uint8Array(0)],
     });
     console.log(`\n`);
 
     await hardhat.run('verify:verify', {
         contract: '@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol:ProxyAdmin',
-        address: proxyAdminAddr,
-        constructorArguments: [proxyAdminOwnerAddr],
+        address: proxyAdmin,
+        constructorArguments: [proxyAdminOwner],
     });
     console.log(`\n`);
 
     await hardhat.run('verify:verify', {
         contract: 'contracts/art-token/ArtToken.sol:ArtToken',
-        address: implAddr,
-        constructorArguments: [mainAddr, auctionHouseAddr, usdcAddr],
+        address: impl,
+        constructorArguments: [main, auctionHouse, usdc, minPrice, minFee, regulated],
     });
     console.log('-'.repeat(process.stdout.columns));
 });

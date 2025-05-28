@@ -1,10 +1,13 @@
+name: 'DigitalOriginal'
+symbol: 'DO'
+
 sepolia:
-    chainId: 11155111
-    url: ''
-    usdc: '0x622333D6627BaE0a7e76F507f8E21aAed577Dd57'
+    minPriceUsd: 100
+    minFeeUsd: 100
+    regulated: true
     minAuctionDurationHours: 0.25
-    deployerPrivateKey: ''
-    main: '0x27fc066baF73Ee97Ce5b95172d82F407490D49b1'
+
+    # dev
     artToken:
         proxy: '0xaf99c146DC881A37a8e960d9EdC1818eEF6CaE7A'
         impl: '0xC223b0B26bD1669dfcb1773A01bb4860E8064701'
@@ -14,13 +17,21 @@ sepolia:
         impl: '0x9C8eAE30b12E6A12EFf556ea8350F45FCFCaEADc'
         admin: '0xE2B7755956382bE4a2fCE7a0e67d4BDd74770a48'
 
+    # local
+    # artToken:
+    #     proxy: '0xe74D07495C9CD456574Dccb5b48cD80B59412136'
+    #     impl: '0xc022E88EBdc40BB1BBec8b29F759A898477329c9'
+    #     admin: '0x23e435Dd7fd98313Da588bFb5df74A067ac9Cb98'
+    # auctionHouse:
+    #     proxy: '0xFaF5E7bb2EF569d89eF0Af819e54eEf780cCBc25'
+    #     impl: '0x472A116dd99291DFBf3eaeEE913dFda17634ACB2'
+    #     admin: '0xfaa84c3EE49FBF050B850A073186A83780b01964'
+
 ethereum:
-    chainId: 1
-    url: ''
-    usdc: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'
+    minPriceUsd: 100
+    minFeeUsd: 100
+    regulated: true
     minAuctionDurationHours: 24
-    deployerPrivateKey: ''
-    main: '0x445458607007b26dB4f80DcF0f26bd6e1A4af8A5'
     artToken:
         proxy: '0x653cdB21a83b59374C194002Da332D683F5678aA'
         impl: '0x2A87F19DC4Ff1633691813CcA5b04690c3c22862'

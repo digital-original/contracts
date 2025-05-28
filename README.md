@@ -12,7 +12,7 @@ Upgradable contract. The contract provides functionality to sell Digital Origina
 ```
 $ npm install
 ```
-2. Fill out `config.yaml`
+2. Fill out `config.env.yaml`
 3. Compile contracts
 ```
 $ npm run compile

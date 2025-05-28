@@ -37,12 +37,14 @@ contract ArtToken is IArtToken, ArtTokenBase, RoleSystem, EIP712("ArtToken", "1"
     IAuctionHouse public immutable AUCTION_HOUSE; // AuctionHouse contract address
     IERC20 public immutable USDC; // USDC asset contract address
 
+    uint256 public immutable MIN_PRICE; // Minimum price value
+    uint256 public immutable MIN_FEE; // Minimum fee value
+
+    bool public immutable REGULATED;
+
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
     bytes32 public constant FINANCIAL_ROLE = keccak256("FINANCIAL_ROLE");
     bytes32 public constant PARTNER_ROLE = keccak256("PARTNER_ROLE");
-
-    uint256 public constant MIN_PRICE = 100_000_000; // Minimum price value
-    uint256 public constant MIN_FEE = 100_000_000; // Minimum fee value
 
     /**
      * @dev Throws if called by any account without a minting permission.
@@ -60,19 +62,24 @@ contract ArtToken is IArtToken, ArtTokenBase, RoleSystem, EIP712("ArtToken", "1"
      * @param auctionHouse AuctionHouse contract address.
      * @param usdc USDC asset contract address.
      */
-    constructor(address main, address auctionHouse, address usdc) RoleSystem(main) {
+    constructor(
+        address main,
+        address auctionHouse,
+        address usdc,
+        uint256 minPrice,
+        uint256 minFee,
+        bool regulated
+    ) RoleSystem(main) {
         if (auctionHouse == address(0)) revert ArtTokenMisconfiguration(1);
         if (usdc == address(0)) revert ArtTokenMisconfiguration(2);
+        if (minPrice == 0) revert ArtTokenMisconfiguration(3);
+        if (minFee == 0) revert ArtTokenMisconfiguration(4);
 
         AUCTION_HOUSE = IAuctionHouse(auctionHouse);
         USDC = IERC20(usdc);
-    }
-
-    /**
-     * @dev Initializes the contract by setting a `name` and a `symbol`.
-     */
-    function initialize() external {
-        _initialize("DigitalOriginal", "DO");
+        MIN_PRICE = minPrice;
+        MIN_FEE = minFee;
+        REGULATED = regulated;
     }
 
     /**
@@ -146,14 +153,18 @@ contract ArtToken is IArtToken, ArtTokenBase, RoleSystem, EIP712("ArtToken", "1"
      * @inheritdoc IArtToken
      */
     function recipientAuthorized(address account) external view returns (bool) {
-        return account.code.length == 0 || hasRole(PARTNER_ROLE, account);
+        if (REGULATED) {
+            return account.code.length == 0 || hasRole(PARTNER_ROLE, account);
+        } else {
+            return true;
+        }
     }
 
     /**
      * @dev Throws if the account is not authorized.
      */
     function _requireAuthorizedRecipient(address account) private view {
-        if (account.code.length != 0) _requireRole(PARTNER_ROLE, account);
+        if (REGULATED && account.code.length != 0) _requireRole(PARTNER_ROLE, account);
     }
 
     /**

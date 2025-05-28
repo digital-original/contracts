@@ -15,6 +15,21 @@
                 "internalType": "address",
                 "name": "usdc",
                 "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "minPrice",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "minFee",
+                "type": "uint256"
+            },
+            {
+                "internalType": "bool",
+                "name": "regulated",
+                "type": "bool"
             }
         ],
         "stateMutability": "nonpayable",
@@ -651,6 +666,19 @@
     },
     {
         "inputs": [],
+        "name": "REGULATED",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "",
+                "type": "bool"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
         "name": "USDC",
         "outputs": [
             {
@@ -816,7 +844,18 @@
         "type": "function"
     },
     {
-        "inputs": [],
+        "inputs": [
+            {
+                "internalType": "string",
+                "name": "_name",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "_symbol",
+                "type": "string"
+            }
+        ],
         "name": "initialize",
         "outputs": [],
         "stateMutability": "nonpayable",

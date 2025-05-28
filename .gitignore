@@ -12,5 +12,6 @@ artifacts
 venv
 docs
 config.yaml
+config.env.yaml
 
 TODO.md

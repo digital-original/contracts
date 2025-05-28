@@ -8,14 +8,17 @@ import '@nomicfoundation/hardhat-toolbox';
 import './tasks';
 
 import type { HardhatUserConfig } from 'hardhat/config';
-import type { ChainConfig } from './types/environment';
+import type { RecordConfigCollection, RecordConfigEnv } from './types/environment';
 import { NetworksUserConfig } from 'hardhat/types';
 
 dotenv.config();
 
-const config = <Record<string, ChainConfig>>yaml.load(fs.readFileSync('./config.yaml', 'utf8'));
+const configEnv = <RecordConfigEnv>yaml.load(fs.readFileSync('./config.env.yaml', 'utf8'));
+const configDo = <RecordConfigCollection>yaml.load(fs.readFileSync('./config.do.yaml', 'utf8'));
+const configDc = <RecordConfigCollection>yaml.load(fs.readFileSync('./config.dc.yaml', 'utf8'));
 
 const ENV_MODE = String(process.env.ENV_MODE);
+const COLLECTION = <'do' | 'dc'>String(process.env.COLLECTION);
 const CHAIN_TO_FORK = String(process.env.CHAIN_TO_FORK);
 const FORKED_CHAIN = String(process.env.FORKED_CHAIN);
 const FORKED_CHAIN_URL = String(process.env.FORKED_CHAIN_URL);
@@ -65,26 +68,34 @@ function buildHardhatConfig(): HardhatUserConfig {
         return { ...hardhatBaseConfig, ...hardhatTestConfig };
     }
 
+    let configCollection: RecordConfigCollection;
+
+    if (COLLECTION == 'do') {
+        configCollection = configDo;
+    } else if (COLLECTION == 'dc') {
+        configCollection = configDc;
+    } else {
+        throw new Error(`Invalid 'COLLECTION' value: ${COLLECTION}`);
+    }
+
     const hardhatNetworksConfig: NetworksUserConfig = {};
 
-    for (const [chainName, chainConfig] of Object.entries(config)) {
-        const {
-            chainId,
-            url,
-            usdc,
-            minAuctionDurationHours,
-            deployerPrivateKey,
-            main,
-            artToken,
-            auctionHouse,
-        } = chainConfig;
+    for (const [chainName, _configEnv] of Object.entries(configEnv)) {
+        const _configCollection = configCollection[chainName];
+
+        const { chainId, url, deployerPrivateKey, usdc, main } = _configEnv;
 
         const extra = {
+            name: configCollection.name,
+            symbol: configCollection.symbol,
             usdc,
-            minAuctionDurationHours,
             main,
-            artToken,
-            auctionHouse,
+            minPriceUsd: _configCollection.minPriceUsd,
+            minFeeUsd: _configCollection.minFeeUsd,
+            regulated: _configCollection.regulated,
+            minAuctionDurationHours: _configCollection.minAuctionDurationHours,
+            artToken: _configCollection.artToken,
+            auctionHouse: _configCollection.auctionHouse,
         };
 
         hardhatNetworksConfig[chainName] = {
@@ -105,10 +116,10 @@ function buildHardhatConfig(): HardhatUserConfig {
 
     if (CHAIN_TO_FORK) {
         hardhatNetworksConfig['hardhat'] = {
-            forking: { url: config[CHAIN_TO_FORK].url },
+            forking: { url: configEnv[CHAIN_TO_FORK].url },
             accounts: [
                 {
-                    privateKey: config[CHAIN_TO_FORK].deployerPrivateKey,
+                    privateKey: configEnv[CHAIN_TO_FORK].deployerPrivateKey,
                     balance: ethers.parseEther('100').toString(),
                 },
             ],

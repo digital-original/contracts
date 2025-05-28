@@ -6,29 +6,42 @@ import {
 import { OwnershipTransferredEvent } from '../typechain-types/@openzeppelin/contracts/proxy/transparent/ProxyAdmin';
 import { DeployedEvent } from '../typechain-types/contracts/utils/Deployer';
 import { deployClassic } from './deploy-classic';
+import { USDC_DECIMALS } from '../constants/usdc';
 
 type Params = {
+    name: string;
+    symbol: string;
     main: AddressParam;
     usdc: AddressParam;
+    minPriceUsd: number;
+    minFeeUsd: number;
+    regulated: boolean;
     minAuctionDurationHours: number;
 };
 
 // prettier-ignore
 export async function deployProtocol(params: Params, deployer?: Signer) {
     const {
+        name,
+        symbol,
         main,
         usdc,
+        minPriceUsd,
+        minFeeUsd,
+        regulated,
         minAuctionDurationHours,
     } = params;
 
     const { ethers } = await import('hardhat');
 
     const minAuctionDurationSeconds = minAuctionDurationHours * 60 * 60;
+    const mainPrice = minPriceUsd * 10**USDC_DECIMALS
+    const minFee = minFeeUsd * 10**USDC_DECIMALS
 
     const { receipt } = await deployClassic(
         {
             name: 'Deployer',
-            constructorArgs: [main, usdc, minAuctionDurationSeconds],
+            constructorArgs: [name, symbol, main, usdc, mainPrice, minFee, minAuctionDurationSeconds, regulated],
         },
         deployer,
     );

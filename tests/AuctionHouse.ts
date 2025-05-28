@@ -51,9 +51,14 @@ describe('AuctionHouse', function () {
             artToken: _artToken,
             artTokenAddr: _artTokenAddr,
         } = await deployProtocol({
+            name: 'TestToken',
+            symbol: 'TT',
             main,
             usdc,
+            minPriceUsd: 10,
+            minFeeUsd: 10,
             minAuctionDurationHours: 1,
+            regulated: true,
         });
 
         await _artToken.connect(main).transferUniqueRole(adminRole, admin);

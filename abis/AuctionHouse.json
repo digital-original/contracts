@@ -20,6 +20,16 @@
                 "internalType": "uint256",
                 "name": "minAuctionDuration",
                 "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "minPrice",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "minFee",
+                "type": "uint256"
             }
         ],
         "stateMutability": "nonpayable",
