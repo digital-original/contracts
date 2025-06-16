@@ -1,10 +1,12 @@
+import { AddressLike, Numeric } from 'ethers';
+
 export type BuyPermitStruct = {
-    tokenId: bigint;
+    tokenId: Numeric;
     tokenURI: string;
-    sender: string;
-    price: bigint;
-    fee: bigint;
-    participants: string[];
-    shares: bigint[];
-    deadline: number;
+    sender: AddressLike;
+    price: Numeric;
+    fee: Numeric;
+    participants: AddressLike[];
+    shares: Numeric[];
+    deadline: Numeric;
 };

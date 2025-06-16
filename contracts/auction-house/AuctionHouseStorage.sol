@@ -6,9 +6,12 @@ import {IAuctionHouse} from "./IAuctionHouse.sol";
 /**
  * @title AuctionHouseStorage
  *
- * @notice AuctionHouseStorage library provides access to AuctionHouse storage layout.
+ * @notice Defines the unstructured-storage layout for {AuctionHouse}. Using a
+ *         deterministic slot makes the module safe for use behind proxies and
+ *         alongside other upgradeable components.
  */
 library AuctionHouseStorage {
+    /// @dev Unique storage slot for the layout, derived via EIP-7201 convention.
     bytes32 private constant STORAGE_SLOT =
         keccak256(abi.encode(uint256(keccak256("digital-original.storage.AuctionHouse")) - 1)) &
             ~bytes32(uint256(0xff));
@@ -17,12 +20,14 @@ library AuctionHouseStorage {
      * @custom:storage-location erc7201:digital-original.storage.AuctionHouse
      */
     struct Layout {
-        mapping(uint256 auctionId => IAuctionHouse.Auction) auctions;
-        mapping(uint256 tokenId => uint256 auctionId) tokenAuctionIds;
+        mapping(uint256 auctionId => IAuctionHouse.Auction) auction;
+        mapping(uint256 tokenId => uint256) tokenAuctionId;
     }
 
     /**
-     * @dev Returns storage layout
+     * @notice Returns a pointer to the pre-allocated storage layout.
+     *
+     * @return $ Storage struct containing all auctions and reverse mappings.
      */
     function layout() internal pure returns (Layout storage $) {
         bytes32 slot = STORAGE_SLOT;

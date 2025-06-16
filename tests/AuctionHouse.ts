@@ -1,118 +1,93 @@
 import { expect } from 'chai';
-import { ethers } from 'ethers';
-import { ArtToken, AuctionHouse, USDC } from '../typechain-types';
-import { setNextBlockTimestamp } from '@nomicfoundation/hardhat-network-helpers/dist/src/helpers/time';
+import { Signer, MaxInt256, ZeroAddress } from 'ethers';
 import { mine } from '@nomicfoundation/hardhat-network-helpers/dist/src/helpers/mine';
-import { Signer } from '../types/environment';
-import { getChainId } from './utils/get-chain-id';
-import { getSigners } from './utils/get-signers';
-import { TOTAL_SHARE } from '../constants/distribution';
-import { getValidDeadline } from './utils/get-valid-deadline';
-import { getLatestBlockTimestamp } from './utils/get-latest-block-timestamp';
-import { deployProtocol } from '../scripts/deploy-protocol';
-import { deployUsdc } from './utils/deploy-usdc';
+import { setNextBlockTimestamp } from '@nomicfoundation/hardhat-network-helpers/dist/src/helpers/time';
+import { ArtToken, AuctionHouse, USDC } from '../typechain-types';
 import { CreatePermitStruct } from '../types/auction-house';
-import { signCreatePermit } from './utils/sign-auction-house-create-permit';
 import { BuyPermitStruct } from '../types/art-token';
-import { signBuyPermit } from './utils/sign-art-token-buy-permit';
+import { MIN_FEE, MIN_PRICE } from './constants/min-price-and-fee';
+import { TOTAL_SHARE } from './constants/distribution';
+import { AUCTION_ID, AUCTION_STEP, SECOND_AUCTION_ID } from './constants/auction-house';
+import { TOKEN_ID, TOKEN_URI } from './constants/art-token';
+import { HOUR } from './constants/time';
+import { getSigners } from './utils/get-signers';
+import { getLatestBlockTimestamp } from './utils/get-latest-block-timestamp';
+import { deployProtocolTest } from './utils/deploy-protocol-test';
+import { ArtTokenUtils } from './utils/art-token-utils';
+import { AuctionHouseUtils } from './utils/auction-house-utils';
 
 describe('AuctionHouse', function () {
     let auctionHouse: AuctionHouse, auctionHouseAddr: string;
     let artToken: ArtToken, artTokenAddr: string;
     let usdc: USDC, usdcAddr: string;
 
-    let chainId: number;
-
-    let main: Signer, mainAddr: string;
-    let admin: Signer, adminAddr: string;
+    let auctionHouseSigner: Signer, auctionHouseSignerAddr: string;
     let financier: Signer, financierAddr: string;
     let institution: Signer, institutionAddr: string;
     let buyer: Signer, buyerAddr: string;
     let randomAccount: Signer, randomAccountAddr: string;
 
-    const adminRole = ethers.keccak256(Buffer.from('ADMIN_ROLE'));
-    const financialRole = ethers.keccak256(Buffer.from('FINANCIAL_ROLE'));
-
     before(async () => {
-        chainId = await getChainId();
-
-        [usdc, usdcAddr] = await deployUsdc();
-
         [
-            [main, admin, financier, institution, buyer, randomAccount],
-            [mainAddr, adminAddr, financierAddr, institutionAddr, buyerAddr, randomAccountAddr],
+            [auctionHouseSigner, financier, institution, buyer, randomAccount],
+            [auctionHouseSignerAddr, financierAddr, institutionAddr, buyerAddr, randomAccountAddr],
         ] = await getSigners();
     });
 
     beforeEach(async () => {
-        const {
-            auctionHouse: _auctionHouse,
-            auctionHouseAddr: _auctionHouseAddr,
-            artToken: _artToken,
-            artTokenAddr: _artTokenAddr,
-        } = await deployProtocol({
-            name: 'TestToken',
-            symbol: 'TT',
-            main,
-            usdc,
-            minPriceUsd: 10,
-            minFeeUsd: 10,
-            minAuctionDurationHours: 1,
-            regulated: true,
+        const protocol = await deployProtocolTest({
+            signer: auctionHouseSigner,
+            financier,
         });
 
-        await _artToken.connect(main).transferUniqueRole(adminRole, admin);
-        await _artToken.connect(main).transferUniqueRole(financialRole, financier);
-        await _auctionHouse.connect(main).transferUniqueRole(adminRole, admin);
-        await _auctionHouse.connect(main).transferUniqueRole(financialRole, financier);
-
-        await Promise.all([usdc.connect(buyer).mint(), usdc.connect(randomAccount).mint()]);
-
-        await Promise.all([
-            usdc.connect(buyer).approve(_auctionHouse, ethers.MaxInt256),
-            usdc.connect(buyer).approve(_artToken, ethers.MaxInt256),
-            usdc.connect(randomAccount).approve(_auctionHouse, ethers.MaxInt256),
-        ]);
-
-        auctionHouse = _auctionHouse;
-        auctionHouseAddr = _auctionHouseAddr;
-        artToken = _artToken;
-        artTokenAddr = _artTokenAddr;
-    });
-
-    let auctionId: bigint;
-    let tokenId: bigint;
-    let tokenURI: string;
-    let price: bigint;
-    let fee: bigint;
-    let step: bigint;
-    let endTime: number;
-    let participants: string[];
-    let shares: bigint[];
-    let deadline: number;
-
-    beforeEach(async () => {
-        auctionId = 3n;
-        tokenId = 4n;
-        tokenURI = 'ipfs://Q...';
-        price = 100_000_000n;
-        fee = 100_000_000n;
-        step = 1_000_000n;
-        endTime = await getValidDeadline();
-        participants = [financierAddr, institutionAddr];
-        shares = [TOTAL_SHARE / 5n, (TOTAL_SHARE / 5n) * 4n];
-        deadline = await getValidDeadline();
+        auctionHouse = protocol.auctionHouse;
+        auctionHouseAddr = protocol.auctionHouseAddr;
+        artToken = protocol.artToken;
+        artTokenAddr = protocol.artTokenAddr;
+        usdc = protocol.usdc;
+        usdcAddr = protocol.usdcAddr;
     });
 
     describe(`method 'create'`, () => {
-        it(`should create correct auction`, async () => {
-            await create();
+        it(`should create the auction`, async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
 
-            const auction = await getAuction();
+            const price = MIN_PRICE;
+            const fee = MIN_FEE;
+            const step = 1_000_000n;
+            const endTime = latestBlockTimestamp + HOUR;
+            const participants = [institutionAddr, financierAddr];
+            const shares = [(TOTAL_SHARE / 5n) * 4n, TOTAL_SHARE / 5n];
 
-            expect(auction.tokenId).equal(tokenId);
-            expect(auction.tokenURI).equal(tokenURI);
-            expect(auction.buyer).equal(ethers.ZeroAddress);
+            const permit: CreatePermitStruct = {
+                auctionId: AUCTION_ID,
+                tokenId: TOKEN_ID,
+                tokenURI: TOKEN_URI,
+                price,
+                fee,
+                step,
+                endTime,
+                participants,
+                shares,
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            const tx = await AuctionHouseUtils.create({
+                auctionHouse,
+                permit,
+                permitSigner: auctionHouseSigner,
+                sender: institution,
+            });
+
+            const auction = await auctionHouse.auction(AUCTION_ID);
+
+            await expect(tx)
+                .to.be.emit(auctionHouse, 'Created')
+                .withArgs(AUCTION_ID, TOKEN_ID, price, endTime);
+
+            expect(auction.tokenId).equal(TOKEN_ID);
+            expect(auction.tokenURI).equal(TOKEN_URI);
+            expect(auction.buyer).equal(ZeroAddress);
             expect(auction.price).equal(price);
             expect(auction.fee).equal(fee);
             expect(auction.step).equal(step);
@@ -122,545 +97,680 @@ describe('AuctionHouse', function () {
             expect(auction.shares).to.deep.equal(shares);
         });
 
-        it(`should create new auction for token that was not sold at the previous auction`, async () => {
-            await create();
-            await end();
+        it(`should create the new auction for token that was not sold at the previous auction`, async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
 
-            const _auctionId = 5n;
-            const _endTime = await getValidDeadline();
-            const _deadline = await getValidDeadline();
-
-            await create({
-                _auctionId,
-                _endTime,
-                _deadline,
-            });
-
-            const auction = await getAuction(_auctionId);
-
-            expect(auction.tokenId).equal(tokenId);
-            expect(auction.tokenURI).equal(tokenURI);
-            expect(auction.buyer).equal(ethers.ZeroAddress);
-            expect(auction.price).equal(price);
-            expect(auction.fee).equal(fee);
-            expect(auction.step).equal(step);
-            expect(auction.endTime).equal(_endTime);
-            expect(auction.sold).equal(false);
-            expect(auction.participants).to.deep.equal(participants);
-            expect(auction.shares).to.deep.equal(shares);
-        });
-
-        it(`should emit created event`, async () => {
-            const transaction = await create();
-
-            await expect(transaction)
-                .to.be.emit(auctionHouse, 'Created')
-                .withArgs(auctionId, tokenId, price, endTime);
-        });
-
-        it(`should fail if end time lass than block time`, async () => {
-            const blockTimestamp = await getLatestBlockTimestamp();
-
-            const _endTime = blockTimestamp + 100;
-
-            await setNextBlockTimestamp(_endTime);
-
-            await expect(create({ _endTime })).to.eventually.rejectedWith(
-                'AuctionHouseInvalidEndTime',
-            );
-        });
-
-        it(`should fail if auction already exists`, async () => {
-            await create();
-
-            await expect(create()).to.eventually.rejectedWith('AuctionHouseAuctionExists');
-        });
-
-        it(`should fail if token is already at active auction`, async () => {
-            await create();
-
-            const _auctionId = 5n;
-
-            await expect(create({ _auctionId })).to.eventually.rejectedWith(
-                'AuctionHouseTokenReserved',
-            );
-        });
-
-        it(`should fail if token is at auction with buyer`, async () => {
-            await create();
-            await endWithBuyer();
-
-            const _auctionId = 5n;
-            const _endTime = await getValidDeadline();
-            const _deadline = await getValidDeadline();
-
-            await expect(create({ _auctionId, _endTime, _deadline })).to.eventually.rejectedWith(
-                'AuctionHouseTokenReserved',
-            );
-        });
-
-        it(`should fail if token is already minted`, async () => {
-            const buyPermit: BuyPermitStruct = {
-                tokenId,
-                tokenURI,
-                sender: buyerAddr,
-                price: 100_000_001n,
-                fee: 100_000_001n,
-                participants: [financierAddr],
-                shares: [TOTAL_SHARE],
-                deadline,
+            const firstPermit: CreatePermitStruct = {
+                auctionId: AUCTION_ID,
+                tokenId: TOKEN_ID,
+                tokenURI: TOKEN_URI,
+                price: MIN_PRICE,
+                fee: MIN_FEE,
+                step: AUCTION_STEP,
+                endTime: latestBlockTimestamp + HOUR,
+                participants: [institutionAddr, financierAddr],
+                shares: [(TOTAL_SHARE / 5n) * 4n, TOTAL_SHARE / 5n],
+                deadline: latestBlockTimestamp + HOUR,
             };
 
-            const signature = await signBuyPermit(chainId, artTokenAddr, buyPermit, admin);
+            const secondPermit: CreatePermitStruct = {
+                ...firstPermit,
+                auctionId: SECOND_AUCTION_ID,
+                endTime: latestBlockTimestamp + HOUR * 2,
+                deadline: latestBlockTimestamp + HOUR * 2,
+            };
 
-            await artToken.connect(buyer).buy({
-                tokenId,
-                tokenURI,
-                price: buyPermit.price,
-                fee: buyPermit.fee,
-                participants: buyPermit.participants,
-                shares: buyPermit.shares,
-                signature,
-                deadline,
+            await AuctionHouseUtils.create({
+                auctionHouse,
+                permit: firstPermit,
+                permitSigner: auctionHouseSigner,
+                sender: institution,
             });
 
-            await expect(create()).to.eventually.rejectedWith('AuctionHouseTokenReserved');
-        });
+            await setNextBlockTimestamp(firstPermit.endTime);
 
-        describe(`permit logic`, () => {
-            it(`should fail if permit signer is not admin`, async () => {
-                const _admin = randomAccount;
-
-                await expect(create({ _admin })).to.be.rejectedWith('EIP712InvalidSignature');
+            await AuctionHouseUtils.create({
+                auctionHouse,
+                permit: secondPermit,
+                permitSigner: auctionHouseSigner,
+                sender: institution,
             });
 
-            it(`should fail if permit is expired`, async () => {
-                const _deadline = await getLatestBlockTimestamp();
+            const auction = await auctionHouse.auction(SECOND_AUCTION_ID);
 
-                await expect(create({ _deadline })).to.be.rejectedWith('EIP712ExpiredSignature');
+            expect(auction.tokenId).equal(TOKEN_ID);
+        });
+
+        it(`should fail if the auction duration is less than the minimum duration`, async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
+
+            const nextBlockTimestamp = latestBlockTimestamp + HOUR;
+
+            await setNextBlockTimestamp(nextBlockTimestamp);
+
+            const minDuration = Number(await auctionHouse.MIN_DURATION());
+
+            const endTime = nextBlockTimestamp + minDuration - 1;
+
+            const permit: CreatePermitStruct = {
+                auctionId: AUCTION_ID,
+                tokenId: TOKEN_ID,
+                tokenURI: TOKEN_URI,
+                price: MIN_PRICE,
+                fee: MIN_FEE,
+                step: AUCTION_STEP,
+                endTime,
+                participants: [institutionAddr, financierAddr],
+                shares: [(TOTAL_SHARE / 5n) * 4n, TOTAL_SHARE / 5n],
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            const tx = AuctionHouseUtils.create({
+                auctionHouse,
+                permit,
+                permitSigner: auctionHouseSigner,
+                sender: institution,
             });
+
+            await expect(tx).to.eventually.rejectedWith('AuctionHouseInvalidEndTime');
         });
 
-        describe(`distribution logic`, () => {
-            it(`should fail if number of shares is not equal number of participants`, async () => {
-                const _participants = [financierAddr];
-                const _shares = [TOTAL_SHARE / 2n, TOTAL_SHARE / 2n];
+        it(`should fail if the auction duration is greater than the maximum duration`, async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
 
-                await expect(create({ _participants, _shares })).to.be.rejectedWith(
-                    'DistributionInvalidSharesCount',
-                );
+            const nextBlockTimestamp = latestBlockTimestamp + HOUR;
+
+            await setNextBlockTimestamp(nextBlockTimestamp);
+
+            const maxDuration = Number(await auctionHouse.MAX_DURATION());
+
+            const endTime = nextBlockTimestamp + maxDuration + 1;
+
+            const permit: CreatePermitStruct = {
+                auctionId: AUCTION_ID,
+                tokenId: TOKEN_ID,
+                tokenURI: TOKEN_URI,
+                price: MIN_PRICE,
+                fee: MIN_FEE,
+                step: AUCTION_STEP,
+                endTime,
+                participants: [institutionAddr, financierAddr],
+                shares: [(TOTAL_SHARE / 5n) * 4n, TOTAL_SHARE / 5n],
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            const tx = AuctionHouseUtils.create({
+                auctionHouse,
+                permit,
+                permitSigner: auctionHouseSigner,
+                sender: institution,
             });
 
-            it(`should fail if total shares is not equal TOTAL_SHARE`, async () => {
-                const _participants = [financierAddr, institutionAddr];
-                const _shares = [TOTAL_SHARE, 1n];
+            await expect(tx).to.eventually.rejectedWith('AuctionHouseInvalidEndTime');
+        });
 
-                await expect(create({ _participants, _shares })).to.be.rejectedWith(
-                    'DistributionInvalidSharesSum',
-                );
+        it(`should fail if the auction already exists`, async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
+
+            const permit: CreatePermitStruct = {
+                auctionId: AUCTION_ID,
+                tokenId: TOKEN_ID,
+                tokenURI: TOKEN_URI,
+                price: MIN_PRICE,
+                fee: MIN_FEE,
+                step: AUCTION_STEP,
+                endTime: latestBlockTimestamp + HOUR,
+                participants: [institutionAddr, financierAddr],
+                shares: [(TOTAL_SHARE / 5n) * 4n, TOTAL_SHARE / 5n],
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            await AuctionHouseUtils.create({
+                auctionHouse,
+                permit,
+                permitSigner: auctionHouseSigner,
+                sender: institution,
             });
 
-            it(`should fail if shares and participants are empty`, async () => {
-                const _participants: string[] = [];
-                const _shares: bigint[] = [];
-
-                await expect(create({ _participants, _shares })).to.be.rejectedWith(
-                    'DistributionInvalidSharesSum',
-                );
+            const tx = AuctionHouseUtils.create({
+                auctionHouse,
+                permit,
+                permitSigner: auctionHouseSigner,
+                sender: institution,
             });
-        });
-    });
 
-    describe(`method 'tokenReserved'`, () => {
-        it(`should return 'true' for token that is at active auction`, async () => {
-            await create();
-
-            await expect(auctionHouse.tokenReserved(tokenId)).to.eventually.equal(true);
+            await expect(tx).to.eventually.rejectedWith('AuctionHouseAuctionExists');
         });
 
-        it(`should return 'true' for token that is at auction with buyer`, async () => {
-            await create();
-            await endWithBuyer();
+        it(`should fail if the token is already in an active auction`, async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
 
-            await expect(auctionHouse.tokenReserved(tokenId)).to.eventually.equal(true);
+            const firstPermit: CreatePermitStruct = {
+                auctionId: AUCTION_ID,
+                tokenId: TOKEN_ID,
+                tokenURI: TOKEN_URI,
+                price: MIN_PRICE,
+                fee: MIN_FEE,
+                step: AUCTION_STEP,
+                endTime: latestBlockTimestamp + HOUR,
+                participants: [institutionAddr, financierAddr],
+                shares: [(TOTAL_SHARE / 5n) * 4n, TOTAL_SHARE / 5n],
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            const secondPermit: CreatePermitStruct = {
+                ...firstPermit,
+                auctionId: SECOND_AUCTION_ID,
+            };
+
+            await AuctionHouseUtils.create({
+                auctionHouse,
+                permit: firstPermit,
+                permitSigner: auctionHouseSigner,
+                sender: institution,
+            });
+
+            const tx = AuctionHouseUtils.create({
+                auctionHouse,
+                permit: secondPermit,
+                permitSigner: auctionHouseSigner,
+                sender: institution,
+            });
+
+            await expect(tx).to.eventually.rejectedWith('AuctionHouseTokenReserved');
         });
 
-        it(`should return 'false' for token that was not sold at the previous auction`, async () => {
-            await create();
-            await end();
+        it(`should fail if the token is in an inactive auction with a buyer`, async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
 
-            await expect(auctionHouse.tokenReserved(tokenId)).to.eventually.equal(false);
+            const firstPermit: CreatePermitStruct = {
+                auctionId: AUCTION_ID,
+                tokenId: TOKEN_ID,
+                tokenURI: TOKEN_URI,
+                price: MIN_PRICE,
+                fee: MIN_FEE,
+                step: AUCTION_STEP,
+                endTime: latestBlockTimestamp + HOUR,
+                participants: [institutionAddr, financierAddr],
+                shares: [(TOTAL_SHARE / 5n) * 4n, TOTAL_SHARE / 5n],
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            const secondPermit: CreatePermitStruct = {
+                ...firstPermit,
+                auctionId: SECOND_AUCTION_ID,
+                endTime: latestBlockTimestamp + HOUR * 2,
+                deadline: latestBlockTimestamp + HOUR * 2,
+            };
+
+            await AuctionHouseUtils.create({
+                auctionHouse,
+                permit: firstPermit,
+                permitSigner: auctionHouseSigner,
+                sender: institution,
+            });
+
+            await usdc.connect(buyer).mintAndApprove(auctionHouse, MaxInt256);
+
+            await auctionHouse.connect(buyer).raiseInitial(AUCTION_ID, 100_000_000n);
+
+            await setNextBlockTimestamp(firstPermit.endTime);
+
+            const tx = AuctionHouseUtils.create({
+                auctionHouse,
+                permit: secondPermit,
+                permitSigner: auctionHouseSigner,
+                sender: institution,
+            });
+
+            await expect(tx).to.eventually.rejectedWith('AuctionHouseTokenReserved');
         });
 
-        it(`should return 'false' for token that has never been put at auction`, async () => {
-            await expect(auctionHouse.tokenReserved(tokenId)).to.eventually.equal(false);
+        it(`should fail if the token is already minted`, async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
+
+            const buyPermit: BuyPermitStruct = {
+                tokenId: TOKEN_ID,
+                tokenURI: TOKEN_URI,
+                sender: buyerAddr,
+                price: MIN_PRICE,
+                fee: MIN_FEE,
+                participants: [institutionAddr],
+                shares: [TOTAL_SHARE],
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            const createPermit: CreatePermitStruct = {
+                auctionId: AUCTION_ID,
+                tokenId: TOKEN_ID,
+                tokenURI: TOKEN_URI,
+                price: MIN_PRICE,
+                fee: MIN_FEE,
+                step: AUCTION_STEP,
+                endTime: latestBlockTimestamp + HOUR,
+                participants: [institutionAddr, financierAddr],
+                shares: [(TOTAL_SHARE / 5n) * 4n, TOTAL_SHARE / 5n],
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            await usdc.connect(buyer).mintAndApprove(artToken, MaxInt256);
+
+            await ArtTokenUtils.buy({
+                artToken,
+                permit: buyPermit,
+                permitSigner: auctionHouseSigner,
+                sender: buyer,
+            });
+
+            const tx = AuctionHouseUtils.create({
+                auctionHouse,
+                permit: createPermit,
+                permitSigner: auctionHouseSigner,
+                sender: institution,
+            });
+
+            await expect(tx).to.eventually.rejectedWith('AuctionHouseTokenReserved');
+        });
+
+        it(`should fail if the permit signer is not the auction house signer`, async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
+
+            const permit: CreatePermitStruct = {
+                auctionId: AUCTION_ID,
+                tokenId: TOKEN_ID,
+                tokenURI: TOKEN_URI,
+                price: MIN_PRICE,
+                fee: MIN_FEE,
+                step: AUCTION_STEP,
+                endTime: latestBlockTimestamp + HOUR,
+                participants: [institutionAddr, financierAddr],
+                shares: [(TOTAL_SHARE / 5n) * 4n, TOTAL_SHARE / 5n],
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            const tx = AuctionHouseUtils.create({
+                auctionHouse,
+                permit,
+                permitSigner: randomAccount,
+                sender: institution,
+            });
+
+            await expect(tx).to.eventually.rejectedWith('AuthorizationUnauthorizedAction');
         });
     });
 
     describe(`method 'raiseInitial'`, () => {
         beforeEach(async () => {
-            await create();
-            auctionHouse = auctionHouse.connect(buyer);
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
+
+            const permit: CreatePermitStruct = {
+                auctionId: AUCTION_ID,
+                tokenId: TOKEN_ID,
+                tokenURI: TOKEN_URI,
+                price: MIN_PRICE,
+                fee: MIN_FEE,
+                step: AUCTION_STEP,
+                endTime: latestBlockTimestamp + HOUR,
+                participants: [institutionAddr, financierAddr],
+                shares: [(TOTAL_SHARE / 5n) * 4n, TOTAL_SHARE / 5n],
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            await AuctionHouseUtils.create({
+                auctionHouse,
+                permit,
+                permitSigner: auctionHouseSigner,
+                sender: institution,
+            });
+
+            await usdc.connect(buyer).mintAndApprove(auctionHouse, MaxInt256);
         });
 
-        it(`should set buyer if new price is equal initial price`, async () => {
-            await raiseInitial();
+        it(`should raise if the new price is equal to the initial price`, async () => {
+            const { price: initialPrice } = await auctionHouse.auction(AUCTION_ID);
 
-            const auction = await getAuction();
+            const newPrice = initialPrice;
+
+            const tx = await auctionHouse.connect(buyer).raiseInitial(AUCTION_ID, newPrice);
+
+            const auction = await auctionHouse.auction(AUCTION_ID);
 
             expect(auction.buyer).equal(buyerAddr);
-            expect(auction.price).equal(price);
-        });
+            expect(auction.price).equal(newPrice);
 
-        it(`should set buyer and change price if new price is more than initial price`, async () => {
-            const _price = price + 1n;
-
-            await raiseInitial({ _price });
-
-            const auction = await getAuction();
-
-            expect(auction.buyer).equal(buyerAddr);
-            expect(auction.price).equal(_price);
-        });
-
-        it(`should emit raised event`, async () => {
-            const transaction = await raiseInitial();
-
-            await expect(transaction)
+            await expect(tx)
                 .to.be.emit(auctionHouse, 'Raised')
-                .withArgs(auctionId, buyerAddr, price);
-        });
+                .withArgs(AUCTION_ID, auction.buyer, auction.price);
 
-        it(`should transfer price and fee from buyer to contract`, async () => {
-            const transaction = await raiseInitial();
-
-            await expect(transaction)
+            await expect(tx)
                 .to.be.emit(usdc, 'Transfer')
-                .withArgs(buyerAddr, auctionHouseAddr, price + fee);
+                .withArgs(buyerAddr, auctionHouseAddr, auction.price + auction.fee);
         });
 
-        it(`should fail if new price is less than initial price`, async () => {
-            const _price = price - 1n;
+        it(`should raise if the new price is greater than the initial price`, async () => {
+            const { price: initialPrice } = await auctionHouse.auction(AUCTION_ID);
 
-            await expect(raiseInitial({ _price })).to.eventually.rejectedWith(
-                'AuctionHouseRaiseTooSmall',
-            );
+            const newPrice = initialPrice + 1n;
+
+            await auctionHouse.connect(buyer).raiseInitial(AUCTION_ID, newPrice);
+
+            const auction = await auctionHouse.auction(AUCTION_ID);
+
+            expect(auction.buyer).equal(buyerAddr);
+            expect(auction.price).equal(newPrice);
         });
 
-        it(`should fail if auction does not exist`, async () => {
-            const _auctionId = auctionId + 123n;
+        it(`should fail if the new price is lower than the initial price`, async () => {
+            const { price: initialPrice } = await auctionHouse.auction(AUCTION_ID);
 
-            await expect(raiseInitial({ _auctionId })).to.eventually.rejectedWith(
-                'AuctionHouseAuctionNotExist',
-            );
+            const newPrice = initialPrice - 1n;
+
+            const tx = auctionHouse.connect(buyer).raiseInitial(AUCTION_ID, newPrice);
+
+            await expect(tx).to.eventually.rejectedWith('AuctionHouseRaiseTooLow');
         });
 
-        it(`should fail if auction has buyer`, async () => {
-            await raiseInitial();
+        it(`should fail if the auction does not exist`, async () => {
+            const tx = auctionHouse.connect(buyer).raiseInitial(0, 1n);
 
-            await expect(raiseInitial()).to.eventually.rejectedWith('AuctionHouseBuyerExists');
+            await expect(tx).to.eventually.rejectedWith('AuctionHouseAuctionNotExist');
         });
 
-        it(`should fail if auction has ended`, async () => {
-            await end();
+        it(`should fail if the auction has a buyer`, async () => {
+            const auction = await auctionHouse.auction(AUCTION_ID);
 
-            await expect(raiseInitial()).to.eventually.rejectedWith('AuctionHouseAuctionEnded');
+            await auctionHouse.connect(buyer).raiseInitial(AUCTION_ID, auction.price);
+
+            await usdc.connect(randomAccount).mintAndApprove(auctionHouse, MaxInt256);
+
+            const tx = auctionHouse.connect(randomAccount).raiseInitial(AUCTION_ID, auction.price);
+
+            await expect(tx).to.eventually.rejectedWith('AuctionHouseBuyerExists');
+        });
+
+        it(`should fail if the auction has ended`, async () => {
+            const auction = await auctionHouse.auction(AUCTION_ID);
+
+            await setNextBlockTimestamp(auction.endTime);
+
+            const tx = auctionHouse.connect(buyer).raiseInitial(AUCTION_ID, auction.price);
+
+            await expect(tx).to.eventually.rejectedWith('AuctionHouseAuctionEnded');
         });
     });
 
     describe(`method 'raise'`, () => {
         beforeEach(async () => {
-            await create();
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
+
+            const permit: CreatePermitStruct = {
+                auctionId: AUCTION_ID,
+                tokenId: TOKEN_ID,
+                tokenURI: TOKEN_URI,
+                price: MIN_PRICE,
+                fee: MIN_FEE,
+                step: AUCTION_STEP,
+                endTime: latestBlockTimestamp + HOUR,
+                participants: [institutionAddr, financierAddr],
+                shares: [(TOTAL_SHARE / 5n) * 4n, TOTAL_SHARE / 5n],
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            await AuctionHouseUtils.create({
+                auctionHouse,
+                permit,
+                permitSigner: auctionHouseSigner,
+                sender: institution,
+            });
+
+            await usdc.connect(buyer).mintAndApprove(auctionHouse, MaxInt256);
+            await usdc.connect(randomAccount).mintAndApprove(auctionHouse, MaxInt256);
         });
 
-        it(`should change buyer and price if new price is equal sum of old price plus step`, async () => {
-            await raiseInitial({ _auctionHouse: auctionHouse.connect(randomAccount) });
-            await raise({ _auctionHouse: auctionHouse.connect(buyer) });
+        it(`should raise if the new price is equal to the sum of the old price and the step`, async () => {
+            const { price: initialPrice, step, fee } = await auctionHouse.auction(AUCTION_ID);
 
-            const auction = await getAuction();
+            await auctionHouse.connect(randomAccount).raiseInitial(AUCTION_ID, initialPrice);
+
+            const newPrice = initialPrice + step;
+
+            const tx = await auctionHouse.connect(buyer).raise(AUCTION_ID, newPrice);
+
+            const auction = await auctionHouse.auction(AUCTION_ID);
 
             expect(auction.buyer).equal(buyerAddr);
-            expect(auction.price).equal(price + step);
-        });
+            expect(auction.price).equal(newPrice);
 
-        it(`should change buyer and price if new price is more than sum of old price plus step`, async () => {
-            await raiseInitial({ _auctionHouse: auctionHouse.connect(randomAccount) });
-
-            const _step = step + 55n;
-
-            await raise({ _step, _auctionHouse: auctionHouse.connect(buyer) });
-
-            const auction = await getAuction();
-
-            expect(auction.buyer).equal(buyerAddr);
-            expect(auction.price).equal(price + _step);
-        });
-
-        it(`should transfer price and fee from buyer to contract`, async () => {
-            await raiseInitial({ _auctionHouse: auctionHouse.connect(randomAccount) });
-
-            const transaction = await raise({ _auctionHouse: auctionHouse.connect(buyer) });
-
-            await expect(transaction)
-                .to.be.emit(usdc, 'Transfer')
-                .withArgs(buyerAddr, auctionHouseAddr, price + step + fee);
-        });
-
-        it(`should transfer old price and fee to old buyer`, async () => {
-            await raiseInitial({ _auctionHouse: auctionHouse.connect(randomAccount) });
-
-            const transaction = await raise({ _auctionHouse: auctionHouse.connect(buyer) });
-
-            await expect(transaction)
-                .to.be.emit(usdc, 'Transfer')
-                .withArgs(auctionHouseAddr, randomAccountAddr, price + fee);
-        });
-
-        it(`should emit raised event`, async () => {
-            await raiseInitial({ _auctionHouse: auctionHouse.connect(randomAccount) });
-
-            const transaction = await raise({ _auctionHouse: auctionHouse.connect(buyer) });
-
-            await expect(transaction)
+            await expect(tx)
                 .to.be.emit(auctionHouse, 'Raised')
-                .withArgs(auctionId, buyerAddr, price + step);
+                .withArgs(AUCTION_ID, auction.buyer, auction.price);
+
+            await expect(tx)
+                .to.be.emit(usdc, 'Transfer')
+                .withArgs(buyerAddr, auctionHouseAddr, auction.price + auction.fee);
+
+            await expect(tx)
+                .to.be.emit(usdc, 'Transfer')
+                .withArgs(auctionHouseAddr, randomAccountAddr, initialPrice + fee);
         });
 
-        it(`should fail if new price is less than sum of old price plus step`, async () => {
-            await raiseInitial({ _auctionHouse: auctionHouse.connect(randomAccount) });
+        it(`should raise if the new price is greater than the sum of the old price and the step`, async () => {
+            const { price: initialPrice, step } = await auctionHouse.auction(AUCTION_ID);
 
-            const _step = step - 1n;
+            await auctionHouse.connect(randomAccount).raiseInitial(AUCTION_ID, initialPrice);
 
-            await expect(
-                raise({ _step, _auctionHouse: auctionHouse.connect(buyer) }),
-            ).to.eventually.rejectedWith('AuctionHouseRaiseTooSmall');
+            const newPrice = initialPrice + step + 1n;
+
+            await auctionHouse.connect(buyer).raise(AUCTION_ID, newPrice);
+
+            const auction = await auctionHouse.auction(AUCTION_ID);
+
+            expect(auction.buyer).equal(buyerAddr);
+            expect(auction.price).equal(newPrice);
         });
 
-        it(`should fail if auction does not exist`, async () => {
-            const _auctionId = auctionId + 123n;
+        it(`should fail if the new price is lower than the sum of the old price and the step`, async () => {
+            const { price: initialPrice, step } = await auctionHouse.auction(AUCTION_ID);
 
-            await expect(raise({ _auctionId })).to.eventually.rejectedWith(
-                'AuctionHouseAuctionNotExist',
-            );
+            await auctionHouse.connect(randomAccount).raiseInitial(AUCTION_ID, initialPrice);
+
+            const newPrice = initialPrice + step - 1n;
+
+            const tx = auctionHouse.connect(buyer).raise(AUCTION_ID, newPrice);
+
+            await expect(tx).to.eventually.rejectedWith('AuctionHouseRaiseTooLow');
         });
 
-        it(`should fail if auction has ended`, async () => {
-            await end();
+        it(`should fail if the auction does not exist`, async () => {
+            const tx = auctionHouse.connect(buyer).raise(0, 2n);
 
-            await expect(raise()).to.eventually.rejectedWith('AuctionHouseAuctionEnded');
+            await expect(tx).to.eventually.rejectedWith('AuctionHouseAuctionNotExist');
         });
 
-        it(`should fail if auction does not have buyer`, async () => {
-            await expect(raise()).to.eventually.rejectedWith('AuctionHouseBuyerNotExists');
+        it(`should fail if the auction has ended`, async () => {
+            const { price: initialPrice, step, endTime } = await auctionHouse.auction(AUCTION_ID);
+
+            await auctionHouse.connect(randomAccount).raiseInitial(AUCTION_ID, initialPrice);
+
+            await setNextBlockTimestamp(endTime);
+
+            const tx = auctionHouse.connect(buyer).raise(AUCTION_ID, initialPrice + step);
+
+            await expect(tx).to.eventually.rejectedWith('AuctionHouseAuctionEnded');
+        });
+
+        it(`should fail if the auction does not have a buyer`, async () => {
+            const { price: initialPrice, step } = await auctionHouse.auction(AUCTION_ID);
+
+            const tx = auctionHouse.connect(buyer).raise(AUCTION_ID, initialPrice + step);
+
+            await expect(tx).to.eventually.rejectedWith('AuctionHouseBuyerNotExists');
         });
     });
 
     describe(`method 'finish'`, async () => {
         beforeEach(async () => {
-            await create();
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
+
+            const permit: CreatePermitStruct = {
+                auctionId: AUCTION_ID,
+                tokenId: TOKEN_ID,
+                tokenURI: TOKEN_URI,
+                price: MIN_PRICE,
+                fee: MIN_FEE,
+                step: AUCTION_STEP,
+                endTime: latestBlockTimestamp + HOUR,
+                participants: [institutionAddr, financierAddr],
+                shares: [(TOTAL_SHARE / 5n) * 4n, TOTAL_SHARE / 5n],
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            await AuctionHouseUtils.create({
+                auctionHouse,
+                permit,
+                permitSigner: auctionHouseSigner,
+                sender: institution,
+            });
+
+            await usdc.connect(buyer).mintAndApprove(auctionHouse, MaxInt256);
         });
 
-        it(`should mark auction as sold`, async () => {
-            await endWithBuyer();
+        it(`should finish the auction`, async () => {
+            const { price, endTime, fee, participants, shares } =
+                await auctionHouse.auction(AUCTION_ID);
 
-            await finish();
+            await auctionHouse.connect(buyer).raiseInitial(AUCTION_ID, price);
 
-            const auction = await getAuction();
+            await setNextBlockTimestamp(endTime);
+
+            const tx = await auctionHouse.connect(buyer).finish(AUCTION_ID);
+
+            const auction = await auctionHouse.auction(AUCTION_ID);
 
             expect(auction.sold).equal(true);
-        });
 
-        it(`should mint token for buyer`, async () => {
-            await endWithBuyer();
+            await expect(tx) //
+                .to.be.emit(auctionHouse, 'Sold')
+                .withArgs(AUCTION_ID);
 
-            const transaction = await finish();
-
-            await Promise.all([
-                expect(transaction)
-                    .to.be.emit(artToken, 'Transfer')
-                    .withArgs(ethers.ZeroAddress, buyerAddr, tokenId),
-                expect(artToken.ownerOf(tokenId)).to.eventually.equal(buyerAddr),
-            ]);
-        });
-
-        it(`should emit sold event`, async () => {
-            await endWithBuyer();
-
-            const transaction = await finish();
-
-            await expect(transaction).to.be.emit(auctionHouse, 'Sold').withArgs(auctionId);
-        });
-
-        it(`should transfer fee to financier`, async () => {
-            await endWithBuyer();
-
-            const transaction = await finish();
-
-            await expect(transaction)
+            await expect(tx)
                 .to.be.emit(usdc, 'Transfer')
                 .withArgs(auctionHouseAddr, financierAddr, fee);
+
+            await expect(tx)
+                .to.be.emit(artToken, 'Transfer')
+                .withArgs(ZeroAddress, buyerAddr, TOKEN_ID);
+
+            await expect(tx)
+                .to.be.emit(usdc, 'Transfer')
+                .withArgs(auctionHouseAddr, participants[0], (price * shares[0]) / TOTAL_SHARE);
+
+            await expect(tx)
+                .to.be.emit(usdc, 'Transfer')
+                .withArgs(auctionHouseAddr, participants[1], (price * shares[1]) / TOTAL_SHARE);
         });
 
-        it(`should fail if auction does not exist`, async () => {
-            const _auctionId = auctionId + 123n;
+        it(`should fail if the auction does not exist`, async () => {
+            const tx = auctionHouse.connect(buyer).finish(0);
 
-            await expect(finish(_auctionId)).to.eventually.rejectedWith(
-                'AuctionHouseAuctionNotExist',
-            );
+            await expect(tx).to.eventually.rejectedWith('AuctionHouseAuctionNotExist');
         });
 
-        it(`should fail if auction has sold`, async () => {
-            await endWithBuyer();
-            await finish();
+        it(`should fail if the token has been sold`, async () => {
+            const { price, endTime } = await auctionHouse.auction(AUCTION_ID);
 
-            await expect(finish()).to.eventually.rejectedWith('AuctionHouseTokenSold');
+            await auctionHouse.connect(buyer).raiseInitial(AUCTION_ID, price);
+
+            await setNextBlockTimestamp(endTime);
+
+            await auctionHouse.connect(buyer).finish(AUCTION_ID);
+
+            const tx = auctionHouse.connect(buyer).finish(AUCTION_ID);
+
+            await expect(tx).to.eventually.rejectedWith('AuctionHouseTokenSold');
         });
 
-        it(`should fail if auction has not ended`, async () => {
-            await expect(finish()).to.eventually.rejectedWith('AuctionHouseAuctionNotEnded');
+        it(`should fail if the auction has not ended`, async () => {
+            const { price } = await auctionHouse.auction(AUCTION_ID);
+
+            await auctionHouse.connect(buyer).raiseInitial(AUCTION_ID, price);
+
+            const tx = auctionHouse.connect(buyer).finish(AUCTION_ID);
+
+            await expect(tx).to.eventually.rejectedWith('AuctionHouseAuctionNotEnded');
         });
 
-        it(`should fail if auction does not have buyer`, async () => {
-            await end();
+        it(`should fail if the auction does not have a buyer`, async () => {
+            const { endTime } = await auctionHouse.auction(AUCTION_ID);
 
-            await expect(finish()).to.eventually.rejectedWith('AuctionHouseBuyerNotExists');
-        });
+            await setNextBlockTimestamp(endTime);
 
-        describe(`distribution logic`, () => {
-            it(`should distribute reward between participants according to shares`, async () => {
-                await endWithBuyer();
+            const tx = auctionHouse.connect(buyer).finish(AUCTION_ID);
 
-                const transaction = await finish();
-
-                await Promise.all([
-                    expect(transaction)
-                        .to.be.emit(usdc, 'Transfer')
-                        .withArgs(
-                            auctionHouseAddr,
-                            participants[0],
-                            (price * shares[0]) / TOTAL_SHARE,
-                        ),
-                    expect(transaction)
-                        .to.be.emit(usdc, 'Transfer')
-                        .withArgs(
-                            auctionHouseAddr,
-                            participants[1],
-                            (price * shares[1]) / TOTAL_SHARE,
-                        ),
-                ]);
-            });
+            await expect(tx).to.eventually.rejectedWith('AuctionHouseBuyerNotExists');
         });
     });
 
-    async function create(
-        params: {
-            _auctionId?: bigint;
-            _tokenId?: bigint;
-            _tokenURI?: string;
-            _price?: bigint;
-            _fee?: bigint;
-            _step?: bigint;
-            _endTime?: number;
-            _participants?: string[];
-            _shares?: bigint[];
-            _deadline?: number;
-            _admin?: Signer;
-            _auctionHouse?: AuctionHouse;
-        } = {},
-    ) {
-        const {
-            _auctionId = auctionId,
-            _tokenId = tokenId,
-            _tokenURI = tokenURI,
-            _price = price,
-            _fee = fee,
-            _step = step,
-            _endTime = endTime,
-            _participants = participants,
-            _shares = shares,
-            _deadline = deadline,
-            _admin = admin,
-            _auctionHouse = auctionHouse,
-        } = params;
+    describe(`method 'tokenReserved'`, () => {
+        beforeEach(async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
 
-        const permit: CreatePermitStruct = {
-            auctionId: _auctionId,
-            tokenId: _tokenId,
-            tokenURI: _tokenURI,
-            price: _price,
-            fee: _fee,
-            step: _step,
-            endTime: _endTime,
-            participants: _participants,
-            shares: _shares,
-            deadline: _deadline,
-        };
+            const permit: CreatePermitStruct = {
+                auctionId: AUCTION_ID,
+                tokenId: TOKEN_ID,
+                tokenURI: TOKEN_URI,
+                price: MIN_PRICE,
+                fee: MIN_FEE,
+                step: AUCTION_STEP,
+                endTime: latestBlockTimestamp + HOUR,
+                participants: [institutionAddr, financierAddr],
+                shares: [(TOTAL_SHARE / 5n) * 4n, TOTAL_SHARE / 5n],
+                deadline: latestBlockTimestamp + HOUR,
+            };
 
-        const signature = await signCreatePermit(chainId, auctionHouseAddr, permit, _admin);
+            await AuctionHouseUtils.create({
+                auctionHouse,
+                permit,
+                permitSigner: auctionHouseSigner,
+                sender: institution,
+            });
 
-        return _auctionHouse.create({
-            auctionId: _auctionId,
-            tokenId: _tokenId,
-            tokenURI: _tokenURI,
-            price: _price,
-            fee: _fee,
-            step: _step,
-            endTime: _endTime,
-            participants: _participants,
-            shares: _shares,
-            signature,
-            deadline: _deadline,
+            await usdc.connect(buyer).mintAndApprove(auctionHouse, MaxInt256);
         });
-    }
 
-    async function raiseInitial(
-        params: {
-            _auctionId?: bigint;
-            _price?: bigint;
-            _auctionHouse?: AuctionHouse;
-        } = {},
-    ) {
-        const { _auctionId = auctionId, _price = price, _auctionHouse = auctionHouse } = params;
+        it(`should return 'true' for a token that is in an active auction`, async () => {
+            const tokenReserved = await auctionHouse.tokenReserved(TOKEN_ID);
 
-        return _auctionHouse.raiseInitial(_auctionId, _price);
-    }
+            expect(tokenReserved).equal(true);
+        });
 
-    async function raise(
-        params: {
-            _auctionId?: bigint;
-            _price?: bigint;
-            _step?: bigint;
-            _auctionHouse?: AuctionHouse;
-        } = {},
-    ) {
-        const {
-            _auctionId = auctionId,
-            _price = price,
-            _step = step,
-            _auctionHouse = auctionHouse,
-        } = params;
+        it(`should return 'true' for a token that is in an inactive auction with a buyer`, async () => {
+            const { price, endTime } = await auctionHouse.auction(AUCTION_ID);
 
-        return _auctionHouse.raise(_auctionId, _price + _step);
-    }
+            await auctionHouse.connect(buyer).raiseInitial(AUCTION_ID, price);
 
-    async function finish(_auctionId = auctionId) {
-        return auctionHouse.finish(_auctionId);
-    }
+            await setNextBlockTimestamp(endTime);
 
-    async function getAuction(_auctionId = auctionId) {
-        return auctionHouse.auction(_auctionId);
-    }
+            const tokenReserved = await auctionHouse.tokenReserved(TOKEN_ID);
 
-    async function end() {
-        const auction = await getAuction();
+            expect(tokenReserved).equal(true);
+        });
 
-        await setNextBlockTimestamp(auction.endTime + 1n);
+        it(`should return 'false' for a token that has not been sold`, async () => {
+            const { endTime } = await auctionHouse.auction(AUCTION_ID);
 
-        await mine();
-    }
+            await setNextBlockTimestamp(endTime);
+            await mine();
 
-    async function endWithBuyer(_buyer: Signer = buyer) {
-        await raiseInitial({ _auctionHouse: auctionHouse.connect(_buyer) });
-        await end();
-    }
+            const tokenReserved = await auctionHouse.tokenReserved(TOKEN_ID);
+
+            expect(tokenReserved).equal(false);
+        });
+
+        it(`should return 'false' for a token that has never been put up for auction`, async () => {
+            const tokenReserved = await auctionHouse.tokenReserved(0);
+
+            expect(tokenReserved).equal(false);
+        });
+    });
 });

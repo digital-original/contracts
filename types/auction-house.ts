@@ -1,12 +1,14 @@
+import { Numeric } from 'ethers';
+
 export type CreatePermitStruct = {
-    auctionId: bigint;
-    tokenId: bigint;
+    auctionId: Numeric;
+    tokenId: Numeric;
     tokenURI: string;
-    price: bigint;
-    fee: bigint;
-    step: bigint;
-    endTime: number;
+    price: Numeric;
+    fee: Numeric;
+    step: Numeric;
+    endTime: Numeric;
     participants: string[];
-    shares: bigint[];
-    deadline: number;
+    shares: Numeric[];
+    deadline: Numeric;
 };

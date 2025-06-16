@@ -2,23 +2,23 @@ import fs from 'fs';
 import yaml from 'js-yaml';
 import dotenv from 'dotenv';
 
-import { ethers } from 'ethers';
+import { parseEther } from 'ethers';
 import '@nomicfoundation/hardhat-toolbox';
 
 import './tasks';
 
 import type { HardhatUserConfig } from 'hardhat/config';
+import type { NetworksUserConfig } from 'hardhat/types';
 import type { RecordConfigCollection, RecordConfigEnv } from './types/environment';
-import { NetworksUserConfig } from 'hardhat/types';
 
 dotenv.config();
 
 const configEnv = <RecordConfigEnv>yaml.load(fs.readFileSync('./config.env.yaml', 'utf8'));
 const configDo = <RecordConfigCollection>yaml.load(fs.readFileSync('./config.do.yaml', 'utf8'));
-const configDc = <RecordConfigCollection>yaml.load(fs.readFileSync('./config.dc.yaml', 'utf8'));
+const configDn = <RecordConfigCollection>yaml.load(fs.readFileSync('./config.dn.yaml', 'utf8'));
 
 const ENV_MODE = String(process.env.ENV_MODE);
-const COLLECTION = <'do' | 'dc'>String(process.env.COLLECTION);
+const COLLECTION = <'do' | 'dn'>String(process.env.COLLECTION);
 const CHAIN_TO_FORK = String(process.env.CHAIN_TO_FORK);
 const FORKED_CHAIN = String(process.env.FORKED_CHAIN);
 const FORKED_CHAIN_URL = String(process.env.FORKED_CHAIN_URL);
@@ -72,8 +72,8 @@ function buildHardhatConfig(): HardhatUserConfig {
 
     if (COLLECTION == 'do') {
         configCollection = configDo;
-    } else if (COLLECTION == 'dc') {
-        configCollection = configDc;
+    } else if (COLLECTION == 'dn') {
+        configCollection = configDn;
     } else {
         throw new Error(`Invalid 'COLLECTION' value: ${COLLECTION}`);
     }
@@ -120,7 +120,7 @@ function buildHardhatConfig(): HardhatUserConfig {
             accounts: [
                 {
                     privateKey: configEnv[CHAIN_TO_FORK].deployerPrivateKey,
-                    balance: ethers.parseEther('100').toString(),
+                    balance: parseEther('100').toString(),
                 },
             ],
         };

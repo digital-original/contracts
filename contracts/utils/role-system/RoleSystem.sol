@@ -7,27 +7,21 @@ import {IRoleSystem} from "./IRoleSystem.sol";
 /**
  * @title RoleSystem
  *
- * @notice The contract provides the roles system to control access and get accounts by role.
+ * @notice Concrete implementation of {IRoleSystem}. Stores role mappings in an
+ *         unstructured-storage slot defined by {RoleSystemStorage} and exposes
+ *         simple grant/revoke/transfer helpers restricted to the immutable
+ *         {MAIN} administrator.
  */
-abstract contract RoleSystem is IRoleSystem {
+contract RoleSystem is IRoleSystem {
     /**
-     * @dev The main account. The account can grant and revoke roles and transfer unique roles.
+     * @notice Account endowed with full administrative privileges over the
+     *         role system (grant, revoke, transfer unique roles).
      */
     address public immutable MAIN;
 
     /**
-     * @dev Sets the main account.
-     *
-     * @param main The main account for managing the role system.
-     */
-    constructor(address main) {
-        if (main == address(0)) revert RoleSystemMisconfiguration(0);
-
-        MAIN = main;
-    }
-
-    /**
-     * @dev Throws if sender is not the main account
+     * @dev Restricts a function so it can only be executed by {MAIN}. Reverts
+     *      with {RoleSystemNotMain} otherwise.
      */
     modifier onlyMain() {
         if (msg.sender != MAIN) {
@@ -37,94 +31,80 @@ abstract contract RoleSystem is IRoleSystem {
         _;
     }
 
-    /* ############################################################
-                                ROLES
-    ############################################################ */
+    /**
+     * @param main Address that will be set as {MAIN}. Cannot be zero.
+     *
+     * @dev Reverts with {RoleSystemMisconfiguration} if `main` is the zero address.
+     */
+    constructor(address main) {
+        if (main == address(0)) revert RoleSystemMisconfiguration(0);
+
+        MAIN = main;
+    }
 
     /**
      * @inheritdoc IRoleSystem
      */
-    function grandRole(bytes32 role, address account) external onlyMain {
-        if (!hasRole(role, account)) {
-            RoleSystemStorage.Layout storage $ = RoleSystemStorage.layout();
+    function grantRole(bytes32 role, address account) external onlyMain {
+        _requireNotZeroAddress(account);
 
-            $._roles[role][account] = true;
+        RoleSystemStorage.Layout storage $ = RoleSystemStorage.layout();
 
-            emit RoleGranted(role, account);
-        }
+        $.hasRole[role][account] = true;
+
+        emit RoleGranted(role, account);
     }
 
     /**
      * @inheritdoc IRoleSystem
      */
     function revokeRole(bytes32 role, address account) external onlyMain {
-        if (hasRole(role, account)) {
-            RoleSystemStorage.Layout storage $ = RoleSystemStorage.layout();
+        _requireNotZeroAddress(account);
 
-            $._roles[role][account] = false;
+        RoleSystemStorage.Layout storage $ = RoleSystemStorage.layout();
 
-            emit RoleRevoked(role, account);
-        }
+        $.hasRole[role][account] = false;
+
+        emit RoleRevoked(role, account);
+    }
+
+    /**
+     * @inheritdoc IRoleSystem
+     */
+    function transferUniqueRole(bytes32 uniqueRole, address newOwner) external onlyMain {
+        RoleSystemStorage.Layout storage $ = RoleSystemStorage.layout();
+
+        $.uniqueRoleOwner[uniqueRole] = newOwner;
+
+        emit UniqueRoleTransferred(uniqueRole, newOwner);
     }
 
     /**
      * @inheritdoc IRoleSystem
      */
     function hasRole(bytes32 role, address account) public view returns (bool) {
-        if (account == address(0)) {
-            revert RoleSystemZeroAddress();
-        }
+        _requireNotZeroAddress(account);
 
         RoleSystemStorage.Layout storage $ = RoleSystemStorage.layout();
 
-        return $._roles[role][account];
-    }
-
-    /**
-     * @dev Throws if `account` does not have `role`.
-     */
-    function _requireRole(bytes32 role, address account) internal view {
-        if (!hasRole(role, account)) {
-            revert RoleSystemUnauthorizedAccount(account, role);
-        }
-    }
-
-    /* ############################################################
-                            UNIQUE_ROLES
-    ############################################################ */
-
-    /**
-     * @inheritdoc IRoleSystem
-     */
-    function transferUniqueRole(bytes32 uniqueRole, address to) external onlyMain {
-        RoleSystemStorage.Layout storage $ = RoleSystemStorage.layout();
-
-        address from = $._uniqueRoles[uniqueRole];
-
-        $._uniqueRoles[uniqueRole] = to;
-
-        emit UniqueRoleTransferred(from, to, uniqueRole);
+        return $.hasRole[role][account];
     }
 
     /**
      * @inheritdoc IRoleSystem
      */
-    function uniqueRoleAccount(bytes32 uniqueRole) public view returns (address account) {
+    function uniqueRoleOwner(bytes32 uniqueRole) public view returns (address owner) {
         RoleSystemStorage.Layout storage $ = RoleSystemStorage.layout();
 
-        account = $._uniqueRoles[uniqueRole];
+        owner = $.uniqueRoleOwner[uniqueRole];
 
-        if (account == address(0)) {
-            revert RoleSystemZeroAddress();
-        }
+        _requireNotZeroAddress(owner);
     }
 
-    /**
-     * @dev Throws if `account` does not have `uniqueRole`.
-     */
-    function _requireUniqueRole(bytes32 uniqueRole, address account) internal view {
-        if (uniqueRoleAccount(uniqueRole) != account) {
-            revert RoleSystemUnauthorizedAccount(account, uniqueRole);
+    function _requireNotZeroAddress(address account) private pure {
+        // Internal helper that standardises zero-address checks across the contract.
+        if (account == address(0)) {
+            revert RoleSystemZeroAddress();
         }
     }
 }

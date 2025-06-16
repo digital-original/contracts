@@ -1,13 +1,12 @@
 import { task } from 'hardhat/config';
 import { ChainConfig } from '../types/environment';
-import { USDC_DECIMALS } from '../constants/usdc';
+import { etherToWeiForErc20 } from './utils/ether-to-wei-for-erc20';
 
 /*
 npx hardhat verify-art-token --network fork
 */
 
 task('verify-art-token').setAction(async (taskArgs: Record<string, string>, hardhat) => {
-    const ethers = hardhat.ethers;
     const chain = hardhat.network;
     const chainId = chain.config.chainId;
     const config = <ChainConfig>(<any>chain.config);
@@ -18,6 +17,7 @@ task('verify-art-token').setAction(async (taskArgs: Record<string, string>, hard
     console.group('Conditions:');
     console.log(`Chain - ${chain.name}`);
     console.log(`Chain ID - ${chainId}`);
+    console.log(`Collection - ${config.name}`);
     console.groupEnd();
     console.log('-'.repeat(process.stdout.columns));
 
@@ -33,8 +33,8 @@ task('verify-art-token').setAction(async (taskArgs: Record<string, string>, hard
     const main = config.main;
     const auctionHouse = config.auctionHouse.proxy;
     const usdc = config.usdc;
-    const minPrice = config.minPriceUsd * 10 ** USDC_DECIMALS;
-    const minFee = config.minFeeUsd * 10 ** USDC_DECIMALS;
+    const minPrice = await etherToWeiForErc20(usdc, config.minPriceUsd);
+    const minFee = await etherToWeiForErc20(usdc, config.minFeeUsd);
     const regulated = config.regulated;
 
     console.log(`Verify ArtToken...`);
@@ -82,7 +82,7 @@ task('verify-art-token').setAction(async (taskArgs: Record<string, string>, hard
     await hardhat.run('verify:verify', {
         contract: 'contracts/art-token/ArtToken.sol:ArtToken',
         address: impl,
-        constructorArguments: [main, auctionHouse, usdc, minPrice, minFee, regulated],
+        constructorArguments: [proxy, main, auctionHouse, usdc, minPrice, minFee, regulated],
     });
     console.log('-'.repeat(process.stdout.columns));
 });

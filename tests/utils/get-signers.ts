@@ -1,5 +1,5 @@
 import { ethers } from 'hardhat';
-import { Signer } from '../../types/environment';
+import { Signer } from 'ethers';
 
 export async function getSigners(): Promise<readonly [signers: Signer[], addresses: string[]]> {
     const [deployer, signer1, signer2, signer3, signer4, signer5, signer6, signer7, signer8] =

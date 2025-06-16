@@ -1,14 +1,13 @@
 import { task } from 'hardhat/config';
 import { ChainConfig } from '../types/environment';
-import { deployClassic } from '../scripts/deploy-classic';
-import { USDC_DECIMALS } from '../constants/usdc';
+import { etherToWeiForErc20 } from './utils/ether-to-wei-for-erc20';
+import { hoursToSeconds } from './utils/hours-to-seconds';
 
 /*
 npx hardhat verify-auction-house --network fork
 */
 
 task('verify-auction-house').setAction(async (taskArgs: Record<string, string>, hardhat) => {
-    const ethers = hardhat.ethers;
     const chain = hardhat.network;
     const chainId = chain.config.chainId;
     const config = <ChainConfig>(<any>chain.config);
@@ -19,6 +18,7 @@ task('verify-auction-house').setAction(async (taskArgs: Record<string, string>, 
     console.group('Conditions:');
     console.log(`Chain - ${chain.name}`);
     console.log(`Chain ID - ${chainId}`);
+    console.log(`Collection - ${config.name}`);
     console.groupEnd();
     console.log('-'.repeat(process.stdout.columns));
 
@@ -34,9 +34,9 @@ task('verify-auction-house').setAction(async (taskArgs: Record<string, string>, 
     const main = config.main;
     const artToken = config.artToken.proxy;
     const usdc = config.usdc;
-    const minAuctionDuration = config.minAuctionDurationHours * 60 * 60;
-    const minPrice = config.minPriceUsd * 10 ** USDC_DECIMALS;
-    const minFee = config.minFeeUsd * 10 ** USDC_DECIMALS;
+    const minPrice = await etherToWeiForErc20(usdc, config.minPriceUsd);
+    const minFee = await etherToWeiForErc20(usdc, config.minFeeUsd);
+    const minAuctionDuration = hoursToSeconds(config.minAuctionDurationHours);
 
     console.log(`Verify AuctionHouse...`);
     console.log(`\n`);
@@ -83,7 +83,7 @@ task('verify-auction-house').setAction(async (taskArgs: Record<string, string>, 
     await hardhat.run('verify:verify', {
         contract: 'contracts/auction-house/AuctionHouse.sol:AuctionHouse',
         address: impl,
-        constructorArguments: [main, artToken, usdc, minAuctionDuration, minPrice, minFee],
+        constructorArguments: [proxy, main, artToken, usdc, minAuctionDuration, minPrice, minFee],
     });
     console.log('-'.repeat(process.stdout.columns));
 });

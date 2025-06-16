@@ -1,6 +1,3 @@
-export const ART_TOKEN_NAME = 'Digital Original';
-export const ART_TOKEN_SYMBOL = 'DO';
-
 export const ART_TOKEN_DOMAIN_NAME = 'ArtToken';
 export const ART_TOKEN_DOMAIN_VERSION = '1';
 
@@ -16,3 +13,7 @@ export const BUY_PERMIT_TYPE = {
         { name: 'deadline', type: 'uint256' },
     ],
 };
+
+export const TOKEN_ID = 1;
+export const TOKEN_URI = 'ipfs://QmbQ9c4KN5FcGreai5rjTRUs1N2FFMaY819JGZZMGDcSLQ';
+export const REGULATED = true;

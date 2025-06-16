@@ -1,11 +1,11 @@
-import { ContractConstructorArgs, Signer } from '../types/environment';
+import { Signer } from 'ethers';
 
 interface Params {
     name: string;
-    constructorArgs: ContractConstructorArgs;
+    constructorArgs: any[];
 }
 
-export async function deployClassic(params: Params, deployer?: Signer) {
+export async function deploy(params: Params, deployer?: Signer) {
     const { ethers } = await import('hardhat');
 
     const { name, constructorArgs } = params;

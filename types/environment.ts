@@ -1,6 +1,4 @@
-import type { Addressable, Signer as EthersSigner } from 'ethers';
-
-export type UpgradeableContractConfig = {
+type UpgradeableContractConfig = {
     proxy: string;
     impl: string;
     admin: string;
@@ -34,9 +32,3 @@ export type RecordConfigCollection = CollectionData &
     Record<string, Omit<ConfigCollection, keyof CollectionData>>;
 
 export type ChainConfig = ConfigEnv & ConfigCollection;
-
-export type ContractConstructorArgs = (string | number | boolean | Uint8Array | Addressable)[];
-
-export type AddressParam = string | Addressable;
-
-export type Signer = EthersSigner;

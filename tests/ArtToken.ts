@@ -1,388 +1,340 @@
 import { expect } from 'chai';
-import { ethers } from 'hardhat';
-import { getSigners } from './utils/get-signers';
-import { ArtToken, AuctionHouse, USDC } from '../typechain-types';
-import { Signer } from '../types/environment';
-import { signBuyPermit } from './utils/sign-art-token-buy-permit';
-import { getChainId } from './utils/get-chain-id';
+import { Signer, MaxInt256, ZeroAddress } from 'ethers';
+import { ArtToken, AuctionHouse, USDC, MarketMock } from '../typechain-types';
 import { BuyPermitStruct } from '../types/art-token';
-import { TOTAL_SHARE } from '../constants/distribution';
-import { getValidDeadline } from './utils/get-valid-deadline';
-import { getLatestBlockTimestamp } from './utils/get-latest-block-timestamp';
-import { deployProtocol } from '../scripts/deploy-protocol';
-import { deployUsdc } from './utils/deploy-usdc';
-import { signCreatePermit } from './utils/sign-auction-house-create-permit';
 import { CreatePermitStruct } from '../types/auction-house';
+import { MIN_FEE, MIN_PRICE } from './constants/min-price-and-fee';
+import { TOTAL_SHARE } from './constants/distribution';
+import { TOKEN_ID, TOKEN_URI } from './constants/art-token';
+import { HOUR } from './constants/time';
+import { AUCTION_ID, AUCTION_STEP } from './constants/auction-house';
+import { getSigners } from './utils/get-signers';
+import { getLatestBlockTimestamp } from './utils/get-latest-block-timestamp';
+import { deployProtocolTest } from './utils/deploy-protocol-test';
+import { ArtTokenUtils } from './utils/art-token-utils';
+import { AuctionHouseUtils } from './utils/auction-house-utils';
 
 describe('ArtToken', function () {
     let artToken: ArtToken, artTokenAddr: string;
     let auctionHouse: AuctionHouse, auctionHouseAddr: string;
+    let market: MarketMock, marketAddr: string;
     let usdc: USDC, usdcAddr: string;
 
-    let chainId: number;
-
-    let main: Signer, mainAddr: string;
-    let admin: Signer, adminAddr: string;
+    let artTokenSigner: Signer, artTokenSignerAddr: string;
     let financier: Signer, financierAddr: string;
     let institution: Signer, institutionAddr: string;
     let buyer: Signer, buyerAddr: string;
     let randomAccount: Signer, randomAccountAddr: string;
 
-    const adminRole = ethers.keccak256(Buffer.from('ADMIN_ROLE'));
-    const financialRole = ethers.keccak256(Buffer.from('FINANCIAL_ROLE'));
-    const partnerRole = ethers.keccak256(Buffer.from('PARTNER_ROLE'));
-
     before(async () => {
-        chainId = await getChainId();
-
-        [usdc, usdcAddr] = await deployUsdc();
-
         [
-            [main, admin, financier, institution, buyer, randomAccount],
-            [mainAddr, adminAddr, financierAddr, institutionAddr, buyerAddr, randomAccountAddr],
+            [artTokenSigner, financier, institution, buyer, randomAccount],
+            [artTokenSignerAddr, financierAddr, institutionAddr, buyerAddr, randomAccountAddr],
         ] = await getSigners();
     });
 
     beforeEach(async () => {
-        const {
-            artToken: _artToken,
-            artTokenAddr: _artTokenAddr,
-            auctionHouse: _auctionHouse,
-            auctionHouseAddr: _auctionHouseAddr,
-        } = await deployProtocol({
-            name: 'TestToken',
-            symbol: 'TT',
-            main,
-            usdc,
-            minPriceUsd: 10,
-            minFeeUsd: 10,
-            minAuctionDurationHours: 1,
-            regulated: true,
-        });
+        const protocol = await deployProtocolTest({ signer: artTokenSigner, financier });
 
-        await _artToken.connect(main).transferUniqueRole(adminRole, admin);
-        await _artToken.connect(main).transferUniqueRole(financialRole, financier);
-        await _auctionHouse.connect(main).transferUniqueRole(adminRole, admin);
-        await _auctionHouse.connect(main).transferUniqueRole(financialRole, financier);
-
-        await usdc.connect(buyer).mint();
-        await usdc.connect(buyer).approve(_artToken, ethers.MaxInt256);
-
-        artToken = _artToken.connect(buyer);
-        artTokenAddr = _artTokenAddr;
-        auctionHouse = _auctionHouse;
-        auctionHouseAddr = _auctionHouseAddr;
-    });
-
-    let tokenId: bigint;
-    let tokenURI: string;
-    let price: bigint;
-    let fee: bigint;
-    let participants: string[];
-    let shares: bigint[];
-    let deadline: number;
-
-    beforeEach(async () => {
-        tokenId = 0n;
-        tokenURI = 'ipfs://Q...';
-        price = 100_000_000n;
-        fee = 100_000_000n;
-        participants = [financierAddr, institutionAddr];
-        shares = [TOTAL_SHARE / 5n, (TOTAL_SHARE / 5n) * 4n];
-        deadline = await getValidDeadline();
+        artToken = protocol.artToken;
+        artTokenAddr = protocol.artTokenAddr;
+        auctionHouse = protocol.auctionHouse;
+        auctionHouseAddr = protocol.auctionHouseAddr;
+        market = protocol.marketMock;
+        marketAddr = protocol.marketMockAddr;
+        usdc = protocol.usdc;
+        usdcAddr = protocol.usdcAddr;
     });
 
     describe(`method 'buy'`, () => {
-        it(`should mint token`, async () => {
-            await buy();
-
-            await Promise.all([
-                expect(artToken.ownerOf(tokenId)).to.eventually.equal(buyerAddr),
-                expect(artToken.tokenURI(tokenId)).to.eventually.equal(tokenURI),
-                expect(artToken.balanceOf(buyer)).to.eventually.equal(1n),
-            ]);
+        beforeEach(async () => {
+            await usdc.connect(buyer).mintAndApprove(artToken, MaxInt256);
         });
 
-        it(`should transfer fee to financier`, async () => {
-            const transaction = await buy();
+        it(`should mint the token, distribute reward, and charge fee`, async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
 
-            await expect(transaction)
-                .to.be.emit(usdc, 'Transfer')
-                .withArgs(artTokenAddr, financierAddr, fee);
-        });
+            const institutionShare = (TOTAL_SHARE / 5n) * 4n; // 80%
+            const platformShare = TOTAL_SHARE / 5n; // 20%
 
-        it(`should transfer price and fee from buyer to contract`, async () => {
-            const transaction = await buy();
+            const price = MIN_PRICE;
+            const fee = MIN_FEE;
 
-            await expect(transaction)
-                .to.be.emit(usdc, 'Transfer')
-                .withArgs(buyerAddr, artTokenAddr, price + fee);
-        });
-
-        it(`should fail if token is reserved by auction`, async () => {
-            const createPermit: CreatePermitStruct = {
-                auctionId: 1n,
-                tokenId,
-                tokenURI,
-                price: 100_000_001n,
-                fee: 100_000_001n,
-                step: 1_000_001n,
-                endTime: deadline,
-                participants,
-                shares,
-                deadline,
+            const buyPermit: BuyPermitStruct = {
+                tokenId: TOKEN_ID,
+                tokenURI: TOKEN_URI,
+                sender: buyerAddr,
+                price,
+                fee,
+                participants: [institutionAddr, financierAddr],
+                shares: [institutionShare, platformShare],
+                deadline: latestBlockTimestamp + HOUR,
             };
 
-            const signature = await signCreatePermit(
-                chainId,
-                auctionHouseAddr,
-                createPermit,
-                admin,
-            );
-
-            await auctionHouse.create({
-                auctionId: createPermit.auctionId,
-                tokenId,
-                tokenURI,
-                price: createPermit.price,
-                fee: createPermit.fee,
-                step: createPermit.step,
-                endTime: createPermit.endTime,
-                participants,
-                shares,
-                signature,
-                deadline,
+            const tx = await ArtTokenUtils.buy({
+                artToken,
+                permit: buyPermit,
+                permitSigner: artTokenSigner,
+                sender: buyer,
             });
 
-            await expect(buy()).to.be.rejectedWith('ArtTokenReserved');
+            await expect(tx)
+                .to.be.emit(usdc, 'Transfer')
+                .withArgs(buyerAddr, artTokenAddr, price + fee);
+
+            await expect(tx)
+                .to.be.emit(usdc, 'Transfer')
+                .withArgs(artTokenAddr, institutionAddr, (price * institutionShare) / TOTAL_SHARE);
+
+            await expect(tx)
+                .to.be.emit(usdc, 'Transfer')
+                .withArgs(artTokenAddr, financierAddr, (price * platformShare) / TOTAL_SHARE);
+
+            await expect(tx)
+                .to.be.emit(usdc, 'Transfer')
+                .withArgs(artTokenAddr, financierAddr, fee);
+
+            await expect(tx)
+                .to.be.emit(artToken, 'Transfer') //
+                .withArgs(ZeroAddress, buyerAddr, TOKEN_ID);
         });
 
-        describe(`permit logic`, () => {
-            it(`should fail if permit signer is not admin`, async () => {
-                const _admin = randomAccount;
+        it(`should fail if the token is reserved by the auction`, async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
 
-                await expect(buy({ _admin })).to.be.rejectedWith('EIP712InvalidSignature');
+            const createPermit: CreatePermitStruct = {
+                auctionId: AUCTION_ID,
+                tokenId: TOKEN_ID,
+                tokenURI: TOKEN_URI,
+                price: MIN_PRICE,
+                fee: MIN_FEE,
+                step: AUCTION_STEP,
+                endTime: latestBlockTimestamp + HOUR,
+                participants: [institutionAddr],
+                shares: [TOTAL_SHARE],
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            await AuctionHouseUtils.create({
+                auctionHouse,
+                permit: createPermit,
+                permitSigner: artTokenSigner,
+                sender: institution,
             });
 
-            it(`should fail if permit is expired`, async () => {
-                const _deadline = await getLatestBlockTimestamp();
+            const buyPermit: BuyPermitStruct = {
+                tokenId: TOKEN_ID,
+                tokenURI: TOKEN_URI,
+                sender: buyerAddr,
+                price: MIN_PRICE,
+                fee: MIN_FEE,
+                participants: [institutionAddr],
+                shares: [TOTAL_SHARE],
+                deadline: latestBlockTimestamp + HOUR,
+            };
 
-                await expect(buy({ _deadline })).to.be.rejectedWith('EIP712ExpiredSignature');
+            const tx = ArtTokenUtils.buy({
+                artToken,
+                permit: buyPermit,
+                permitSigner: artTokenSigner,
+                sender: buyer,
             });
 
-            it(`should fail if the sender is invalid`, async () => {
-                const _artToken = artToken.connect(randomAccount);
-
-                await expect(buy({ _artToken })).to.be.rejectedWith('EIP712InvalidSignature');
-            });
+            await expect(tx).to.be.rejectedWith('ArtTokenTokenReserved');
         });
 
-        describe(`distribution logic`, () => {
-            it(`should distribute reward between participants according to shares`, async () => {
-                const transaction = await buy();
+        it(`should fail if the permit signer is not the art token signer`, async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
 
-                await Promise.all([
-                    expect(transaction)
-                        .to.be.emit(usdc, 'Transfer')
-                        .withArgs(artTokenAddr, participants[0], (price * shares[0]) / TOTAL_SHARE),
-                    expect(transaction)
-                        .to.be.emit(usdc, 'Transfer')
-                        .withArgs(artTokenAddr, participants[1], (price * shares[1]) / TOTAL_SHARE),
-                ]);
+            const institutionShare = (TOTAL_SHARE / 5n) * 4n; // 80%
+            const platformShare = TOTAL_SHARE / 5n; // 20%
+
+            const price = MIN_PRICE;
+            const fee = MIN_FEE;
+
+            const buyPermit: BuyPermitStruct = {
+                tokenId: TOKEN_ID,
+                tokenURI: TOKEN_URI,
+                sender: buyerAddr,
+                price,
+                fee,
+                participants: [institutionAddr, financierAddr],
+                shares: [institutionShare, platformShare],
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            const tx = ArtTokenUtils.buy({
+                artToken,
+                permit: buyPermit,
+                permitSigner: randomAccount,
+                sender: buyer,
             });
 
-            it(`should fail if number of shares is not equal number of participants`, async () => {
-                const _participants = [financierAddr];
-                const _shares = [TOTAL_SHARE / 2n, TOTAL_SHARE / 2n];
-
-                await expect(buy({ _participants, _shares })).to.be.rejectedWith(
-                    'DistributionInvalidSharesCount',
-                );
-            });
-
-            it(`should fail if total shares is not equal TOTAL_SHARE`, async () => {
-                const _participants = [financierAddr, institutionAddr];
-                const _shares = [TOTAL_SHARE, 1n];
-
-                await expect(buy({ _participants, _shares })).to.be.rejectedWith(
-                    'DistributionInvalidSharesSum',
-                );
-            });
-
-            it(`should fail if shares and participants are empty`, async () => {
-                const _participants: string[] = [];
-                const _shares: bigint[] = [];
-
-                await expect(buy({ _participants, _shares })).to.be.rejectedWith(
-                    'DistributionInvalidSharesSum',
-                );
-            });
+            await expect(tx).to.be.rejectedWith('AuthorizationUnauthorizedAction');
         });
     });
 
     describe(`method 'transferFrom'`, () => {
+        beforeEach(async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
+
+            const buyPermit: BuyPermitStruct = {
+                tokenId: TOKEN_ID,
+                tokenURI: TOKEN_URI,
+                sender: buyerAddr,
+                price: MIN_PRICE,
+                fee: MIN_FEE,
+                participants: [institutionAddr],
+                shares: [TOTAL_SHARE],
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            await usdc.connect(buyer).mintAndApprove(artToken, MaxInt256);
+
+            await ArtTokenUtils.buy({
+                artToken,
+                permit: buyPermit,
+                permitSigner: artTokenSigner,
+                sender: buyer,
+            });
+        });
+
         it(`should transfer to a non-contract account`, async () => {
-            await buy();
+            const tx = await artToken.connect(buyer).transferFrom(buyer, randomAccount, TOKEN_ID);
 
-            const transaction = await artToken.transferFrom(buyer, randomAccount, tokenId);
-
-            await expect(transaction)
+            await expect(tx)
                 .to.be.emit(artToken, 'Transfer')
-                .withArgs(buyerAddr, randomAccountAddr, tokenId);
+                .withArgs(buyerAddr, randomAccountAddr, TOKEN_ID);
         });
 
         it(`should transfer to a partner contract`, async () => {
-            await buy();
+            const tx = await artToken.connect(buyer).transferFrom(buyer, market, TOKEN_ID);
 
-            await artToken.connect(main).grandRole(partnerRole, auctionHouse);
-
-            const transaction = await artToken.transferFrom(buyer, auctionHouse, tokenId);
-
-            await expect(transaction)
+            await expect(tx)
                 .to.be.emit(artToken, 'Transfer')
-                .withArgs(buyerAddr, auctionHouseAddr, tokenId);
+                .withArgs(buyerAddr, marketAddr, TOKEN_ID);
         });
 
-        it(`should fail if a token is tried to transfer to a non-partner contract`, async () => {
-            await buy();
+        it(`should fail if a token is attempted to be transferred to a non-partner contract`, async () => {
+            const tx = artToken.connect(buyer).transferFrom(buyer, usdc, TOKEN_ID);
 
-            await expect(
-                artToken.transferFrom(buyer, auctionHouse, tokenId),
-            ).to.eventually.rejectedWith('RoleSystemUnauthorizedAccount');
-        });
-    });
-
-    describe(`method 'safeTransferFrom'`, () => {
-        it(`should transfer to a non-contract account`, async () => {
-            await buy();
-
-            const transaction = await artToken['safeTransferFrom(address,address,uint256)'](
-                buyer,
-                randomAccount,
-                tokenId,
-            );
-
-            await expect(transaction)
-                .to.be.emit(artToken, 'Transfer')
-                .withArgs(buyerAddr, randomAccountAddr, tokenId);
-        });
-
-        it(`should fail if a token is tried to transfer to a non-partner contract`, async () => {
-            await buy();
-
-            await expect(
-                artToken['safeTransferFrom(address,address,uint256)'](buyer, auctionHouse, tokenId),
-            ).to.eventually.rejectedWith('RoleSystemUnauthorizedAccount');
+            await expect(tx).to.eventually.rejectedWith('ArtTokenUnauthorizedAccount');
         });
     });
 
     describe(`method 'approve'`, () => {
+        beforeEach(async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
+
+            const buyPermit: BuyPermitStruct = {
+                tokenId: TOKEN_ID,
+                tokenURI: TOKEN_URI,
+                sender: buyerAddr,
+                price: MIN_PRICE,
+                fee: MIN_FEE,
+                participants: [institutionAddr],
+                shares: [TOTAL_SHARE],
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            await usdc.connect(buyer).mintAndApprove(artToken, MaxInt256);
+
+            await ArtTokenUtils.buy({
+                artToken,
+                permit: buyPermit,
+                permitSigner: artTokenSigner,
+                sender: buyer,
+            });
+        });
+
         it(`should provide the approval to a non-contract account`, async () => {
-            await buy();
+            const tx = await artToken.connect(buyer).approve(randomAccountAddr, TOKEN_ID);
 
-            const transaction = await artToken.approve(randomAccountAddr, tokenId);
-
-            await expect(transaction)
+            await expect(tx)
                 .to.be.emit(artToken, 'Approval')
-                .withArgs(buyerAddr, randomAccountAddr, tokenId);
+                .withArgs(buyerAddr, randomAccountAddr, TOKEN_ID);
         });
 
         it(`should provide the approval to a partner contract`, async () => {
-            await buy();
+            const tx = await artToken.connect(buyer).approve(market, TOKEN_ID);
 
-            await artToken.connect(main).grandRole(partnerRole, auctionHouse);
-
-            const transaction = await artToken.approve(auctionHouse, tokenId);
-
-            await expect(transaction)
+            await expect(tx)
                 .to.be.emit(artToken, 'Approval')
-                .withArgs(buyerAddr, auctionHouseAddr, tokenId);
+                .withArgs(buyerAddr, marketAddr, TOKEN_ID);
         });
 
-        it(`should fail if the approval is tried to provide to a non-partner contract`, async () => {
-            await buy();
+        it(`should fail if the approval is attempted to be provided to a non-partner contract`, async () => {
+            const tx = artToken.connect(buyer).approve(usdc, TOKEN_ID);
 
-            await expect(artToken.approve(auctionHouse, tokenId)).to.eventually.rejectedWith(
-                'RoleSystemUnauthorizedAccount',
-            );
+            await expect(tx).to.eventually.rejectedWith('ArtTokenUnauthorizedAccount');
         });
     });
 
     describe(`method 'setApprovalForAll'`, () => {
-        it(`should fail`, async () => {
-            await buy();
+        beforeEach(async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
 
-            await expect(artToken.setApprovalForAll(auctionHouse, true)).to.eventually.rejectedWith(
-                'ArtTokenForbiddenAction',
-            );
+            const buyPermit: BuyPermitStruct = {
+                tokenId: TOKEN_ID,
+                tokenURI: TOKEN_URI,
+                sender: buyerAddr,
+                price: MIN_PRICE,
+                fee: MIN_FEE,
+                participants: [institutionAddr],
+                shares: [TOTAL_SHARE],
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            await usdc.connect(buyer).mintAndApprove(artToken, MaxInt256);
+
+            await ArtTokenUtils.buy({
+                artToken,
+                permit: buyPermit,
+                permitSigner: artTokenSigner,
+                sender: buyer,
+            });
+        });
+
+        it(`should provide the approval to a non-contract account`, async () => {
+            const tx = await artToken.connect(buyer).setApprovalForAll(randomAccountAddr, true);
+
+            await expect(tx)
+                .to.be.emit(artToken, 'ApprovalForAll')
+                .withArgs(buyerAddr, randomAccountAddr, true);
+        });
+
+        it(`should provide the approval to a partner contract`, async () => {
+            const tx = await artToken.connect(buyer).setApprovalForAll(market, true);
+
+            await expect(tx)
+                .to.be.emit(artToken, 'ApprovalForAll')
+                .withArgs(buyerAddr, marketAddr, true);
+        });
+
+        it(`should fail if the approval is attempted to be provided to a non-partner contract`, async () => {
+            const tx = artToken.connect(buyer).setApprovalForAll(usdc, true);
+
+            await expect(tx).to.eventually.rejectedWith('ArtTokenUnauthorizedAccount');
         });
     });
 
     describe(`method 'recipientAuthorized'`, () => {
         it(`should return 'true' for a non-contract account`, async () => {
-            await expect(artToken.recipientAuthorized(randomAccount)).to.eventually.equal(true);
+            const authorized = await artToken.recipientAuthorized(randomAccount);
+
+            expect(authorized).equal(true);
         });
 
         it(`should return 'true' for a partner contract`, async () => {
-            await artToken.connect(main).grandRole(partnerRole, auctionHouse);
+            const authorized = await artToken.recipientAuthorized(market);
 
-            await expect(artToken.recipientAuthorized(auctionHouse)).to.eventually.equal(true);
+            expect(authorized).equal(true);
         });
 
         it(`should return 'false' for a non-partner contract`, async () => {
-            await expect(artToken.recipientAuthorized(auctionHouse)).to.eventually.equal(false);
+            const authorized = await artToken.recipientAuthorized(usdc);
+
+            expect(authorized).equal(false);
         });
     });
-
-    async function buy(
-        params: {
-            _tokenId?: bigint;
-            _tokenURI?: string;
-            _sender?: string;
-            _price?: bigint;
-            _fee?: bigint;
-            _participants?: string[];
-            _shares?: bigint[];
-            _deadline?: number;
-            _admin?: Signer;
-            _artToken?: ArtToken;
-        } = {},
-    ) {
-        const {
-            _tokenId = tokenId,
-            _tokenURI = tokenURI,
-            _sender = buyerAddr,
-            _price = price,
-            _fee = fee,
-            _participants = participants,
-            _shares = shares,
-            _deadline = deadline,
-            _admin = admin,
-            _artToken = artToken,
-        } = params;
-
-        const permit: BuyPermitStruct = {
-            tokenId: _tokenId,
-            tokenURI: _tokenURI,
-            sender: _sender,
-            price: _price,
-            fee: _fee,
-            participants: _participants,
-            shares: _shares,
-            deadline: _deadline,
-        };
-
-        const signature = await signBuyPermit(chainId, artTokenAddr, permit, _admin);
-
-        return _artToken.buy({
-            tokenId: _tokenId,
-            tokenURI: _tokenURI,
-            price: _price,
-            fee: _fee,
-            participants: _participants,
-            shares: _shares,
-            signature,
-            deadline: _deadline,
-        });
-    }
 });

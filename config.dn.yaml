@@ -1,5 +1,5 @@
-name: 'DigitalCommon'
-symbol: 'DC'
+name: 'DigitalNative'
+symbol: 'DN'
 
 sepolia:
     minPriceUsd: 50
