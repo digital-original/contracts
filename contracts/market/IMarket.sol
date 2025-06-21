@@ -11,7 +11,7 @@ interface IMarket {
         address maker,
         address taker,
         uint256 price,
-        uint256 tokenId
+        uint256 tokenId //
     );
 
     event BidOrderExecuted(
@@ -19,7 +19,7 @@ interface IMarket {
         address maker,
         address taker,
         uint256 price,
-        uint256 tokenId
+        uint256 tokenId //
     );
 
     event OrderInvalidated(
@@ -43,10 +43,7 @@ interface IMarket {
 
     function invalidateOrder(address maker, bytes32 orderHash) external;
 
-    function orderInvalidated(
-        address maker,
-        bytes32 orderHash
-    ) external returns (bool invalidated);
+    function orderInvalidated(address maker, bytes32 orderHash) external returns (bool invalidated);
 
     function bidFee(uint256 price) external returns (uint256 fee);
 

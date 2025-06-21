@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.20;
 
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {EIP712Domain} from "../utils/EIP712Domain.sol";
 import {EIP712Signature} from "../utils/EIP712Signature.sol";
 import {RoleSystem} from "../utils/role-system/RoleSystem.sol";
+import {AssetList} from "../utils/asset-list/AssetList.sol";
+import {Roles} from "../utils/Roles.sol";
 import {Authorization} from "../utils/Authorization.sol";
 import {Distribution} from "../utils/Distribution.sol";
 import {Array} from "../utils/Array.sol";
@@ -16,7 +18,7 @@ import {AskOrder} from "./libraries/AskOrder.sol";
 import {BidOrder} from "./libraries/BidOrder.sol";
 import {OrderExecutionPermit} from "./libraries/OrderExecutionPermit.sol";
 
-contract Market is IMarket, EIP712Domain, RoleSystem, Authorization {
+contract Market is IMarket, EIP712Domain, RoleSystem, AssetList, Authorization {
     using SafeERC20 for IERC20;
     using AskOrder for AskOrder.Type;
     using BidOrder for BidOrder.Type;
@@ -24,9 +26,6 @@ contract Market is IMarket, EIP712Domain, RoleSystem, Authorization {
 
     IArtToken public immutable ART_TOKEN; // ArtToken contract address
     IERC20 public immutable USDC; // USDC contract address
-
-    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
-    bytes32 public constant FINANCIAL_ROLE = keccak256("FINANCIAL_ROLE");
 
     constructor(
         address proxy,
@@ -61,13 +60,13 @@ contract Market is IMarket, EIP712Domain, RoleSystem, Authorization {
             maker,
             order.startTime,
             order.endTime,
-            orderSignature
+            orderSignature //
         );
 
         _requireAuthorizedAction(
             permit.hash(orderHash),
             permit.deadline,
-            permitSignature
+            permitSignature //
         );
 
         _invalidateOrder(maker, orderHash);
@@ -111,13 +110,13 @@ contract Market is IMarket, EIP712Domain, RoleSystem, Authorization {
             maker,
             order.startTime,
             order.endTime,
-            orderSignature
+            orderSignature //
         );
 
         _requireAuthorizedAction(
             permit.hash(orderHash),
             permit.deadline,
-            permitSignature
+            permitSignature //
         );
 
         _invalidateOrder(maker, orderHash);
@@ -142,7 +141,7 @@ contract Market is IMarket, EIP712Domain, RoleSystem, Authorization {
     }
 
     function invalidateOrder(address maker, bytes32 orderHash) external {
-        if (msg.sender == maker || hasRole(ADMIN_ROLE, msg.sender)) {
+        if (msg.sender == maker || hasRole(Roles.ADMIN_ROLE, msg.sender)) {
             _invalidateOrder(maker, orderHash);
 
             emit OrderInvalidated(maker, orderHash);
@@ -151,10 +150,7 @@ contract Market is IMarket, EIP712Domain, RoleSystem, Authorization {
         }
     }
 
-    function orderInvalidated(
-        address maker,
-        bytes32 orderHash
-    ) external view returns (bool invalidated) {
+    function orderInvalidated(address maker, bytes32 orderHash) external view returns (bool invalidated) {
         MarketStorage.Layout storage $ = MarketStorage.layout();
 
         invalidated = $.makerOrderNonce[maker][orderHash];
@@ -195,7 +191,7 @@ contract Market is IMarket, EIP712Domain, RoleSystem, Authorization {
 
         USDC.safeTransferFrom(userBid, address(this), price + fee);
 
-        USDC.safeTransfer(uniqueRoleAccount(FINANCIAL_ROLE), fee);
+        USDC.safeTransfer(uniqueRoleOwner(Roles.FINANCIAL_ROLE), fee);
 
         Distribution.safeDistribute(USDC, price, _participants, _shares);
     }
@@ -230,7 +226,7 @@ contract Market is IMarket, EIP712Domain, RoleSystem, Authorization {
         address signer = EIP712Signature.recover(
             DOMAIN_SEPARATOR,
             orderHash,
-            orderSignature
+            orderSignature //
         );
 
         if (maker != signer) {
@@ -254,10 +250,7 @@ contract Market is IMarket, EIP712Domain, RoleSystem, Authorization {
         _shares = Array.push(shares, remaining);
     }
 
-    function _prepareBidFee(
-        uint256 price,
-        uint256 userBidFee
-    ) internal pure returns (uint256 fee) {
+    function _prepareBidFee(uint256 price, uint256 userBidFee) internal pure returns (uint256 fee) {
         fee = bidFee(price);
 
         if (userBidFee < fee) {

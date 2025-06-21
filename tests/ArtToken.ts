@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { Signer, MaxInt256, ZeroAddress } from 'ethers';
-import { ArtToken, AuctionHouse, USDC, MarketMock } from '../typechain-types';
+import { ArtToken, AuctionHouse, USDC, Market } from '../typechain-types';
 import { BuyPermitStruct } from '../types/art-token';
 import { CreatePermitStruct } from '../types/auction-house';
 import { MIN_FEE, MIN_PRICE } from './constants/min-price-and-fee';
@@ -17,7 +17,7 @@ import { AuctionHouseUtils } from './utils/auction-house-utils';
 describe('ArtToken', function () {
     let artToken: ArtToken, artTokenAddr: string;
     let auctionHouse: AuctionHouse, auctionHouseAddr: string;
-    let market: MarketMock, marketAddr: string;
+    let market: Market, marketAddr: string;
     let usdc: USDC, usdcAddr: string;
 
     let artTokenSigner: Signer, artTokenSignerAddr: string;
@@ -40,8 +40,8 @@ describe('ArtToken', function () {
         artTokenAddr = protocol.artTokenAddr;
         auctionHouse = protocol.auctionHouse;
         auctionHouseAddr = protocol.auctionHouseAddr;
-        market = protocol.marketMock;
-        marketAddr = protocol.marketMockAddr;
+        market = protocol.market;
+        marketAddr = protocol.marketAddr;
         usdc = protocol.usdc;
         usdcAddr = protocol.usdcAddr;
     });

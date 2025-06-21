@@ -20,10 +20,7 @@ library OrderExecutionPermit {
             ")"
         );
 
-    function hash(
-        Type calldata permit,
-        bytes32 orderHash
-    ) internal pure returns (bytes32) {
+    function hash(Type calldata permit, bytes32 orderHash) internal pure returns (bytes32) {
         return
             keccak256(
                 abi.encode(

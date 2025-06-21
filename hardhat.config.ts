@@ -57,7 +57,13 @@ const hardhatBaseConfig: HardhatUserConfig = {
     },
 };
 
-const hardhatTestConfig: HardhatUserConfig = {};
+const hardhatTestConfig: HardhatUserConfig = {
+    networks: {
+        hardhat: {
+            allowUnlimitedContractSize: true,
+        },
+    },
+};
 
 const hardhatEtherscanConfig: HardhatUserConfig = {
     etherscan: { apiKey: ETHERSCAN_API_KEY },

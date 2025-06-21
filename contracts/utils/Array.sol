@@ -2,10 +2,7 @@
 pragma solidity ^0.8.20;
 
 library Array {
-    function push(
-        uint256[] calldata array,
-        uint256 element
-    ) internal pure returns (uint256[] memory result) {
+    function push(uint256[] calldata array, uint256 element) internal pure returns (uint256[] memory result) {
         unchecked {
             result = new uint256[](array.length + 1);
 
@@ -19,10 +16,7 @@ library Array {
         }
     }
 
-    function push(
-        address[] calldata array,
-        address element
-    ) internal pure returns (address[] memory result) {
+    function push(address[] calldata array, address element) internal pure returns (address[] memory result) {
         unchecked {
             result = new address[](array.length + 1);
 

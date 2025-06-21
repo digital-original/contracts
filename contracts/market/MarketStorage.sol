@@ -8,8 +8,7 @@ pragma solidity ^0.8.20;
  */
 library MarketStorage {
     bytes32 private constant STORAGE_SLOT =
-        keccak256(abi.encode(uint256(keccak256("digital-original.storage.Market")) - 1)) &
-            ~bytes32(uint256(0xff));
+        keccak256(abi.encode(uint256(keccak256("digital-original.storage.Market")) - 1)) & ~bytes32(uint256(0xff));
 
     /**
      * @custom:storage-location erc7201:digital-original.storage.Market

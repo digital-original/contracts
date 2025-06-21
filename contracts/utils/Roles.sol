@@ -17,4 +17,7 @@ library Roles {
 
     /// @notice Role allowed to sign off-chain permits and other authorizations.
     bytes32 internal constant SIGNER_ROLE = keccak256("SIGNER_ROLE");
+
+    /// @notice TODO.
+    bytes32 internal constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 }

@@ -32,6 +32,20 @@ contract RoleSystem is IRoleSystem {
     }
 
     /**
+     * @dev Restricts a function so it can only be executed by an account that
+     *      has `role`. Reverts with {RoleSystemUnauthorizedAccount} otherwise.
+     *
+     * @param role The role required to call the function.
+     */
+    modifier onlyRole(bytes32 role) {
+        if (!hasRole(role, msg.sender)) {
+            revert RoleSystemUnauthorizedAccount(msg.sender, role);
+        }
+
+        _;
+    }
+
+    /**
      * @param main Address that will be set as {MAIN}. Cannot be zero.
      *
      * @dev Reverts with {RoleSystemMisconfiguration} if `main` is the zero address.

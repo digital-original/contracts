@@ -9,10 +9,11 @@ import {
 import { BuyPermitStruct } from '../types/art-token';
 import { TOTAL_SHARE } from './constants/distribution';
 import { TOKEN_ID, TOKEN_URI } from './constants/art-token';
+import { MIN_FEE, MIN_PRICE } from './constants/min-price-and-fee';
 import { HOUR } from './constants/time';
 import { getSigners } from './utils/get-signers';
 import { getLatestBlockTimestamp } from './utils/get-latest-block-timestamp';
-import { deployProtocol } from './utils/deploy-protocol';
+import { deployProtocolTest } from './utils/deploy-protocol-test';
 import { MarketUtils } from './utils/market-utils';
 import { ArtTokenUtils } from './utils/art-token-utils';
 
@@ -45,7 +46,7 @@ describe('Market', function () {
     });
 
     beforeEach(async () => {
-        const protocol = await deployProtocol({
+        const protocol = await deployProtocolTest({
             signer: marketSigner,
             financier,
             admin: marketAdmin,
@@ -67,8 +68,8 @@ describe('Market', function () {
                 tokenId: TOKEN_ID,
                 tokenURI: TOKEN_URI,
                 sender: makerAddr,
-                price: 100_000_000n,
-                fee: 100_000_000n,
+                price: MIN_PRICE,
+                fee: MIN_FEE,
                 participants: [institutionAddr],
                 shares: [TOTAL_SHARE],
                 deadline: latestBlockTimestamp + HOUR,
@@ -91,7 +92,7 @@ describe('Market', function () {
         it(`should execute the order`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
-            const price = 100_000_000n;
+            const price = MIN_PRICE;
             const fee = await market.bidFee(price);
 
             const makerShare = TOTAL_SHARE / 2n; // 50%
@@ -158,7 +159,7 @@ describe('Market', function () {
         it(`should send the remaining share to maker`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
-            const price = 100_000_000n;
+            const price = MIN_PRICE;
 
             const makerShare = 0n;
             const institutionShare = (TOTAL_SHARE / 5n) * 2n;
@@ -211,7 +212,7 @@ describe('Market', function () {
             const order: AskOrder.TypeStruct = {
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: 100_000_000n,
+                price: MIN_PRICE,
                 makerShare: TOTAL_SHARE / 2n,
                 startTime,
                 endTime,
@@ -244,7 +245,7 @@ describe('Market', function () {
             const order: AskOrder.TypeStruct = {
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: 100_000_000n,
+                price: MIN_PRICE,
                 makerShare: TOTAL_SHARE / 2n,
                 startTime,
                 endTime,
@@ -274,7 +275,7 @@ describe('Market', function () {
             const order: AskOrder.TypeStruct = {
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: 100_000_000n,
+                price: MIN_PRICE,
                 makerShare: TOTAL_SHARE / 2n,
                 startTime: latestBlockTimestamp,
                 endTime: latestBlockTimestamp + HOUR,
@@ -304,7 +305,7 @@ describe('Market', function () {
             const order: AskOrder.TypeStruct = {
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: 100_000_000n,
+                price: MIN_PRICE,
                 makerShare: TOTAL_SHARE / 2n,
                 startTime: latestBlockTimestamp,
                 endTime: latestBlockTimestamp + HOUR,
@@ -336,7 +337,7 @@ describe('Market', function () {
             const order: AskOrder.TypeStruct = {
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: 100_000_000n,
+                price: MIN_PRICE,
                 makerShare: TOTAL_SHARE / 2n,
                 startTime: latestBlockTimestamp,
                 endTime: latestBlockTimestamp + HOUR,
@@ -366,7 +367,7 @@ describe('Market', function () {
             const order: AskOrder.TypeStruct = {
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: 100_000_000n,
+                price: MIN_PRICE,
                 makerShare: TOTAL_SHARE / 2n,
                 startTime: latestBlockTimestamp,
                 endTime: latestBlockTimestamp + HOUR,
@@ -404,7 +405,7 @@ describe('Market', function () {
             const order: AskOrder.TypeStruct = {
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: 100_000_000n,
+                price: MIN_PRICE,
                 makerShare,
                 startTime: latestBlockTimestamp,
                 endTime: latestBlockTimestamp + HOUR,
@@ -437,8 +438,8 @@ describe('Market', function () {
                 tokenId: TOKEN_ID,
                 tokenURI: TOKEN_URI,
                 sender: takerAddr,
-                price: 100_000_000n,
-                fee: 100_000_000n,
+                price: MIN_PRICE,
+                fee: MIN_FEE,
                 participants: [institutionAddr],
                 shares: [TOTAL_SHARE],
                 deadline: latestBlockTimestamp + HOUR,
@@ -461,7 +462,7 @@ describe('Market', function () {
         it(`should execute the order`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
-            const price = 100_000_000n;
+            const price = MIN_PRICE;
             const makerFee = await market.bidFee(price);
 
             const makerShare = TOTAL_SHARE / 2n; // 50%
@@ -528,7 +529,7 @@ describe('Market', function () {
         it(`should charge the calculated fee to the maker`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
-            const price = 100_000_000n;
+            const price = MIN_PRICE;
             const makerFee = price;
             const calculatedFee = await market.bidFee(price);
 
@@ -570,8 +571,8 @@ describe('Market', function () {
             const order: BidOrder.TypeStruct = {
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: 100_000_000n,
-                makerFee: await market.bidFee(100_000_000n),
+                price: MIN_PRICE,
+                makerFee: await market.bidFee(MIN_PRICE),
                 startTime,
                 endTime,
             };
@@ -603,8 +604,8 @@ describe('Market', function () {
             const order: BidOrder.TypeStruct = {
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: 100_000_000n,
-                makerFee: await market.bidFee(100_000_000n),
+                price: MIN_PRICE,
+                makerFee: await market.bidFee(MIN_PRICE),
                 startTime,
                 endTime,
             };
@@ -633,8 +634,8 @@ describe('Market', function () {
             const order: BidOrder.TypeStruct = {
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: 100_000_000n,
-                makerFee: await market.bidFee(100_000_000n),
+                price: MIN_PRICE,
+                makerFee: await market.bidFee(MIN_PRICE),
                 startTime: latestBlockTimestamp,
                 endTime: latestBlockTimestamp + HOUR,
             };
@@ -663,8 +664,8 @@ describe('Market', function () {
             const order: BidOrder.TypeStruct = {
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: 100_000_000n,
-                makerFee: await market.bidFee(100_000_000n),
+                price: MIN_PRICE,
+                makerFee: await market.bidFee(MIN_PRICE),
                 startTime: latestBlockTimestamp,
                 endTime: latestBlockTimestamp + HOUR,
             };
@@ -695,8 +696,8 @@ describe('Market', function () {
             const order: BidOrder.TypeStruct = {
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: 100_000_000n,
-                makerFee: await market.bidFee(100_000_000n),
+                price: MIN_PRICE,
+                makerFee: await market.bidFee(MIN_PRICE),
                 startTime: latestBlockTimestamp,
                 endTime: latestBlockTimestamp + HOUR,
             };
@@ -725,8 +726,8 @@ describe('Market', function () {
             const order: BidOrder.TypeStruct = {
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: 100_000_000n,
-                makerFee: await market.bidFee(100_000_000n),
+                price: MIN_PRICE,
+                makerFee: await market.bidFee(MIN_PRICE),
                 startTime: latestBlockTimestamp,
                 endTime: latestBlockTimestamp + HOUR,
             };
@@ -756,7 +757,7 @@ describe('Market', function () {
         it(`should fail if the calculated fee is bigger than the maker fee`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
-            const price = 100_000_000n;
+            const price = MIN_PRICE;
             const makerFee = (await market.bidFee(price)) - 1n;
 
             const order: BidOrder.TypeStruct = {

@@ -1,5 +1,5 @@
 import { ethers } from 'hardhat';
-import { AddressLike, Signer } from 'ethers';
+import { AddressLike, Signer, ZeroAddress } from 'ethers';
 import {
     UpgradedEvent,
     AdminChangedEvent,
@@ -14,6 +14,7 @@ import { REGULATED } from '../constants/art-token';
 type Params = {
     signer: AddressLike;
     financier: AddressLike;
+    admin?: AddressLike;
 };
 
 // prettier-ignore
@@ -21,12 +22,13 @@ export async function deployProtocolTest(params: Params, deployer?: Signer) {
     const {
         signer,
         financier,
+        admin = ZeroAddress,
     } = params;
 
     const { receipt } = await deploy(
         {
             name: 'DeployerTest',
-            constructorArgs: [signer, financier, MIN_PRICE, MIN_FEE, MIN_AUCTION_DURATION, REGULATED],
+            constructorArgs: [signer, financier, admin, MIN_PRICE, MIN_FEE, MIN_AUCTION_DURATION, REGULATED],
         },
         deployer,
     );
@@ -59,9 +61,21 @@ export async function deployProtocolTest(params: Params, deployer?: Signer) {
         AdminChangedEvent.LogDescription
     >(<unknown>Proxy.interface.parseLog(<any>receipt.logs[5]));
 
+    const Market_Proxy_UpgradedEvent = <
+        UpgradedEvent.LogDescription
+    >(<unknown>Proxy.interface.parseLog(<any>receipt.logs[6]));
+
+    const Market_ProxyAdmin_OwnershipTransferredEvent = <
+        OwnershipTransferredEvent.LogDescription
+    >(<unknown>ProxyAdmin.interface.parseLog(<any>receipt.logs[7]));
+
+    const Market_Proxy_AdminChangedEvent = <
+        AdminChangedEvent.LogDescription
+    >(<unknown>Proxy.interface.parseLog(<any>receipt.logs[8]));
+
     const Deployer_DeployedEvent = <
         DeployedEvent.LogDescription
-    >(<unknown>Deployer.interface.parseLog(<any>receipt.logs[6]));
+    >(<unknown>Deployer.interface.parseLog(<any>receipt.logs[9]));
 
     const artTokenAddr = Deployer_DeployedEvent.args.artToken;
     const artTokenImplAddr = ArtToken_Proxy_UpgradedEvent.args.implementation;
@@ -73,7 +87,10 @@ export async function deployProtocolTest(params: Params, deployer?: Signer) {
     const auctionHouseProxyAdminAddr = AuctionHouse_Proxy_AdminChangedEvent.args.newAdmin;
     const auctionHouseProxyAdminOwner = AuctionHouse_ProxyAdmin_OwnershipTransferredEvent.args.newOwner;
 
-    const marketMockAddr = Deployer_DeployedEvent.args.marketMock;
+    const marketAddr = Deployer_DeployedEvent.args.market;
+    const marketImplAddr = Market_Proxy_UpgradedEvent.args.implementation;
+    const marketProxyAdminAddr = Market_Proxy_AdminChangedEvent.args.newAdmin;
+    const marketProxyAdminOwner = Market_ProxyAdmin_OwnershipTransferredEvent.args.newOwner;
 
     const usdcAddr = Deployer_DeployedEvent.args.usdc;
 
@@ -83,7 +100,8 @@ export async function deployProtocolTest(params: Params, deployer?: Signer) {
     const auctionHouse = await ethers.getContractAt('AuctionHouse', auctionHouseAddr);
     const auctionHouseProxyAdmin = await ethers.getContractAt('ProxyAdmin', auctionHouseProxyAdminAddr);
 
-    const marketMock = await ethers.getContractAt('MarketMock', marketMockAddr);
+    const market = await ethers.getContractAt('Market', marketAddr);
+    const marketProxyAdmin = await ethers.getContractAt('ProxyAdmin', marketProxyAdminAddr);
 
     const usdc = await ethers.getContractAt('USDC', usdcAddr);
 
@@ -104,8 +122,12 @@ export async function deployProtocolTest(params: Params, deployer?: Signer) {
         auctionHouseProxyAdminOwner,
         auctionHouseImplAddr,
 
-        marketMock,
-        marketMockAddr,
+        market,
+        marketAddr,
+        marketProxyAdmin,
+        marketProxyAdminAddr,
+        marketProxyAdminOwner,
+        marketImplAddr,
 
         usdcAddr,
         usdc,

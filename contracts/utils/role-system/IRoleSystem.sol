@@ -89,6 +89,14 @@ interface IRoleSystem {
     error RoleSystemNotMain();
 
     /**
+     * @dev Thrown when an account does not have the required role.
+     *
+     * @param account The account that does not have the required role.
+     * @param requiredRole The required role.
+     */
+    error RoleSystemUnauthorizedAccount(address account, bytes32 requiredRole);
+
+    /**
      * @dev Thrown when the zero address is supplied where a non-zero address is required.
      */
     error RoleSystemZeroAddress();
