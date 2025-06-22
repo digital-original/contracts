@@ -30,19 +30,19 @@ library Distribution {
      *      contract if validation fails. Uses {SafeERC20.safeTransfer} to guard
      *      against non-standard ERC-20s.
      *
-     * @param asset ERC20 asset address.
+     * @param currency ERC20 currency address.
      * @param reward Amount to distribute.
      * @param participants Addresses that will receive a portion of `reward`.
      * @param shares       Shares (in basis points) assigned to each participant.
      */
     function safeDistribute(
-        IERC20 asset,
+        IERC20 currency,
         uint256 reward,
         address[] memory participants,
         uint256[] memory shares
     ) internal {
         requireValidConditions(participants, shares);
-        distribute(asset, reward, participants, shares);
+        distribute(currency, reward, participants, shares);
     }
 
     /**
@@ -52,12 +52,17 @@ library Distribution {
      *      {requireValidConditions} has been invoked prior to calling this
      *      function.
      *
-     * @param asset ERC20 asset address.
+     * @param currency ERC20 currency address.
      * @param reward Amount to distribute.
      * @param participants Addresses that will receive a portion of `reward`.
      * @param shares       Shares (in basis points) assigned to each participant.
      */
-    function distribute(IERC20 asset, uint256 reward, address[] memory participants, uint256[] memory shares) internal {
+    function distribute(
+        IERC20 currency,
+        uint256 reward,
+        address[] memory participants,
+        uint256[] memory shares
+    ) internal {
         uint256 lastShareIndex = shares.length - 1;
         uint256 distributed = 0;
 
@@ -66,7 +71,7 @@ library Distribution {
 
             distributed += value;
 
-            asset.safeTransfer(participants[i], value);
+            currency.safeTransfer(participants[i], value);
 
             unchecked {
                 i++;
@@ -74,7 +79,7 @@ library Distribution {
         }
 
         // calculates last share out of loop not to lose wei after division
-        asset.safeTransfer(participants[lastShareIndex], reward - distributed);
+        currency.safeTransfer(participants[lastShareIndex], reward - distributed);
     }
 
     /**

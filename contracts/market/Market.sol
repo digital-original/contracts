@@ -6,7 +6,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {EIP712Domain} from "../utils/EIP712Domain.sol";
 import {EIP712Signature} from "../utils/EIP712Signature.sol";
 import {RoleSystem} from "../utils/role-system/RoleSystem.sol";
-import {AssetList} from "../utils/asset-list/AssetList.sol";
+import {CurrencyManager} from "../utils/currency-manager/CurrencyManager.sol";
 import {Roles} from "../utils/Roles.sol";
 import {Authorization} from "../utils/Authorization.sol";
 import {Distribution} from "../utils/Distribution.sol";
@@ -18,7 +18,7 @@ import {AskOrder} from "./libraries/AskOrder.sol";
 import {BidOrder} from "./libraries/BidOrder.sol";
 import {OrderExecutionPermit} from "./libraries/OrderExecutionPermit.sol";
 
-contract Market is IMarket, EIP712Domain, RoleSystem, AssetList, Authorization {
+contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authorization {
     using SafeERC20 for IERC20;
     using AskOrder for AskOrder.Type;
     using BidOrder for BidOrder.Type;
