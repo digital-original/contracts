@@ -50,14 +50,7 @@ contract DeployerTest {
                 )
             );
 
-            address marketImpl = address(
-                new Market(
-                    calculatedMarketProxy,
-                    address(this),
-                    calculatedArtTokenProxy,
-                    address(usdc) //
-                )
-            );
+            address marketImpl = address(new Market(calculatedMarketProxy, address(this)));
 
             address artTokenProxy = Deployment.deployUpgradeableContract(artTokenImpl, address(this));
             address auctionHouseProxy = Deployment.deployUpgradeableContract(auctionHouseImpl, address(this));
@@ -81,6 +74,8 @@ contract DeployerTest {
         Market(calculatedMarketProxy).transferUniqueRole(Roles.SIGNER_ROLE, signer);
         Market(calculatedMarketProxy).transferUniqueRole(Roles.FINANCIAL_ROLE, financier);
         if (admin != address(0)) Market(calculatedMarketProxy).grantRole(Roles.ADMIN_ROLE, admin);
+        Market(calculatedMarketProxy).grantRole(Roles.ADMIN_ROLE, address(this));
+        Market(calculatedMarketProxy).updateCurrencyStatus(address(usdc), true);
     }
 
     error DeployerIncorrectAddress();

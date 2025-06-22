@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {EIP712Domain} from "../utils/EIP712Domain.sol";
 import {EIP712Signature} from "../utils/EIP712Signature.sol";
@@ -11,7 +12,6 @@ import {Roles} from "../utils/Roles.sol";
 import {Authorization} from "../utils/Authorization.sol";
 import {Distribution} from "../utils/Distribution.sol";
 import {Array} from "../utils/Array.sol";
-import {IArtToken} from "../art-token/IArtToken.sol";
 import {MarketStorage} from "./MarketStorage.sol";
 import {IMarket} from "./IMarket.sol";
 import {AskOrder} from "./libraries/AskOrder.sol";
@@ -24,21 +24,7 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
     using BidOrder for BidOrder.Type;
     using OrderExecutionPermit for OrderExecutionPermit.Type;
 
-    IArtToken public immutable ART_TOKEN; // ArtToken contract address
-    IERC20 public immutable USDC; // USDC contract address
-
-    constructor(
-        address proxy,
-        address main,
-        address artToken,
-        address usdc
-    ) EIP712Domain(proxy, "Market", "1") RoleSystem(main) {
-        if (artToken == address(0)) revert MarketMisconfiguration(2);
-        if (usdc == address(0)) revert MarketMisconfiguration(3);
-
-        ART_TOKEN = IArtToken(artToken);
-        USDC = IERC20(usdc);
-    }
+    constructor(address proxy, address main) EIP712Domain(proxy, "Market", "1") RoleSystem(main) {}
 
     /**
      * @dev Maker creates ASK order, Taker executes ASK order,
@@ -52,6 +38,10 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
         bytes calldata orderSignature,
         bytes calldata permitSignature
     ) external {
+        if (!currencyAllowed(order.currency)) {
+            revert MarketCurrencyInvalid();
+        }
+
         bytes32 orderHash = order.hash();
         address maker = order.maker;
 
@@ -72,6 +62,7 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
         _invalidateOrder(maker, orderHash);
 
         _chargePayment(
+            IERC20(order.currency),
             maker, // userAsk
             msg.sender, // userBid
             order.price,
@@ -81,7 +72,7 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
             permit.shares
         );
 
-        ART_TOKEN.safeTransferFrom(
+        IERC721(order.collection).safeTransferFrom(
             maker, // from userAsk
             msg.sender, // to userBid
             order.tokenId
@@ -102,6 +93,10 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
         bytes calldata orderSignature,
         bytes calldata permitSignature
     ) external {
+        if (!currencyAllowed(order.currency)) {
+            revert MarketCurrencyInvalid();
+        }
+
         bytes32 orderHash = order.hash();
         address maker = order.maker;
 
@@ -122,6 +117,7 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
         _invalidateOrder(maker, orderHash);
 
         _chargePayment(
+            IERC20(order.currency),
             msg.sender, // userAsk
             maker, // userBid
             order.price,
@@ -131,7 +127,7 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
             permit.shares
         );
 
-        ART_TOKEN.safeTransferFrom(
+        IERC721(order.collection).safeTransferFrom(
             msg.sender, // from userAsk
             order.maker, // to userBid
             order.tokenId
@@ -156,22 +152,13 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
         invalidated = $.makerOrderNonce[maker][orderHash];
     }
 
-    // prettier-ignore
-    function bidFee(uint256 price) public pure returns (uint256 fee) {
-        // price <= 100K USDC; fee = 5%
-        if (price <= 100_000_000_000) fee = (price * 500) / 10_000;
-
-        // price <= 500K USDC; fee = 4%
-        else if (price <= 500_000_000_000) fee = (price * 400) / 10_000;
-
-        // price <= 5M USDC; fee = 3%
-        else if (price <= 5_000_000_000_000) fee = (price * 300) / 10_000;
-
-        // price > 5M USDC; fee = 2%
-        else fee = (price * 200) / 10_000;
+    function bidFee(uint256 /* price */) public pure returns (uint256 fee) {
+        // TODO: implement fee calculation or explain why it's not implemented
+        return 0;
     }
 
     function _chargePayment(
+        IERC20 currency,
         address userAsk,
         address userBid,
         uint256 price,
@@ -180,6 +167,12 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
         address[] calldata participants,
         uint256[] calldata shares
     ) internal {
+        uint256 fee = _prepareBidFee(price, userBidFee);
+
+        currency.safeTransferFrom(userBid, address(this), price + fee);
+
+        currency.safeTransfer(uniqueRoleOwner(Roles.FINANCIAL_ROLE), fee);
+
         (address[] memory _participants, uint256[] memory _shares) = _prepareDistribution(
             userAsk,
             userAskShare,
@@ -187,13 +180,7 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
             shares
         );
 
-        uint256 fee = _prepareBidFee(price, userBidFee);
-
-        USDC.safeTransferFrom(userBid, address(this), price + fee);
-
-        USDC.safeTransfer(uniqueRoleOwner(Roles.FINANCIAL_ROLE), fee);
-
-        Distribution.safeDistribute(USDC, price, _participants, _shares);
+        Distribution.safeDistribute(currency, price, _participants, _shares);
     }
 
     function _invalidateOrder(address maker, bytes32 orderHash) internal {

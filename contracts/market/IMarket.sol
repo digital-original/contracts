@@ -57,6 +57,8 @@ interface IMarket {
 
     error MarketUserBidFeeTooLow();
 
+    error MarketCurrencyInvalid();
+
     error MarketOrderInvalidated(bytes32 orderHash);
 
     error MarketMisconfiguration(uint256 argIndex);

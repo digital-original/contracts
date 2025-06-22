@@ -3,6 +3,8 @@ pragma solidity ^0.8.20;
 
 library AskOrder {
     struct Type {
+        address collection;
+        address currency;
         address maker;
         uint256 tokenId;
         uint256 price;
@@ -15,6 +17,8 @@ library AskOrder {
     bytes32 internal constant TYPE_HASH =
         keccak256(
             "AskOrder("
+                "address collection,"
+                "address currency,"
                 "address maker,"
                 "uint256 tokenId,"
                 "uint256 price,"
@@ -29,6 +33,8 @@ library AskOrder {
             keccak256(
                 abi.encode(
                     TYPE_HASH,
+                    order.collection,
+                    order.currency,
                     order.maker,
                     order.tokenId,
                     order.price,
