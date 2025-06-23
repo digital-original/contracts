@@ -1,5 +1,5 @@
 import { task } from 'hardhat/config';
-import { ChainConfig } from '../types/environment';
+import { ProtocolConfig } from '../types/environment';
 import { deploy } from '../scripts/deploy';
 import { etherToWeiForErc20 } from './utils/ether-to-wei-for-erc20';
 import { hoursToSeconds } from './utils/hours-to-seconds';
@@ -11,7 +11,7 @@ npx hardhat deploy-auction-house-impl --network fork
 task('deploy-auction-house-impl').setAction(async (taskArgs: Record<string, string>, hardhat) => {
     const chain = hardhat.network;
     const chainId = chain.config.chainId;
-    const config = <ChainConfig>(<any>chain.config);
+    const config = <ProtocolConfig>(<any>chain.config).protocolConfig;
 
     if (!chainId) throw new Error(`Chain ID is not defined`);
 
@@ -22,8 +22,9 @@ task('deploy-auction-house-impl').setAction(async (taskArgs: Record<string, stri
     console.groupEnd();
     console.log('-'.repeat(process.stdout.columns));
 
-    const { usdc, main, minPriceUsd, minFeeUsd, minAuctionDurationHours, artToken, auctionHouse } =
-        config;
+    const { usdc, main } = config;
+    const { minPriceUsd, minFeeUsd, minAuctionDurationHours, artToken, auctionHouse } =
+        config.collection;
 
     const minPrice = await etherToWeiForErc20(usdc, minPriceUsd);
     const minFee = await etherToWeiForErc20(usdc, minFeeUsd);

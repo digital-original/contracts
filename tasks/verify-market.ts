@@ -1,5 +1,5 @@
 import { task } from 'hardhat/config';
-import { ChainConfig } from '../types/environment';
+import { ProtocolConfig } from '../types/environment';
 
 /*
 npx hardhat verify-market --network fork
@@ -8,7 +8,7 @@ npx hardhat verify-market --network fork
 task('verify-market').setAction(async (taskArgs: Record<string, string>, hardhat) => {
     const chain = hardhat.network;
     const chainId = chain.config.chainId;
-    const config = <ChainConfig>(<any>chain.config);
+    const config = <ProtocolConfig>(<any>chain.config).protocolConfig;
 
     if (!chainId) throw new Error(`Chain ID is not defined`);
 
@@ -16,21 +16,20 @@ task('verify-market').setAction(async (taskArgs: Record<string, string>, hardhat
     console.group('Conditions:');
     console.log(`Chain - ${chain.name}`);
     console.log(`Chain ID - ${chainId}`);
+    console.log(`Market`);
     console.groupEnd();
     console.log('-'.repeat(process.stdout.columns));
 
     // TransparentUpgradeableProxy
-    const proxyAddr = config.market.proxy;
-    const implAddr = config.market.impl;
+    const proxyAddr = config.market.market.proxy;
+    const implAddr = config.market.market.impl;
     const proxyAdminOwnerAddr = config.main;
 
     // ProxyAdmin
-    const proxyAdminAddr = config.market.admin;
+    const proxyAdminAddr = config.market.market.admin;
 
     // Market
     const mainAddr = config.main;
-    const artTokenAddr = config.artToken.proxy;
-    const usdcAddr = config.usdc;
 
     console.log(`Verify Market...`);
     console.log(`\n`);
@@ -47,10 +46,8 @@ task('verify-market').setAction(async (taskArgs: Record<string, string>, hardhat
     console.log(`proxyAdminOwner: ${proxyAdminOwnerAddr}`);
     console.groupEnd();
 
-    console.group(`ArtToken:`);
+    console.group(`Market:`);
     console.log(`main: ${mainAddr}`);
-    console.log(`artToken: ${artTokenAddr}`);
-    console.log(`usdc: ${usdcAddr}`);
     console.groupEnd();
 
     console.groupEnd();
@@ -74,7 +71,7 @@ task('verify-market').setAction(async (taskArgs: Record<string, string>, hardhat
     await hardhat.run('verify:verify', {
         contract: 'contracts/market/Market.sol:Market',
         address: implAddr,
-        constructorArguments: [proxyAddr, mainAddr, artTokenAddr, usdcAddr],
+        constructorArguments: [proxyAddr, mainAddr],
     });
     console.log('-'.repeat(process.stdout.columns));
 });

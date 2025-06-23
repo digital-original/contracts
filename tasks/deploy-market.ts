@@ -1,12 +1,12 @@
 import { task } from 'hardhat/config';
 import { ProtocolConfig } from '../types/environment';
-import { deploy } from '../scripts/deploy';
+import { deployMarket } from '../scripts/deploy-market';
 
 /*
-npx hardhat deploy-market-impl--network fork
+npx hardhat deploy-market --network fork
 */
 
-task('deploy-market-impl').setAction(async (taskArgs: Record<string, string>, hardhat) => {
+task('deploy-market').setAction(async (taskArgs: Record<string, string>, hardhat) => {
     const chain = hardhat.network;
     const chainId = chain.config.chainId;
     const config = <ProtocolConfig>(<any>chain.config).protocolConfig;
@@ -21,29 +21,29 @@ task('deploy-market-impl').setAction(async (taskArgs: Record<string, string>, ha
     console.groupEnd();
     console.log('-'.repeat(process.stdout.columns));
 
-    const proxyAddr = config.market.market.proxy;
-    const mainAddr = config.main;
+    const { main } = config;
 
-    console.log(`Deploying Market Impl...`);
+    console.log(`Deploying Market...`);
     console.log(`\n`);
     console.group('Params:');
-    console.log(`proxy: ${proxyAddr}`);
-    console.log(`main: ${mainAddr}`);
+    console.log(`main: ${main}`);
     console.groupEnd();
     console.log(`\n`);
     console.log(`Transaction broadcasting...`);
 
-    const { receipt, contractAddr: marketImplAddr } = await deploy({
-        name: 'Market',
-        constructorArgs: [proxyAddr, mainAddr],
-    });
+    const { receipt, marketAddr, marketProxyAdminAddr, marketProxyAdminOwnerAddr, marketImplAddr } =
+        await deployMarket({ main });
 
     console.log(`Transaction broadcasted`);
     console.log(`Transaction hash - ${receipt.hash}`);
     console.log('-'.repeat(process.stdout.columns));
 
     console.group('Result:');
+    console.log(`Market Proxy - ${marketAddr}`);
     console.log(`Market Impl - ${marketImplAddr}`);
+    console.log(`Market Proxy Admin - ${marketProxyAdminAddr}`);
+    console.log(`Market Proxy Admin Owner - ${marketProxyAdminOwnerAddr}`);
+
     console.groupEnd();
     console.log('-'.repeat(process.stdout.columns));
 });

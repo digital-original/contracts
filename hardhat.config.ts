@@ -9,13 +9,16 @@ import './tasks';
 
 import type { HardhatUserConfig } from 'hardhat/config';
 import type { NetworksUserConfig } from 'hardhat/types';
-import type { RecordConfigCollection, RecordConfigEnv } from './types/environment';
+import type {
+    ChainConfigTop,
+    CollectionConfig,
+    CollectionConfigTop,
+    MarketConfig,
+    MarketConfigTop,
+    ProtocolConfig,
+} from './types/environment';
 
 dotenv.config();
-
-const configEnv = <RecordConfigEnv>yaml.load(fs.readFileSync('./config.env.yaml', 'utf8'));
-const configDo = <RecordConfigCollection>yaml.load(fs.readFileSync('./config.do.yaml', 'utf8'));
-const configDn = <RecordConfigCollection>yaml.load(fs.readFileSync('./config.dn.yaml', 'utf8'));
 
 const ENV_MODE = String(process.env.ENV_MODE);
 const COLLECTION = <'do' | 'dn'>String(process.env.COLLECTION);
@@ -26,6 +29,24 @@ const FORKED_CHAIN_ID = Number(process.env.FORKED_CHAIN_ID);
 const REPORT_GAS = Boolean(process.env.REPORT_GAS === 'true');
 const ETHERSCAN_API_KEY = String(process.env.ETHERSCAN_API_KEY);
 const COINMARKETCAP_API_KEY = String(process.env.COINMARKETCAP_API_KEY);
+
+const chainConfigTop = <ChainConfigTop>yaml.load(fs.readFileSync('./config.env.yaml', 'utf8'));
+const marketConfigTop = <MarketConfigTop>yaml.load(fs.readFileSync('./config.market.yaml', 'utf8'));
+let collectionConfigTop: CollectionConfigTop;
+
+if (COLLECTION == 'do') {
+    collectionConfigTop = <CollectionConfigTop>(
+        yaml.load(fs.readFileSync('./config.do.yaml', 'utf8'))
+    );
+} else if (COLLECTION == 'dn') {
+    collectionConfigTop = <CollectionConfigTop>(
+        yaml.load(fs.readFileSync('./config.dn.yaml', 'utf8'))
+    );
+} else if (ENV_MODE === 'test') {
+    // skip
+} else {
+    throw new Error(`Invalid 'COLLECTION' value: ${COLLECTION}`);
+}
 
 const hardhatBaseConfig: HardhatUserConfig = {
     solidity: {
@@ -74,41 +95,41 @@ function buildHardhatConfig(): HardhatUserConfig {
         return { ...hardhatBaseConfig, ...hardhatTestConfig };
     }
 
-    let configCollection: RecordConfigCollection;
-
-    if (COLLECTION == 'do') {
-        configCollection = configDo;
-    } else if (COLLECTION == 'dn') {
-        configCollection = configDn;
-    } else {
-        throw new Error(`Invalid 'COLLECTION' value: ${COLLECTION}`);
-    }
-
     const hardhatNetworksConfig: NetworksUserConfig = {};
 
-    for (const [chainName, _configEnv] of Object.entries(configEnv)) {
-        const _configCollection = configCollection[chainName];
+    for (const [chainName, chainConfig] of Object.entries(chainConfigTop)) {
+        const collectionConfig = collectionConfigTop[chainName];
+        const marketConfig = marketConfigTop[chainName];
 
-        const { chainId, url, deployerPrivateKey, usdc, main } = _configEnv;
+        const { chainId, url, deployerPrivateKey, usdc, main } = chainConfig;
 
-        const extra = {
-            name: configCollection.name,
-            symbol: configCollection.symbol,
-            usdc,
+        const collection: CollectionConfig = {
+            name: collectionConfigTop.name,
+            symbol: collectionConfigTop.symbol,
+            minPriceUsd: collectionConfig.minPriceUsd,
+            minFeeUsd: collectionConfig.minFeeUsd,
+            regulated: collectionConfig.regulated,
+            minAuctionDurationHours: collectionConfig.minAuctionDurationHours,
+            artToken: collectionConfig.artToken,
+            auctionHouse: collectionConfig.auctionHouse,
+        };
+
+        const market: MarketConfig = {
+            market: marketConfig.market,
+        };
+
+        const protocolConfig: ProtocolConfig = {
             main,
-            minPriceUsd: _configCollection.minPriceUsd,
-            minFeeUsd: _configCollection.minFeeUsd,
-            regulated: _configCollection.regulated,
-            minAuctionDurationHours: _configCollection.minAuctionDurationHours,
-            artToken: _configCollection.artToken,
-            auctionHouse: _configCollection.auctionHouse,
+            usdc,
+            collection,
+            market,
         };
 
         hardhatNetworksConfig[chainName] = {
             chainId,
             url,
             accounts: [deployerPrivateKey],
-            ...extra,
+            ...{ protocolConfig },
         };
     }
 
@@ -122,24 +143,24 @@ function buildHardhatConfig(): HardhatUserConfig {
 
     if (CHAIN_TO_FORK) {
         hardhatNetworksConfig['hardhat'] = {
-            forking: { url: configEnv[CHAIN_TO_FORK].url },
+            forking: { url: chainConfigTop[CHAIN_TO_FORK].url },
             accounts: [
                 {
-                    privateKey: configEnv[CHAIN_TO_FORK].deployerPrivateKey,
+                    privateKey: chainConfigTop[CHAIN_TO_FORK].deployerPrivateKey,
                     balance: parseEther('100').toString(),
                 },
             ],
         };
     }
 
-    const hardhatConfig: HardhatUserConfig = {
+    const hardhatUserConfig: HardhatUserConfig = {
         networks: hardhatNetworksConfig,
     };
 
     return {
         ...hardhatBaseConfig,
         ...hardhatEtherscanConfig,
-        ...hardhatConfig,
+        ...hardhatUserConfig,
     };
 }
 

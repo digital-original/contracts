@@ -13,7 +13,7 @@ import { MIN_FEE, MIN_PRICE } from './constants/min-price-and-fee';
 import { HOUR } from './constants/time';
 import { getSigners } from './utils/get-signers';
 import { getLatestBlockTimestamp } from './utils/get-latest-block-timestamp';
-import { deployProtocolTest } from './utils/deploy-protocol-test';
+import { deployAll } from './utils/deploy-all';
 import { MarketUtils } from './utils/market-utils';
 import { ArtTokenUtils } from './utils/art-token-utils';
 
@@ -46,18 +46,18 @@ describe('Market', function () {
     });
 
     beforeEach(async () => {
-        const protocol = await deployProtocolTest({
+        const all = await deployAll({
             signer: marketSigner,
             financier,
             admin: marketAdmin,
         });
 
-        market = protocol.market;
-        marketAddr = protocol.marketAddr;
-        artToken = protocol.artToken;
-        artTokenAddr = protocol.artTokenAddr;
-        usdc = protocol.usdc;
-        usdcAddr = protocol.usdcAddr;
+        market = all.market;
+        marketAddr = all.marketAddr;
+        artToken = all.artToken;
+        artTokenAddr = all.artTokenAddr;
+        usdc = all.usdc;
+        usdcAddr = all.usdcAddr;
     });
 
     describe(`method 'executeAsk'`, () => {

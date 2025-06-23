@@ -1,5 +1,5 @@
 import { task } from 'hardhat/config';
-import { ChainConfig } from '../types/environment';
+import { ProtocolConfig } from '../types/environment';
 import { etherToWeiForErc20 } from './utils/ether-to-wei-for-erc20';
 
 /*
@@ -9,7 +9,7 @@ npx hardhat verify-art-token --network fork
 task('verify-art-token').setAction(async (taskArgs: Record<string, string>, hardhat) => {
     const chain = hardhat.network;
     const chainId = chain.config.chainId;
-    const config = <ChainConfig>(<any>chain.config);
+    const config = <ProtocolConfig>(<any>chain.config).protocolConfig;
 
     if (!chainId) throw new Error(`Chain ID is not defined`);
 
@@ -17,25 +17,25 @@ task('verify-art-token').setAction(async (taskArgs: Record<string, string>, hard
     console.group('Conditions:');
     console.log(`Chain - ${chain.name}`);
     console.log(`Chain ID - ${chainId}`);
-    console.log(`Collection - ${config.name}`);
+    console.log(`Collection - ${config.collection.name}`);
     console.groupEnd();
     console.log('-'.repeat(process.stdout.columns));
 
     // TransparentUpgradeableProxy
-    const proxy = config.artToken.proxy;
-    const impl = config.artToken.impl;
+    const proxy = config.collection.artToken.proxy;
+    const impl = config.collection.artToken.impl;
     const proxyAdminOwner = config.main;
 
     // ProxyAdmin
-    const proxyAdmin = config.artToken.admin;
+    const proxyAdmin = config.collection.artToken.admin;
 
     // ArtToken
     const main = config.main;
-    const auctionHouse = config.auctionHouse.proxy;
+    const auctionHouse = config.collection.auctionHouse.proxy;
     const usdc = config.usdc;
-    const minPrice = await etherToWeiForErc20(usdc, config.minPriceUsd);
-    const minFee = await etherToWeiForErc20(usdc, config.minFeeUsd);
-    const regulated = config.regulated;
+    const minPrice = await etherToWeiForErc20(usdc, config.collection.minPriceUsd);
+    const minFee = await etherToWeiForErc20(usdc, config.collection.minFeeUsd);
+    const regulated = config.collection.regulated;
 
     console.log(`Verify ArtToken...`);
     console.log(`\n`);

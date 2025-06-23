@@ -6,19 +6,19 @@ import {AuctionHouse} from "../auction-house/AuctionHouse.sol";
 import {Deployment} from "./Deployment.sol";
 
 /**
- * @title Deployer
+ * @title CollectionDeployer
  *
  * @notice Helper contract that deploys and wires together fresh instances of
  *         `ArtToken` and `AuctionHouse` behind transparent upgradeable
  *         proxies. Intended for deterministic deployments during initial
- *         protocol setup.
+ *         collection setup.
  *
  * @dev The contract self-destructs implicitly after construction (no storage is
  *      written). It relies on {Deployment.calculateContractAddress} to
  *      pre-compute the proxy addresses, ensuring that the implementation
  *      constructors can reference each other before the proxies exist.
  */
-contract Deployer {
+contract CollectionDeployer {
     /// @notice Emitted once the proxy contracts are deployed and initialised.
     /// @param artToken     Address of the newly deployed ArtToken proxy.
     /// @param auctionHouse Address of the newly deployed AuctionHouse proxy.

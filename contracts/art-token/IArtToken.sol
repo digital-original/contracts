@@ -21,7 +21,7 @@ interface IArtToken is IERC721 {
      * @param participants Addresses that will receive a portion of `price`.
      * @param shares       Number of shares assigned to each participant; must sum to
      *                     {Distribution.TOTAL_SHARE} in the implementation.
-     * @param signature    EIP-712 signature issued by the trusted signer authorizing the purchase.
+     * @param signature    EIP-712 signature issued by the art-token signer authorizing the purchase.
      * @param deadline     Latest UNIX timestamp at which the signature remains valid.
      */
     struct BuyParams {

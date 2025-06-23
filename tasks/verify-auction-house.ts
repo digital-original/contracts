@@ -1,5 +1,5 @@
 import { task } from 'hardhat/config';
-import { ChainConfig } from '../types/environment';
+import { ProtocolConfig } from '../types/environment';
 import { etherToWeiForErc20 } from './utils/ether-to-wei-for-erc20';
 import { hoursToSeconds } from './utils/hours-to-seconds';
 
@@ -10,7 +10,7 @@ npx hardhat verify-auction-house --network fork
 task('verify-auction-house').setAction(async (taskArgs: Record<string, string>, hardhat) => {
     const chain = hardhat.network;
     const chainId = chain.config.chainId;
-    const config = <ChainConfig>(<any>chain.config);
+    const config = <ProtocolConfig>(<any>chain.config).protocolConfig;
 
     if (!chainId) throw new Error(`Chain ID is not defined`);
 
@@ -18,25 +18,25 @@ task('verify-auction-house').setAction(async (taskArgs: Record<string, string>, 
     console.group('Conditions:');
     console.log(`Chain - ${chain.name}`);
     console.log(`Chain ID - ${chainId}`);
-    console.log(`Collection - ${config.name}`);
+    console.log(`Collection - ${config.collection.name}`);
     console.groupEnd();
     console.log('-'.repeat(process.stdout.columns));
 
     // TransparentUpgradeableProxy
-    const proxy = config.auctionHouse.proxy;
-    const impl = config.auctionHouse.impl;
+    const proxy = config.collection.auctionHouse.proxy;
+    const impl = config.collection.auctionHouse.impl;
     const proxyAdminOwner = config.main;
 
     // ProxyAdmin
-    const proxyAdmin = config.auctionHouse.admin;
+    const proxyAdmin = config.collection.auctionHouse.admin;
 
     // AuctionHouse
     const main = config.main;
-    const artToken = config.artToken.proxy;
+    const artToken = config.collection.artToken.proxy;
     const usdc = config.usdc;
-    const minPrice = await etherToWeiForErc20(usdc, config.minPriceUsd);
-    const minFee = await etherToWeiForErc20(usdc, config.minFeeUsd);
-    const minAuctionDuration = hoursToSeconds(config.minAuctionDurationHours);
+    const minPrice = await etherToWeiForErc20(usdc, config.collection.minPriceUsd);
+    const minFee = await etherToWeiForErc20(usdc, config.collection.minFeeUsd);
+    const minAuctionDuration = hoursToSeconds(config.collection.minAuctionDurationHours);
 
     console.log(`Verify AuctionHouse...`);
     console.log(`\n`);

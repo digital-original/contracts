@@ -48,7 +48,7 @@ interface IAuctionHouse {
      * @param endTime      Auction end timestamp.
      * @param participants Revenue-sharing recipients.
      * @param shares       Shares for each participant.
-     * @param signature    EIP-712 signature issued by protocol signer authorizing the auction.
+     * @param signature    EIP-712 signature issued by the auction-house signer authorizing the auction.
      * @param deadline     Expiration timestamp for the signature.
      */
     struct CreateParams {

@@ -172,7 +172,7 @@ contract AuctionHouse is IAuctionHouse, EIP712Domain, RoleSystem, Authorization 
      * @inheritdoc IAuctionHouse
      *
      * @dev Flow:
-     *  1. Validates `params` and the EIP-712 permit signed by the protocol signer.
+     *  1. Validates `params` and the EIP-712 permit signed by the auction-house signer.
      *  2. Writes a new {IAuctionHouse.Auction} struct to storage and maps
      *     `params.tokenId` to `params.auctionId`.
      *  3. Emits {Created}.

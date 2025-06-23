@@ -28,15 +28,15 @@ sepolia:
     #     admin: '0xDdc680Aa4852dA4a43198e7c1FF3d04bA53f8910'
 
 ethereum:
-    minPriceUsd: 0
-    minFeeUsd: 0
+    minPriceUsd: 30
+    minFeeUsd: 30
     regulated: false
-    minAuctionDurationHours: 0
+    minAuctionDurationHours: 12
     artToken:
-        proxy: ''
-        impl: ''
-        admin: ''
+        proxy: '0x9ada5D6A6192eAda21b45268Da4948e69059EA69'
+        impl: '0x10Ef1fA0FD87b07dF5Ba6e5cF9C58517175d0d7d'
+        admin: '0xc092f522AAdB74FAE51fF38696BfdDd0E017ff0c'
     auctionHouse:
-        proxy: ''
-        impl: ''
-        admin: ''
+        proxy: '0x534ecf8fBb28a31851B7137B8dB96592F8E6b22C'
+        impl: '0x15f22f722E8d923a2fC8F3288Dd2A1BB9fE6563D'
+        admin: '0x8E73Aa836017bAf87eF6d8feC1a075b98D5Da008'

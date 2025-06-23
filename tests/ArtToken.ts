@@ -10,7 +10,7 @@ import { HOUR } from './constants/time';
 import { AUCTION_ID, AUCTION_STEP } from './constants/auction-house';
 import { getSigners } from './utils/get-signers';
 import { getLatestBlockTimestamp } from './utils/get-latest-block-timestamp';
-import { deployProtocolTest } from './utils/deploy-protocol-test';
+import { deployAll } from './utils/deploy-all';
 import { ArtTokenUtils } from './utils/art-token-utils';
 import { AuctionHouseUtils } from './utils/auction-house-utils';
 
@@ -34,16 +34,16 @@ describe('ArtToken', function () {
     });
 
     beforeEach(async () => {
-        const protocol = await deployProtocolTest({ signer: artTokenSigner, financier });
+        const all = await deployAll({ signer: artTokenSigner, financier });
 
-        artToken = protocol.artToken;
-        artTokenAddr = protocol.artTokenAddr;
-        auctionHouse = protocol.auctionHouse;
-        auctionHouseAddr = protocol.auctionHouseAddr;
-        market = protocol.market;
-        marketAddr = protocol.marketAddr;
-        usdc = protocol.usdc;
-        usdcAddr = protocol.usdcAddr;
+        artToken = all.artToken;
+        artTokenAddr = all.artTokenAddr;
+        auctionHouse = all.auctionHouse;
+        auctionHouseAddr = all.auctionHouseAddr;
+        market = all.market;
+        marketAddr = all.marketAddr;
+        usdc = all.usdc;
+        usdcAddr = all.usdcAddr;
     });
 
     describe(`method 'buy'`, () => {

@@ -49,10 +49,10 @@ Execute scripts using Hardhat.
 npx hardhat run <path-to-script> --network fork
 ```
 
-### Deploy Protocol
+### Deploy Collection
 Deploy the smart contracts to the specified network.
 ```bash
-npx hardhat deploy-protocol --network fork
+npx hardhat deploy-collection --network fork
 ```
 
 ### Run Slither

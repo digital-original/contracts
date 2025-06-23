@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { Signer, ZeroAddress } from 'ethers';
 import { CurrencyManager, USDC } from '../typechain-types';
 import { getSigners } from './utils/get-signers';
-import { deployProtocolTest } from './utils/deploy-protocol-test';
+import { deployAll } from './utils/deploy-all';
 
 describe('CurrencyManager', function () {
     let currencyManager: CurrencyManager, currencyManagerAddr: string;
@@ -21,16 +21,16 @@ describe('CurrencyManager', function () {
     });
 
     beforeEach(async () => {
-        const protocol = await deployProtocolTest({
+        const all = await deployAll({
             signer,
             financier,
             admin,
         });
 
-        currencyManager = protocol.market;
-        currencyManagerAddr = protocol.marketAddr;
-        usdc = protocol.usdc;
-        usdcAddr = protocol.usdcAddr;
+        currencyManager = all.market;
+        currencyManagerAddr = all.marketAddr;
+        usdc = all.usdc;
+        usdcAddr = all.usdcAddr;
     });
 
     describe(`method 'currencyAllowed'`, () => {

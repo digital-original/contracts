@@ -4,7 +4,7 @@ import {
     AdminChangedEvent,
 } from '../typechain-types/@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol/TransparentUpgradeableProxy';
 import { OwnershipTransferredEvent } from '../typechain-types/@openzeppelin/contracts/proxy/transparent/ProxyAdmin';
-import { DeployedEvent } from '../typechain-types/contracts/utils/Deployer';
+import { DeployedEvent } from '../typechain-types/contracts/utils/CollectionDeployer';
 import { deploy } from './deploy';
 
 type Params = {
@@ -19,7 +19,9 @@ type Params = {
 };
 
 // prettier-ignore
-export async function deployProtocol(params: Params, deployer?: Signer) {
+export async function deployCollection(params: Params, deployer?: Signer) {
+    const { ethers } = await import('hardhat');
+
     const {
         name,
         symbol,
@@ -31,11 +33,9 @@ export async function deployProtocol(params: Params, deployer?: Signer) {
         minAuctionDuration,
     } = params;
 
-    const { ethers } = await import('hardhat');
-
     const { receipt } = await deploy(
         {
-            name: 'Deployer',
+            name: 'CollectionDeployer',
             constructorArgs: [name, symbol, main, usdc, minPrice, minFee, minAuctionDuration, regulated],
         },
         deployer,
@@ -43,7 +43,7 @@ export async function deployProtocol(params: Params, deployer?: Signer) {
 
     const Proxy = await ethers.getContractFactory('TransparentUpgradeableProxy');
     const ProxyAdmin = await ethers.getContractFactory('ProxyAdmin');
-    const Deployer = await ethers.getContractFactory('Deployer');
+    const Deployer = await ethers.getContractFactory('CollectionDeployer');
 
     const ArtToken_Proxy_UpgradedEvent = <
         UpgradedEvent.LogDescription
@@ -78,12 +78,12 @@ export async function deployProtocol(params: Params, deployer?: Signer) {
     const artTokenAddr = Deployer_DeployedEvent.args.artToken;
     const artTokenImplAddr = ArtToken_Proxy_UpgradedEvent.args.implementation;
     const artTokenProxyAdminAddr = ArtToken_Proxy_AdminChangedEvent.args.newAdmin;
-    const artTokenProxyAdminOwner = ArtToken_ProxyAdmin_OwnershipTransferredEvent.args.newOwner;
+    const artTokenProxyAdminOwnerAddr = ArtToken_ProxyAdmin_OwnershipTransferredEvent.args.newOwner;
 
     const auctionHouseAddr = Deployer_DeployedEvent.args.auctionHouse;
     const auctionHouseImplAddr = AuctionHouse_Proxy_UpgradedEvent.args.implementation;
     const auctionHouseProxyAdminAddr = AuctionHouse_Proxy_AdminChangedEvent.args.newAdmin;
-    const auctionHouseProxyAdminOwner = AuctionHouse_ProxyAdmin_OwnershipTransferredEvent.args.newOwner;
+    const auctionHouseProxyAdminOwnerAddr = AuctionHouse_ProxyAdmin_OwnershipTransferredEvent.args.newOwner;
 
     const artToken = await ethers.getContractAt('ArtToken', artTokenAddr);
     const artTokenProxyAdmin = await ethers.getContractAt('ProxyAdmin', artTokenProxyAdminAddr);
@@ -98,14 +98,14 @@ export async function deployProtocol(params: Params, deployer?: Signer) {
         artTokenAddr,
         artTokenProxyAdmin,
         artTokenProxyAdminAddr,
-        artTokenProxyAdminOwner,
+        artTokenProxyAdminOwnerAddr,
         artTokenImplAddr,
 
         auctionHouse,
         auctionHouseAddr,
         auctionHouseProxyAdmin,
         auctionHouseProxyAdminAddr,
-        auctionHouseProxyAdminOwner,
+        auctionHouseProxyAdminOwnerAddr,
         auctionHouseImplAddr,
     };
 }

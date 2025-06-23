@@ -8,7 +8,7 @@ import {Market} from "../market/Market.sol";
 import {Roles} from "../utils/Roles.sol";
 import {USDC} from "../tests/USDC.sol";
 
-contract DeployerTest {
+contract AllDeployer {
     event Deployed(address artToken, address auctionHouse, address market, address usdc);
 
     constructor(

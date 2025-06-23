@@ -1,5 +1,5 @@
 import { task } from 'hardhat/config';
-import { ChainConfig } from '../types/environment';
+import { ProtocolConfig } from '../types/environment';
 import { deploy } from '../scripts/deploy';
 import { etherToWeiForErc20 } from './utils/ether-to-wei-for-erc20';
 
@@ -10,7 +10,7 @@ npx hardhat deploy-art-token-impl --network fork
 task('deploy-art-token-impl').setAction(async (taskArgs: Record<string, string>, hardhat) => {
     const chain = hardhat.network;
     const chainId = chain.config.chainId;
-    const config = <ChainConfig>(<any>chain.config);
+    const config = <ProtocolConfig>(<any>chain.config).protocolConfig;
 
     if (!chainId) throw new Error(`Chain ID is not defined`);
 
@@ -18,11 +18,12 @@ task('deploy-art-token-impl').setAction(async (taskArgs: Record<string, string>,
     console.group('Conditions:');
     console.log(`Chain - ${chain.name}`);
     console.log(`Chain ID - ${chainId}`);
-    console.log(`Collection - ${config.name}`);
+    console.log(`Collection - ${config.collection.name}`);
     console.groupEnd();
     console.log('-'.repeat(process.stdout.columns));
 
-    const { usdc, main, minPriceUsd, minFeeUsd, regulated, artToken, auctionHouse } = config;
+    const { usdc, main } = config;
+    const { minPriceUsd, minFeeUsd, regulated, artToken, auctionHouse } = config.collection;
 
     const minPrice = await etherToWeiForErc20(usdc, minPriceUsd);
     const minFee = await etherToWeiForErc20(usdc, minFeeUsd);
