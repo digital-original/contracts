@@ -51,7 +51,7 @@ describe('ArtToken', function () {
             await usdc.connect(buyer).mintAndApprove(artToken, MaxInt256);
         });
 
-        it(`should mint the token, distribute reward, and charge fee`, async () => {
+        it(`should mint the token, distribute rewards, and charge a fee`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
             const institutionShare = (TOTAL_SHARE / 5n) * 4n; // 80%
@@ -99,7 +99,7 @@ describe('ArtToken', function () {
                 .withArgs(ZeroAddress, buyerAddr, TOKEN_ID);
         });
 
-        it(`should fail if the token is reserved by the auction`, async () => {
+        it(`should fail if the token is reserved by an auction`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
             const createPermit: CreatePermitStruct = {
@@ -215,7 +215,7 @@ describe('ArtToken', function () {
                 .withArgs(buyerAddr, marketAddr, TOKEN_ID);
         });
 
-        it(`should fail if a token is attempted to be transferred to a non-partner contract`, async () => {
+        it(`should fail if a token is transferred to a non-partner contract`, async () => {
             const tx = artToken.connect(buyer).transferFrom(buyer, usdc, TOKEN_ID);
 
             await expect(tx).to.eventually.rejectedWith('ArtTokenUnauthorizedAccount');
@@ -263,7 +263,7 @@ describe('ArtToken', function () {
                 .withArgs(buyerAddr, marketAddr, TOKEN_ID);
         });
 
-        it(`should fail if the approval is attempted to be provided to a non-partner contract`, async () => {
+        it(`should fail if approval is provided to a non-partner contract`, async () => {
             const tx = artToken.connect(buyer).approve(usdc, TOKEN_ID);
 
             await expect(tx).to.eventually.rejectedWith('ArtTokenUnauthorizedAccount');
@@ -311,7 +311,7 @@ describe('ArtToken', function () {
                 .withArgs(buyerAddr, marketAddr, true);
         });
 
-        it(`should fail if the approval is attempted to be provided to a non-partner contract`, async () => {
+        it(`should fail if approval is provided to a non-partner contract`, async () => {
             const tx = artToken.connect(buyer).setApprovalForAll(usdc, true);
 
             await expect(tx).to.eventually.rejectedWith('ArtTokenUnauthorizedAccount');

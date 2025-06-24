@@ -44,7 +44,7 @@ describe('CurrencyManager', function () {
     });
 
     describe(`method 'updateCurrencyStatus'`, () => {
-        it(`should update the currency status if the caller is admin`, async () => {
+        it(`should update the currency status if the caller is an admin`, async () => {
             expect(await currencyManager.currencyAllowed(usdcAddr)).to.be.true;
 
             await expect(currencyManager.connect(admin).updateCurrencyStatus(usdcAddr, false))
@@ -60,7 +60,7 @@ describe('CurrencyManager', function () {
             expect(await currencyManager.currencyAllowed(usdcAddr)).to.be.true;
         });
 
-        it(`should fail if the caller is not admin`, async () => {
+        it(`should fail if the caller is not an admin`, async () => {
             await expect(
                 currencyManager.connect(randomAccount).updateCurrencyStatus(usdcAddr, false),
             ).to.be.revertedWithCustomError(currencyManager, 'RoleSystemUnauthorizedAccount');

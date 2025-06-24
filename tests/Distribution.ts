@@ -44,7 +44,7 @@ describe('Distribution', function () {
             await usdc.connect(buyer).mintAndApprove(artToken, MaxInt256);
         });
 
-        it(`should distribute rewards between participants according to shares`, async () => {
+        it(`should distribute rewards among participants according to shares`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
             const institutionShare = (TOTAL_SHARE / 5n) * 4n; // 80%

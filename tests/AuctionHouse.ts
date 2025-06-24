@@ -97,7 +97,7 @@ describe('AuctionHouse', function () {
             expect(auction.shares).to.deep.equal(shares);
         });
 
-        it(`should create the new auction for token that was not sold at the previous auction`, async () => {
+        it(`should create a new auction for a token that was not sold in the previous auction`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
             const firstPermit: CreatePermitStruct = {

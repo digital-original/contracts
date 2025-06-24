@@ -158,7 +158,7 @@ describe('Market', function () {
             await expect(market.orderInvalidated(maker, orderHash)).to.eventually.equal(true);
         });
 
-        it(`should send the remaining share to maker`, async () => {
+        it(`should send the remaining share to the maker`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
             const price = MIN_PRICE;
@@ -242,7 +242,7 @@ describe('Market', function () {
             await expect(tx).to.eventually.rejectedWith('MarketOrderOutsideOfTimeRange');
         });
 
-        it(`should fail if the order end time is smaller than the current time`, async () => {
+        it(`should fail if the order end time is less than the current time`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
             const startTime = latestBlockTimestamp - HOUR * 3;
@@ -619,7 +619,7 @@ describe('Market', function () {
             await expect(tx).to.eventually.rejectedWith('MarketOrderOutsideOfTimeRange');
         });
 
-        it(`should fail if the order end time is smaller than the current time`, async () => {
+        it(`should fail if the order end time is less than the current time`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
             const startTime = latestBlockTimestamp - HOUR * 3;
@@ -788,7 +788,9 @@ describe('Market', function () {
             await expect(tx).to.eventually.rejectedWith('MarketOrderInvalidated');
         });
 
-        it.skip(`should fail if the calculated fee is bigger than the maker fee`, async () => {
+        it.skip(`should fail if the calculated fee is greater than the maker fee`, async () => {
+            // TODO: add explanation for `skip`
+
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
             const price = MIN_PRICE;
@@ -826,6 +828,8 @@ describe('Market', function () {
 
     describe(`method 'bidFee'`, () => {
         it.skip(`should calculate fee correctly`, async () => {
+            // TODO: add explanation for `skip`
+
             // price <= 100K USDC; fee = 5%
             const price1 = 100_000_000n;
             const fee1 = (price1 * 500n) / 10_000n;
@@ -859,7 +863,7 @@ describe('Market', function () {
     });
 
     describe(`method 'orderInvalidated'`, () => {
-        it(`should return correct value`, async () => {
+        it(`should return the correct value`, async () => {
             const orderHash = randomBytes(32);
 
             await expect(market.orderInvalidated(maker, orderHash)).to.eventually.equal(false);
@@ -871,7 +875,7 @@ describe('Market', function () {
     });
 
     describe(`method 'invalidateOrder'`, () => {
-        it(`should invalidate the order if a sender is the maker`, async () => {
+        it(`should invalidate the order if the sender is the maker`, async () => {
             const orderHash = randomBytes(32);
 
             const tx = await market.connect(maker).invalidateOrder(maker, orderHash);
@@ -883,7 +887,7 @@ describe('Market', function () {
             await expect(tx).to.be.emit(market, 'OrderInvalidated').withArgs(makerAddr, orderHash);
         });
 
-        it(`should invalidate the order if a sender is the market admin`, async () => {
+        it(`should invalidate the order if the sender is the market admin`, async () => {
             const orderHash = randomBytes(32);
 
             await market.connect(marketAdmin).invalidateOrder(maker, orderHash);
@@ -893,7 +897,7 @@ describe('Market', function () {
             expect(invalidated).equal(true);
         });
 
-        it(`should fail if a sender is not the maker or the market admin`, async () => {
+        it(`should fail if the sender is not the maker or the market admin`, async () => {
             const orderHash = randomBytes(32);
 
             const tx = market.connect(randomAccount).invalidateOrder(maker, orderHash);
