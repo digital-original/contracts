@@ -53,7 +53,7 @@ interface IMarket {
 
     error MarketOrderOutsideOfTimeRange();
 
-    error MarketRemainingShareTooLow(uint256 remaining);
+    error MarketRemainingShareTooLow();
 
     error MarketUserBidFeeTooLow();
 

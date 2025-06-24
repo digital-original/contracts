@@ -444,7 +444,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).to.eventually.rejectedWith('MarketRemainingShareTooLow(4000)');
+            await expect(tx).to.eventually.rejectedWith('MarketRemainingShareTooLow');
         });
     });
 

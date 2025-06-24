@@ -42,6 +42,10 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
             revert MarketCurrencyInvalid();
         }
 
+        if (order.makerShare > Distribution.remainingShare(permit.shares)) {
+            revert MarketRemainingShareTooLow();
+        }
+
         bytes32 orderHash = order.hash();
         address maker = order.maker;
 
@@ -66,8 +70,6 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
             maker, // userAsk
             msg.sender, // userBid
             order.price,
-            order.makerShare, // userAskShare
-            bidFee(order.price), // userBidFee
             permit.participants,
             permit.shares
         );
@@ -97,6 +99,10 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
             revert MarketCurrencyInvalid();
         }
 
+        if (order.makerFee < bidFee(order.price)) {
+            revert MarketUserBidFeeTooLow();
+        }
+
         bytes32 orderHash = order.hash();
         address maker = order.maker;
 
@@ -121,8 +127,6 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
             msg.sender, // userAsk
             maker, // userBid
             order.price,
-            0, // userAskShare, zero means remainingShare
-            order.makerFee, // userBidFee
             permit.participants,
             permit.shares
         );
@@ -149,12 +153,12 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
     function orderInvalidated(address maker, bytes32 orderHash) external view returns (bool invalidated) {
         MarketStorage.Layout storage $ = MarketStorage.layout();
 
-        invalidated = $.makerOrderNonce[maker][orderHash];
+        invalidated = $.orderInvalidated[maker][orderHash];
     }
 
     function bidFee(uint256 /* price */) public pure returns (uint256 fee) {
         // TODO: implement fee calculation or explain why it's not implemented
-        return 0;
+        fee = 0;
     }
 
     function _chargePayment(
@@ -162,23 +166,16 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
         address userAsk,
         address userBid,
         uint256 price,
-        uint256 userAskShare,
-        uint256 userBidFee,
         address[] calldata participants,
         uint256[] calldata shares
     ) internal {
-        uint256 fee = _prepareBidFee(price, userBidFee);
+        uint256 fee = bidFee(price);
 
         currency.safeTransferFrom(userBid, address(this), price + fee);
-
         currency.safeTransfer(uniqueRoleOwner(Roles.FINANCIAL_ROLE), fee);
 
-        (address[] memory _participants, uint256[] memory _shares) = _prepareDistribution(
-            userAsk,
-            userAskShare,
-            participants,
-            shares
-        );
+        address[] memory _participants = Array.push(participants, userAsk);
+        uint256[] memory _shares = Array.push(shares, Distribution.remainingShare(shares));
 
         Distribution.safeDistribute(currency, price, _participants, _shares);
     }
@@ -186,19 +183,13 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
     function _invalidateOrder(address maker, bytes32 orderHash) internal {
         MarketStorage.Layout storage $ = MarketStorage.layout();
 
-        if ($.makerOrderNonce[maker][orderHash]) {
+        if ($.orderInvalidated[maker][orderHash]) {
             revert MarketOrderInvalidated(orderHash);
         }
 
-        $.makerOrderNonce[maker][orderHash] = true;
+        $.orderInvalidated[maker][orderHash] = true;
     }
 
-    /**
-     * @notice This function is internal and is used to verify the validity of an order
-     *         in the context of the current block timestamps.
-     * @param startTime Start timestamp
-     * @param endTime End timestamp
-     */
     function _requireAuthorizedOrder(
         bytes32 orderHash,
         address maker,
@@ -218,30 +209,6 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
 
         if (maker != signer) {
             revert MarketUnauthorizedOrder();
-        }
-    }
-
-    function _prepareDistribution(
-        address userAsk,
-        uint256 userAskShare,
-        address[] calldata participants,
-        uint256[] calldata shares
-    ) internal pure returns (address[] memory _participants, uint256[] memory _shares) {
-        uint256 remaining = Distribution.remainingShare(shares);
-
-        if (remaining < userAskShare) {
-            revert MarketRemainingShareTooLow(remaining);
-        }
-
-        _participants = Array.push(participants, userAsk);
-        _shares = Array.push(shares, remaining);
-    }
-
-    function _prepareBidFee(uint256 price, uint256 userBidFee) internal pure returns (uint256 fee) {
-        fee = bidFee(price);
-
-        if (userBidFee < fee) {
-            revert MarketUserBidFeeTooLow();
         }
     }
 }

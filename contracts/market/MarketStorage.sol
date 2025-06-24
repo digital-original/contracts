@@ -14,7 +14,7 @@ library MarketStorage {
      * @custom:storage-location erc7201:digital-original.storage.Market
      */
     struct Layout {
-        mapping(address maker => mapping(bytes32 nonce => bool)) makerOrderNonce;
+        mapping(address maker => mapping(bytes32 orderHash => bool)) orderInvalidated;
     }
 
     /**
