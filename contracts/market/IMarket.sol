@@ -8,18 +8,22 @@ import {OrderExecutionPermit} from "./libraries/OrderExecutionPermit.sol";
 interface IMarket {
     event AskOrderExecuted(
         bytes32 orderHash,
+        address collection,
+        address currency,
         address maker,
         address taker,
         uint256 price,
-        uint256 tokenId //
+        uint256 tokenId
     );
 
     event BidOrderExecuted(
         bytes32 orderHash,
+        address collection,
+        address currency,
         address maker,
         address taker,
         uint256 price,
-        uint256 tokenId //
+        uint256 tokenId
     );
 
     event OrderInvalidated(
@@ -55,7 +59,7 @@ interface IMarket {
 
     error MarketRemainingShareTooLow();
 
-    error MarketUserBidFeeTooLow();
+    error MarketBidFeeTooHigh();
 
     error MarketCurrencyInvalid();
 

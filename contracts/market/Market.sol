@@ -80,7 +80,15 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
             order.tokenId
         );
 
-        emit AskOrderExecuted(orderHash, maker, msg.sender, order.price, order.tokenId);
+        emit AskOrderExecuted(
+            orderHash,
+            order.collection,
+            order.currency,
+            maker,
+            msg.sender,
+            order.price,
+            order.tokenId
+        );
     }
 
     /**
@@ -100,7 +108,7 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
         }
 
         if (order.makerFee < bidFee(order.price)) {
-            revert MarketUserBidFeeTooLow();
+            revert MarketBidFeeTooHigh();
         }
 
         bytes32 orderHash = order.hash();
@@ -137,7 +145,15 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
             order.tokenId
         );
 
-        emit BidOrderExecuted(orderHash, maker, msg.sender, order.price, order.tokenId);
+        emit BidOrderExecuted(
+            orderHash,
+            order.collection,
+            order.currency,
+            maker,
+            msg.sender,
+            order.price,
+            order.tokenId
+        );
     }
 
     function invalidateOrder(address maker, bytes32 orderHash) external {

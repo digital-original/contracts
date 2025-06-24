@@ -28,10 +28,10 @@ contract AllDeployer {
         {
             address artTokenImpl = address(
                 new ArtToken(
-                    address(calculatedArtTokenProxy),
+                    calculatedArtTokenProxy,
                     address(this),
                     calculatedAuctionHouseProxy,
-                    address(usdc),
+                    usdc,
                     minPrice,
                     minFee,
                     regulated
@@ -43,14 +43,19 @@ contract AllDeployer {
                     calculatedAuctionHouseProxy,
                     address(this),
                     calculatedArtTokenProxy,
-                    address(usdc),
+                    usdc,
                     minAuctionDuration,
                     minPrice,
                     minFee
                 )
             );
 
-            address marketImpl = address(new Market(calculatedMarketProxy, address(this)));
+            address marketImpl = address(
+                new Market(
+                    calculatedMarketProxy,
+                    address(this) //
+                )
+            );
 
             address artTokenProxy = Deployment.deployUpgradeableContract(artTokenImpl, address(this));
             address auctionHouseProxy = Deployment.deployUpgradeableContract(auctionHouseImpl, address(this));
@@ -65,8 +70,8 @@ contract AllDeployer {
 
         ArtToken(calculatedArtTokenProxy).transferUniqueRole(Roles.SIGNER_ROLE, signer);
         ArtToken(calculatedArtTokenProxy).transferUniqueRole(Roles.FINANCIAL_ROLE, financier);
-        ArtToken(calculatedArtTokenProxy).grantRole(Roles.PARTNER_ROLE, address(calculatedAuctionHouseProxy));
-        ArtToken(calculatedArtTokenProxy).grantRole(Roles.PARTNER_ROLE, address(calculatedMarketProxy));
+        ArtToken(calculatedArtTokenProxy).grantRole(Roles.PARTNER_ROLE, calculatedAuctionHouseProxy);
+        ArtToken(calculatedArtTokenProxy).grantRole(Roles.PARTNER_ROLE, calculatedMarketProxy);
 
         AuctionHouse(calculatedAuctionHouseProxy).transferUniqueRole(Roles.FINANCIAL_ROLE, financier);
         AuctionHouse(calculatedAuctionHouseProxy).transferUniqueRole(Roles.SIGNER_ROLE, signer);
@@ -75,7 +80,7 @@ contract AllDeployer {
         Market(calculatedMarketProxy).transferUniqueRole(Roles.FINANCIAL_ROLE, financier);
         if (admin != address(0)) Market(calculatedMarketProxy).grantRole(Roles.ADMIN_ROLE, admin);
         Market(calculatedMarketProxy).grantRole(Roles.ADMIN_ROLE, address(this));
-        Market(calculatedMarketProxy).updateCurrencyStatus(address(usdc), true);
+        Market(calculatedMarketProxy).updateCurrencyStatus(usdc, true);
     }
 
     error DeployerIncorrectAddress();

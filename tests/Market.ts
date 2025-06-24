@@ -153,7 +153,7 @@ describe('Market', function () {
 
             await expect(tx)
                 .to.be.emit(market, 'AskOrderExecuted')
-                .withArgs(orderHash, makerAddr, takerAddr, price, TOKEN_ID);
+                .withArgs(orderHash, artTokenAddr, usdcAddr, makerAddr, takerAddr, price, TOKEN_ID);
 
             await expect(market.orderInvalidated(maker, orderHash)).to.eventually.equal(true);
         });
@@ -541,7 +541,7 @@ describe('Market', function () {
 
             await expect(tx)
                 .to.be.emit(market, 'BidOrderExecuted')
-                .withArgs(orderHash, makerAddr, takerAddr, price, TOKEN_ID);
+                .withArgs(orderHash, artTokenAddr, usdcAddr, makerAddr, takerAddr, price, TOKEN_ID);
 
             await expect(market.orderInvalidated(maker, orderHash)).to.eventually.equal(true);
         });
@@ -822,7 +822,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).to.eventually.rejectedWith('MarketUserBidFeeTooLow');
+            await expect(tx).to.eventually.rejectedWith('MarketBidFeeTooHigh');
         });
     });
 

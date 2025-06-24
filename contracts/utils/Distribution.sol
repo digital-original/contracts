@@ -129,7 +129,7 @@ library Distribution {
      * @return remaining The difference between {TOTAL_SHARE} and the sum
      *                  of provided `shares`.
      */
-    function remainingShare(uint256[] memory shares) internal pure returns (uint256 remaining) {
+    function remainingShare(uint256[] calldata shares) internal pure returns (uint256 remaining) {
         return TOTAL_SHARE - _sumShares(shares);
     }
 
