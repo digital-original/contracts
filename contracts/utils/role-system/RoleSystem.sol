@@ -8,20 +8,19 @@ import {IRoleSystem} from "./IRoleSystem.sol";
  * @title RoleSystem
  *
  * @notice Concrete implementation of {IRoleSystem}. Stores role mappings in an
- *         unstructured-storage slot defined by {RoleSystemStorage} and exposes
- *         simple grant/revoke/transfer helpers restricted to the immutable
- *         {MAIN} administrator.
+ *         unstructured-storage slot defined by {RoleSystemStorage} and exposes simple
+ *         grant/revoke/transfer helpers restricted to the immutable {MAIN} administrator.
  */
 contract RoleSystem is IRoleSystem {
     /**
-     * @notice Account endowed with full administrative privileges over the
-     *         role system (grant, revoke, transfer unique roles).
+     * @notice Account endowed with full administrative privileges over the role system (grant,
+     *         revoke, transfer unique roles).
      */
     address public immutable MAIN;
 
     /**
-     * @dev Restricts a function so it can only be executed by {MAIN}. Reverts
-     *      with {RoleSystemNotMain} otherwise.
+     * @dev Restricts a function so it can only be executed by {MAIN}. Reverts with
+     *      {RoleSystemNotMain} otherwise.
      */
     modifier onlyMain() {
         if (msg.sender != MAIN) {
@@ -32,8 +31,8 @@ contract RoleSystem is IRoleSystem {
     }
 
     /**
-     * @dev Restricts a function so it can only be executed by an account that
-     *      has `role`. Reverts with {RoleSystemUnauthorizedAccount} otherwise.
+     * @dev Restricts a function so it can only be executed by an account that has `role`.
+     *      Reverts with {RoleSystemUnauthorizedAccount} otherwise.
      *
      * @param role The role required to call the function.
      */

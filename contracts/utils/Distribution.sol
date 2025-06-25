@@ -10,9 +10,8 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
  *
  * @notice Library for deterministic ERC-20 reward splitting.
  *
- * @dev Provides helpers to safely distribute `reward` among `participants`
- *      given a {TOTAL_SHARE}-denominated `shares` array (10,000 —
- *      i.e. basis points).
+ * @dev Provides helpers to safely distribute `reward` among `participants` given a
+ *      {TOTAL_SHARE}-denominated `shares` array (10,000 — i.e. basis points).
  */
 library Distribution {
     using SafeERC20 for IERC20;
@@ -23,17 +22,17 @@ library Distribution {
     uint256 internal constant TOTAL_SHARE = 10_000;
 
     /**
-     * @notice Performs a validation pass and then distributes `reward` between
-     *         `participants` according to `shares`.
+     * @notice Performs a validation pass and then distributes `reward` between `participants`
+     *         according to `shares`.
      *
-     * @dev Reverts with one of the custom errors declared at the bottom of the
-     *      contract if validation fails. Uses {SafeERC20.safeTransfer} to guard
-     *      against non-standard ERC-20s.
+     * @dev Reverts with one of the custom errors declared at the bottom of the contract if
+     *      validation fails. Uses {SafeERC20.safeTransfer} to guard against non-standard
+     *      ERC-20s.
      *
      * @param currency ERC20 currency address.
      * @param reward Amount to distribute.
      * @param participants Addresses that will receive a portion of `reward`.
-     * @param shares       Shares (in basis points) assigned to each participant.
+     * @param shares Shares (in basis points) assigned to each participant.
      */
     function safeDistribute(
         IERC20 currency,
@@ -48,14 +47,13 @@ library Distribution {
     /**
      * @notice Distributes `reward` between `participants` according to `shares`.
      *
-     * @dev Performs **no** parameter validation — callers MUST ensure that
-     *      {requireValidConditions} has been invoked prior to calling this
-     *      function.
+     * @dev Performs **no** parameter validation — callers MUST ensure that {requireValidConditions}
+     *      has been invoked prior to calling this function.
      *
      * @param currency ERC20 currency address.
      * @param reward Amount to distribute.
      * @param participants Addresses that will receive a portion of `reward`.
-     * @param shares       Shares (in basis points) assigned to each participant.
+     * @param shares Shares (in basis points) assigned to each participant.
      */
     function distribute(
         IERC20 currency,
@@ -92,7 +90,7 @@ library Distribution {
      *      - Sum of shares exceeds {TOTAL_SHARE} or is below it.
      *
      * @param participants Array with participants address.
-     * @param shares       Shares (in basis points) corresponding to each participant.
+     * @param shares Shares (in basis points) corresponding to each participant.
      */
     function requireValidConditions(address[] memory participants, uint256[] memory shares) internal pure {
         uint256 participantsLen = participants.length;
@@ -121,21 +119,19 @@ library Distribution {
     /**
      * @notice Calculates the unallocated share given an array of `shares`.
      *
-     * @dev Useful for determining the last participant's share when the
-     *      other shares are known but do not yet sum to {TOTAL_SHARE}.
+     * @dev Useful for determining the last participant's share when the other shares are known
+     *      but do not yet sum to {TOTAL_SHARE}.
      *
      * @param shares Array containing shares expressed in basis points.
      *
-     * @return remaining The difference between {TOTAL_SHARE} and the sum
-     *                  of provided `shares`.
+     * @return remaining The difference between {TOTAL_SHARE} and the sum of provided `shares`.
      */
     function remainingShare(uint256[] calldata shares) internal pure returns (uint256 remaining) {
         return TOTAL_SHARE - _sumShares(shares);
     }
 
     /**
-     * @dev Internal helper that sums the `shares` array while enforcing
-     *              invariants.
+     * @dev Internal helper that sums the `shares` array while enforcing invariants.
      *
      * Requirements:
      *  - Every share must be non-zero ({DistributionZeroShare});

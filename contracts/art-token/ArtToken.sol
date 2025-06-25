@@ -15,13 +15,12 @@ import {IArtToken} from "./IArtToken.sol";
 /**
  * @title ArtToken
  *
- * @notice Upgradeable ERC-721 token used by DigitalOriginal
- *         protocols. Adds primary-sale logic via `buy`, integrates EIP-712
- *         permits and enforces optional transfer restrictions for regulated
- *         collections.
+ * @notice Upgradeable ERC-721 token used by DigitalOriginal protocols. Adds primary-sale
+ *         logic via `buy`, integrates EIP-712 permits and enforces optional transfer
+ *         restrictions for regulated collections.
  *
- * @dev Implements {IArtToken}. Uses mix-ins for EIP-712 domain
- *      separation, role management and signature authorization.
+ * @dev Implements {IArtToken}. Uses mix-ins for EIP-712 domain separation, role management and
+ *      signature authorization.
  */
 contract ArtToken is IArtToken, ArtTokenBase, EIP712Domain, RoleSystem, Authorization {
     using SafeERC20 for IERC20;
@@ -72,14 +71,14 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712Domain, RoleSystem, Authoriz
     /**
      * @notice Contract constructor.
      *
-     * @param proxy        Address of the proxy that will ultimately own the
-     *                     implementation (used for EIP-712 domain separator).
-     * @param main         Address that will be set as {RoleSystem.MAIN}.
+     * @param proxy Address of the proxy that will ultimately own the implementation
+     *              (used for EIP-712 domain separator).
+     * @param main Address that will be set as {RoleSystem.MAIN}.
      * @param auctionHouse Address of the AuctionHouse contract.
-     * @param usdc         Address of the USDC token contract.
-     * @param minPrice     Absolute minimum `price` accepted by `buy`.
-     * @param minFee       Absolute minimum `fee` accepted by `buy`.
-     * @param regulated    Whether transfer restrictions are enabled.
+     * @param usdc Address of the USDC token contract.
+     * @param minPrice Absolute minimum `price` accepted by `buy`.
+     * @param minFee Absolute minimum `fee` accepted by `buy`.
+     * @param regulated Whether transfer restrictions are enabled.
      */
     constructor(
         address proxy,
@@ -105,8 +104,8 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712Domain, RoleSystem, Authoriz
     /**
      * @inheritdoc IArtToken
      *
-     * @dev Only the {AUCTION_HOUSE} contract is authorized to call this function.
-     *      The call will revert if `_tokenURI` is empty or if `tokenId` has already been minted.
+     * @dev Only the {AUCTION_HOUSE} contract is authorized to call this function. The call will
+     *      revert if `_tokenURI` is empty or if `tokenId` has already been minted.
      */
     function mint(address to, uint256 tokenId, string memory _tokenURI) external onlyAuctionHouse {
         if (bytes(_tokenURI).length == 0) {
@@ -120,10 +119,10 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712Domain, RoleSystem, Authoriz
      * @inheritdoc IArtToken
      *
      * @dev Workflow:
-     *  1. Recreates the EIP-712 digest for the supplied {BuyParams} and verifies
-     *     the signature via {_requireAuthorizedAction}.
-     *  2. Performs runtime checks listed below; any failure reverts with a
-     *     contract-specific error.
+     *  1. Recreates the EIP-712 digest for the supplied {BuyParams} and verifies the
+     *     signature via {_requireAuthorizedAction}.
+     *  2. Performs runtime checks listed below. Any failure reverts with a contract-specific
+     *     error.
      *  3. Mints the token directly to `msg.sender` (buyer).
      *  4. Pulls `price + fee` USDC from the buyer.
      *  5. Splits `price` among `participants` according to `shares` via
@@ -136,8 +135,7 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712Domain, RoleSystem, Authoriz
      *   - `params.fee`   ≥ {MIN_FEE}   → {ArtTokenInvalidFee}.
      *   - `AUCTION_HOUSE.tokenReserved(tokenId)` must be false → {ArtTokenTokenReserved}.
      *
-     * @param params Packed struct containing all buy parameters
-     *               (see {IArtToken.BuyParams}).
+     * @param params Packed struct containing all buy parameters (see {IArtToken.BuyParams}).
      */
     function buy(BuyParams calldata params) external {
         bytes32 structHash = keccak256(
@@ -207,8 +205,7 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712Domain, RoleSystem, Authoriz
     }
 
     /**
-     * @dev Ensures both recipient and authorizing address are compliant before
-     *      any transfer.
+     * @dev Ensures both recipient and authorizing address are compliant before any transfer.
      */
     function _beforeTransfer(address to, uint256 /* tokenId */, address auth) internal view override {
         _requireAuthorizedRecipient(to);

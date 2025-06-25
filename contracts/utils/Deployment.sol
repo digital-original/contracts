@@ -6,25 +6,22 @@ import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transpa
 /**
  * @title Deployment
  *
- * @notice Helper library that simplifies contract deployment logic used in the
- *         protocol scripts.
+ * @notice Helper library that simplifies contract deployment logic used in the protocol scripts.
  *
  * @dev Currently exposes two low-level utilities:
- *      1. {deployUpgradeableContract} — deploys an `TransparentUpgradeableProxy`
- *         pointing to an implementation contract.
- *      2. {calculateContractAddress} — deterministic computation of the address
- *         of a contract that would be deployed by `account` at a given nonce
- *         (matching the algorithm used by the EVM).
+ *      1. {deployUpgradeableContract} — deploys an `TransparentUpgradeableProxy` pointing to an
+ *         implementation contract.
+ *      2. {calculateContractAddress} — deterministic computation of the address of a contract
+ *         that would be deployed by `account` at a given nonce (matching the algorithm used
+ *         by the EVM).
  */
 library Deployment {
     /**
-     * @notice Deploys a `TransparentUpgradeableProxy` with the provided
-     *         implementation and admin.
+     * @notice Deploys a `TransparentUpgradeableProxy` with the provided implementation and
+     *         admin.
      *
-     * @param impl            Address of the implementation contract that the
-     *                        proxy will delegate‐call to.
-     * @param proxyAdminOwner Address that will become the owner of the proxy's
-     *                        admin contract.
+     * @param impl Address of the implementation contract that the proxy will delegate‐call to.
+     * @param proxyAdminOwner Address that will become the owner of the proxy's admin contract.
      *
      * @return proxy Address of the newly deployed proxy.
      */
@@ -33,16 +30,13 @@ library Deployment {
     }
 
     /**
-     * @notice Predicts the address of a future deployment by `account` at the
-     *         specified nonce.
+     * @notice Predicts the address of a future deployment by `account` at the specified nonce.
      *
-     * @dev Mirrors the algorithm used by the `CREATE` opcode. Only supports
-     *      nonces up to `0xffffff` to avoid unnecessary dynamic memory in
-     *      encoding logic.
+     * @dev Mirrors the algorithm used by the `CREATE` opcode. Only supports nonces up to
+     *      `0xffffff` to avoid unnecessary dynamic memory in encoding logic.
      *
      * @param account Deployer address.
-     * @param nonce   Nonce of the deploying account at the time of the future
-     *                deployment.
+     * @param nonce Nonce of the deploying account at the time of the future deployment.
      *
      * @return predicted Address the contract will be deployed to.
      */

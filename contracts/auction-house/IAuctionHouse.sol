@@ -4,24 +4,24 @@ pragma solidity ^0.8.20;
 /**
  * @title IAuctionHouse
  *
- * @notice Interface for the protocol's English-auction module responsible for
- *         primary NFT sales. Allows creating auctions, placing bids (raises),
- *         and finalizing sales with revenue distribution.
+ * @notice Interface for the protocol's English-auction module responsible for primary NFT sales.
+ *         Allows creating auctions, placing bids (raises), and finalizing sales with revenue
+ *         distribution.
  */
 interface IAuctionHouse {
     /**
      * @notice In-memory representation of an auction.
      *
-     * @param tokenId      Identifier of the token being sold.
-     * @param price        Current highest bid (or starting price).
-     * @param fee          Platform fee that will be added to the final payment.
-     * @param step         Minimum raise step expressed in settlement-token units.
-     * @param endTime      UNIX timestamp after which the auction can be finalized.
-     * @param buyer        Current highest bidder.
-     * @param sold         Flag indicating whether `finish` has been called.
-     * @param tokenURI     Metadata URI for lazy-minting upon settlement.
+     * @param tokenId Identifier of the token being sold.
+     * @param price Current highest bid (or starting price).
+     * @param fee Platform fee that will be added to the final payment.
+     * @param step Minimum raise step expressed in settlement-token units.
+     * @param endTime UNIX timestamp after which the auction can be finalized.
+     * @param buyer Current highest bidder.
+     * @param sold Flag indicating whether `finish` has been called.
+     * @param tokenURI Metadata URI for lazy-minting upon settlement.
      * @param participants Revenue-sharing recipients.
-     * @param shares       Number of shares assigned to each participant.
+     * @param shares Number of shares assigned to each participant.
      */
     struct Auction {
         uint256 tokenId;
@@ -39,17 +39,18 @@ interface IAuctionHouse {
     /**
      * @notice Parameters accepted by {create}.
      *
-     * @param auctionId    Unique identifier chosen by the caller.
-     * @param tokenId      Identifier of the token that will be minted/sold.
-     * @param tokenURI     Metadata URI.
-     * @param price        Starting price.
-     * @param fee          Platform fee.
-     * @param step         Minimum raise increment.
-     * @param endTime      Auction end timestamp.
+     * @param auctionId Unique identifier chosen by the caller.
+     * @param tokenId Identifier of the token that will be minted/sold.
+     * @param tokenURI Metadata URI.
+     * @param price Starting price.
+     * @param fee Platform fee.
+     * @param step Minimum raise increment.
+     * @param endTime Auction end timestamp.
      * @param participants Revenue-sharing recipients.
-     * @param shares       Shares for each participant.
-     * @param signature    EIP-712 signature issued by the auction-house signer authorizing the auction.
-     * @param deadline     Expiration timestamp for the signature.
+     * @param shares Shares for each participant.
+     * @param signature EIP-712 signature issued by the auction-house signer authorizing the
+     *                  auction.
+     * @param deadline Expiration timestamp for the signature.
      */
     struct CreateParams {
         uint256 auctionId;
@@ -69,9 +70,9 @@ interface IAuctionHouse {
      * @notice Emitted after a successful call to {create}.
      *
      * @param auctionId Identifier of the newly created auction.
-     * @param tokenId   Token identifier associated with the auction.
-     * @param price     Starting price.
-     * @param endTime   Auction end timestamp.
+     * @param tokenId Token identifier associated with the auction.
+     * @param price Starting price.
+     * @param endTime Auction end timestamp.
      */
     event Created(uint256 indexed auctionId, uint256 indexed tokenId, uint256 price, uint256 endTime);
 
@@ -79,8 +80,8 @@ interface IAuctionHouse {
      * @notice Emitted each time a new highest bid is placed.
      *
      * @param auctionId Identifier of the auction.
-     * @param buyer     Address of the bidder.
-     * @param price     New highest bid.
+     * @param buyer Address of the bidder.
+     * @param price New highest bid.
      */
     event Raised(uint256 indexed auctionId, address indexed buyer, uint256 price);
 
@@ -90,7 +91,8 @@ interface IAuctionHouse {
     event Sold(uint256 indexed auctionId);
 
     /**
-     * @notice Creates a new auction with parameters validated and authorized via an EIP-712 signature.
+     * @notice Creates a new auction with parameters validated and authorized via
+     *         an EIP-712 signature.
      */
     function create(CreateParams calldata params) external;
 
@@ -105,7 +107,8 @@ interface IAuctionHouse {
     function raise(uint256 auctionId, uint256 price) external;
 
     /**
-     * @notice Finalizes the auction, mints the token to the highest bidder and distributes proceeds.
+     * @notice Finalizes the auction, mints the token to the highest bidder
+     *         and distributes proceeds.
      */
     function finish(uint256 auctionId) external;
 

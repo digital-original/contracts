@@ -6,8 +6,8 @@ import {IAuctionHouse} from "./IAuctionHouse.sol";
 /**
  * @title AuctionHouseStorage
  *
- * @notice Defines the storage layout for {AuctionHouse}. Using a deterministic slot
- * makes the module safe for use behind proxies and alongside other upgradeable components.
+ * @notice Defines the storage layout for {AuctionHouse}. Using a deterministic slot makes the
+ *         module safe for use behind proxies and alongside other upgradeable components.
  */
 library AuctionHouseStorage {
     /// @dev Unique storage slot for the layout, computed using EIP-7201 convention.

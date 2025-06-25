@@ -4,8 +4,8 @@ pragma solidity ^0.8.20;
 /**
  * @title RoleSystemStorage
  *
- * @notice Defines the storage layout for {RoleSystem}. Using a deterministic slot
- * makes the module safe for use behind proxies and alongside other upgradeable components.
+ * @notice Defines the storage layout for {RoleSystem}. Using a deterministic slot makes the
+ *         module safe for use behind proxies and alongside other upgradeable components.
  */
 library RoleSystemStorage {
     /// @dev Unique storage slot for the layout, computed using EIP-7201 convention.

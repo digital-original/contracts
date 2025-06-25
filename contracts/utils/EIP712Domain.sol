@@ -4,11 +4,11 @@ pragma solidity ^0.8.20;
 /**
  * @title EIP712Domain
  *
- * @notice Minimal helper that constructs an EIP-712 domain separator once at
- *         deployment time and exposes it as an immutable constant.
+ * @notice Minimal helper that constructs an EIP-712 domain separator once at deployment time and
+ *         exposes it as an immutable constant.
  *
- * @dev Designed to be inherited by contracts that need typed-data signatures.
- *      Follows the standard domain schema:
+ * @dev Designed to be inherited by contracts that need typed-data signatures. Follows the standard
+ *      domain schema:
  *      `EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)`.
  */
 contract EIP712Domain {
@@ -33,8 +33,8 @@ contract EIP712Domain {
 
     /**
      * @param verifyingContract Address of the contract that will verify signatures (usually the proxy).
-     * @param name              Human-readable name of the signing domain.
-     * @param version           Current major version of the signing domain.
+     * @param name Human-readable name of the signing domain.
+     * @param version Current major version of the signing domain.
      */
     constructor(address verifyingContract, string memory name, string memory version) {
         if (verifyingContract == address(0)) revert EIP712DomainMisconfiguration(0);
@@ -53,8 +53,8 @@ contract EIP712Domain {
     }
 
     /**
-     * @dev Thrown when a constructor argument at position `argIndex` is invalid
-     *      (zero address or empty string).
+     * @dev Thrown when a constructor argument at position `argIndex` is invalid (zero address or
+     *      empty string).
      */
     error EIP712DomainMisconfiguration(uint256 argIndex);
 }

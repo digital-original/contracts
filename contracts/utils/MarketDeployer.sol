@@ -7,8 +7,8 @@ import {Deployment} from "./Deployment.sol";
 /**
  * @title MarketDeployer
  *
- * @notice Helper contract that deploys the `Market` contract behind a
- *         transparent upgradeable proxy.
+ * @notice Helper contract that deploys the `Market` contract behind a transparent upgradeable
+ *         proxy.
  */
 contract MarketDeployer {
     /// @notice Emitted once the proxy contract is deployed.
@@ -19,13 +19,13 @@ contract MarketDeployer {
      * @notice Deploys upgradeable `Market` instance.
      *
      * @dev The constructor performs the following steps:
-     *      1. Computes the expected proxy addresses using the current
-     *         contract nonce (deploy order is deterministic).
+     *      1. Computes the expected proxy addresses using the current contract nonce (deploy
+     *         order is deterministic).
      *      2. Deploys the implementation contract.
      *      3. Deploys the transparent proxy via {Deployment.deployUpgradeableContract}.
-     *      4. Reverts with {DeployerIncorrectAddress} if the actual proxy
-     *         addresses do not match the pre-computed ones (should never
-     *         happen unless the deployment order changes).
+     *      4. Reverts with {DeployerIncorrectAddress} if the actual proxy addresses do not
+     *         match the pre-computed ones (should never happen unless the deployment order
+     *         changes).
      *      5. Emits {Deployed}.
      *
      * @param main Address that will be set as {RoleSystem.MAIN}.
