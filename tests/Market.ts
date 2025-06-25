@@ -789,7 +789,10 @@ describe('Market', function () {
         });
 
         it.skip(`should fail if the calculated fee is greater than the maker fee`, async () => {
-            // TODO: add explanation for `skip`
+            /**
+             * @dev This testcase checks the bid fee logic. Currently, the fee is always 0, so the
+             *      test is skipped, but it is kept for future use.
+             */
 
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
@@ -828,7 +831,10 @@ describe('Market', function () {
 
     describe(`method 'bidFee'`, () => {
         it.skip(`should calculate fee correctly`, async () => {
-            // TODO: add explanation for `skip`
+            /**
+             * @dev This testcase checks the bid fee logic. Currently, the fee is always 0, so the
+             *      test is skipped, but it is kept for future use.
+             */
 
             // price <= 100K USDC; fee = 5%
             const price1 = 100_000_000n;

@@ -19,9 +19,6 @@ import {IAuctionHouse} from "./IAuctionHouse.sol";
  *         {ArtToken}. Users create auctions via an authorized EIP-712 permit, place bids in
  *         USDC and, after the auction ends, the highest bidder receives the token while funds are
  *         split between participants and the protocol treasury.
- *
- * @dev Implements {IAuctionHouse}. Uses mix-ins for EIP-712 domain separation, role management
- *      and signature authorization.
  */
 contract AuctionHouse is IAuctionHouse, EIP712Domain, RoleSystem, Authorization {
     using SafeERC20 for IERC20;
@@ -30,19 +27,20 @@ contract AuctionHouse is IAuctionHouse, EIP712Domain, RoleSystem, Authorization 
      * @notice EIP-712 struct type-hash used to validate `CreatePermit` signatures
      *         supplied to {create}.
      */
+    // prettier-ignore
     bytes32 public constant CREATE_PERMIT_TYPE_HASH =
         keccak256(
             "CreatePermit("
-            "uint256 auctionId,"
-            "uint256 tokenId,"
-            "string tokenURI,"
-            "uint256 price,"
-            "uint256 fee,"
-            "uint256 step,"
-            "uint256 endTime,"
-            "address[] participants,"
-            "uint256[] shares,"
-            "uint256 deadline"
+                "uint256 auctionId,"
+                "uint256 tokenId,"
+                "string tokenURI,"
+                "uint256 price,"
+                "uint256 fee,"
+                "uint256 step,"
+                "uint256 endTime,"
+                "address[] participants,"
+                "uint256[] shares,"
+                "uint256 deadline"
             ")"
         );
 

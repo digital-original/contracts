@@ -9,7 +9,7 @@ import {ICurrencyManager} from "./ICurrencyManager.sol";
 /**
  * @title CurrencyManager
  *
- * @notice Implements the logic for managing allowed currencies.
+ * @notice Abstract contract that implements the logic for managing allowed currencies.
  */
 abstract contract CurrencyManager is ICurrencyManager, RoleSystem {
     /**
@@ -26,7 +26,7 @@ abstract contract CurrencyManager is ICurrencyManager, RoleSystem {
     /**
      * @inheritdoc ICurrencyManager
      */
-    function currencyAllowed(address currency) public view returns (bool) {
+    function currencyAllowed(address currency) public view returns (bool allowed) {
         return CurrencyManagerStorage.layout().allowed[currency];
     }
 }

@@ -93,6 +93,8 @@ interface IAuctionHouse {
     /**
      * @notice Creates a new auction with parameters validated and authorized via
      *         an EIP-712 signature.
+     *
+     * @param params See {CreateParams}.
      */
     function create(CreateParams calldata params) external;
 

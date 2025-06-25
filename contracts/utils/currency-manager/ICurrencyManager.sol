@@ -30,7 +30,7 @@ interface ICurrencyManager {
      *
      * @param currency The address of the currency to check.
      *
-     * @return bool True if the currency is allowed, false otherwise.
+     * @return allowed True if the currency is allowed, false otherwise.
      */
-    function currencyAllowed(address currency) external view returns (bool);
+    function currencyAllowed(address currency) external view returns (bool allowed);
 }

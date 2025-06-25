@@ -19,7 +19,7 @@ contract RoleSystem is IRoleSystem {
     address public immutable MAIN;
 
     /**
-     * @dev Restricts a function so it can only be executed by {MAIN}. Reverts with
+     * @notice Restricts a function so it can only be executed by {MAIN}. Reverts with
      *      {RoleSystemNotMain} otherwise.
      */
     modifier onlyMain() {
@@ -31,7 +31,7 @@ contract RoleSystem is IRoleSystem {
     }
 
     /**
-     * @dev Restricts a function so it can only be executed by an account that has `role`.
+     * @notice Restricts a function so it can only be executed by an account that has `role`.
      *      Reverts with {RoleSystemUnauthorizedAccount} otherwise.
      *
      * @param role The role required to call the function.
@@ -45,6 +45,8 @@ contract RoleSystem is IRoleSystem {
     }
 
     /**
+     * @notice Contract constructor.
+     *
      * @param main Address that will be set as {MAIN}. Cannot be zero.
      *
      * @dev Reverts with {RoleSystemMisconfiguration} if `main` is the zero address.
@@ -114,8 +116,14 @@ contract RoleSystem is IRoleSystem {
         _requireNotZeroAddress(owner);
     }
 
+    /**
+     * @notice Internal helper that standardises zero-address checks across the contract.
+     *
+     * @dev Reverts with {RoleSystemZeroAddress} if `account` is the zero address.
+     *
+     * @param account The address to check.
+     */
     function _requireNotZeroAddress(address account) private pure {
-        // Internal helper that standardises zero-address checks across the contract.
         if (account == address(0)) {
             revert RoleSystemZeroAddress();
         }

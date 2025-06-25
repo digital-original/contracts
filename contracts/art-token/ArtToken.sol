@@ -18,9 +18,6 @@ import {IArtToken} from "./IArtToken.sol";
  * @notice Upgradeable ERC-721 token used by DigitalOriginal protocols. Adds primary-sale
  *         logic via `buy`, integrates EIP-712 permits and enforces optional transfer
  *         restrictions for regulated collections.
- *
- * @dev Implements {IArtToken}. Uses mix-ins for EIP-712 domain separation, role management and
- *      signature authorization.
  */
 contract ArtToken is IArtToken, ArtTokenBase, EIP712Domain, RoleSystem, Authorization {
     using SafeERC20 for IERC20;
@@ -28,6 +25,10 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712Domain, RoleSystem, Authoriz
     /**
      * @notice EIP-712 struct type-hash used to validate `BuyPermit` signatures
      *         supplied to {buy}.
+     *
+     * @dev The `sender` field, which is part of the signed data, is implicitly set to
+     *      `msg.sender` during the execution of the {buy} function. This ensures that the permit
+     *      can only be used by the intended buyer.
      */
     // prettier-ignore
     bytes32 public constant BUY_PERMIT_TYPE_HASH =
@@ -205,7 +206,10 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712Domain, RoleSystem, Authoriz
     }
 
     /**
-     * @dev Ensures both recipient and authorizing address are compliant before any transfer.
+     * @inheritdoc ArtTokenBase
+     *
+     * @dev Hook that ensures both the recipient and the authorizing address are compliant with
+     *      the collection's rules before any token transfer occurs.
      */
     function _beforeTransfer(address to, uint256 /* tokenId */, address auth) internal view override {
         _requireAuthorizedRecipient(to);
@@ -213,14 +217,20 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712Domain, RoleSystem, Authoriz
     }
 
     /**
-     * @dev Ensures the approval recipient is compliant.
+     * @inheritdoc ArtTokenBase
+     *
+     * @dev Hook that ensures the recipient of an approval is compliant with the collection's
+     *      rules.
      */
     function _beforeApprove(address to, uint256 /* tokenId */) internal view override {
         _requireAuthorizedRecipient(to);
     }
 
     /**
-     * @dev Ensures the operator is compliant when `approved` is set to true.
+     * @inheritdoc ArtTokenBase
+     *
+     * @dev Hook that ensures a new operator is compliant with the collection's rules before
+     *      being approved.
      */
     function _beforeSetApprovalForAll(address operator, bool approved) internal view override {
         if (approved) {

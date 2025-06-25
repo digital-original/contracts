@@ -131,9 +131,9 @@ library Distribution {
     }
 
     /**
-     * @dev Internal helper that sums the `shares` array while enforcing invariants.
+     * @notice Internal helper that sums the `shares` array while enforcing invariants.
      *
-     * Requirements:
+     * @dev Requirements:
      *  - Every share must be non-zero ({DistributionZeroShare});
      *  - Running total must not exceed {TOTAL_SHARE} ({DistributionSharesSumTooBig}).
      *

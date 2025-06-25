@@ -32,6 +32,8 @@ contract EIP712Domain {
     bytes32 public immutable DOMAIN_SEPARATOR;
 
     /**
+     * @notice Contract constructor.
+     *
      * @param verifyingContract Address of the contract that will verify signatures (usually the proxy).
      * @param name Human-readable name of the signing domain.
      * @param version Current major version of the signing domain.

@@ -18,19 +18,37 @@ import {AskOrder} from "./libraries/AskOrder.sol";
 import {BidOrder} from "./libraries/BidOrder.sol";
 import {OrderExecutionPermit} from "./libraries/OrderExecutionPermit.sol";
 
+/**
+ * @title Market
+ *
+ * @notice Upgradeable secondary market contract that facilitates peer-to-peer trading of NFTs
+ *         through off-chain orders. It supports both sell-side (ask) and buy-side (bid) orders,
+ *         which are authorized via EIP-712 signatures.
+ */
 contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authorization {
     using SafeERC20 for IERC20;
     using AskOrder for AskOrder.Type;
     using BidOrder for BidOrder.Type;
     using OrderExecutionPermit for OrderExecutionPermit.Type;
 
+    /**
+     * @notice Contract constructor.
+     *
+     * @param proxy Proxy address used for EIP-712 verifying contract.
+     * @param main Address that will be set as {RoleSystem.MAIN}.
+     */
     constructor(address proxy, address main) EIP712Domain(proxy, "Market", "1") RoleSystem(main) {}
 
     /**
-     * @dev Maker creates ASK order, Taker executes ASK order,
-     *   Maker is ASK user, Taker is BID user
-     *   Maker receives ERC20, Taker receives ERC721
-     *   BID user pays fee
+     * @inheritdoc IMarket
+     *
+     * @dev Flow:
+     *   1. Validates the order currency, share distribution, signatures, and time range.
+     *   2. Invalidates the order to prevent replay attacks.
+     *   3. Transfers the token from the seller to the buyer.
+     *   4. Transfers the payment from the buyer, splits the revenue, and sends the fee to the
+     *      treasury.
+     *   5. Emits {AskOrderExecuted}.
      */
     function executeAsk(
         AskOrder.Type calldata order,
@@ -92,10 +110,15 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
     }
 
     /**
-     * @dev Maker creates BID order, Taker executes BID order,
-     *   Maker is BID user, Taker is ASK user
-     *   Maker receives ERC721, Taker receives ERC20
-     *   BID user pays fee
+     * @inheritdoc IMarket
+     *
+     * @dev Flow:
+     *   1. Validates the order currency, fee, signatures, and time range.
+     *   2. Invalidates the order to prevent replay attacks.
+     *   3. Transfers the token from the seller to the buyer.
+     *   4. Transfers the payment from the buyer, splits the revenue, and sends the fee to the
+     *      treasury.
+     *   5. Emits {BidOrderExecuted}.
      */
     function executeBid(
         BidOrder.Type calldata order,
@@ -156,6 +179,9 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
         );
     }
 
+    /**
+     * @inheritdoc IMarket
+     */
     function invalidateOrder(address maker, bytes32 orderHash) external {
         if (msg.sender == maker || hasRole(Roles.ADMIN_ROLE, msg.sender)) {
             _invalidateOrder(maker, orderHash);
@@ -166,6 +192,9 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
         }
     }
 
+    /**
+     * @inheritdoc IMarket
+     */
     function orderInvalidated(address maker, bytes32 orderHash) external view returns (bool invalidated) {
         MarketStorage.Layout storage $ = MarketStorage.layout();
 
@@ -173,13 +202,27 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
     }
 
     /**
-     * @dev This function is used to calculate the fee for a bid.
-     * Currently, the fee is always 0, but this function is kept for future use.
+     * @inheritdoc IMarket
+     *
+     * @dev Currently, the fee is always 0, but this function is kept for future use.
      */
     function bidFee(uint256 /* price */) public pure returns (uint256 fee) {
         fee = 0;
     }
 
+    /**
+     * @notice Internal function to handle payment transfers for an order.
+     *
+     * @dev It transfers the `price` and `fee` from the buyer, sends the `fee` to the treasury,
+     *      and distributes the `price` among the seller and other participants.
+     *
+     * @param currency The ERC-20 token used for the payment.
+     * @param userAsk The seller's address.
+     * @param userBid The buyer's address.
+     * @param price The price of the order.
+     * @param participants An array of addresses for revenue sharing.
+     * @param shares An array of shares for each participant.
+     */
     function _chargePayment(
         IERC20 currency,
         address userAsk,
@@ -199,6 +242,14 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
         Distribution.safeDistribute(currency, price, _participants, _shares);
     }
 
+    /**
+     * @notice Internal function to invalidate an order.
+     *
+     * @dev Reverts with {MarketOrderInvalidated} if the order is already invalidated.
+     *
+     * @param maker The address of the order's maker.
+     * @param orderHash The hash of the order to invalidate.
+     */
     function _invalidateOrder(address maker, bytes32 orderHash) internal {
         MarketStorage.Layout storage $ = MarketStorage.layout();
 
@@ -209,6 +260,18 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
         $.orderInvalidated[maker][orderHash] = true;
     }
 
+    /**
+     * @notice Internal function to verify an order's authorization.
+     *
+     * @dev It checks the time validity of the order and recovers the signer's address from the
+     *      signature to ensure it matches the `maker`.
+     *
+     * @param orderHash The hash of the order.
+     * @param maker The address of the order's maker.
+     * @param startTime The start time of the order's validity.
+     * @param endTime The end time of the order's validity.
+     * @param orderSignature The EIP-712 signature of the order.
+     */
     function _requireAuthorizedOrder(
         bytes32 orderHash,
         address maker,
