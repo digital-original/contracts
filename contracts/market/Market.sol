@@ -172,8 +172,11 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
         invalidated = $.orderInvalidated[maker][orderHash];
     }
 
+    /**
+     * @dev This function is used to calculate the fee for a bid.
+     * Currently, the fee is always 0, but this function is kept for future use.
+     */
     function bidFee(uint256 /* price */) public pure returns (uint256 fee) {
-        // TODO: implement fee calculation or explain why it's not implemented
         fee = 0;
     }
 

@@ -4,10 +4,8 @@ pragma solidity ^0.8.20;
 /**
  * @title RoleSystemStorage
  *
- * @notice Defines the unstructured storage layout for {RoleSystem}. Using a
- *         dedicated storage slot allows the role system to be used behind
- *         proxies and composed with other modules without risk of slot
- *         collisions.
+ * @notice Defines the storage layout for {RoleSystem}. Using a deterministic slot
+ * makes the module safe for use behind proxies and alongside other upgradeable components.
  */
 library RoleSystemStorage {
     /// @dev Unique storage slot for the layout, computed using EIP-7201 convention.
@@ -23,9 +21,9 @@ library RoleSystemStorage {
     }
 
     /**
-     * @notice Returns a pointer to the pre-allocated storage layout.
+     * @notice Returns a pointer to the storage layout.
      *
-     * @return $ Storage struct with role mappings.
+     * @return $ The pointer to the Layout struct in storage.
      */
     function layout() internal pure returns (Layout storage $) {
         bytes32 slot = STORAGE_SLOT;
