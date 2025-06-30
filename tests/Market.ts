@@ -1,15 +1,12 @@
 import { expect } from 'chai';
 import { Signer, MaxInt256, randomBytes } from 'ethers';
 import { ArtToken, Market, USDC } from '../typechain-types';
-import {
-    AskOrder,
-    BidOrder,
-    OrderExecutionPermit,
-} from '../typechain-types/contracts/market/IMarket';
+import { Order, ExecutionPermit } from '../typechain-types/contracts/market/Market';
 import { BuyPermitStruct } from '../types/art-token';
 import { TOTAL_SHARE } from './constants/distribution';
 import { TOKEN_ID, TOKEN_URI } from './constants/art-token';
 import { MIN_FEE, MIN_PRICE } from './constants/min-price-and-fee';
+import { PRICE, ASK_SIDE_FEE, BID_SIDE_FEE, ASK_SIDE, BID_SIDE } from './constants/market';
 import { HOUR } from './constants/time';
 import { getSigners } from './utils/get-signers';
 import { getLatestBlockTimestamp } from './utils/get-latest-block-timestamp';
@@ -61,6 +58,10 @@ describe('Market', function () {
     });
 
     describe(`method 'executeAsk'`, () => {
+        /**
+         * MAKER is ASK_SIDE
+         * TAKER is BID_SIDE
+         */
         beforeEach(async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
@@ -92,31 +93,32 @@ describe('Market', function () {
         it(`should execute the order`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
-            const price = MIN_PRICE;
-            const fee = await market.bidFee(price);
+            const askSideReward = PRICE - ASK_SIDE_FEE;
+            const institutionReward = PRICE - askSideReward - 100n;
+            const platformReward = PRICE - askSideReward - institutionReward;
 
-            const makerShare = TOTAL_SHARE / 2n; // 50%
-            const institutionShare = (TOTAL_SHARE / 5n) * 2n; // 40%
-            const platformShare = TOTAL_SHARE / 10n; // 10%
-
-            const order: AskOrder.TypeStruct = {
+            const order: Order.TypeStruct = {
+                side: ASK_SIDE,
                 collection: artTokenAddr,
                 currency: usdcAddr,
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price,
-                makerShare,
+                price: PRICE,
+                makerFee: ASK_SIDE_FEE,
                 startTime: latestBlockTimestamp,
                 endTime: latestBlockTimestamp + HOUR,
             };
 
-            const permit: OrderExecutionPermit.TypeStruct = {
+            const orderHash = MarketUtils.hashOrder(order);
+
+            const permit: ExecutionPermit.TypeStruct = {
+                orderHash,
+                taker: takerAddr,
+                takerFee: BID_SIDE_FEE,
                 participants: [institutionAddr, financierAddr],
-                shares: [institutionShare, platformShare],
+                rewards: [institutionReward, platformReward],
                 deadline: latestBlockTimestamp + HOUR,
             };
-
-            const orderHash = MarketUtils.hashAskOrder(order);
 
             const tx = await MarketUtils.executeAsk({
                 market,
@@ -129,23 +131,23 @@ describe('Market', function () {
 
             await expect(tx)
                 .to.be.emit(usdc, 'Transfer')
-                .withArgs(takerAddr, marketAddr, price + fee);
+                .withArgs(takerAddr, marketAddr, PRICE + BID_SIDE_FEE);
 
             await expect(tx)
                 .to.be.emit(usdc, 'Transfer') //
-                .withArgs(marketAddr, financierAddr, fee);
+                .withArgs(marketAddr, financierAddr, BID_SIDE_FEE);
 
             await expect(tx)
                 .to.be.emit(usdc, 'Transfer')
-                .withArgs(marketAddr, makerAddr, (price * makerShare) / TOTAL_SHARE);
+                .withArgs(marketAddr, makerAddr, askSideReward);
 
             await expect(tx)
                 .to.be.emit(usdc, 'Transfer')
-                .withArgs(marketAddr, institutionAddr, (price * institutionShare) / TOTAL_SHARE);
+                .withArgs(marketAddr, institutionAddr, institutionReward);
 
             await expect(tx)
                 .to.be.emit(usdc, 'Transfer')
-                .withArgs(marketAddr, financierAddr, (price * platformShare) / TOTAL_SHARE);
+                .withArgs(marketAddr, financierAddr, platformReward);
 
             await expect(tx)
                 .to.be.emit(artToken, 'Transfer') //
@@ -153,58 +155,9 @@ describe('Market', function () {
 
             await expect(tx)
                 .to.be.emit(market, 'AskOrderExecuted')
-                .withArgs(orderHash, artTokenAddr, usdcAddr, makerAddr, takerAddr, price, TOKEN_ID);
+                .withArgs(orderHash, artTokenAddr, usdcAddr, makerAddr, takerAddr, TOKEN_ID, PRICE);
 
             await expect(market.orderInvalidated(maker, orderHash)).to.eventually.equal(true);
-        });
-
-        it(`should send the remaining share to the maker`, async () => {
-            const latestBlockTimestamp = await getLatestBlockTimestamp();
-
-            const price = MIN_PRICE;
-
-            const makerShare = 0n;
-            const institutionShare = (TOTAL_SHARE / 5n) * 2n;
-            const platformShare = TOTAL_SHARE / 10n;
-            const remainingShare = TOTAL_SHARE - institutionShare - platformShare;
-
-            const order: AskOrder.TypeStruct = {
-                collection: artTokenAddr,
-                currency: usdcAddr,
-                maker: makerAddr,
-                tokenId: TOKEN_ID,
-                price,
-                makerShare,
-                startTime: latestBlockTimestamp,
-                endTime: latestBlockTimestamp + HOUR,
-            };
-
-            const permit: OrderExecutionPermit.TypeStruct = {
-                participants: [institutionAddr, financierAddr],
-                shares: [institutionShare, platformShare],
-                deadline: latestBlockTimestamp + HOUR,
-            };
-
-            const tx = await MarketUtils.executeAsk({
-                market,
-                order,
-                permit,
-                orderSigner: maker,
-                permitSigner: marketSigner,
-                sender: taker,
-            });
-
-            await expect(tx)
-                .to.be.emit(usdc, 'Transfer')
-                .withArgs(marketAddr, makerAddr, (price * remainingShare) / TOTAL_SHARE);
-
-            await expect(tx)
-                .to.be.emit(usdc, 'Transfer')
-                .withArgs(marketAddr, institutionAddr, (price * institutionShare) / TOTAL_SHARE);
-
-            await expect(tx)
-                .to.be.emit(usdc, 'Transfer')
-                .withArgs(marketAddr, financierAddr, (price * platformShare) / TOTAL_SHARE);
         });
 
         it(`should fail if the order start time is greater than the current time`, async () => {
@@ -213,20 +166,24 @@ describe('Market', function () {
             const startTime = latestBlockTimestamp + HOUR * 2;
             const endTime = latestBlockTimestamp + HOUR * 10;
 
-            const order: AskOrder.TypeStruct = {
+            const order: Order.TypeStruct = {
+                side: ASK_SIDE,
                 collection: artTokenAddr,
                 currency: usdcAddr,
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: MIN_PRICE,
-                makerShare: TOTAL_SHARE / 2n,
+                price: PRICE,
+                makerFee: ASK_SIDE_FEE,
                 startTime,
                 endTime,
             };
 
-            const permit: OrderExecutionPermit.TypeStruct = {
+            const permit: ExecutionPermit.TypeStruct = {
+                orderHash: MarketUtils.hashOrder(order),
+                taker: takerAddr,
+                takerFee: BID_SIDE_FEE,
                 participants: [institutionAddr],
-                shares: [TOTAL_SHARE / 2n],
+                rewards: [ASK_SIDE_FEE],
                 deadline: latestBlockTimestamp + HOUR,
             };
 
@@ -248,20 +205,24 @@ describe('Market', function () {
             const startTime = latestBlockTimestamp - HOUR * 3;
             const endTime = latestBlockTimestamp - HOUR;
 
-            const order: AskOrder.TypeStruct = {
+            const order: Order.TypeStruct = {
+                side: ASK_SIDE,
                 collection: artTokenAddr,
                 currency: usdcAddr,
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: MIN_PRICE,
-                makerShare: TOTAL_SHARE / 2n,
+                price: PRICE,
+                makerFee: ASK_SIDE_FEE,
                 startTime,
                 endTime,
             };
 
-            const permit: OrderExecutionPermit.TypeStruct = {
+            const permit: ExecutionPermit.TypeStruct = {
+                orderHash: MarketUtils.hashOrder(order),
+                taker: takerAddr,
+                takerFee: BID_SIDE_FEE,
                 participants: [institutionAddr],
-                shares: [TOTAL_SHARE / 2n],
+                rewards: [ASK_SIDE_FEE],
                 deadline: latestBlockTimestamp + HOUR,
             };
 
@@ -280,20 +241,24 @@ describe('Market', function () {
         it(`should fail if the order signer is not the maker`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
-            const order: AskOrder.TypeStruct = {
+            const order: Order.TypeStruct = {
+                side: ASK_SIDE,
                 collection: artTokenAddr,
                 currency: usdcAddr,
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: MIN_PRICE,
-                makerShare: TOTAL_SHARE / 2n,
+                price: PRICE,
+                makerFee: ASK_SIDE_FEE,
                 startTime: latestBlockTimestamp,
                 endTime: latestBlockTimestamp + HOUR,
             };
 
-            const permit: OrderExecutionPermit.TypeStruct = {
+            const permit: ExecutionPermit.TypeStruct = {
+                orderHash: MarketUtils.hashOrder(order),
+                taker: takerAddr,
+                takerFee: BID_SIDE_FEE,
                 participants: [institutionAddr],
-                shares: [TOTAL_SHARE / 2n],
+                rewards: [ASK_SIDE_FEE],
                 deadline: latestBlockTimestamp + HOUR,
             };
 
@@ -312,54 +277,60 @@ describe('Market', function () {
         it(`should fail if the permit order hash and the order hash do not match`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
-            const order: AskOrder.TypeStruct = {
+            const order: Order.TypeStruct = {
+                side: ASK_SIDE,
                 collection: artTokenAddr,
                 currency: usdcAddr,
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: MIN_PRICE,
-                makerShare: TOTAL_SHARE / 2n,
+                price: PRICE,
+                makerFee: ASK_SIDE_FEE,
                 startTime: latestBlockTimestamp,
                 endTime: latestBlockTimestamp + HOUR,
             };
 
-            const permit: OrderExecutionPermit.TypeStruct = {
+            const permit: ExecutionPermit.TypeStruct = {
+                orderHash: randomBytes(32),
+                taker: takerAddr,
+                takerFee: BID_SIDE_FEE,
                 participants: [institutionAddr],
-                shares: [TOTAL_SHARE / 2n],
+                rewards: [ASK_SIDE_FEE],
                 deadline: latestBlockTimestamp + HOUR,
             };
-
-            const orderHash = MarketUtils.hashAskOrder({ ...order, tokenId: 0 });
 
             const tx = MarketUtils.executeAsk({
                 market,
                 order,
-                permit: { ...permit, orderHash },
+                permit,
                 orderSigner: maker,
                 permitSigner: marketSigner,
                 sender: taker,
             });
 
-            await expect(tx).to.eventually.rejectedWith('AuthorizationUnauthorizedAction');
+            await expect(tx).to.eventually.rejectedWith('MarketInvalidOrderHash');
         });
 
         it(`should fail if the permit signer is not the market signer`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
-            const order: AskOrder.TypeStruct = {
+            const order: Order.TypeStruct = {
+                side: ASK_SIDE,
                 collection: artTokenAddr,
                 currency: usdcAddr,
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: MIN_PRICE,
-                makerShare: TOTAL_SHARE / 2n,
+                price: PRICE,
+                makerFee: ASK_SIDE_FEE,
                 startTime: latestBlockTimestamp,
                 endTime: latestBlockTimestamp + HOUR,
             };
 
-            const permit: OrderExecutionPermit.TypeStruct = {
+            const permit: ExecutionPermit.TypeStruct = {
+                orderHash: MarketUtils.hashOrder(order),
+                taker: takerAddr,
+                takerFee: BID_SIDE_FEE,
                 participants: [institutionAddr],
-                shares: [TOTAL_SHARE / 2n],
+                rewards: [ASK_SIDE_FEE],
                 deadline: latestBlockTimestamp + HOUR,
             };
 
@@ -378,24 +349,28 @@ describe('Market', function () {
         it(`should fail if the order is invalidated`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
-            const order: AskOrder.TypeStruct = {
+            const order: Order.TypeStruct = {
+                side: ASK_SIDE,
                 collection: artTokenAddr,
                 currency: usdcAddr,
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: MIN_PRICE,
-                makerShare: TOTAL_SHARE / 2n,
+                price: PRICE,
+                makerFee: ASK_SIDE_FEE,
                 startTime: latestBlockTimestamp,
                 endTime: latestBlockTimestamp + HOUR,
             };
 
-            const permit: OrderExecutionPermit.TypeStruct = {
+            const orderHash = MarketUtils.hashOrder(order);
+
+            const permit: ExecutionPermit.TypeStruct = {
+                orderHash,
+                taker: takerAddr,
+                takerFee: BID_SIDE_FEE,
                 participants: [institutionAddr],
-                shares: [TOTAL_SHARE / 2n],
+                rewards: [ASK_SIDE_FEE],
                 deadline: latestBlockTimestamp + HOUR,
             };
-
-            const orderHash = MarketUtils.hashAskOrder(order);
 
             await market.connect(maker).invalidateOrder(makerAddr, orderHash);
 
@@ -410,45 +385,13 @@ describe('Market', function () {
 
             await expect(tx).to.eventually.rejectedWith('MarketOrderInvalidated');
         });
-
-        it(`should fail if the remaining share is lower than the maker share`, async () => {
-            const latestBlockTimestamp = await getLatestBlockTimestamp();
-
-            const makerShare = TOTAL_SHARE / 2n; // 50%
-            const institutionShare = (TOTAL_SHARE / 5n) * 2n; // 40%
-            const platformShare = TOTAL_SHARE / 5n; // 20%
-
-            const order: AskOrder.TypeStruct = {
-                collection: artTokenAddr,
-                currency: usdcAddr,
-                maker: makerAddr,
-                tokenId: TOKEN_ID,
-                price: MIN_PRICE,
-                makerShare,
-                startTime: latestBlockTimestamp,
-                endTime: latestBlockTimestamp + HOUR,
-            };
-
-            const permit: OrderExecutionPermit.TypeStruct = {
-                participants: [institutionAddr, financierAddr],
-                shares: [institutionShare, platformShare],
-                deadline: latestBlockTimestamp + HOUR,
-            };
-
-            const tx = MarketUtils.executeAsk({
-                market,
-                order,
-                permit,
-                orderSigner: maker,
-                permitSigner: marketSigner,
-                sender: taker,
-            });
-
-            await expect(tx).to.eventually.rejectedWith('MarketRemainingShareTooLow');
-        });
     });
 
     describe(`method 'executeBid'`, () => {
+        /**
+         * MAKER is BID_SIDE
+         * TAKER is ASK_SIDE
+         */
         beforeEach(async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
@@ -480,29 +423,30 @@ describe('Market', function () {
         it(`should execute the order`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
-            const price = MIN_PRICE;
-            const makerFee = await market.bidFee(price);
+            const askSideReward = PRICE - ASK_SIDE_FEE;
+            const institutionReward = PRICE - askSideReward - 100n;
+            const platformReward = PRICE - askSideReward - institutionReward;
 
-            const makerShare = TOTAL_SHARE / 2n; // 50%
-            const institutionShare = (TOTAL_SHARE / 5n) * 2n; // 40%
-            const platformShare = TOTAL_SHARE / 10n; // 10%
-
-            const order: BidOrder.TypeStruct = {
+            const order: Order.TypeStruct = {
+                side: BID_SIDE,
                 collection: artTokenAddr,
                 currency: usdcAddr,
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price,
-                makerFee,
+                price: PRICE,
+                makerFee: BID_SIDE_FEE,
                 startTime: latestBlockTimestamp,
                 endTime: latestBlockTimestamp + HOUR,
             };
 
-            const orderHash = MarketUtils.hashBidOrder(order);
+            const orderHash = MarketUtils.hashOrder(order);
 
-            const permit: OrderExecutionPermit.TypeStruct = {
+            const permit: ExecutionPermit.TypeStruct = {
+                orderHash,
+                taker: takerAddr,
+                takerFee: ASK_SIDE_FEE,
                 participants: [institutionAddr, financierAddr],
-                shares: [institutionShare, platformShare],
+                rewards: [institutionReward, platformReward],
                 deadline: latestBlockTimestamp + HOUR,
             };
 
@@ -517,23 +461,23 @@ describe('Market', function () {
 
             await expect(tx)
                 .to.be.emit(usdc, 'Transfer')
-                .withArgs(makerAddr, marketAddr, price + makerFee);
+                .withArgs(makerAddr, marketAddr, PRICE + BID_SIDE_FEE);
 
             await expect(tx)
                 .to.be.emit(usdc, 'Transfer') //
-                .withArgs(marketAddr, financierAddr, makerFee);
+                .withArgs(marketAddr, financierAddr, BID_SIDE_FEE);
 
             await expect(tx)
                 .to.be.emit(usdc, 'Transfer')
-                .withArgs(marketAddr, takerAddr, (price * makerShare) / TOTAL_SHARE);
+                .withArgs(marketAddr, takerAddr, askSideReward);
 
             await expect(tx)
                 .to.be.emit(usdc, 'Transfer')
-                .withArgs(marketAddr, institutionAddr, (price * institutionShare) / TOTAL_SHARE);
+                .withArgs(marketAddr, institutionAddr, institutionReward);
 
             await expect(tx)
                 .to.be.emit(usdc, 'Transfer')
-                .withArgs(marketAddr, financierAddr, (price * platformShare) / TOTAL_SHARE);
+                .withArgs(marketAddr, financierAddr, platformReward);
 
             await expect(tx)
                 .to.be.emit(artToken, 'Transfer') //
@@ -541,47 +485,9 @@ describe('Market', function () {
 
             await expect(tx)
                 .to.be.emit(market, 'BidOrderExecuted')
-                .withArgs(orderHash, artTokenAddr, usdcAddr, makerAddr, takerAddr, price, TOKEN_ID);
+                .withArgs(orderHash, artTokenAddr, usdcAddr, makerAddr, takerAddr, TOKEN_ID, PRICE);
 
             await expect(market.orderInvalidated(maker, orderHash)).to.eventually.equal(true);
-        });
-
-        it(`should charge the calculated fee to the maker`, async () => {
-            const latestBlockTimestamp = await getLatestBlockTimestamp();
-
-            const price = MIN_PRICE;
-            const makerFee = price;
-            const calculatedFee = await market.bidFee(price);
-
-            const order: BidOrder.TypeStruct = {
-                collection: artTokenAddr,
-                currency: usdcAddr,
-                maker: makerAddr,
-                tokenId: TOKEN_ID,
-                price,
-                makerFee,
-                startTime: latestBlockTimestamp,
-                endTime: latestBlockTimestamp + HOUR,
-            };
-
-            const permit: OrderExecutionPermit.TypeStruct = {
-                participants: [institutionAddr, financierAddr],
-                shares: [(TOTAL_SHARE / 5n) * 2n, TOTAL_SHARE / 10n],
-                deadline: latestBlockTimestamp + HOUR,
-            };
-
-            const tx = await MarketUtils.executeBid({
-                market,
-                order,
-                permit,
-                orderSigner: maker,
-                permitSigner: marketSigner,
-                sender: taker,
-            });
-
-            await expect(tx)
-                .to.be.emit(usdc, 'Transfer')
-                .withArgs(makerAddr, marketAddr, price + calculatedFee);
         });
 
         it(`should fail if the order start time is greater than the current time`, async () => {
@@ -590,20 +496,24 @@ describe('Market', function () {
             const startTime = latestBlockTimestamp + HOUR * 2;
             const endTime = latestBlockTimestamp + HOUR * 10;
 
-            const order: BidOrder.TypeStruct = {
+            const order: Order.TypeStruct = {
+                side: BID_SIDE,
                 collection: artTokenAddr,
                 currency: usdcAddr,
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: MIN_PRICE,
-                makerFee: await market.bidFee(MIN_PRICE),
+                price: PRICE,
+                makerFee: BID_SIDE_FEE,
                 startTime,
                 endTime,
             };
 
-            const permit: OrderExecutionPermit.TypeStruct = {
-                participants: [institutionAddr, financierAddr],
-                shares: [(TOTAL_SHARE / 5n) * 2n, TOTAL_SHARE / 10n],
+            const permit: ExecutionPermit.TypeStruct = {
+                orderHash: MarketUtils.hashOrder(order),
+                taker: takerAddr,
+                takerFee: ASK_SIDE_FEE,
+                participants: [institutionAddr],
+                rewards: [ASK_SIDE_FEE],
                 deadline: latestBlockTimestamp + HOUR,
             };
 
@@ -625,20 +535,24 @@ describe('Market', function () {
             const startTime = latestBlockTimestamp - HOUR * 3;
             const endTime = latestBlockTimestamp - HOUR;
 
-            const order: BidOrder.TypeStruct = {
+            const order: Order.TypeStruct = {
+                side: BID_SIDE,
                 collection: artTokenAddr,
                 currency: usdcAddr,
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: MIN_PRICE,
-                makerFee: await market.bidFee(MIN_PRICE),
+                price: PRICE,
+                makerFee: BID_SIDE_FEE,
                 startTime,
                 endTime,
             };
 
-            const permit: OrderExecutionPermit.TypeStruct = {
-                participants: [institutionAddr, financierAddr],
-                shares: [(TOTAL_SHARE / 5n) * 2n, TOTAL_SHARE / 10n],
+            const permit: ExecutionPermit.TypeStruct = {
+                orderHash: MarketUtils.hashOrder(order),
+                taker: takerAddr,
+                takerFee: ASK_SIDE_FEE,
+                participants: [institutionAddr],
+                rewards: [ASK_SIDE_FEE],
                 deadline: latestBlockTimestamp + HOUR,
             };
 
@@ -657,20 +571,24 @@ describe('Market', function () {
         it(`should fail if the order signer is not the maker`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
-            const order: BidOrder.TypeStruct = {
+            const order: Order.TypeStruct = {
+                side: BID_SIDE,
                 collection: artTokenAddr,
                 currency: usdcAddr,
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: MIN_PRICE,
-                makerFee: await market.bidFee(MIN_PRICE),
+                price: PRICE,
+                makerFee: BID_SIDE_FEE,
                 startTime: latestBlockTimestamp,
                 endTime: latestBlockTimestamp + HOUR,
             };
 
-            const permit: OrderExecutionPermit.TypeStruct = {
-                participants: [institutionAddr, financierAddr],
-                shares: [(TOTAL_SHARE / 5n) * 2n, TOTAL_SHARE / 10n],
+            const permit: ExecutionPermit.TypeStruct = {
+                orderHash: MarketUtils.hashOrder(order),
+                taker: takerAddr,
+                takerFee: ASK_SIDE_FEE,
+                participants: [institutionAddr],
+                rewards: [ASK_SIDE_FEE],
                 deadline: latestBlockTimestamp + HOUR,
             };
 
@@ -689,54 +607,60 @@ describe('Market', function () {
         it(`should fail if the permit order hash and the order hash do not match`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
-            const order: BidOrder.TypeStruct = {
+            const order: Order.TypeStruct = {
+                side: BID_SIDE,
                 collection: artTokenAddr,
                 currency: usdcAddr,
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: MIN_PRICE,
-                makerFee: await market.bidFee(MIN_PRICE),
+                price: PRICE,
+                makerFee: BID_SIDE_FEE,
                 startTime: latestBlockTimestamp,
                 endTime: latestBlockTimestamp + HOUR,
             };
 
-            const orderHash = MarketUtils.hashBidOrder({ ...order, tokenId: 0 });
-
-            const permit: OrderExecutionPermit.TypeStruct = {
-                participants: [institutionAddr, financierAddr],
-                shares: [(TOTAL_SHARE / 5n) * 2n, TOTAL_SHARE / 10n],
+            const permit: ExecutionPermit.TypeStruct = {
+                orderHash: randomBytes(32),
+                taker: takerAddr,
+                takerFee: ASK_SIDE_FEE,
+                participants: [institutionAddr],
+                rewards: [ASK_SIDE_FEE],
                 deadline: latestBlockTimestamp + HOUR,
             };
 
             const tx = MarketUtils.executeBid({
                 market,
                 order,
-                permit: { ...permit, orderHash },
+                permit,
                 orderSigner: maker,
                 permitSigner: marketSigner,
                 sender: taker,
             });
 
-            await expect(tx).to.eventually.rejectedWith('AuthorizationUnauthorizedAction');
+            await expect(tx).to.eventually.rejectedWith('MarketInvalidOrderHash');
         });
 
         it(`should fail if the permit signer is not the market signer`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
-            const order: BidOrder.TypeStruct = {
+            const order: Order.TypeStruct = {
+                side: BID_SIDE,
                 collection: artTokenAddr,
                 currency: usdcAddr,
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: MIN_PRICE,
-                makerFee: await market.bidFee(MIN_PRICE),
+                price: PRICE,
+                makerFee: BID_SIDE_FEE,
                 startTime: latestBlockTimestamp,
                 endTime: latestBlockTimestamp + HOUR,
             };
 
-            const permit: OrderExecutionPermit.TypeStruct = {
-                participants: [institutionAddr, financierAddr],
-                shares: [(TOTAL_SHARE / 5n) * 2n, TOTAL_SHARE / 10n],
+            const permit: ExecutionPermit.TypeStruct = {
+                orderHash: MarketUtils.hashOrder(order),
+                taker: takerAddr,
+                takerFee: ASK_SIDE_FEE,
+                participants: [institutionAddr],
+                rewards: [ASK_SIDE_FEE],
                 deadline: latestBlockTimestamp + HOUR,
             };
 
@@ -755,22 +679,26 @@ describe('Market', function () {
         it(`should fail if the order is invalidated`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
-            const order: BidOrder.TypeStruct = {
+            const order: Order.TypeStruct = {
+                side: BID_SIDE,
                 collection: artTokenAddr,
                 currency: usdcAddr,
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: MIN_PRICE,
-                makerFee: await market.bidFee(MIN_PRICE),
+                price: PRICE,
+                makerFee: BID_SIDE_FEE,
                 startTime: latestBlockTimestamp,
                 endTime: latestBlockTimestamp + HOUR,
             };
 
-            const orderHash = MarketUtils.hashBidOrder(order);
+            const orderHash = MarketUtils.hashOrder(order);
 
-            const permit: OrderExecutionPermit.TypeStruct = {
-                participants: [institutionAddr, financierAddr],
-                shares: [(TOTAL_SHARE / 5n) * 2n, TOTAL_SHARE / 10n],
+            const permit: ExecutionPermit.TypeStruct = {
+                orderHash,
+                taker: takerAddr,
+                takerFee: ASK_SIDE_FEE,
+                participants: [institutionAddr],
+                rewards: [ASK_SIDE_FEE],
                 deadline: latestBlockTimestamp + HOUR,
             };
 
@@ -786,85 +714,6 @@ describe('Market', function () {
             });
 
             await expect(tx).to.eventually.rejectedWith('MarketOrderInvalidated');
-        });
-
-        it.skip(`should fail if the calculated fee is greater than the maker fee`, async () => {
-            /**
-             * @dev This testcase checks the bid fee logic. Currently, the fee is always 0, so the
-             *      test is skipped, but it is kept for future use.
-             */
-
-            const latestBlockTimestamp = await getLatestBlockTimestamp();
-
-            const price = MIN_PRICE;
-            const makerFee = (await market.bidFee(price)) - 1n;
-
-            const order: BidOrder.TypeStruct = {
-                collection: artTokenAddr,
-                currency: usdcAddr,
-                maker: makerAddr,
-                tokenId: TOKEN_ID,
-                price,
-                makerFee,
-                startTime: latestBlockTimestamp,
-                endTime: latestBlockTimestamp + HOUR,
-            };
-
-            const permit: OrderExecutionPermit.TypeStruct = {
-                participants: [institutionAddr, financierAddr],
-                shares: [(TOTAL_SHARE / 5n) * 2n, TOTAL_SHARE / 10n],
-                deadline: latestBlockTimestamp + HOUR,
-            };
-
-            const tx = MarketUtils.executeBid({
-                market,
-                order,
-                permit,
-                orderSigner: maker,
-                permitSigner: marketSigner,
-                sender: taker,
-            });
-
-            await expect(tx).to.eventually.rejectedWith('MarketBidFeeTooHigh');
-        });
-    });
-
-    describe(`method 'bidFee'`, () => {
-        it.skip(`should calculate fee correctly`, async () => {
-            /**
-             * @dev This testcase checks the bid fee logic. Currently, the fee is always 0, so the
-             *      test is skipped, but it is kept for future use.
-             */
-
-            // price <= 100K USDC; fee = 5%
-            const price1 = 100_000_000n;
-            const fee1 = (price1 * 500n) / 10_000n;
-            const price2 = 100_000_000_000n;
-            const fee2 = (price2 * 500n) / 10_000n;
-            // price <= 500K USDC; fee = 4%
-            const price3 = price2 + 1n;
-            const fee3 = (price3 * 400n) / 10_000n;
-            const price4 = 500_000_000_000n;
-            const fee4 = (price4 * 400n) / 10_000n;
-            // price <= 5M USDC; fee = 3%
-            const price5 = price4 + 1n;
-            const fee5 = (price5 * 300n) / 10_000n;
-            const price6 = 5_000_000_000_000n;
-            const fee6 = (price6 * 300n) / 10_000n;
-            // price > 5M USDC; fee = 2%
-            const price7 = price6 + 1n;
-            const fee7 = (price7 * 200n) / 10_000n;
-            const price8 = price6 * 10n;
-            const fee8 = (price8 * 200n) / 10_000n;
-
-            await expect(market.bidFee(price1)).to.eventually.equal(fee1);
-            await expect(market.bidFee(price2)).to.eventually.equal(fee2);
-            await expect(market.bidFee(price3)).to.eventually.equal(fee3);
-            await expect(market.bidFee(price4)).to.eventually.equal(fee4);
-            await expect(market.bidFee(price5)).to.eventually.equal(fee5);
-            await expect(market.bidFee(price6)).to.eventually.equal(fee6);
-            await expect(market.bidFee(price7)).to.eventually.equal(fee7);
-            await expect(market.bidFee(price8)).to.eventually.equal(fee8);
         });
     });
 

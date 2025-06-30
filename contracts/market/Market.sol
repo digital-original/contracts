@@ -10,13 +10,11 @@ import {RoleSystem} from "../utils/role-system/RoleSystem.sol";
 import {CurrencyManager} from "../utils/currency-manager/CurrencyManager.sol";
 import {Roles} from "../utils/Roles.sol";
 import {Authorization} from "../utils/Authorization.sol";
-import {Distribution} from "../utils/Distribution.sol";
-import {Array} from "../utils/Array.sol";
+import {SafeERC20BulkTransfer} from "../utils/SafeERC20BulkTransfer.sol";
 import {MarketStorage} from "./MarketStorage.sol";
 import {IMarket} from "./IMarket.sol";
-import {AskOrder} from "./libraries/AskOrder.sol";
-import {BidOrder} from "./libraries/BidOrder.sol";
-import {OrderExecutionPermit} from "./libraries/OrderExecutionPermit.sol";
+import {Order} from "./libraries/Order.sol";
+import {ExecutionPermit} from "./libraries/ExecutionPermit.sol";
 
 /**
  * @title Market
@@ -26,10 +24,8 @@ import {OrderExecutionPermit} from "./libraries/OrderExecutionPermit.sol";
  *         which are authorized via EIP-712 signatures.
  */
 contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authorization {
-    using SafeERC20 for IERC20;
-    using AskOrder for AskOrder.Type;
-    using BidOrder for BidOrder.Type;
-    using OrderExecutionPermit for OrderExecutionPermit.Type;
+    using Order for Order.Type;
+    using ExecutionPermit for ExecutionPermit.Type;
 
     /**
      * @notice Contract constructor.
@@ -43,69 +39,71 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
      * @inheritdoc IMarket
      *
      * @dev Flow:
-     *   1. Validates the order currency, share distribution, signatures, and time range.
+     *   1. Validates the order side, taker, currency, signatures, and time range.
      *   2. Invalidates the order to prevent replay attacks.
-     *   3. Transfers the token from the seller to the buyer.
-     *   4. Transfers the payment from the buyer, splits the revenue, and sends the fee to the
-     *      treasury.
+     *   3. Distributes the payment and fees.
+     *   4. Transfers the token from the seller to the buyer.
      *   5. Emits {AskOrderExecuted}.
      */
     function executeAsk(
-        AskOrder.Type calldata order,
-        OrderExecutionPermit.Type calldata permit,
+        Order.Type calldata order,
+        ExecutionPermit.Type calldata permit,
         bytes calldata orderSignature,
         bytes calldata permitSignature
     ) external {
+        if (order.side != Order.Side.ASK) {
+            revert MarketInvalidOrderSide();
+        }
+
+        if (permit.orderHash != order.hash()) {
+            revert MarketInvalidOrderHash();
+        }
+
+        if (order.makerFee >= order.price) {
+            revert MarketInvalidAskSideFee();
+        }
+
+        if (permit.taker != msg.sender) {
+            revert MarketUnauthorizedAccount();
+        }
+
         if (!currencyAllowed(order.currency)) {
             revert MarketCurrencyInvalid();
         }
 
-        if (order.makerShare > Distribution.remainingShare(permit.shares)) {
-            revert MarketRemainingShareTooLow();
-        }
-
-        bytes32 orderHash = order.hash();
         address maker = order.maker;
 
-        _requireAuthorizedOrder(
-            orderHash,
-            maker,
-            order.startTime,
-            order.endTime,
-            orderSignature //
-        );
+        _requireAuthorizedOrder(permit.orderHash, maker, order.startTime, order.endTime, orderSignature);
 
-        _requireAuthorizedAction(
-            permit.hash(orderHash),
-            permit.deadline,
-            permitSignature //
-        );
+        _requireAuthorizedAction(permit.hash(), permit.deadline, permitSignature);
 
-        _invalidateOrder(maker, orderHash);
+        _invalidateOrder(maker, permit.orderHash);
 
-        _chargePayment(
+        _distribute(
             IERC20(order.currency),
-            maker, // userAsk
-            msg.sender, // userBid
+            maker, // askSide - maker
+            msg.sender, // bidSide - taker
             order.price,
+            order.makerFee, // askSideFee
+            permit.takerFee, // bidSideFee
             permit.participants,
-            permit.shares
+            permit.rewards
         );
 
         IERC721(order.collection).safeTransferFrom(
-            maker, // from userAsk
-            msg.sender, // to userBid
+            maker, // from askSide - maker
+            msg.sender, // to bidSide - taker
             order.tokenId
         );
 
         emit AskOrderExecuted(
-            orderHash,
+            permit.orderHash,
             order.collection,
             order.currency,
             maker,
             msg.sender,
-            order.price,
-            order.tokenId
+            order.tokenId,
+            order.price
         );
     }
 
@@ -113,69 +111,71 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
      * @inheritdoc IMarket
      *
      * @dev Flow:
-     *   1. Validates the order currency, fee, signatures, and time range.
+     *   1. Validates the order side, taker, currency, signatures, and time range.
      *   2. Invalidates the order to prevent replay attacks.
-     *   3. Transfers the token from the seller to the buyer.
-     *   4. Transfers the payment from the buyer, splits the revenue, and sends the fee to the
-     *      treasury.
+     *   3. Distributes the payment and fees.
+     *   4. Transfers the token from the seller to the buyer.
      *   5. Emits {BidOrderExecuted}.
      */
     function executeBid(
-        BidOrder.Type calldata order,
-        OrderExecutionPermit.Type calldata permit,
+        Order.Type calldata order,
+        ExecutionPermit.Type calldata permit,
         bytes calldata orderSignature,
         bytes calldata permitSignature
     ) external {
+        if (order.side != Order.Side.BID) {
+            revert MarketInvalidOrderSide();
+        }
+
+        if (permit.orderHash != order.hash()) {
+            revert MarketInvalidOrderHash();
+        }
+
+        if (permit.takerFee >= order.price) {
+            revert MarketInvalidAskSideFee();
+        }
+
+        if (permit.taker != msg.sender) {
+            revert MarketUnauthorizedAccount();
+        }
+
         if (!currencyAllowed(order.currency)) {
             revert MarketCurrencyInvalid();
         }
 
-        if (order.makerFee < bidFee(order.price)) {
-            revert MarketBidFeeTooHigh();
-        }
-
-        bytes32 orderHash = order.hash();
         address maker = order.maker;
 
-        _requireAuthorizedOrder(
-            orderHash,
-            maker,
-            order.startTime,
-            order.endTime,
-            orderSignature //
-        );
+        _requireAuthorizedOrder(permit.orderHash, maker, order.startTime, order.endTime, orderSignature);
 
-        _requireAuthorizedAction(
-            permit.hash(orderHash),
-            permit.deadline,
-            permitSignature //
-        );
+        _requireAuthorizedAction(permit.hash(), permit.deadline, permitSignature);
 
-        _invalidateOrder(maker, orderHash);
+        _invalidateOrder(maker, permit.orderHash);
 
-        _chargePayment(
+        _distribute(
             IERC20(order.currency),
-            msg.sender, // userAsk
-            maker, // userBid
+            msg.sender, // askSide - taker
+            maker, // bidSide - maker
             order.price,
+            permit.takerFee, // askSideFee
+            order.makerFee, // bidSideFee
             permit.participants,
-            permit.shares
+            permit.rewards
         );
 
         IERC721(order.collection).safeTransferFrom(
-            msg.sender, // from userAsk
-            order.maker, // to userBid
+            msg.sender, // from askSide - taker
+            maker, // to bidSide - maker
             order.tokenId
         );
 
         emit BidOrderExecuted(
-            orderHash,
+            permit.orderHash,
             order.collection,
             order.currency,
             maker,
             msg.sender,
-            order.price,
-            order.tokenId
+            order.tokenId,
+            order.price
         );
     }
 
@@ -202,44 +202,34 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
     }
 
     /**
-     * @inheritdoc IMarket
-     *
-     * @dev Currently, the fee is always 0, but this function is kept for future use.
-     */
-    function bidFee(uint256 /* price */) public pure returns (uint256 fee) {
-        fee = 0;
-    }
-
-    /**
-     * @notice Internal function to handle payment transfers for an order.
-     *
-     * @dev It transfers the `price` and `fee` from the buyer, sends the `fee` to the treasury,
-     *      and distributes the `price` among the seller and other participants.
+     * @notice Internal function to handle the distribution of funds for an order.
      *
      * @param currency The ERC-20 token used for the payment.
-     * @param userAsk The seller's address.
-     * @param userBid The buyer's address.
+     * @param askSide The seller's address.
+     * @param bidSide The buyer's address.
      * @param price The price of the order.
-     * @param participants An array of addresses for revenue sharing.
-     * @param shares An array of shares for each participant.
+     * @param askSideFee The fee for the ask side.
+     * @param bidSideFee The fee for the bid side.
+     * @param participants The addresses of the participants in the revenue share.
+     * @param rewards The corresponding rewards for each participant.
      */
-    function _chargePayment(
+    function _distribute(
         IERC20 currency,
-        address userAsk,
-        address userBid,
+        address askSide,
+        address bidSide,
         uint256 price,
+        uint256 askSideFee,
+        uint256 bidSideFee,
         address[] calldata participants,
-        uint256[] calldata shares
+        uint256[] calldata rewards
     ) internal {
-        uint256 fee = bidFee(price);
+        SafeERC20.safeTransferFrom(currency, bidSide, address(this), price + bidSideFee);
 
-        currency.safeTransferFrom(userBid, address(this), price + fee);
-        currency.safeTransfer(uniqueRoleOwner(Roles.FINANCIAL_ROLE), fee);
+        SafeERC20.safeTransfer(currency, askSide, price - askSideFee);
 
-        address[] memory _participants = Array.push(participants, userAsk);
-        uint256[] memory _shares = Array.push(shares, Distribution.remainingShare(shares));
+        SafeERC20.safeTransfer(currency, uniqueRoleOwner(Roles.FINANCIAL_ROLE), bidSideFee);
 
-        Distribution.safeDistribute(currency, price, _participants, _shares);
+        SafeERC20BulkTransfer.safeTransfer(currency, askSideFee, participants, rewards);
     }
 
     /**

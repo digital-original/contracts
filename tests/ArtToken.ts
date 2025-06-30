@@ -51,7 +51,7 @@ describe('ArtToken', function () {
             await usdc.connect(buyer).mintAndApprove(artToken, MaxInt256);
         });
 
-        it(`should mint the token, distribute rewards, and charge a fee`, async () => {
+        it(`should mint the token, distribute price, and charge a fee`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
             const institutionShare = (TOTAL_SHARE / 5n) * 4n; // 80%

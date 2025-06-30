@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.20;
 
-import {AskOrder} from "./libraries/AskOrder.sol";
-import {BidOrder} from "./libraries/BidOrder.sol";
-import {OrderExecutionPermit} from "./libraries/OrderExecutionPermit.sol";
+import {Order} from "./libraries/Order.sol";
+import {ExecutionPermit} from "./libraries/ExecutionPermit.sol";
 
 /**
  * @title IMarket
@@ -29,8 +28,8 @@ interface IMarket {
         address currency,
         address maker,
         address taker,
-        uint256 price,
-        uint256 tokenId
+        uint256 tokenId,
+        uint256 price
     );
 
     /**
@@ -50,8 +49,8 @@ interface IMarket {
         address currency,
         address maker,
         address taker,
-        uint256 price,
-        uint256 tokenId
+        uint256 tokenId,
+        uint256 price
     );
 
     /**
@@ -60,10 +59,7 @@ interface IMarket {
      * @param maker Address of the order's maker.
      * @param orderHash The hash of the invalidated order.
      */
-    event OrderInvalidated(
-        address maker,
-        bytes32 orderHash //
-    );
+    event OrderInvalidated(address maker, bytes32 orderHash);
 
     /**
      * @notice Executes a sell-side order (ask).
@@ -71,14 +67,15 @@ interface IMarket {
      * @dev The `order` must be signed by the `maker` (seller), and the `permit` must be signed by
      *      the market signer. The `msg.sender` is the `taker` (buyer).
      *
-     * @param order The ask order to execute.
-     * @param permit The execution permit, containing revenue-sharing information.
+     * @param order The ask order to execute. See {Order.Type}.
+     * @param permit The execution permit, containing revenue-sharing information. See
+     *               {ExecutionPermit.Type}.
      * @param orderSignature The EIP-712 signature of the `order`, signed by the `maker`.
      * @param permitSignature The EIP-712 signature of the `permit`, signed by the market signer.
      */
     function executeAsk(
-        AskOrder.Type calldata order,
-        OrderExecutionPermit.Type calldata permit,
+        Order.Type calldata order,
+        ExecutionPermit.Type calldata permit,
         bytes calldata orderSignature,
         bytes calldata permitSignature
     ) external;
@@ -89,14 +86,15 @@ interface IMarket {
      * @dev The `order` must be signed by the `maker` (buyer), and the `permit` must be signed by
      *      the market signer. The `msg.sender` is the `taker` (seller).
      *
-     * @param order The bid order to execute.
-     * @param permit The execution permit, containing revenue-sharing information.
+     * @param order The bid order to execute. See {Order.Type}.
+     * @param permit The execution permit, containing revenue-sharing information. See
+     *               {ExecutionPermit.Type}.
      * @param orderSignature The EIP-712 signature of the `order`, signed by the `maker`.
      * @param permitSignature The EIP-712 signature of the `permit`, signed by the market signer.
      */
     function executeBid(
-        BidOrder.Type calldata order,
-        OrderExecutionPermit.Type calldata permit,
+        Order.Type calldata order,
+        ExecutionPermit.Type calldata permit,
         bytes calldata orderSignature,
         bytes calldata permitSignature
     ) external;
@@ -121,17 +119,14 @@ interface IMarket {
      */
     function orderInvalidated(address maker, bytes32 orderHash) external view returns (bool invalidated);
 
-    /**
-     * @notice Calculates the fee for a bid at a given price.
-     *
-     * @param price The price of the order.
-     *
-     * @return fee The calculated fee.
-     */
-    function bidFee(uint256 price) external view returns (uint256 fee);
-
     /// @dev Thrown when an order signature is not from the specified `maker`.
     error MarketUnauthorizedOrder();
+
+    /// @dev Thrown when an order is executed with an invalid side.
+    error MarketInvalidOrderSide();
+
+    /// @dev Thrown when an order hash is invalid.
+    error MarketInvalidOrderHash();
 
     /// @dev Thrown when an action is attempted by an unauthorized account.
     error MarketUnauthorizedAccount();
@@ -139,17 +134,14 @@ interface IMarket {
     /// @dev Thrown when an order is executed outside of its `startTime` and `endTime`.
     error MarketOrderOutsideOfTimeRange();
 
-    /// @dev Thrown when the `makerShare` is greater than the remaining share after distribution.
-    error MarketRemainingShareTooLow();
-
-    /// @dev Thrown when the `makerFee` in a bid is less than the required fee.
-    error MarketBidFeeTooHigh();
-
     /// @dev Thrown when the specified `currency` is not supported.
     error MarketCurrencyInvalid();
 
     /// @dev Thrown when an attempt is made to execute an invalidated order.
     error MarketOrderInvalidated(bytes32 orderHash);
+
+    /// @dev Thrown when an ask side fee is invalid.
+    error MarketInvalidAskSideFee();
 
     /// @dev Thrown when a constructor argument at `argIndex` is invalid.
     error MarketMisconfiguration(uint256 argIndex);

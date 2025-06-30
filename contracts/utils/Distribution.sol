@@ -8,9 +8,9 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 /**
  * @title Distribution
  *
- * @notice Library for deterministic ERC-20 reward splitting.
+ * @notice Library for deterministic ERC-20 amount splitting.
  *
- * @dev Provides helpers to safely distribute `reward` among `participants` given a
+ * @dev Provides helpers to safely distribute `amount` among `participants` given a
  *      {TOTAL_SHARE}-denominated `shares` array (10,000 — i.e. basis points).
  */
 library Distribution {
@@ -22,50 +22,49 @@ library Distribution {
     uint256 internal constant TOTAL_SHARE = 10_000;
 
     /**
-     * @notice Performs a validation pass and then distributes `reward` between `participants`
+     * @notice Performs a validation pass and then distributes `amount` between `participants`
      *         according to `shares`.
      *
      * @dev Reverts with one of the custom errors declared at the bottom of the contract if
-     *      validation fails. Uses {SafeERC20.safeTransfer} to guard against non-standard
-     *      ERC-20s.
+     *      validation fails. Uses {SafeERC20.safeTransfer} to guard against non-standard ERC-20s.
      *
      * @param currency ERC20 currency address.
-     * @param reward Amount to distribute.
-     * @param participants Addresses that will receive a portion of `reward`.
+     * @param amount Amount to distribute.
+     * @param participants Addresses that will receive a portion of `amount`.
      * @param shares Shares (in basis points) assigned to each participant.
      */
     function safeDistribute(
         IERC20 currency,
-        uint256 reward,
+        uint256 amount,
         address[] memory participants,
         uint256[] memory shares
     ) internal {
         requireValidConditions(participants, shares);
-        distribute(currency, reward, participants, shares);
+        distribute(currency, amount, participants, shares);
     }
 
     /**
-     * @notice Distributes `reward` between `participants` according to `shares`.
+     * @notice Distributes `amount` between `participants` according to `shares`.
      *
      * @dev Performs **no** parameter validation — callers MUST ensure that {requireValidConditions}
      *      has been invoked prior to calling this function.
      *
      * @param currency ERC20 currency address.
-     * @param reward Amount to distribute.
-     * @param participants Addresses that will receive a portion of `reward`.
-     * @param shares Shares (in basis points) assigned to each participant.
+     * @param amount Amount to distribute.
+     * @param participants An array of participant addresses.
+     * @param shares An array of shares (in basis points) corresponding to each participant.
      */
     function distribute(
         IERC20 currency,
-        uint256 reward,
+        uint256 amount,
         address[] memory participants,
         uint256[] memory shares
     ) internal {
-        uint256 lastShareIndex = shares.length - 1;
+        uint256 lastIndex = participants.length - 1;
         uint256 distributed = 0;
 
-        for (uint256 i = 0; i < lastShareIndex; ) {
-            uint256 value = Math.mulDiv(reward, shares[i], TOTAL_SHARE);
+        for (uint256 i = 0; i < lastIndex; ) {
+            uint256 value = Math.mulDiv(amount, shares[i], TOTAL_SHARE);
 
             distributed += value;
 
@@ -77,7 +76,7 @@ library Distribution {
         }
 
         // calculates last share out of loop not to lose wei after division
-        currency.safeTransfer(participants[lastShareIndex], reward - distributed);
+        currency.safeTransfer(participants[lastIndex], amount - distributed);
     }
 
     /**
@@ -86,65 +85,26 @@ library Distribution {
      * @dev Reverts with a custom error if:
      *      - `participants` and `shares` lengths mismatch;
      *      - Any participant is the zero address;
-     *      - Any share is zero (via {_sumShares});
-     *      - Sum of shares exceeds {TOTAL_SHARE} or is below it.
+     *      - Any share is zero;
+     *      - The sum of `shares` does not equal {TOTAL_SHARE}.
      *
-     * @param participants Array with participants address.
-     * @param shares Shares (in basis points) corresponding to each participant.
+     * @param participants An array of participant addresses.
+     * @param shares An array of shares (in basis points) corresponding to each participant.
      */
     function requireValidConditions(address[] memory participants, uint256[] memory shares) internal pure {
-        uint256 participantsLen = participants.length;
+        uint256 participantsCount = participants.length;
 
-        if (participantsLen != shares.length) {
+        if (participantsCount != shares.length) {
             revert DistributionParticipantsSharesMismatch();
         }
 
-        for (uint256 i = 0; i < participantsLen; ) {
+        uint256 sharesSum = 0;
+
+        for (uint256 i = 0; i < participantsCount; ) {
             if (participants[i] == address(0)) {
                 revert DistributionZeroAddress();
             }
 
-            unchecked {
-                i++;
-            }
-        }
-
-        uint256 sharesSum = _sumShares(shares);
-
-        if (sharesSum < TOTAL_SHARE) {
-            revert DistributionSharesSumTooLow(sharesSum);
-        }
-    }
-
-    /**
-     * @notice Calculates the unallocated share given an array of `shares`.
-     *
-     * @dev Useful for determining the last participant's share when the other shares are known
-     *      but do not yet sum to {TOTAL_SHARE}.
-     *
-     * @param shares Array containing shares expressed in basis points.
-     *
-     * @return remaining The difference between {TOTAL_SHARE} and the sum of provided `shares`.
-     */
-    function remainingShare(uint256[] calldata shares) internal pure returns (uint256 remaining) {
-        return TOTAL_SHARE - _sumShares(shares);
-    }
-
-    /**
-     * @notice Internal helper that sums the `shares` array while enforcing invariants.
-     *
-     * @dev Requirements:
-     *  - Every share must be non-zero ({DistributionZeroShare});
-     *  - Running total must not exceed {TOTAL_SHARE} ({DistributionSharesSumTooBig}).
-     *
-     * @param shares Array of shares in basis points.
-     *
-     * @return sharesSum Cumulative sum of the shares.
-     */
-    function _sumShares(uint256[] memory shares) private pure returns (uint256 sharesSum) {
-        uint256 sharesLen = shares.length;
-
-        for (uint256 i = 0; i < sharesLen; ) {
             uint256 share = shares[i];
 
             if (share == 0) {
@@ -158,25 +118,20 @@ library Distribution {
             }
         }
 
-        if (sharesSum > TOTAL_SHARE) {
-            revert DistributionSharesSumTooBig(sharesSum);
+        if (sharesSum != TOTAL_SHARE) {
+            revert DistributionSharesSumInvalid(sharesSum);
         }
     }
 
-    /**
-     * @dev Thrown when `participants.length != shares.length`.
-     */
+    /// @dev Thrown when `participants.length != shares.length`.
     error DistributionParticipantsSharesMismatch();
 
-    /// @dev Thrown when a share value of zero is encountered.
+    /// @dev Thrown when a share value is zero.
     error DistributionZeroShare();
 
-    /// @dev Thrown when a participant address is the zero address.
+    /// @dev Thrown when a participant address is zero.
     error DistributionZeroAddress();
 
-    /// @dev Thrown when `sum(shares) < TOTAL_SHARE`.
-    error DistributionSharesSumTooLow(uint256 shareSum);
-
-    /// @dev Thrown when `sum(shares) > TOTAL_SHARE`.
-    error DistributionSharesSumTooBig(uint256 shareSum);
+    /// @dev Thrown when `sum(shares) != TOTAL_SHARE`.
+    error DistributionSharesSumInvalid(uint256 sharesSum);
 }

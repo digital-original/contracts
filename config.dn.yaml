@@ -34,7 +34,7 @@ ethereum:
     minAuctionDurationHours: 12
     artToken:
         proxy: '0x9ada5D6A6192eAda21b45268Da4948e69059EA69'
-        impl: '0x10Ef1fA0FD87b07dF5Ba6e5cF9C58517175d0d7d'
+        impl: '0x1e6b581F60dd8495900701e50B48BF20630331F7'
         admin: '0xc092f522AAdB74FAE51fF38696BfdDd0E017ff0c'
     auctionHouse:
         proxy: '0x534ecf8fBb28a31851B7137B8dB96592F8E6b22C'
