@@ -18,7 +18,7 @@ import type {
     ProtocolConfig,
 } from './types/environment';
 
-dotenv.config();
+dotenv.config(); // TODO: Migrate params from `.env` to `config.env.yaml`
 
 const ENV_MODE = String(process.env.ENV_MODE);
 const COLLECTION = <'do' | 'dn'>String(process.env.COLLECTION);
