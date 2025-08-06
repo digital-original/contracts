@@ -160,6 +160,82 @@ describe('Market', function () {
             await expect(market.orderInvalidated(maker, orderHash)).to.eventually.equal(true);
         });
 
+        it(`should execute the order with zero maker fee`, async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
+
+            const order: Order.TypeStruct = {
+                side: ASK_SIDE,
+                collection: artTokenAddr,
+                currency: usdcAddr,
+                maker: makerAddr,
+                tokenId: TOKEN_ID,
+                price: PRICE,
+                makerFee: 0n, // Zero fee
+                startTime: latestBlockTimestamp,
+                endTime: latestBlockTimestamp + HOUR,
+            };
+
+            const orderHash = MarketUtils.hashOrder(order);
+
+            const permit: ExecutionPermit.TypeStruct = {
+                orderHash,
+                taker: takerAddr,
+                takerFee: BID_SIDE_FEE,
+                participants: [],
+                rewards: [],
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            const tx = await MarketUtils.executeAsk({
+                market,
+                order,
+                permit,
+                orderSigner: maker,
+                permitSigner: marketSigner,
+                sender: taker,
+            });
+
+            await expect(tx).to.be.emit(usdc, 'Transfer').withArgs(marketAddr, makerAddr, PRICE); // Full price to maker
+        });
+
+        it(`should execute the order with zero taker fee`, async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
+
+            const order: Order.TypeStruct = {
+                side: ASK_SIDE,
+                collection: artTokenAddr,
+                currency: usdcAddr,
+                maker: makerAddr,
+                tokenId: TOKEN_ID,
+                price: PRICE,
+                makerFee: ASK_SIDE_FEE,
+                startTime: latestBlockTimestamp,
+                endTime: latestBlockTimestamp + HOUR,
+            };
+
+            const orderHash = MarketUtils.hashOrder(order);
+
+            const permit: ExecutionPermit.TypeStruct = {
+                orderHash,
+                taker: takerAddr,
+                takerFee: 0n, // Zero taker fee
+                participants: [institutionAddr],
+                rewards: [ASK_SIDE_FEE],
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            const tx = await MarketUtils.executeAsk({
+                market,
+                order,
+                permit,
+                orderSigner: maker,
+                permitSigner: marketSigner,
+                sender: taker,
+            });
+
+            await expect(tx).to.be.emit(usdc, 'Transfer').withArgs(takerAddr, marketAddr, PRICE); // Only price, no fee
+        });
+
         it(`should fail if the order start time is greater than the current time`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
@@ -266,7 +342,7 @@ describe('Market', function () {
                 market,
                 order,
                 permit,
-                orderSigner: randomAccount,
+                orderSigner: randomAccount, // Wrong order signer
                 permitSigner: marketSigner,
                 sender: taker,
             });
@@ -290,7 +366,7 @@ describe('Market', function () {
             };
 
             const permit: ExecutionPermit.TypeStruct = {
-                orderHash: randomBytes(32),
+                orderHash: randomBytes(32), // Wrong order hash
                 taker: takerAddr,
                 takerFee: BID_SIDE_FEE,
                 participants: [institutionAddr],
@@ -339,7 +415,7 @@ describe('Market', function () {
                 order,
                 permit,
                 orderSigner: maker,
-                permitSigner: randomAccount,
+                permitSigner: randomAccount, // Wrong permit signer
                 sender: taker,
             });
 
@@ -384,6 +460,186 @@ describe('Market', function () {
             });
 
             await expect(tx).to.eventually.rejectedWith('MarketOrderInvalidated');
+        });
+
+        it(`should fail if the order side is not ASK`, async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
+
+            const order: Order.TypeStruct = {
+                side: BID_SIDE, // Wrong side
+                collection: artTokenAddr,
+                currency: usdcAddr,
+                maker: makerAddr,
+                tokenId: TOKEN_ID,
+                price: PRICE,
+                makerFee: ASK_SIDE_FEE,
+                startTime: latestBlockTimestamp,
+                endTime: latestBlockTimestamp + HOUR,
+            };
+
+            const permit: ExecutionPermit.TypeStruct = {
+                orderHash: MarketUtils.hashOrder(order),
+                taker: takerAddr,
+                takerFee: BID_SIDE_FEE,
+                participants: [institutionAddr],
+                rewards: [ASK_SIDE_FEE],
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            const tx = MarketUtils.executeAsk({
+                market,
+                order,
+                permit,
+                orderSigner: maker,
+                permitSigner: marketSigner,
+                sender: taker,
+            });
+
+            await expect(tx).to.eventually.rejectedWith('MarketInvalidOrderSide');
+        });
+
+        it(`should fail if the ask side fee is greater than or equal to the price`, async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
+
+            const order: Order.TypeStruct = {
+                side: ASK_SIDE,
+                collection: artTokenAddr,
+                currency: usdcAddr,
+                maker: makerAddr,
+                tokenId: TOKEN_ID,
+                price: PRICE,
+                makerFee: PRICE, // Fee equals price
+                startTime: latestBlockTimestamp,
+                endTime: latestBlockTimestamp + HOUR,
+            };
+
+            const permit: ExecutionPermit.TypeStruct = {
+                orderHash: MarketUtils.hashOrder(order),
+                taker: takerAddr,
+                takerFee: BID_SIDE_FEE,
+                participants: [institutionAddr],
+                rewards: [ASK_SIDE_FEE],
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            const tx = MarketUtils.executeAsk({
+                market,
+                order,
+                permit,
+                orderSigner: maker,
+                permitSigner: marketSigner,
+                sender: taker,
+            });
+
+            await expect(tx).to.eventually.rejectedWith('MarketInvalidAskSideFee');
+        });
+
+        it(`should fail if the currency is not allowed`, async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
+
+            const order: Order.TypeStruct = {
+                side: ASK_SIDE,
+                collection: artTokenAddr,
+                currency: randomAccountAddr, // Invalid currency
+                maker: makerAddr,
+                tokenId: TOKEN_ID,
+                price: PRICE,
+                makerFee: ASK_SIDE_FEE,
+                startTime: latestBlockTimestamp,
+                endTime: latestBlockTimestamp + HOUR,
+            };
+
+            const permit: ExecutionPermit.TypeStruct = {
+                orderHash: MarketUtils.hashOrder(order),
+                taker: takerAddr,
+                takerFee: BID_SIDE_FEE,
+                participants: [institutionAddr],
+                rewards: [ASK_SIDE_FEE],
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            const tx = MarketUtils.executeAsk({
+                market,
+                order,
+                permit,
+                orderSigner: maker,
+                permitSigner: marketSigner,
+                sender: taker,
+            });
+
+            await expect(tx).to.eventually.rejectedWith('MarketCurrencyInvalid');
+        });
+
+        it(`should fail if the permit taker is not the sender`, async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
+
+            const order: Order.TypeStruct = {
+                side: ASK_SIDE,
+                collection: artTokenAddr,
+                currency: usdcAddr,
+                maker: makerAddr,
+                tokenId: TOKEN_ID,
+                price: PRICE,
+                makerFee: ASK_SIDE_FEE,
+                startTime: latestBlockTimestamp,
+                endTime: latestBlockTimestamp + HOUR,
+            };
+
+            const permit: ExecutionPermit.TypeStruct = {
+                orderHash: MarketUtils.hashOrder(order),
+                taker: randomAccountAddr, // Different taker
+                takerFee: BID_SIDE_FEE,
+                participants: [institutionAddr],
+                rewards: [ASK_SIDE_FEE],
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            const tx = MarketUtils.executeAsk({
+                market,
+                order,
+                permit,
+                orderSigner: maker,
+                permitSigner: marketSigner,
+                sender: taker,
+            });
+
+            await expect(tx).to.eventually.rejectedWith('MarketUnauthorizedAccount');
+        });
+
+        it(`should fail if the permit deadline has expired`, async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
+
+            const order: Order.TypeStruct = {
+                side: ASK_SIDE,
+                collection: artTokenAddr,
+                currency: usdcAddr,
+                maker: makerAddr,
+                tokenId: TOKEN_ID,
+                price: PRICE,
+                makerFee: ASK_SIDE_FEE,
+                startTime: latestBlockTimestamp,
+                endTime: latestBlockTimestamp + HOUR,
+            };
+
+            const permit: ExecutionPermit.TypeStruct = {
+                orderHash: MarketUtils.hashOrder(order),
+                taker: takerAddr,
+                takerFee: BID_SIDE_FEE,
+                participants: [institutionAddr],
+                rewards: [ASK_SIDE_FEE],
+                deadline: latestBlockTimestamp - HOUR, // Expired deadline
+            };
+
+            const tx = MarketUtils.executeAsk({
+                market,
+                order,
+                permit,
+                orderSigner: maker,
+                permitSigner: marketSigner,
+                sender: taker,
+            });
+
+            await expect(tx).to.eventually.rejectedWith('AuthorizationDeadlineExpired');
         });
     });
 
@@ -490,6 +746,82 @@ describe('Market', function () {
             await expect(market.orderInvalidated(maker, orderHash)).to.eventually.equal(true);
         });
 
+        it(`should execute the order with zero maker fee`, async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
+
+            const order: Order.TypeStruct = {
+                side: BID_SIDE,
+                collection: artTokenAddr,
+                currency: usdcAddr,
+                maker: makerAddr,
+                tokenId: TOKEN_ID,
+                price: PRICE,
+                makerFee: 0n, // Zero fee
+                startTime: latestBlockTimestamp,
+                endTime: latestBlockTimestamp + HOUR,
+            };
+
+            const orderHash = MarketUtils.hashOrder(order);
+
+            const permit: ExecutionPermit.TypeStruct = {
+                orderHash,
+                taker: takerAddr,
+                takerFee: ASK_SIDE_FEE,
+                participants: [institutionAddr],
+                rewards: [ASK_SIDE_FEE],
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            const tx = await MarketUtils.executeBid({
+                market,
+                order,
+                permit,
+                orderSigner: maker,
+                permitSigner: marketSigner,
+                sender: taker,
+            });
+
+            await expect(tx).to.be.emit(usdc, 'Transfer').withArgs(makerAddr, marketAddr, PRICE); // Only price, no fee from maker
+        });
+
+        it(`should execute the order with zero taker fee`, async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
+
+            const order: Order.TypeStruct = {
+                side: BID_SIDE,
+                collection: artTokenAddr,
+                currency: usdcAddr,
+                maker: makerAddr,
+                tokenId: TOKEN_ID,
+                price: PRICE,
+                makerFee: BID_SIDE_FEE,
+                startTime: latestBlockTimestamp,
+                endTime: latestBlockTimestamp + HOUR,
+            };
+
+            const orderHash = MarketUtils.hashOrder(order);
+
+            const permit: ExecutionPermit.TypeStruct = {
+                orderHash,
+                taker: takerAddr,
+                takerFee: 0n, // Zero taker fee
+                participants: [],
+                rewards: [],
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            const tx = await MarketUtils.executeBid({
+                market,
+                order,
+                permit,
+                orderSigner: maker,
+                permitSigner: marketSigner,
+                sender: taker,
+            });
+
+            await expect(tx).to.be.emit(usdc, 'Transfer').withArgs(marketAddr, takerAddr, PRICE); // Full price to taker
+        });
+
         it(`should fail if the order start time is greater than the current time`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
@@ -596,7 +928,7 @@ describe('Market', function () {
                 market,
                 order,
                 permit,
-                orderSigner: randomAccount,
+                orderSigner: randomAccount, // Wrong order signer
                 permitSigner: marketSigner,
                 sender: taker,
             });
@@ -620,7 +952,7 @@ describe('Market', function () {
             };
 
             const permit: ExecutionPermit.TypeStruct = {
-                orderHash: randomBytes(32),
+                orderHash: randomBytes(32), // Wrong order hash
                 taker: takerAddr,
                 takerFee: ASK_SIDE_FEE,
                 participants: [institutionAddr],
@@ -669,7 +1001,7 @@ describe('Market', function () {
                 order,
                 permit,
                 orderSigner: maker,
-                permitSigner: randomAccount,
+                permitSigner: randomAccount, // Wrong permit signer
                 sender: taker,
             });
 
@@ -715,6 +1047,186 @@ describe('Market', function () {
 
             await expect(tx).to.eventually.rejectedWith('MarketOrderInvalidated');
         });
+
+        it(`should fail if the order side is not BID`, async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
+
+            const order: Order.TypeStruct = {
+                side: ASK_SIDE, // Wrong side
+                collection: artTokenAddr,
+                currency: usdcAddr,
+                maker: makerAddr,
+                tokenId: TOKEN_ID,
+                price: PRICE,
+                makerFee: BID_SIDE_FEE,
+                startTime: latestBlockTimestamp,
+                endTime: latestBlockTimestamp + HOUR,
+            };
+
+            const permit: ExecutionPermit.TypeStruct = {
+                orderHash: MarketUtils.hashOrder(order),
+                taker: takerAddr,
+                takerFee: ASK_SIDE_FEE,
+                participants: [institutionAddr],
+                rewards: [ASK_SIDE_FEE],
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            const tx = MarketUtils.executeBid({
+                market,
+                order,
+                permit,
+                orderSigner: maker,
+                permitSigner: marketSigner,
+                sender: taker,
+            });
+
+            await expect(tx).to.eventually.rejectedWith('MarketInvalidOrderSide');
+        });
+
+        it(`should fail if the ask side fee is greater than or equal to the price`, async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
+
+            const order: Order.TypeStruct = {
+                side: BID_SIDE,
+                collection: artTokenAddr,
+                currency: usdcAddr,
+                maker: makerAddr,
+                tokenId: TOKEN_ID,
+                price: PRICE,
+                makerFee: BID_SIDE_FEE,
+                startTime: latestBlockTimestamp,
+                endTime: latestBlockTimestamp + HOUR,
+            };
+
+            const permit: ExecutionPermit.TypeStruct = {
+                orderHash: MarketUtils.hashOrder(order),
+                taker: takerAddr,
+                takerFee: PRICE, // Fee equals price
+                participants: [institutionAddr],
+                rewards: [ASK_SIDE_FEE],
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            const tx = MarketUtils.executeBid({
+                market,
+                order,
+                permit,
+                orderSigner: maker,
+                permitSigner: marketSigner,
+                sender: taker,
+            });
+
+            await expect(tx).to.eventually.rejectedWith('MarketInvalidAskSideFee');
+        });
+
+        it(`should fail if the currency is not allowed`, async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
+
+            const order: Order.TypeStruct = {
+                side: BID_SIDE,
+                collection: artTokenAddr,
+                currency: randomAccountAddr, // Invalid currency
+                maker: makerAddr,
+                tokenId: TOKEN_ID,
+                price: PRICE,
+                makerFee: BID_SIDE_FEE,
+                startTime: latestBlockTimestamp,
+                endTime: latestBlockTimestamp + HOUR,
+            };
+
+            const permit: ExecutionPermit.TypeStruct = {
+                orderHash: MarketUtils.hashOrder(order),
+                taker: takerAddr,
+                takerFee: ASK_SIDE_FEE,
+                participants: [institutionAddr],
+                rewards: [ASK_SIDE_FEE],
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            const tx = MarketUtils.executeBid({
+                market,
+                order,
+                permit,
+                orderSigner: maker,
+                permitSigner: marketSigner,
+                sender: taker,
+            });
+
+            await expect(tx).to.eventually.rejectedWith('MarketCurrencyInvalid');
+        });
+
+        it(`should fail if the permit taker is not the sender`, async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
+
+            const order: Order.TypeStruct = {
+                side: BID_SIDE,
+                collection: artTokenAddr,
+                currency: usdcAddr,
+                maker: makerAddr,
+                tokenId: TOKEN_ID,
+                price: PRICE,
+                makerFee: BID_SIDE_FEE,
+                startTime: latestBlockTimestamp,
+                endTime: latestBlockTimestamp + HOUR,
+            };
+
+            const permit: ExecutionPermit.TypeStruct = {
+                orderHash: MarketUtils.hashOrder(order),
+                taker: randomAccountAddr, // Different taker
+                takerFee: ASK_SIDE_FEE,
+                participants: [institutionAddr],
+                rewards: [ASK_SIDE_FEE],
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            const tx = MarketUtils.executeBid({
+                market,
+                order,
+                permit,
+                orderSigner: maker,
+                permitSigner: marketSigner,
+                sender: taker,
+            });
+
+            await expect(tx).to.eventually.rejectedWith('MarketUnauthorizedAccount');
+        });
+
+        it(`should fail if the permit deadline has expired`, async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
+
+            const order: Order.TypeStruct = {
+                side: BID_SIDE,
+                collection: artTokenAddr,
+                currency: usdcAddr,
+                maker: makerAddr,
+                tokenId: TOKEN_ID,
+                price: PRICE,
+                makerFee: BID_SIDE_FEE,
+                startTime: latestBlockTimestamp,
+                endTime: latestBlockTimestamp + HOUR,
+            };
+
+            const permit: ExecutionPermit.TypeStruct = {
+                orderHash: MarketUtils.hashOrder(order),
+                taker: takerAddr,
+                takerFee: ASK_SIDE_FEE,
+                participants: [institutionAddr],
+                rewards: [ASK_SIDE_FEE],
+                deadline: latestBlockTimestamp - HOUR, // Expired deadline
+            };
+
+            const tx = MarketUtils.executeBid({
+                market,
+                order,
+                permit,
+                orderSigner: maker,
+                permitSigner: marketSigner,
+                sender: taker,
+            });
+
+            await expect(tx).to.eventually.rejectedWith('AuthorizationDeadlineExpired');
+        });
     });
 
     describe(`method 'orderInvalidated'`, () => {
@@ -745,11 +1257,25 @@ describe('Market', function () {
         it(`should invalidate the order if the sender is the market admin`, async () => {
             const orderHash = randomBytes(32);
 
-            await market.connect(marketAdmin).invalidateOrder(maker, orderHash);
+            const tx = await market.connect(marketAdmin).invalidateOrder(maker, orderHash);
 
             const invalidated = await market.orderInvalidated(maker, orderHash);
 
             expect(invalidated).equal(true);
+
+            await expect(tx).to.be.emit(market, 'OrderInvalidated').withArgs(makerAddr, orderHash);
+        });
+
+        it(`should fail when trying to invalidate an already invalidated order`, async () => {
+            const orderHash = randomBytes(32);
+
+            // First invalidation
+            await market.connect(maker).invalidateOrder(maker, orderHash);
+
+            // Second invalidation attempt
+            const tx = market.connect(maker).invalidateOrder(maker, orderHash);
+
+            await expect(tx).to.eventually.rejectedWith('MarketOrderInvalidated');
         });
 
         it(`should fail if the sender is not the maker or the market admin`, async () => {
