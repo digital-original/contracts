@@ -1,10 +1,9 @@
 import { expect } from 'chai';
 import { Signer, MaxInt256, randomBytes } from 'ethers';
 import { ArtToken, Market, USDC } from '../typechain-types';
-import { Order, ExecutionPermit } from '../typechain-types/contracts/market/Market';
-import { BuyPermitStruct } from '../types/art-token';
-import { TOTAL_SHARE } from './constants/distribution';
-import { TOKEN_ID, TOKEN_URI } from './constants/art-token';
+import { TokenMintingPermit } from '../typechain-types/contracts/art-token/ArtToken';
+import { Order, OrderExecutionPermit } from '../typechain-types/contracts/market/Market';
+import { TOKEN_CONFIG, TOKEN_ID, TOKEN_URI } from './constants/art-token';
 import { MIN_FEE, MIN_PRICE } from './constants/min-price-and-fee';
 import { PRICE, ASK_SIDE_FEE, BID_SIDE_FEE, ASK_SIDE, BID_SIDE } from './constants/market';
 import { HOUR } from './constants/time';
@@ -65,22 +64,23 @@ describe('Market', function () {
         beforeEach(async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
-            const buyPermit: BuyPermitStruct = {
+            const tokenMintingPermit: TokenMintingPermit.TypeStruct = {
                 tokenId: TOKEN_ID,
-                tokenURI: TOKEN_URI,
-                sender: makerAddr,
+                minter: makerAddr,
                 price: MIN_PRICE,
                 fee: MIN_FEE,
+                tokenURI: TOKEN_URI,
+                tokenConfig: TOKEN_CONFIG,
                 participants: [institutionAddr],
-                shares: [TOTAL_SHARE],
+                rewards: [MIN_PRICE],
                 deadline: latestBlockTimestamp + HOUR,
             };
 
             await usdc.connect(maker).mintAndApprove(artToken, MaxInt256);
 
-            await ArtTokenUtils.buy({
+            await ArtTokenUtils.mint({
                 artToken,
-                permit: buyPermit,
+                permit: tokenMintingPermit,
                 permitSigner: marketSigner,
                 sender: maker,
             });
@@ -111,7 +111,7 @@ describe('Market', function () {
 
             const orderHash = MarketUtils.hashOrder(order);
 
-            const permit: ExecutionPermit.TypeStruct = {
+            const orderExecutionPermit: OrderExecutionPermit.TypeStruct = {
                 orderHash,
                 taker: takerAddr,
                 takerFee: BID_SIDE_FEE,
@@ -123,7 +123,7 @@ describe('Market', function () {
             const tx = await MarketUtils.executeAsk({
                 market,
                 order,
-                permit,
+                permit: orderExecutionPermit,
                 orderSigner: maker,
                 permitSigner: marketSigner,
                 sender: taker,
@@ -177,7 +177,7 @@ describe('Market', function () {
 
             const orderHash = MarketUtils.hashOrder(order);
 
-            const permit: ExecutionPermit.TypeStruct = {
+            const orderExecutionPermit: OrderExecutionPermit.TypeStruct = {
                 orderHash,
                 taker: takerAddr,
                 takerFee: BID_SIDE_FEE,
@@ -189,7 +189,7 @@ describe('Market', function () {
             const tx = await MarketUtils.executeAsk({
                 market,
                 order,
-                permit,
+                permit: orderExecutionPermit,
                 orderSigner: maker,
                 permitSigner: marketSigner,
                 sender: taker,
@@ -215,7 +215,7 @@ describe('Market', function () {
 
             const orderHash = MarketUtils.hashOrder(order);
 
-            const permit: ExecutionPermit.TypeStruct = {
+            const orderExecutionPermit: OrderExecutionPermit.TypeStruct = {
                 orderHash,
                 taker: takerAddr,
                 takerFee: 0n, // Zero taker fee
@@ -227,7 +227,7 @@ describe('Market', function () {
             const tx = await MarketUtils.executeAsk({
                 market,
                 order,
-                permit,
+                permit: orderExecutionPermit,
                 orderSigner: maker,
                 permitSigner: marketSigner,
                 sender: taker,
@@ -254,7 +254,7 @@ describe('Market', function () {
                 endTime,
             };
 
-            const permit: ExecutionPermit.TypeStruct = {
+            const orderExecutionPermit: OrderExecutionPermit.TypeStruct = {
                 orderHash: MarketUtils.hashOrder(order),
                 taker: takerAddr,
                 takerFee: BID_SIDE_FEE,
@@ -266,7 +266,7 @@ describe('Market', function () {
             const tx = MarketUtils.executeAsk({
                 market,
                 order,
-                permit,
+                permit: orderExecutionPermit,
                 orderSigner: maker,
                 permitSigner: marketSigner,
                 sender: taker,
@@ -293,7 +293,7 @@ describe('Market', function () {
                 endTime,
             };
 
-            const permit: ExecutionPermit.TypeStruct = {
+            const orderExecutionPermit: OrderExecutionPermit.TypeStruct = {
                 orderHash: MarketUtils.hashOrder(order),
                 taker: takerAddr,
                 takerFee: BID_SIDE_FEE,
@@ -305,7 +305,7 @@ describe('Market', function () {
             const tx = MarketUtils.executeAsk({
                 market,
                 order,
-                permit,
+                permit: orderExecutionPermit,
                 orderSigner: maker,
                 permitSigner: marketSigner,
                 sender: taker,
@@ -329,7 +329,7 @@ describe('Market', function () {
                 endTime: latestBlockTimestamp + HOUR,
             };
 
-            const permit: ExecutionPermit.TypeStruct = {
+            const orderExecutionPermit: OrderExecutionPermit.TypeStruct = {
                 orderHash: MarketUtils.hashOrder(order),
                 taker: takerAddr,
                 takerFee: BID_SIDE_FEE,
@@ -341,7 +341,7 @@ describe('Market', function () {
             const tx = MarketUtils.executeAsk({
                 market,
                 order,
-                permit,
+                permit: orderExecutionPermit,
                 orderSigner: randomAccount, // Wrong order signer
                 permitSigner: marketSigner,
                 sender: taker,
@@ -365,7 +365,7 @@ describe('Market', function () {
                 endTime: latestBlockTimestamp + HOUR,
             };
 
-            const permit: ExecutionPermit.TypeStruct = {
+            const orderExecutionPermit: OrderExecutionPermit.TypeStruct = {
                 orderHash: randomBytes(32), // Wrong order hash
                 taker: takerAddr,
                 takerFee: BID_SIDE_FEE,
@@ -377,7 +377,7 @@ describe('Market', function () {
             const tx = MarketUtils.executeAsk({
                 market,
                 order,
-                permit,
+                permit: orderExecutionPermit,
                 orderSigner: maker,
                 permitSigner: marketSigner,
                 sender: taker,
@@ -401,7 +401,7 @@ describe('Market', function () {
                 endTime: latestBlockTimestamp + HOUR,
             };
 
-            const permit: ExecutionPermit.TypeStruct = {
+            const orderExecutionPermit: OrderExecutionPermit.TypeStruct = {
                 orderHash: MarketUtils.hashOrder(order),
                 taker: takerAddr,
                 takerFee: BID_SIDE_FEE,
@@ -413,7 +413,7 @@ describe('Market', function () {
             const tx = MarketUtils.executeAsk({
                 market,
                 order,
-                permit,
+                permit: orderExecutionPermit,
                 orderSigner: maker,
                 permitSigner: randomAccount, // Wrong permit signer
                 sender: taker,
@@ -439,7 +439,7 @@ describe('Market', function () {
 
             const orderHash = MarketUtils.hashOrder(order);
 
-            const permit: ExecutionPermit.TypeStruct = {
+            const orderExecutionPermit: OrderExecutionPermit.TypeStruct = {
                 orderHash,
                 taker: takerAddr,
                 takerFee: BID_SIDE_FEE,
@@ -453,7 +453,7 @@ describe('Market', function () {
             const tx = MarketUtils.executeAsk({
                 market,
                 order,
-                permit,
+                permit: orderExecutionPermit,
                 orderSigner: maker,
                 permitSigner: marketSigner,
                 sender: taker,
@@ -462,7 +462,7 @@ describe('Market', function () {
             await expect(tx).to.eventually.rejectedWith('MarketOrderInvalidated');
         });
 
-        it(`should fail if the order side is not ASK`, async () => {
+        it(`should fail if the order side is not Ask`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
             const order: Order.TypeStruct = {
@@ -477,7 +477,7 @@ describe('Market', function () {
                 endTime: latestBlockTimestamp + HOUR,
             };
 
-            const permit: ExecutionPermit.TypeStruct = {
+            const orderExecutionPermit: OrderExecutionPermit.TypeStruct = {
                 orderHash: MarketUtils.hashOrder(order),
                 taker: takerAddr,
                 takerFee: BID_SIDE_FEE,
@@ -489,7 +489,7 @@ describe('Market', function () {
             const tx = MarketUtils.executeAsk({
                 market,
                 order,
-                permit,
+                permit: orderExecutionPermit,
                 orderSigner: maker,
                 permitSigner: marketSigner,
                 sender: taker,
@@ -513,7 +513,7 @@ describe('Market', function () {
                 endTime: latestBlockTimestamp + HOUR,
             };
 
-            const permit: ExecutionPermit.TypeStruct = {
+            const orderExecutionPermit: OrderExecutionPermit.TypeStruct = {
                 orderHash: MarketUtils.hashOrder(order),
                 taker: takerAddr,
                 takerFee: BID_SIDE_FEE,
@@ -525,7 +525,7 @@ describe('Market', function () {
             const tx = MarketUtils.executeAsk({
                 market,
                 order,
-                permit,
+                permit: orderExecutionPermit,
                 orderSigner: maker,
                 permitSigner: marketSigner,
                 sender: taker,
@@ -549,7 +549,7 @@ describe('Market', function () {
                 endTime: latestBlockTimestamp + HOUR,
             };
 
-            const permit: ExecutionPermit.TypeStruct = {
+            const orderExecutionPermit: OrderExecutionPermit.TypeStruct = {
                 orderHash: MarketUtils.hashOrder(order),
                 taker: takerAddr,
                 takerFee: BID_SIDE_FEE,
@@ -561,7 +561,7 @@ describe('Market', function () {
             const tx = MarketUtils.executeAsk({
                 market,
                 order,
-                permit,
+                permit: orderExecutionPermit,
                 orderSigner: maker,
                 permitSigner: marketSigner,
                 sender: taker,
@@ -585,7 +585,7 @@ describe('Market', function () {
                 endTime: latestBlockTimestamp + HOUR,
             };
 
-            const permit: ExecutionPermit.TypeStruct = {
+            const orderExecutionPermit: OrderExecutionPermit.TypeStruct = {
                 orderHash: MarketUtils.hashOrder(order),
                 taker: randomAccountAddr, // Different taker
                 takerFee: BID_SIDE_FEE,
@@ -597,7 +597,7 @@ describe('Market', function () {
             const tx = MarketUtils.executeAsk({
                 market,
                 order,
-                permit,
+                permit: orderExecutionPermit,
                 orderSigner: maker,
                 permitSigner: marketSigner,
                 sender: taker,
@@ -621,7 +621,7 @@ describe('Market', function () {
                 endTime: latestBlockTimestamp + HOUR,
             };
 
-            const permit: ExecutionPermit.TypeStruct = {
+            const orderExecutionPermit: OrderExecutionPermit.TypeStruct = {
                 orderHash: MarketUtils.hashOrder(order),
                 taker: takerAddr,
                 takerFee: BID_SIDE_FEE,
@@ -633,7 +633,7 @@ describe('Market', function () {
             const tx = MarketUtils.executeAsk({
                 market,
                 order,
-                permit,
+                permit: orderExecutionPermit,
                 orderSigner: maker,
                 permitSigner: marketSigner,
                 sender: taker,
@@ -651,22 +651,23 @@ describe('Market', function () {
         beforeEach(async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
-            const buyPermit: BuyPermitStruct = {
+            const tokenMintingPermit: TokenMintingPermit.TypeStruct = {
                 tokenId: TOKEN_ID,
-                tokenURI: TOKEN_URI,
-                sender: takerAddr,
+                minter: takerAddr,
                 price: MIN_PRICE,
                 fee: MIN_FEE,
+                tokenURI: TOKEN_URI,
+                tokenConfig: TOKEN_CONFIG,
                 participants: [institutionAddr],
-                shares: [TOTAL_SHARE],
+                rewards: [MIN_PRICE],
                 deadline: latestBlockTimestamp + HOUR,
             };
 
             await usdc.connect(taker).mintAndApprove(artToken, MaxInt256);
 
-            await ArtTokenUtils.buy({
+            await ArtTokenUtils.mint({
                 artToken,
-                permit: buyPermit,
+                permit: tokenMintingPermit,
                 permitSigner: marketSigner,
                 sender: taker,
             });
@@ -697,7 +698,7 @@ describe('Market', function () {
 
             const orderHash = MarketUtils.hashOrder(order);
 
-            const permit: ExecutionPermit.TypeStruct = {
+            const orderExecutionPermit: OrderExecutionPermit.TypeStruct = {
                 orderHash,
                 taker: takerAddr,
                 takerFee: ASK_SIDE_FEE,
@@ -709,7 +710,7 @@ describe('Market', function () {
             const tx = await MarketUtils.executeBid({
                 market,
                 order,
-                permit,
+                permit: orderExecutionPermit,
                 orderSigner: maker,
                 permitSigner: marketSigner,
                 sender: taker,
@@ -763,7 +764,7 @@ describe('Market', function () {
 
             const orderHash = MarketUtils.hashOrder(order);
 
-            const permit: ExecutionPermit.TypeStruct = {
+            const orderExecutionPermit: OrderExecutionPermit.TypeStruct = {
                 orderHash,
                 taker: takerAddr,
                 takerFee: ASK_SIDE_FEE,
@@ -775,7 +776,7 @@ describe('Market', function () {
             const tx = await MarketUtils.executeBid({
                 market,
                 order,
-                permit,
+                permit: orderExecutionPermit,
                 orderSigner: maker,
                 permitSigner: marketSigner,
                 sender: taker,
@@ -801,7 +802,7 @@ describe('Market', function () {
 
             const orderHash = MarketUtils.hashOrder(order);
 
-            const permit: ExecutionPermit.TypeStruct = {
+            const orderExecutionPermit: OrderExecutionPermit.TypeStruct = {
                 orderHash,
                 taker: takerAddr,
                 takerFee: 0n, // Zero taker fee
@@ -813,7 +814,7 @@ describe('Market', function () {
             const tx = await MarketUtils.executeBid({
                 market,
                 order,
-                permit,
+                permit: orderExecutionPermit,
                 orderSigner: maker,
                 permitSigner: marketSigner,
                 sender: taker,
@@ -840,7 +841,7 @@ describe('Market', function () {
                 endTime,
             };
 
-            const permit: ExecutionPermit.TypeStruct = {
+            const orderExecutionPermit: OrderExecutionPermit.TypeStruct = {
                 orderHash: MarketUtils.hashOrder(order),
                 taker: takerAddr,
                 takerFee: ASK_SIDE_FEE,
@@ -852,7 +853,7 @@ describe('Market', function () {
             const tx = MarketUtils.executeBid({
                 market,
                 order,
-                permit,
+                permit: orderExecutionPermit,
                 orderSigner: maker,
                 permitSigner: marketSigner,
                 sender: taker,
@@ -879,7 +880,7 @@ describe('Market', function () {
                 endTime,
             };
 
-            const permit: ExecutionPermit.TypeStruct = {
+            const orderExecutionPermit: OrderExecutionPermit.TypeStruct = {
                 orderHash: MarketUtils.hashOrder(order),
                 taker: takerAddr,
                 takerFee: ASK_SIDE_FEE,
@@ -891,7 +892,7 @@ describe('Market', function () {
             const tx = MarketUtils.executeBid({
                 market,
                 order,
-                permit,
+                permit: orderExecutionPermit,
                 orderSigner: maker,
                 permitSigner: marketSigner,
                 sender: taker,
@@ -915,7 +916,7 @@ describe('Market', function () {
                 endTime: latestBlockTimestamp + HOUR,
             };
 
-            const permit: ExecutionPermit.TypeStruct = {
+            const orderExecutionPermit: OrderExecutionPermit.TypeStruct = {
                 orderHash: MarketUtils.hashOrder(order),
                 taker: takerAddr,
                 takerFee: ASK_SIDE_FEE,
@@ -927,7 +928,7 @@ describe('Market', function () {
             const tx = MarketUtils.executeBid({
                 market,
                 order,
-                permit,
+                permit: orderExecutionPermit,
                 orderSigner: randomAccount, // Wrong order signer
                 permitSigner: marketSigner,
                 sender: taker,
@@ -951,7 +952,7 @@ describe('Market', function () {
                 endTime: latestBlockTimestamp + HOUR,
             };
 
-            const permit: ExecutionPermit.TypeStruct = {
+            const orderExecutionPermit: OrderExecutionPermit.TypeStruct = {
                 orderHash: randomBytes(32), // Wrong order hash
                 taker: takerAddr,
                 takerFee: ASK_SIDE_FEE,
@@ -963,7 +964,7 @@ describe('Market', function () {
             const tx = MarketUtils.executeBid({
                 market,
                 order,
-                permit,
+                permit: orderExecutionPermit,
                 orderSigner: maker,
                 permitSigner: marketSigner,
                 sender: taker,
@@ -987,7 +988,7 @@ describe('Market', function () {
                 endTime: latestBlockTimestamp + HOUR,
             };
 
-            const permit: ExecutionPermit.TypeStruct = {
+            const orderExecutionPermit: OrderExecutionPermit.TypeStruct = {
                 orderHash: MarketUtils.hashOrder(order),
                 taker: takerAddr,
                 takerFee: ASK_SIDE_FEE,
@@ -999,7 +1000,7 @@ describe('Market', function () {
             const tx = MarketUtils.executeBid({
                 market,
                 order,
-                permit,
+                permit: orderExecutionPermit,
                 orderSigner: maker,
                 permitSigner: randomAccount, // Wrong permit signer
                 sender: taker,
@@ -1025,7 +1026,7 @@ describe('Market', function () {
 
             const orderHash = MarketUtils.hashOrder(order);
 
-            const permit: ExecutionPermit.TypeStruct = {
+            const orderExecutionPermit: OrderExecutionPermit.TypeStruct = {
                 orderHash,
                 taker: takerAddr,
                 takerFee: ASK_SIDE_FEE,
@@ -1039,7 +1040,7 @@ describe('Market', function () {
             const tx = MarketUtils.executeBid({
                 market,
                 order,
-                permit,
+                permit: orderExecutionPermit,
                 orderSigner: maker,
                 permitSigner: marketSigner,
                 sender: taker,
@@ -1048,7 +1049,7 @@ describe('Market', function () {
             await expect(tx).to.eventually.rejectedWith('MarketOrderInvalidated');
         });
 
-        it(`should fail if the order side is not BID`, async () => {
+        it(`should fail if the order side is not Bid`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
             const order: Order.TypeStruct = {
@@ -1063,7 +1064,7 @@ describe('Market', function () {
                 endTime: latestBlockTimestamp + HOUR,
             };
 
-            const permit: ExecutionPermit.TypeStruct = {
+            const orderExecutionPermit: OrderExecutionPermit.TypeStruct = {
                 orderHash: MarketUtils.hashOrder(order),
                 taker: takerAddr,
                 takerFee: ASK_SIDE_FEE,
@@ -1075,7 +1076,7 @@ describe('Market', function () {
             const tx = MarketUtils.executeBid({
                 market,
                 order,
-                permit,
+                permit: orderExecutionPermit,
                 orderSigner: maker,
                 permitSigner: marketSigner,
                 sender: taker,
@@ -1099,7 +1100,7 @@ describe('Market', function () {
                 endTime: latestBlockTimestamp + HOUR,
             };
 
-            const permit: ExecutionPermit.TypeStruct = {
+            const orderExecutionPermit: OrderExecutionPermit.TypeStruct = {
                 orderHash: MarketUtils.hashOrder(order),
                 taker: takerAddr,
                 takerFee: PRICE, // Fee equals price
@@ -1111,7 +1112,7 @@ describe('Market', function () {
             const tx = MarketUtils.executeBid({
                 market,
                 order,
-                permit,
+                permit: orderExecutionPermit,
                 orderSigner: maker,
                 permitSigner: marketSigner,
                 sender: taker,
@@ -1135,7 +1136,7 @@ describe('Market', function () {
                 endTime: latestBlockTimestamp + HOUR,
             };
 
-            const permit: ExecutionPermit.TypeStruct = {
+            const orderExecutionPermit: OrderExecutionPermit.TypeStruct = {
                 orderHash: MarketUtils.hashOrder(order),
                 taker: takerAddr,
                 takerFee: ASK_SIDE_FEE,
@@ -1147,7 +1148,7 @@ describe('Market', function () {
             const tx = MarketUtils.executeBid({
                 market,
                 order,
-                permit,
+                permit: orderExecutionPermit,
                 orderSigner: maker,
                 permitSigner: marketSigner,
                 sender: taker,
@@ -1171,7 +1172,7 @@ describe('Market', function () {
                 endTime: latestBlockTimestamp + HOUR,
             };
 
-            const permit: ExecutionPermit.TypeStruct = {
+            const orderExecutionPermit: OrderExecutionPermit.TypeStruct = {
                 orderHash: MarketUtils.hashOrder(order),
                 taker: randomAccountAddr, // Different taker
                 takerFee: ASK_SIDE_FEE,
@@ -1183,7 +1184,7 @@ describe('Market', function () {
             const tx = MarketUtils.executeBid({
                 market,
                 order,
-                permit,
+                permit: orderExecutionPermit,
                 orderSigner: maker,
                 permitSigner: marketSigner,
                 sender: taker,
@@ -1207,7 +1208,7 @@ describe('Market', function () {
                 endTime: latestBlockTimestamp + HOUR,
             };
 
-            const permit: ExecutionPermit.TypeStruct = {
+            const orderExecutionPermit: OrderExecutionPermit.TypeStruct = {
                 orderHash: MarketUtils.hashOrder(order),
                 taker: takerAddr,
                 takerFee: ASK_SIDE_FEE,
@@ -1219,7 +1220,7 @@ describe('Market', function () {
             const tx = MarketUtils.executeBid({
                 market,
                 order,
-                permit,
+                permit: orderExecutionPermit,
                 orderSigner: maker,
                 permitSigner: marketSigner,
                 sender: taker,

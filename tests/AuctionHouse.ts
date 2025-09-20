@@ -3,12 +3,12 @@ import { Signer, MaxInt256, ZeroAddress } from 'ethers';
 import { mine } from '@nomicfoundation/hardhat-network-helpers/dist/src/helpers/mine';
 import { setNextBlockTimestamp } from '@nomicfoundation/hardhat-network-helpers/dist/src/helpers/time';
 import { ArtToken, AuctionHouse, USDC } from '../typechain-types';
-import { CreatePermitStruct } from '../types/auction-house';
-import { BuyPermitStruct } from '../types/art-token';
+import { TokenMintingPermit } from '../typechain-types/contracts/art-token/ArtToken';
+import { AuctionCreationPermit } from '../typechain-types/contracts/auction-house/AuctionHouse';
 import { MIN_FEE, MIN_PRICE } from './constants/min-price-and-fee';
 import { TOTAL_SHARE } from './constants/distribution';
 import { AUCTION_ID, AUCTION_STEP, SECOND_AUCTION_ID } from './constants/auction-house';
-import { TOKEN_ID, TOKEN_URI } from './constants/art-token';
+import { TOKEN_CONFIG, TOKEN_ID, TOKEN_URI } from './constants/art-token';
 import { HOUR } from './constants/time';
 import { getSigners } from './utils/get-signers';
 import { getLatestBlockTimestamp } from './utils/get-latest-block-timestamp';
@@ -54,19 +54,20 @@ describe('AuctionHouse', function () {
 
             const price = MIN_PRICE;
             const fee = MIN_FEE;
-            const step = 1_000_000n;
+            const step = AUCTION_STEP;
             const endTime = latestBlockTimestamp + HOUR;
             const participants = [institutionAddr, financierAddr];
             const shares = [(TOTAL_SHARE / 5n) * 4n, TOTAL_SHARE / 5n];
 
-            const permit: CreatePermitStruct = {
+            const auctionCreationPermit: AuctionCreationPermit.TypeStruct = {
                 auctionId: AUCTION_ID,
                 tokenId: TOKEN_ID,
-                tokenURI: TOKEN_URI,
                 price,
                 fee,
                 step,
                 endTime,
+                tokenURI: TOKEN_URI,
+                tokenConfig: TOKEN_CONFIG,
                 participants,
                 shares,
                 deadline: latestBlockTimestamp + HOUR,
@@ -74,7 +75,7 @@ describe('AuctionHouse', function () {
 
             const tx = await AuctionHouseUtils.create({
                 auctionHouse,
-                permit,
+                permit: auctionCreationPermit,
                 permitSigner: auctionHouseSigner,
                 sender: institution,
             });
@@ -100,21 +101,22 @@ describe('AuctionHouse', function () {
         it(`should create a new auction for a token that was not sold in the previous auction`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
-            const firstPermit: CreatePermitStruct = {
+            const firstAuctionCreationPermit: AuctionCreationPermit.TypeStruct = {
                 auctionId: AUCTION_ID,
                 tokenId: TOKEN_ID,
-                tokenURI: TOKEN_URI,
                 price: MIN_PRICE,
                 fee: MIN_FEE,
                 step: AUCTION_STEP,
                 endTime: latestBlockTimestamp + HOUR,
-                participants: [institutionAddr, financierAddr],
-                shares: [(TOTAL_SHARE / 5n) * 4n, TOTAL_SHARE / 5n],
+                tokenURI: TOKEN_URI,
+                tokenConfig: TOKEN_CONFIG,
+                participants: [institutionAddr],
+                shares: [TOTAL_SHARE],
                 deadline: latestBlockTimestamp + HOUR,
             };
 
-            const secondPermit: CreatePermitStruct = {
-                ...firstPermit,
+            const secondAuctionCreationPermit: AuctionCreationPermit.TypeStruct = {
+                ...firstAuctionCreationPermit,
                 auctionId: SECOND_AUCTION_ID,
                 endTime: latestBlockTimestamp + HOUR * 2,
                 deadline: latestBlockTimestamp + HOUR * 2,
@@ -122,16 +124,16 @@ describe('AuctionHouse', function () {
 
             await AuctionHouseUtils.create({
                 auctionHouse,
-                permit: firstPermit,
+                permit: firstAuctionCreationPermit,
                 permitSigner: auctionHouseSigner,
                 sender: institution,
             });
 
-            await setNextBlockTimestamp(firstPermit.endTime);
+            await setNextBlockTimestamp(firstAuctionCreationPermit.endTime);
 
             await AuctionHouseUtils.create({
                 auctionHouse,
-                permit: secondPermit,
+                permit: secondAuctionCreationPermit,
                 permitSigner: auctionHouseSigner,
                 sender: institution,
             });
@@ -150,24 +152,23 @@ describe('AuctionHouse', function () {
 
             const minDuration = Number(await auctionHouse.MIN_DURATION());
 
-            const endTime = nextBlockTimestamp + minDuration - 1;
-
-            const permit: CreatePermitStruct = {
+            const auctionCreationPermit: AuctionCreationPermit.TypeStruct = {
                 auctionId: AUCTION_ID,
                 tokenId: TOKEN_ID,
-                tokenURI: TOKEN_URI,
                 price: MIN_PRICE,
                 fee: MIN_FEE,
                 step: AUCTION_STEP,
-                endTime,
-                participants: [institutionAddr, financierAddr],
-                shares: [(TOTAL_SHARE / 5n) * 4n, TOTAL_SHARE / 5n],
+                endTime: nextBlockTimestamp + minDuration - 1, // Wrong end time
+                tokenURI: TOKEN_URI,
+                tokenConfig: TOKEN_CONFIG,
+                participants: [institutionAddr],
+                shares: [TOTAL_SHARE],
                 deadline: latestBlockTimestamp + HOUR,
             };
 
             const tx = AuctionHouseUtils.create({
                 auctionHouse,
-                permit,
+                permit: auctionCreationPermit,
                 permitSigner: auctionHouseSigner,
                 sender: institution,
             });
@@ -184,24 +185,23 @@ describe('AuctionHouse', function () {
 
             const maxDuration = Number(await auctionHouse.MAX_DURATION());
 
-            const endTime = nextBlockTimestamp + maxDuration + 1;
-
-            const permit: CreatePermitStruct = {
+            const auctionCreationPermit: AuctionCreationPermit.TypeStruct = {
                 auctionId: AUCTION_ID,
                 tokenId: TOKEN_ID,
-                tokenURI: TOKEN_URI,
                 price: MIN_PRICE,
                 fee: MIN_FEE,
                 step: AUCTION_STEP,
-                endTime,
-                participants: [institutionAddr, financierAddr],
-                shares: [(TOTAL_SHARE / 5n) * 4n, TOTAL_SHARE / 5n],
+                endTime: nextBlockTimestamp + maxDuration + 1, // Wrong end time
+                tokenURI: TOKEN_URI,
+                tokenConfig: TOKEN_CONFIG,
+                participants: [institutionAddr],
+                shares: [TOTAL_SHARE],
                 deadline: latestBlockTimestamp + HOUR,
             };
 
             const tx = AuctionHouseUtils.create({
                 auctionHouse,
-                permit,
+                permit: auctionCreationPermit,
                 permitSigner: auctionHouseSigner,
                 sender: institution,
             });
@@ -212,29 +212,30 @@ describe('AuctionHouse', function () {
         it(`should fail if the auction already exists`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
-            const permit: CreatePermitStruct = {
+            const auctionCreationPermit: AuctionCreationPermit.TypeStruct = {
                 auctionId: AUCTION_ID,
                 tokenId: TOKEN_ID,
-                tokenURI: TOKEN_URI,
                 price: MIN_PRICE,
                 fee: MIN_FEE,
                 step: AUCTION_STEP,
                 endTime: latestBlockTimestamp + HOUR,
-                participants: [institutionAddr, financierAddr],
-                shares: [(TOTAL_SHARE / 5n) * 4n, TOTAL_SHARE / 5n],
+                tokenURI: TOKEN_URI,
+                tokenConfig: TOKEN_CONFIG,
+                participants: [institutionAddr],
+                shares: [TOTAL_SHARE],
                 deadline: latestBlockTimestamp + HOUR,
             };
 
             await AuctionHouseUtils.create({
                 auctionHouse,
-                permit,
+                permit: auctionCreationPermit,
                 permitSigner: auctionHouseSigner,
                 sender: institution,
             });
 
             const tx = AuctionHouseUtils.create({
                 auctionHouse,
-                permit,
+                permit: auctionCreationPermit,
                 permitSigner: auctionHouseSigner,
                 sender: institution,
             });
@@ -245,34 +246,35 @@ describe('AuctionHouse', function () {
         it(`should fail if the token is already in an active auction`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
-            const firstPermit: CreatePermitStruct = {
+            const firstAuctionCreationPermit: AuctionCreationPermit.TypeStruct = {
                 auctionId: AUCTION_ID,
                 tokenId: TOKEN_ID,
-                tokenURI: TOKEN_URI,
                 price: MIN_PRICE,
                 fee: MIN_FEE,
                 step: AUCTION_STEP,
                 endTime: latestBlockTimestamp + HOUR,
-                participants: [institutionAddr, financierAddr],
-                shares: [(TOTAL_SHARE / 5n) * 4n, TOTAL_SHARE / 5n],
+                tokenURI: TOKEN_URI,
+                tokenConfig: TOKEN_CONFIG,
+                participants: [institutionAddr],
+                shares: [TOTAL_SHARE],
                 deadline: latestBlockTimestamp + HOUR,
             };
 
-            const secondPermit: CreatePermitStruct = {
-                ...firstPermit,
+            const secondAuctionCreationPermit: AuctionCreationPermit.TypeStruct = {
+                ...firstAuctionCreationPermit,
                 auctionId: SECOND_AUCTION_ID,
             };
 
             await AuctionHouseUtils.create({
                 auctionHouse,
-                permit: firstPermit,
+                permit: firstAuctionCreationPermit,
                 permitSigner: auctionHouseSigner,
                 sender: institution,
             });
 
             const tx = AuctionHouseUtils.create({
                 auctionHouse,
-                permit: secondPermit,
+                permit: secondAuctionCreationPermit,
                 permitSigner: auctionHouseSigner,
                 sender: institution,
             });
@@ -283,21 +285,22 @@ describe('AuctionHouse', function () {
         it(`should fail if the token is in an inactive auction with a buyer`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
-            const firstPermit: CreatePermitStruct = {
+            const firstAuctionCreationPermit: AuctionCreationPermit.TypeStruct = {
                 auctionId: AUCTION_ID,
                 tokenId: TOKEN_ID,
-                tokenURI: TOKEN_URI,
                 price: MIN_PRICE,
                 fee: MIN_FEE,
                 step: AUCTION_STEP,
                 endTime: latestBlockTimestamp + HOUR,
-                participants: [institutionAddr, financierAddr],
-                shares: [(TOTAL_SHARE / 5n) * 4n, TOTAL_SHARE / 5n],
+                tokenURI: TOKEN_URI,
+                tokenConfig: TOKEN_CONFIG,
+                participants: [institutionAddr],
+                shares: [TOTAL_SHARE],
                 deadline: latestBlockTimestamp + HOUR,
             };
 
-            const secondPermit: CreatePermitStruct = {
-                ...firstPermit,
+            const secondAuctionCreationPermit: AuctionCreationPermit.TypeStruct = {
+                ...firstAuctionCreationPermit,
                 auctionId: SECOND_AUCTION_ID,
                 endTime: latestBlockTimestamp + HOUR * 2,
                 deadline: latestBlockTimestamp + HOUR * 2,
@@ -305,7 +308,7 @@ describe('AuctionHouse', function () {
 
             await AuctionHouseUtils.create({
                 auctionHouse,
-                permit: firstPermit,
+                permit: firstAuctionCreationPermit,
                 permitSigner: auctionHouseSigner,
                 sender: institution,
             });
@@ -314,11 +317,11 @@ describe('AuctionHouse', function () {
 
             await auctionHouse.connect(buyer).raiseInitial(AUCTION_ID, 100_000_000n);
 
-            await setNextBlockTimestamp(firstPermit.endTime);
+            await setNextBlockTimestamp(firstAuctionCreationPermit.endTime);
 
             const tx = AuctionHouseUtils.create({
                 auctionHouse,
-                permit: secondPermit,
+                permit: secondAuctionCreationPermit,
                 permitSigner: auctionHouseSigner,
                 sender: institution,
             });
@@ -329,42 +332,44 @@ describe('AuctionHouse', function () {
         it(`should fail if the token is already minted`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
-            const buyPermit: BuyPermitStruct = {
+            const tokenMintingPermit: TokenMintingPermit.TypeStruct = {
                 tokenId: TOKEN_ID,
-                tokenURI: TOKEN_URI,
-                sender: buyerAddr,
+                minter: buyerAddr,
                 price: MIN_PRICE,
                 fee: MIN_FEE,
+                tokenURI: TOKEN_URI,
+                tokenConfig: TOKEN_CONFIG,
+                participants: [institutionAddr],
+                rewards: [MIN_PRICE],
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            const auctionCreationPermit: AuctionCreationPermit.TypeStruct = {
+                auctionId: AUCTION_ID,
+                tokenId: TOKEN_ID,
+                price: MIN_PRICE,
+                fee: MIN_FEE,
+                step: AUCTION_STEP,
+                endTime: latestBlockTimestamp + HOUR,
+                tokenURI: TOKEN_URI,
+                tokenConfig: TOKEN_CONFIG,
                 participants: [institutionAddr],
                 shares: [TOTAL_SHARE],
                 deadline: latestBlockTimestamp + HOUR,
             };
 
-            const createPermit: CreatePermitStruct = {
-                auctionId: AUCTION_ID,
-                tokenId: TOKEN_ID,
-                tokenURI: TOKEN_URI,
-                price: MIN_PRICE,
-                fee: MIN_FEE,
-                step: AUCTION_STEP,
-                endTime: latestBlockTimestamp + HOUR,
-                participants: [institutionAddr, financierAddr],
-                shares: [(TOTAL_SHARE / 5n) * 4n, TOTAL_SHARE / 5n],
-                deadline: latestBlockTimestamp + HOUR,
-            };
-
             await usdc.connect(buyer).mintAndApprove(artToken, MaxInt256);
 
-            await ArtTokenUtils.buy({
+            await ArtTokenUtils.mint({
                 artToken,
-                permit: buyPermit,
+                permit: tokenMintingPermit,
                 permitSigner: auctionHouseSigner,
                 sender: buyer,
             });
 
             const tx = AuctionHouseUtils.create({
                 auctionHouse,
-                permit: createPermit,
+                permit: auctionCreationPermit,
                 permitSigner: auctionHouseSigner,
                 sender: institution,
             });
@@ -375,23 +380,24 @@ describe('AuctionHouse', function () {
         it(`should fail if the permit signer is not the auction house signer`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
-            const permit: CreatePermitStruct = {
+            const auctionCreationPermit: AuctionCreationPermit.TypeStruct = {
                 auctionId: AUCTION_ID,
                 tokenId: TOKEN_ID,
-                tokenURI: TOKEN_URI,
                 price: MIN_PRICE,
                 fee: MIN_FEE,
                 step: AUCTION_STEP,
                 endTime: latestBlockTimestamp + HOUR,
-                participants: [institutionAddr, financierAddr],
-                shares: [(TOTAL_SHARE / 5n) * 4n, TOTAL_SHARE / 5n],
+                tokenURI: TOKEN_URI,
+                tokenConfig: TOKEN_CONFIG,
+                participants: [institutionAddr],
+                shares: [TOTAL_SHARE],
                 deadline: latestBlockTimestamp + HOUR,
             };
 
             const tx = AuctionHouseUtils.create({
                 auctionHouse,
-                permit,
-                permitSigner: randomAccount,
+                permit: auctionCreationPermit,
+                permitSigner: randomAccount, // Wrong signer
                 sender: institution,
             });
 
@@ -403,22 +409,23 @@ describe('AuctionHouse', function () {
         beforeEach(async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
-            const permit: CreatePermitStruct = {
+            const auctionCreationPermit: AuctionCreationPermit.TypeStruct = {
                 auctionId: AUCTION_ID,
                 tokenId: TOKEN_ID,
-                tokenURI: TOKEN_URI,
                 price: MIN_PRICE,
                 fee: MIN_FEE,
                 step: AUCTION_STEP,
                 endTime: latestBlockTimestamp + HOUR,
-                participants: [institutionAddr, financierAddr],
-                shares: [(TOTAL_SHARE / 5n) * 4n, TOTAL_SHARE / 5n],
+                tokenURI: TOKEN_URI,
+                tokenConfig: TOKEN_CONFIG,
+                participants: [institutionAddr],
+                shares: [TOTAL_SHARE],
                 deadline: latestBlockTimestamp + HOUR,
             };
 
             await AuctionHouseUtils.create({
                 auctionHouse,
-                permit,
+                permit: auctionCreationPermit,
                 permitSigner: auctionHouseSigner,
                 sender: institution,
             });
@@ -503,22 +510,23 @@ describe('AuctionHouse', function () {
         beforeEach(async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
-            const permit: CreatePermitStruct = {
+            const auctionCreationPermit: AuctionCreationPermit.TypeStruct = {
                 auctionId: AUCTION_ID,
                 tokenId: TOKEN_ID,
-                tokenURI: TOKEN_URI,
                 price: MIN_PRICE,
                 fee: MIN_FEE,
                 step: AUCTION_STEP,
                 endTime: latestBlockTimestamp + HOUR,
-                participants: [institutionAddr, financierAddr],
-                shares: [(TOTAL_SHARE / 5n) * 4n, TOTAL_SHARE / 5n],
+                tokenURI: TOKEN_URI,
+                tokenConfig: TOKEN_CONFIG,
+                participants: [institutionAddr],
+                shares: [TOTAL_SHARE],
                 deadline: latestBlockTimestamp + HOUR,
             };
 
             await AuctionHouseUtils.create({
                 auctionHouse,
-                permit,
+                permit: auctionCreationPermit,
                 permitSigner: auctionHouseSigner,
                 sender: institution,
             });
@@ -612,22 +620,23 @@ describe('AuctionHouse', function () {
         beforeEach(async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
-            const permit: CreatePermitStruct = {
+            const auctionCreationPermit: AuctionCreationPermit.TypeStruct = {
                 auctionId: AUCTION_ID,
                 tokenId: TOKEN_ID,
-                tokenURI: TOKEN_URI,
                 price: MIN_PRICE,
                 fee: MIN_FEE,
                 step: AUCTION_STEP,
                 endTime: latestBlockTimestamp + HOUR,
-                participants: [institutionAddr, financierAddr],
-                shares: [(TOTAL_SHARE / 5n) * 4n, TOTAL_SHARE / 5n],
+                tokenURI: TOKEN_URI,
+                tokenConfig: TOKEN_CONFIG,
+                participants: [institutionAddr],
+                shares: [TOTAL_SHARE],
                 deadline: latestBlockTimestamp + HOUR,
             };
 
             await AuctionHouseUtils.create({
                 auctionHouse,
-                permit,
+                permit: auctionCreationPermit,
                 permitSigner: auctionHouseSigner,
                 sender: institution,
             });
@@ -664,10 +673,6 @@ describe('AuctionHouse', function () {
             await expect(tx)
                 .to.be.emit(usdc, 'Transfer')
                 .withArgs(auctionHouseAddr, participants[0], (price * shares[0]) / TOTAL_SHARE);
-
-            await expect(tx)
-                .to.be.emit(usdc, 'Transfer')
-                .withArgs(auctionHouseAddr, participants[1], (price * shares[1]) / TOTAL_SHARE);
         });
 
         it(`should fail if the auction does not exist`, async () => {
@@ -715,22 +720,23 @@ describe('AuctionHouse', function () {
         beforeEach(async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
-            const permit: CreatePermitStruct = {
+            const auctionCreationPermit: AuctionCreationPermit.TypeStruct = {
                 auctionId: AUCTION_ID,
                 tokenId: TOKEN_ID,
-                tokenURI: TOKEN_URI,
                 price: MIN_PRICE,
                 fee: MIN_FEE,
                 step: AUCTION_STEP,
                 endTime: latestBlockTimestamp + HOUR,
-                participants: [institutionAddr, financierAddr],
-                shares: [(TOTAL_SHARE / 5n) * 4n, TOTAL_SHARE / 5n],
+                tokenURI: TOKEN_URI,
+                tokenConfig: TOKEN_CONFIG,
+                participants: [institutionAddr],
+                shares: [TOTAL_SHARE],
                 deadline: latestBlockTimestamp + HOUR,
             };
 
             await AuctionHouseUtils.create({
                 auctionHouse,
-                permit,
+                permit: auctionCreationPermit,
                 permitSigner: auctionHouseSigner,
                 sender: institution,
             });

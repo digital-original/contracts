@@ -3,16 +3,16 @@ import {
     MARKET_DOMAIN_NAME,
     MARKET_DOMAIN_VERSION,
     ORDER_TYPE,
-    EXECUTION_PERMIT_TYPE,
+    ORDER_EXECUTION_PERMIT_TYPE,
 } from '../constants/market';
 import { Market } from '../../typechain-types';
-import { Order, ExecutionPermit } from '../../typechain-types/contracts/market/Market';
+import { Order, OrderExecutionPermit } from '../../typechain-types/contracts/market/Market';
 import { getChainId } from './get-chain-id';
 
 type ExecuteAskArgs = {
     market: Market;
     order: Order.TypeStruct;
-    permit: ExecutionPermit.TypeStruct;
+    permit: OrderExecutionPermit.TypeStruct;
     orderSigner: Signer;
     permitSigner: Signer;
     sender: Signer;
@@ -21,7 +21,7 @@ type ExecuteAskArgs = {
 type ExecuteBidArgs = {
     market: Market;
     order: Order.TypeStruct;
-    permit: ExecutionPermit.TypeStruct;
+    permit: OrderExecutionPermit.TypeStruct;
     orderSigner: Signer;
     permitSigner: Signer;
     sender: Signer;
@@ -37,7 +37,7 @@ export class MarketUtils {
 
         const permitSignature = await permitSigner.signTypedData(
             domain,
-            EXECUTION_PERMIT_TYPE,
+            ORDER_EXECUTION_PERMIT_TYPE,
             permit,
         );
 
@@ -53,7 +53,7 @@ export class MarketUtils {
 
         const permitSignature = await permitSigner.signTypedData(
             domain,
-            EXECUTION_PERMIT_TYPE,
+            ORDER_EXECUTION_PERMIT_TYPE,
             permit,
         );
 

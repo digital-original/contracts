@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {Order} from "./libraries/Order.sol";
-import {ExecutionPermit} from "./libraries/ExecutionPermit.sol";
+import {OrderExecutionPermit} from "./libraries/OrderExecutionPermit.sol";
 
 /**
  * @title IMarket
@@ -69,13 +69,13 @@ interface IMarket {
      *
      * @param order The ask order to execute. See {Order.Type}.
      * @param permit The execution permit, containing revenue-sharing information. See
-     *               {ExecutionPermit.Type}.
+     *               {OrderExecutionPermit.Type}.
      * @param orderSignature The EIP-712 signature of the `order`, signed by the `maker`.
      * @param permitSignature The EIP-712 signature of the `permit`, signed by the market signer.
      */
     function executeAsk(
         Order.Type calldata order,
-        ExecutionPermit.Type calldata permit,
+        OrderExecutionPermit.Type calldata permit,
         bytes calldata orderSignature,
         bytes calldata permitSignature
     ) external;
@@ -88,13 +88,13 @@ interface IMarket {
      *
      * @param order The bid order to execute. See {Order.Type}.
      * @param permit The execution permit, containing revenue-sharing information. See
-     *               {ExecutionPermit.Type}.
+     *               {OrderExecutionPermit.Type}.
      * @param orderSignature The EIP-712 signature of the `order`, signed by the `maker`.
      * @param permitSignature The EIP-712 signature of the `permit`, signed by the market signer.
      */
     function executeBid(
         Order.Type calldata order,
-        ExecutionPermit.Type calldata permit,
+        OrderExecutionPermit.Type calldata permit,
         bytes calldata orderSignature,
         bytes calldata permitSignature
     ) external;

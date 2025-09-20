@@ -16,7 +16,7 @@ The `ArtToken` contract is an upgradeable ERC-721 NFT implementation that serves
 
 - **Primary Sales**: Supports direct minting and purchasing through the `buy()` function with built-in revenue distribution
 - **EIP-712 Permits**: All primary sales require cryptographic authorization from designated signers
-- **Compliance & Regulation**: Optional transfer restrictions for regulated collections
+- **Compliance & Regulation**: Optional transfer restrictions for regulated tokens
 - **AuctionHouse Integration**: Works seamlessly with the AuctionHouse for auction-based primary sales
 - **Revenue Splitting**: Automatic distribution of sale proceeds among multiple participants according to predefined shares
 

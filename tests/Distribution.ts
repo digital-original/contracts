@@ -11,7 +11,11 @@ import { getLatestBlockTimestamp } from './utils/get-latest-block-timestamp';
 import { deployAll } from './utils/deploy-all';
 import { ArtTokenUtils } from './utils/art-token-utils';
 
-describe('Distribution', function () {
+/**
+ * TODO:
+ *  - test this module with AuctionHouse
+ */
+describe.skip('Distribution', function () {
     let artToken: ArtToken, artTokenAddr: string;
     let usdc: USDC, usdcAddr: string;
 

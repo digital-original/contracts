@@ -45,7 +45,6 @@ contract CollectionDeployer {
      * @param minPrice Global minimum primary-sale price.
      * @param minFee Global minimum platform fee.
      * @param minAuctionDuration Minimum auction duration (seconds) enforced by AuctionHouse.
-     * @param regulated Whether the ArtToken collection is transfer-restricted.
      */
     constructor(
         string memory name,
@@ -54,8 +53,7 @@ contract CollectionDeployer {
         address usdc,
         uint256 minPrice,
         uint256 minFee,
-        uint256 minAuctionDuration,
-        bool regulated
+        uint256 minAuctionDuration
     ) {
         address calculatedArtTokenProxy = Deployment.calculateContractAddress(address(this), 3);
         address calculatedAuctionHouseProxy = Deployment.calculateContractAddress(address(this), 4);
@@ -67,8 +65,7 @@ contract CollectionDeployer {
                 calculatedAuctionHouseProxy,
                 usdc,
                 minPrice,
-                minFee,
-                regulated //
+                minFee //
             )
         );
 

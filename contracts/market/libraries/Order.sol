@@ -11,12 +11,12 @@ library Order {
     /**
      * @notice Indicates the side of the order.
      *
-     * @param ASK A sell-side order, where the maker is the seller.
-     * @param BID A buy-side order, where the maker is the buyer.
+     * @param Ask A sell-side order, where the maker is the seller.
+     * @param Bid A buy-side order, where the maker is the buyer.
      */
     enum Side {
-        ASK,
-        BID
+        Ask,
+        Bid
     }
 
     /**
@@ -49,7 +49,7 @@ library Order {
     bytes32 internal constant TYPE_HASH =
         keccak256(
             "Order("
-                  "uint8 side,"
+                "uint8 side,"
                 "address collection,"
                 "address currency,"
                 "address maker,"

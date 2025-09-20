@@ -2,12 +2,12 @@
 pragma solidity ^0.8.20;
 
 /**
- * @title ExecutionPermit
+ * @title OrderExecutionPermit
  *
  * @notice EIP-712 struct for an order execution permit, which authorizes the execution of a
  *         market order and specifies the taker fee and revenue-sharing details.
  */
-library ExecutionPermit {
+library OrderExecutionPermit {
     /**
      * @notice Represents an order execution permit.
      *
@@ -27,17 +27,17 @@ library ExecutionPermit {
         uint256 deadline;
     }
 
-    /// @notice EIP-712 type hash for the {ExecutionPermit.Type} struct.
+    /// @notice EIP-712 type hash for the {OrderExecutionPermit.Type} struct.
     // prettier-ignore
     bytes32 internal constant TYPE_HASH =
         keccak256(
-            "ExecutionPermit("
-                  "bytes32 orderHash,"
-                  "address taker,"
-                  "uint256 takerFee,"
+            "OrderExecutionPermit("
+                "bytes32 orderHash,"
+                "address taker,"
+                "uint256 takerFee,"
                 "address[] participants,"
                 "uint256[] rewards,"
-                  "uint256 deadline"
+                "uint256 deadline"
             ")"
         );
 

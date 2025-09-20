@@ -15,8 +15,8 @@ export const ORDER_TYPE = {
     ],
 };
 
-export const EXECUTION_PERMIT_TYPE = {
-    ExecutionPermit: [
+export const ORDER_EXECUTION_PERMIT_TYPE = {
+    OrderExecutionPermit: [
         { name: 'orderHash', type: 'bytes32' },
         { name: 'taker', type: 'address' },
         { name: 'takerFee', type: 'uint256' },
