@@ -11,74 +11,67 @@ import {USDC} from "../tests/USDC.sol";
 contract AllDeployer {
     event Deployed(address artToken, address auctionHouse, address market, address usdc);
 
-    constructor(
-        address signer,
-        address financier,
-        address admin,
-        uint256 minPrice,
-        uint256 minFee,
-        uint256 minAuctionDuration
-    ) {
+    constructor(address signer, address financier, address admin, uint256 minAuctionDuration) {
         address usdc = address(new USDC());
-        address calculatedArtTokenProxy = Deployment.calculateContractAddress(address(this), 5);
-        address calculatedAuctionHouseProxy = Deployment.calculateContractAddress(address(this), 6);
-        address calculatedMarketProxy = Deployment.calculateContractAddress(address(this), 7);
+        address artTokenProxy = Deployment.calculateContractAddress(address(this), 5);
+        address auctionHouseProxy = Deployment.calculateContractAddress(address(this), 6);
+        address marketProxy = Deployment.calculateContractAddress(address(this), 7);
 
         {
             address artTokenImpl = address(
                 new ArtToken(
-                    calculatedArtTokenProxy,
+                    artTokenProxy,
                     address(this),
-                    calculatedAuctionHouseProxy,
-                    usdc,
-                    minPrice,
-                    minFee
+                    auctionHouseProxy //
                 )
             );
 
             address auctionHouseImpl = address(
                 new AuctionHouse(
-                    calculatedAuctionHouseProxy,
+                    auctionHouseProxy,
                     address(this),
-                    calculatedArtTokenProxy,
-                    usdc,
-                    minAuctionDuration,
-                    minPrice,
-                    minFee
+                    artTokenProxy,
+                    minAuctionDuration //
                 )
             );
 
             address marketImpl = address(
                 new Market(
-                    calculatedMarketProxy,
+                    marketProxy,
                     address(this) //
                 )
             );
 
-            address artTokenProxy = Deployment.deployUpgradeableContract(artTokenImpl, address(this));
-            address auctionHouseProxy = Deployment.deployUpgradeableContract(auctionHouseImpl, address(this));
-            address marketProxy = Deployment.deployUpgradeableContract(marketImpl, address(this));
+            address _artTokenProxy = Deployment.deployUpgradeableContract(artTokenImpl, address(this));
+            address _auctionHouseProxy = Deployment.deployUpgradeableContract(auctionHouseImpl, address(this));
+            address _marketProxy = Deployment.deployUpgradeableContract(marketImpl, address(this));
 
-            if (artTokenProxy != calculatedArtTokenProxy) revert DeployerIncorrectAddress();
-            if (auctionHouseProxy != calculatedAuctionHouseProxy) revert DeployerIncorrectAddress();
-            if (marketProxy != calculatedMarketProxy) revert DeployerIncorrectAddress();
+            if (_artTokenProxy != artTokenProxy) revert DeployerIncorrectAddress();
+            if (_auctionHouseProxy != auctionHouseProxy) revert DeployerIncorrectAddress();
+            if (_marketProxy != marketProxy) revert DeployerIncorrectAddress();
 
             emit Deployed(artTokenProxy, auctionHouseProxy, marketProxy, usdc);
         }
 
-        ArtToken(calculatedArtTokenProxy).transferUniqueRole(Roles.SIGNER_ROLE, signer);
-        ArtToken(calculatedArtTokenProxy).transferUniqueRole(Roles.FINANCIAL_ROLE, financier);
-        ArtToken(calculatedArtTokenProxy).grantRole(Roles.PARTNER_ROLE, calculatedAuctionHouseProxy);
-        ArtToken(calculatedArtTokenProxy).grantRole(Roles.PARTNER_ROLE, calculatedMarketProxy);
+        ArtToken(artTokenProxy).transferUniqueRole(Roles.SIGNER_ROLE, signer);
+        ArtToken(artTokenProxy).transferUniqueRole(Roles.FINANCIAL_ROLE, financier);
+        ArtToken(artTokenProxy).grantRole(Roles.PARTNER_ROLE, auctionHouseProxy);
+        ArtToken(artTokenProxy).grantRole(Roles.PARTNER_ROLE, marketProxy);
+        ArtToken(artTokenProxy).grantRole(Roles.ADMIN_ROLE, address(this));
+        ArtToken(artTokenProxy).updateCurrencyStatus(usdc, true);
+        if (admin != address(0)) ArtToken(artTokenProxy).grantRole(Roles.ADMIN_ROLE, admin);
 
-        AuctionHouse(calculatedAuctionHouseProxy).transferUniqueRole(Roles.FINANCIAL_ROLE, financier);
-        AuctionHouse(calculatedAuctionHouseProxy).transferUniqueRole(Roles.SIGNER_ROLE, signer);
+        AuctionHouse(auctionHouseProxy).transferUniqueRole(Roles.FINANCIAL_ROLE, financier);
+        AuctionHouse(auctionHouseProxy).transferUniqueRole(Roles.SIGNER_ROLE, signer);
+        AuctionHouse(auctionHouseProxy).grantRole(Roles.ADMIN_ROLE, address(this));
+        AuctionHouse(auctionHouseProxy).updateCurrencyStatus(usdc, true);
+        if (admin != address(0)) AuctionHouse(auctionHouseProxy).grantRole(Roles.ADMIN_ROLE, admin);
 
-        Market(calculatedMarketProxy).transferUniqueRole(Roles.SIGNER_ROLE, signer);
-        Market(calculatedMarketProxy).transferUniqueRole(Roles.FINANCIAL_ROLE, financier);
-        if (admin != address(0)) Market(calculatedMarketProxy).grantRole(Roles.ADMIN_ROLE, admin);
-        Market(calculatedMarketProxy).grantRole(Roles.ADMIN_ROLE, address(this));
-        Market(calculatedMarketProxy).updateCurrencyStatus(usdc, true);
+        Market(marketProxy).transferUniqueRole(Roles.SIGNER_ROLE, signer);
+        Market(marketProxy).transferUniqueRole(Roles.FINANCIAL_ROLE, financier);
+        Market(marketProxy).grantRole(Roles.ADMIN_ROLE, address(this));
+        Market(marketProxy).updateCurrencyStatus(usdc, true);
+        if (admin != address(0)) Market(marketProxy).grantRole(Roles.ADMIN_ROLE, admin);
     }
 
     error DeployerIncorrectAddress();

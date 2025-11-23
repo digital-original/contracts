@@ -18,7 +18,6 @@ abstract contract ArtTokenConfigManager is IArtTokenConfigManager, RoleSystem {
     /**
      * @inheritdoc IArtTokenConfigManager
      */
-    // TODO: Should I add validation for null value?
     function updateTokenCreator(uint256 tokenId, address creator) external onlyRole(Roles.ADMIN_ROLE) {
         ArtTokenConfigManagerStorage.Layout storage $ = ArtTokenConfigManagerStorage.layout();
 
@@ -34,6 +33,11 @@ abstract contract ArtTokenConfigManager is IArtTokenConfigManager, RoleSystem {
         uint256 tokenId,
         TokenConfig.RegulationMode regulationMode
     ) external onlyRole(Roles.ADMIN_ROLE) {
+        /**
+         * TODO: revert if regulationMode is None.
+         * I want to add it, but if I do it I need to add config validation for AuctionHouse.
+         */
+
         ArtTokenConfigManagerStorage.Layout storage $ = ArtTokenConfigManagerStorage.layout();
 
         $.tokenConfig[tokenId].regulationMode = regulationMode;

@@ -6,6 +6,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {EIP712Domain} from "../utils/EIP712Domain.sol";
 import {RoleSystem} from "../utils/role-system/RoleSystem.sol";
 import {Authorization} from "../utils/Authorization.sol";
+import {CurrencyManager} from "../utils/currency-manager/CurrencyManager.sol";
 import {SafeERC20BulkTransfer} from "../utils/SafeERC20BulkTransfer.sol";
 import {TokenConfig} from "../utils/TokenConfig.sol";
 import {Roles} from "../utils/Roles.sol";
@@ -29,24 +30,15 @@ contract ArtToken is
     EIP712Domain,
     RoleSystem,
     Authorization,
+    CurrencyManager,
     ArtTokenConfigManager,
     ArtTokenRoyaltyManager
 {
     // TODO: need to implement method for validation mint conditions (tokenId, URI, config, etc)
-    using SafeERC20 for IERC20;
     using TokenMintingPermit for TokenMintingPermit.Type;
 
     /// @notice Address of the accompanying AuctionHouse contract.
     IAuctionHouse public immutable AUCTION_HOUSE;
-
-    /// @notice Settlement token.
-    IERC20 public immutable USDC;
-
-    /// @notice Minimum allowed primary-sale price.
-    uint256 public immutable MIN_PRICE;
-
-    /// @notice Minimum allowed platform fee.
-    uint256 public immutable MIN_FEE;
 
     /**
      * @notice Contract constructor.
@@ -55,27 +47,15 @@ contract ArtToken is
      *              (used for EIP-712 domain separator).
      * @param main Address that will be set as {RoleSystem.MAIN}.
      * @param auctionHouse Address of the AuctionHouse contract.
-     * @param usdc Address of the USDC token contract.
-     * @param minPrice Absolute minimum `price` accepted for a primary sale.
-     * @param minFee Absolute minimum `fee` accepted for a primary sale.
      */
     constructor(
         address proxy,
         address main,
-        address auctionHouse,
-        address usdc,
-        uint256 minPrice,
-        uint256 minFee
+        address auctionHouse
     ) EIP712Domain(proxy, "ArtToken", "1") RoleSystem(main) {
         if (auctionHouse == address(0)) revert ArtTokenMisconfiguration(2);
-        if (usdc == address(0)) revert ArtTokenMisconfiguration(3);
-        if (minPrice == 0) revert ArtTokenMisconfiguration(4);
-        if (minFee == 0) revert ArtTokenMisconfiguration(5);
 
         AUCTION_HOUSE = IAuctionHouse(auctionHouse);
-        USDC = IERC20(usdc);
-        MIN_PRICE = minPrice;
-        MIN_FEE = minFee;
     }
 
     /**
@@ -104,11 +84,11 @@ contract ArtToken is
             revert ArtTokenUnauthorizedAccount(msg.sender);
         }
 
-        if (permit.price < MIN_PRICE) {
+        if (permit.price == 0) {
             revert ArtTokenInvalidPrice();
         }
 
-        if (permit.fee < MIN_FEE) {
+        if (permit.fee == 0) {
             revert ArtTokenInvalidFee();
         }
 
@@ -116,13 +96,30 @@ contract ArtToken is
             revert ArtTokenTokenReserved();
         }
 
+        if (!currencyAllowed(permit.currency)) {
+            revert ArtTokenCurrencyInvalid();
+        }
+
+        IERC20 currency = IERC20(permit.currency);
+
         _mint(permit.minter, permit.tokenId, permit.tokenURI, permit.tokenConfig);
 
-        USDC.safeTransferFrom(msg.sender, address(this), permit.price + permit.fee);
+        SafeERC20.safeTransferFrom(currency, msg.sender, address(this), permit.price + permit.fee);
 
-        SafeERC20BulkTransfer.safeTransfer(USDC, permit.price, permit.participants, permit.rewards);
+        SafeERC20BulkTransfer.safeTransfer(currency, permit.price, permit.participants, permit.rewards);
 
-        USDC.safeTransfer(uniqueRoleOwner(Roles.FINANCIAL_ROLE), permit.fee);
+        SafeERC20.safeTransfer(currency, uniqueRoleOwner(Roles.FINANCIAL_ROLE), permit.fee);
+    }
+
+    /**
+     * @inheritdoc IArtToken
+     */
+    function setTokenURI(uint256 tokenId, string memory _tokenURI) external onlyRole(Roles.ADMIN_ROLE) {
+        if (_ownerOf(tokenId) == address(0)) {
+            revert ArtTokenNonexistentToken(tokenId);
+        }
+
+        _setTokenURI(tokenId, _tokenURI);
     }
 
     /**
@@ -141,8 +138,10 @@ contract ArtToken is
 
     /**
      * @notice Internal function to mint a new token.
+     *
      * @dev This function is called by both `mintFromAuctionHouse` and `mint`. It handles the core
      *      minting logic and sets the token URI and configuration.
+     *
      * @param to The address that will receive the newly minted token.
      * @param tokenId The unique identifier of the token to mint.
      * @param _tokenURI The metadata URI that will be associated with the token.
@@ -154,15 +153,17 @@ contract ArtToken is
         string calldata _tokenURI,
         TokenConfig.Type calldata tokenConfig
     ) internal {
-        if (bytes(_tokenURI).length == 0) {
-            revert ArtTokenEmptyTokenURI();
-        }
-
         _safeMintAndSetTokenURI(to, tokenId, _tokenURI);
         _setTokenConfig(tokenId, tokenConfig);
     }
 
-    /// @dev Reverts unless `account` passes {recipientAuthorized}.
+    /**
+     * @notice Reverts unless `account` passes {recipientAuthorized}.
+     *
+     * @dev This function is used to enforce that only authorized accounts can receive tokens.
+     *
+     * @param account The account to check.
+     */
     function _requireAuthorizedRecipient(address account) private view {
         if (!recipientAuthorized(account)) {
             revert ArtTokenUnauthorizedAccount(account);

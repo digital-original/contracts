@@ -41,20 +41,9 @@ contract CollectionDeployer {
      * @param name ERC-721 collection name.
      * @param symbol ERC-721 collection symbol.
      * @param main Address that will be set as {RoleSystem.MAIN}.
-     * @param usdc Address of the USDC token contract.
-     * @param minPrice Global minimum primary-sale price.
-     * @param minFee Global minimum platform fee.
      * @param minAuctionDuration Minimum auction duration (seconds) enforced by AuctionHouse.
      */
-    constructor(
-        string memory name,
-        string memory symbol,
-        address main,
-        address usdc,
-        uint256 minPrice,
-        uint256 minFee,
-        uint256 minAuctionDuration
-    ) {
+    constructor(string memory name, string memory symbol, address main, uint256 minAuctionDuration) {
         address calculatedArtTokenProxy = Deployment.calculateContractAddress(address(this), 3);
         address calculatedAuctionHouseProxy = Deployment.calculateContractAddress(address(this), 4);
 
@@ -62,10 +51,7 @@ contract CollectionDeployer {
             new ArtToken(
                 calculatedArtTokenProxy,
                 main,
-                calculatedAuctionHouseProxy,
-                usdc,
-                minPrice,
-                minFee //
+                calculatedAuctionHouseProxy //
             )
         );
 
@@ -74,10 +60,7 @@ contract CollectionDeployer {
                 calculatedAuctionHouseProxy,
                 main,
                 calculatedArtTokenProxy,
-                usdc,
-                minAuctionDuration,
-                minPrice,
-                minFee
+                minAuctionDuration //
             )
         );
 

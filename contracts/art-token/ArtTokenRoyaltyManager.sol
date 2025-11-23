@@ -19,9 +19,9 @@ abstract contract ArtTokenRoyaltyManager is IERC2981, ArtTokenConfigManager {
     uint256 public constant ROYALTY_PERCENT_IN_BP = 500; // 5%
 
     /**
-     * @notice One hundred percent represented in basis points (10000 = 100%).
+     * @notice One hundred percent represented in basis points (10_000 = 100%).
      */
-    uint256 public constant ONE_HUNDRED_PERCENT_IN_BP = 10000; // 100% in basis points
+    uint256 public constant ONE_HUNDRED_PERCENT_IN_BP = 10_000; // 100% in basis points
 
     /**
      * @notice Calculates the royalty payment for a token sale, returning the recipient's address and the royalty amount.

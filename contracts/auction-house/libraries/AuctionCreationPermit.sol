@@ -16,6 +16,7 @@ library AuctionCreationPermit {
      *
      * @param auctionId The ID of the auction to be created.
      * @param tokenId The ID of the token to be auctioned.
+     * @param currency The token used for payment.
      * @param price The starting price of the auction.
      * @param fee The platform fee for the auction.
      * @param step The minimum bid increment for the auction.
@@ -29,6 +30,7 @@ library AuctionCreationPermit {
     struct Type {
         uint256 auctionId;
         uint256 tokenId;
+        address currency;
         uint256 price;
         uint256 fee;
         uint256 step;
@@ -47,6 +49,7 @@ library AuctionCreationPermit {
             "AuctionCreationPermit("
                 "uint256 auctionId,"
                 "uint256 tokenId,"
+                "address currency,"
                 "uint256 price,"
                 "uint256 fee,"
                 "uint256 step,"
@@ -73,6 +76,7 @@ library AuctionCreationPermit {
                     TYPE_HASH,
                     permit.auctionId,
                     permit.tokenId,
+                    permit.currency,
                     permit.price,
                     permit.fee,
                     permit.step,

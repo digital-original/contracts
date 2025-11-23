@@ -2,8 +2,6 @@ name: 'DigitalNative'
 symbol: 'DN'
 
 sepolia:
-    minPriceUsd: 50
-    minFeeUsd: 50
     minAuctionDurationHours: 0.25
 
     # dev
@@ -27,8 +25,6 @@ sepolia:
     #     admin: '0xDdc680Aa4852dA4a43198e7c1FF3d04bA53f8910'
 
 ethereum:
-    minPriceUsd: 30
-    minFeeUsd: 30
     minAuctionDurationHours: 12
     artToken:
         proxy: '0x9ada5D6A6192eAda21b45268Da4948e69059EA69'

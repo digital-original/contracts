@@ -11,9 +11,6 @@ type Params = {
     name: string;
     symbol: string;
     main: AddressLike;
-    usdc: AddressLike;
-    minPrice: Numeric;
-    minFee: Numeric;
     minAuctionDuration: number;
 };
 
@@ -25,16 +22,13 @@ export async function deployCollection(params: Params, deployer?: Signer) {
         name,
         symbol,
         main,
-        usdc,
-        minPrice,
-        minFee,
         minAuctionDuration,
     } = params;
 
     const { receipt } = await deploy(
         {
             name: 'CollectionDeployer',
-            constructorArgs: [name, symbol, main, usdc, minPrice, minFee, minAuctionDuration],
+            constructorArgs: [name, symbol, main, minAuctionDuration],
         },
         deployer,
     );

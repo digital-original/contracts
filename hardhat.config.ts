@@ -100,13 +100,11 @@ function buildHardhatConfig(): HardhatUserConfig {
         const collectionConfig = collectionConfigTop[chainName];
         const marketConfig = marketConfigTop[chainName];
 
-        const { chainId, url, deployerPrivateKey, usdc, main } = chainConfig;
+        const { chainId, url, deployerPrivateKey, main } = chainConfig;
 
         const collection: CollectionConfig = {
             name: collectionConfigTop.name,
             symbol: collectionConfigTop.symbol,
-            minPriceUsd: collectionConfig.minPriceUsd,
-            minFeeUsd: collectionConfig.minFeeUsd,
             minAuctionDurationHours: collectionConfig.minAuctionDurationHours,
             artToken: collectionConfig.artToken,
             auctionHouse: collectionConfig.auctionHouse,
@@ -118,7 +116,6 @@ function buildHardhatConfig(): HardhatUserConfig {
 
         const protocolConfig: ProtocolConfig = {
             main,
-            usdc,
             collection,
             market,
         };

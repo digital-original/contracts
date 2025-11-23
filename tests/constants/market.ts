@@ -29,6 +29,6 @@ export const ORDER_EXECUTION_PERMIT_TYPE = {
 export const ASK_SIDE = 0;
 export const BID_SIDE = 1;
 
-export const PRICE = 10_000_000_000n;
+export const ORDER_PRICE = 10_000_000_000n;
 export const ASK_SIDE_FEE = 100_000_000n;
 export const BID_SIDE_FEE = 100_000_000n;

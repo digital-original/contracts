@@ -1,6 +1,5 @@
 import { task } from 'hardhat/config';
 import { ProtocolConfig } from '../types/environment';
-import { etherToWeiForErc20 } from './utils/ether-to-wei-for-erc20';
 import { hoursToSeconds } from './utils/hours-to-seconds';
 
 /*
@@ -33,9 +32,6 @@ task('verify-auction-house').setAction(async (taskArgs: Record<string, string>, 
     // AuctionHouse
     const main = config.main;
     const artToken = config.collection.artToken.proxy;
-    const usdc = config.usdc;
-    const minPrice = await etherToWeiForErc20(usdc, config.collection.minPriceUsd);
-    const minFee = await etherToWeiForErc20(usdc, config.collection.minFeeUsd);
     const minAuctionDuration = hoursToSeconds(config.collection.minAuctionDurationHours);
 
     console.log(`Verify AuctionHouse...`);
@@ -53,13 +49,10 @@ task('verify-auction-house').setAction(async (taskArgs: Record<string, string>, 
     console.log(`proxyAdminOwner: ${proxyAdminOwner}`);
     console.groupEnd();
 
-    console.group(`ArtToken:`);
+    console.group(`AuctionHouse Impl:`);
     console.log(`main: ${main}`);
     console.log(`artToken: ${artToken}`);
-    console.log(`usdc: ${usdc}`);
     console.log(`minAuctionDuration: ${minAuctionDuration}`);
-    console.log(`minPrice: ${minPrice}`);
-    console.log(`minFee: ${minFee}`);
     console.groupEnd();
 
     console.groupEnd();
@@ -83,7 +76,7 @@ task('verify-auction-house').setAction(async (taskArgs: Record<string, string>, 
     await hardhat.run('verify:verify', {
         contract: 'contracts/auction-house/AuctionHouse.sol:AuctionHouse',
         address: impl,
-        constructorArguments: [proxy, main, artToken, usdc, minAuctionDuration, minPrice, minFee],
+        constructorArguments: [proxy, main, artToken, minAuctionDuration],
     });
     console.log('-'.repeat(process.stdout.columns));
 });

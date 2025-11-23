@@ -17,6 +17,7 @@ library TokenMintingPermit {
      *
      * @param tokenId The ID of the token to be minted.
      * @param minter The address of the account that will mint the token.
+     * @param currency The token used for payment.
      * @param price The price of the token for the primary sale.
      * @param fee The platform fee for the primary sale.
      * @param tokenURI The metadata URI for the token.
@@ -28,6 +29,7 @@ library TokenMintingPermit {
     struct Type {
         uint256 tokenId;
         address minter;
+        address currency;
         uint256 price;
         uint256 fee;
         string tokenURI;
@@ -44,6 +46,7 @@ library TokenMintingPermit {
             "TokenMintingPermit("
                 "uint256 tokenId,"
                 "address minter,"
+                "address currency,"
                 "uint256 price,"
                 "uint256 fee,"
                 "string tokenURI,"
@@ -68,6 +71,7 @@ library TokenMintingPermit {
                     TYPE_HASH,
                     permit.tokenId,
                     permit.minter,
+                    permit.currency,
                     permit.price,
                     permit.fee,
                     keccak256(bytes(permit.tokenURI)),

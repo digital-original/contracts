@@ -2,13 +2,10 @@ export type ChainConfig = {
     chainId: number;
     url: string;
     deployerPrivateKey: string;
-    usdc: string;
     main: string;
 };
 
 export type CollectionConfig = CollectionData & {
-    minPriceUsd: number;
-    minFeeUsd: number;
     minAuctionDurationHours: number;
     artToken: UpgradeableContractConfig;
     auctionHouse: UpgradeableContractConfig;
@@ -18,7 +15,7 @@ export type MarketConfig = {
     market: UpgradeableContractConfig;
 };
 
-export type ProtocolConfig = Pick<ChainConfig, 'main' | 'usdc'> & {
+export type ProtocolConfig = Pick<ChainConfig, 'main'> & {
     collection: CollectionConfig;
     market: MarketConfig;
 };

@@ -3,25 +3,54 @@ import { Signer, MaxInt256, ZeroAddress } from 'ethers';
 import { ArtToken, AuctionHouse, USDC, Market } from '../typechain-types';
 import { AuctionCreationPermit } from '../typechain-types/contracts/auction-house/AuctionHouse';
 import { TokenMintingPermit } from '../typechain-types/contracts/art-token/ArtToken';
-import { MIN_FEE, MIN_PRICE } from './constants/min-price-and-fee';
-import { TOKEN_CONFIG, TOKEN_ID, TOKEN_URI } from './constants/art-token';
-import { HOUR } from './constants/time';
-import { AUCTION_ID, AUCTION_STEP } from './constants/auction-house';
-import { TOTAL_SHARE } from './constants/distribution';
+import { HOUR, ONE_HUNDRED } from './constants/general';
+import { TOKEN_CONFIG, TOKEN_FEE, TOKEN_ID, TOKEN_PRICE, TOKEN_URI } from './constants/art-token';
+import { AUCTION_FEE, AUCTION_ID, AUCTION_PRICE, AUCTION_STEP } from './constants/auction-house';
 import { getSigners } from './utils/get-signers';
 import { getLatestBlockTimestamp } from './utils/get-latest-block-timestamp';
 import { deployAll } from './utils/deploy-all';
 import { ArtTokenUtils } from './utils/art-token-utils';
 import { AuctionHouseUtils } from './utils/auction-house-utils';
 
-/**
- * TODO:
- *  - cover with tests ArtTokenConfigManager
- *  - cover with test the logic with TokenConfig
- *  - tests for the `mintFromAuctionHouse` method
- *  - write more tests for the `mint` method
- */
 describe('ArtToken', function () {
+    /**
+     * TODO:
+     *
+     * > CurrencyManager:
+     *  - should fail if the currency is not allowed
+     *
+     * > ArtTokenRoyaltyManager:
+     *  - should return correct creator address
+     *  - should return correct default creator address
+     *  - should return correct royalty amount
+     *
+     * > `setTokenURI` method:
+     *  - should set the token URI
+     *  - should fail if the caller is the art token admin
+     *  - should fail if the token does not exist
+     *
+     * > `mintFromAuctionHouse` method:
+     *  - should fail if the caller is not the auction house
+     *
+     * > `mint` method:
+     *  - should fail if the caller is not the allowed minter
+     *  - should fail if the currency is not allowed
+     *  - check the set token config
+     *
+     * > ArtTokenConfigManager:
+     *  > `updateTokenCreator` method:
+     *    - should update the token creator
+     *    - should fail if the caller is not the art token admin
+     *  > `updateTokenRegulationMode` method:
+     *    - should update the token regulation mode
+     *    - should fail if the caller is not the art token admin
+     *
+     *  (-) should return correct default creator address
+     *  (-) should return correct default regulation mode
+     *  - should return correct token-specific creator address
+     *  - should return correct token-specific regulation mode
+     *
+     */
     let artToken: ArtToken, artTokenAddr: string;
     let auctionHouse: AuctionHouse, auctionHouseAddr: string;
     let market: Market, marketAddr: string;
@@ -61,17 +90,15 @@ describe('ArtToken', function () {
         it(`should mint the token, distribute price, and charge a fee`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
-            const price = MIN_PRICE;
-            const fee = MIN_FEE;
-
-            const institutionReward = (price / 5n) * 4n; // 80%
-            const platformReward = price / 5n; // 20%
+            const institutionReward = (TOKEN_PRICE / 5n) * 4n; // 80%
+            const platformReward = TOKEN_PRICE / 5n; // 20%
 
             const tokenMintingPermit: TokenMintingPermit.TypeStruct = {
                 tokenId: TOKEN_ID,
                 minter: buyerAddr,
-                price,
-                fee,
+                currency: usdcAddr,
+                price: TOKEN_PRICE,
+                fee: TOKEN_FEE,
                 tokenURI: TOKEN_URI,
                 tokenConfig: TOKEN_CONFIG,
                 participants: [institutionAddr, financierAddr],
@@ -88,7 +115,7 @@ describe('ArtToken', function () {
 
             await expect(tx)
                 .to.be.emit(usdc, 'Transfer')
-                .withArgs(buyerAddr, artTokenAddr, price + fee);
+                .withArgs(buyerAddr, artTokenAddr, TOKEN_PRICE + TOKEN_FEE);
 
             await expect(tx)
                 .to.be.emit(usdc, 'Transfer')
@@ -100,7 +127,7 @@ describe('ArtToken', function () {
 
             await expect(tx)
                 .to.be.emit(usdc, 'Transfer')
-                .withArgs(artTokenAddr, financierAddr, fee);
+                .withArgs(artTokenAddr, financierAddr, TOKEN_FEE);
 
             await expect(tx)
                 .to.be.emit(artToken, 'Transfer')
@@ -113,14 +140,15 @@ describe('ArtToken', function () {
             const auctionCreationPermit: AuctionCreationPermit.TypeStruct = {
                 auctionId: AUCTION_ID,
                 tokenId: TOKEN_ID,
-                price: MIN_PRICE,
-                fee: MIN_FEE,
+                currency: usdcAddr,
+                price: AUCTION_PRICE,
+                fee: AUCTION_FEE,
                 step: AUCTION_STEP,
                 endTime: latestBlockTimestamp + HOUR,
                 tokenURI: TOKEN_URI,
                 tokenConfig: TOKEN_CONFIG,
                 participants: [institutionAddr],
-                shares: [TOTAL_SHARE],
+                shares: [ONE_HUNDRED],
                 deadline: latestBlockTimestamp + HOUR,
             };
 
@@ -134,12 +162,13 @@ describe('ArtToken', function () {
             const tokenMintingPermit: TokenMintingPermit.TypeStruct = {
                 tokenId: TOKEN_ID,
                 minter: buyerAddr,
-                price: MIN_PRICE,
-                fee: MIN_FEE,
+                currency: usdcAddr,
+                price: TOKEN_PRICE,
+                fee: TOKEN_FEE,
                 tokenURI: TOKEN_URI,
                 tokenConfig: TOKEN_CONFIG,
                 participants: [institutionAddr],
-                rewards: [MIN_PRICE],
+                rewards: [TOKEN_PRICE],
                 deadline: latestBlockTimestamp + HOUR,
             };
 
@@ -159,12 +188,13 @@ describe('ArtToken', function () {
             const tokenMintingPermit: TokenMintingPermit.TypeStruct = {
                 tokenId: TOKEN_ID,
                 minter: buyerAddr,
-                price: MIN_PRICE,
-                fee: MIN_FEE,
+                currency: usdcAddr,
+                price: TOKEN_PRICE,
+                fee: TOKEN_FEE,
                 tokenURI: TOKEN_URI,
                 tokenConfig: TOKEN_CONFIG,
                 participants: [institutionAddr],
-                rewards: [MIN_PRICE],
+                rewards: [TOKEN_PRICE],
                 deadline: latestBlockTimestamp + HOUR,
             };
 
@@ -186,12 +216,13 @@ describe('ArtToken', function () {
             const tokenMintingPermit: TokenMintingPermit.TypeStruct = {
                 tokenId: TOKEN_ID,
                 minter: buyerAddr,
-                price: MIN_PRICE,
-                fee: MIN_FEE,
+                currency: usdcAddr,
+                price: TOKEN_PRICE,
+                fee: TOKEN_FEE,
                 tokenURI: TOKEN_URI,
                 tokenConfig: TOKEN_CONFIG,
                 participants: [institutionAddr],
-                rewards: [MIN_PRICE],
+                rewards: [TOKEN_PRICE],
                 deadline: latestBlockTimestamp + HOUR,
             };
 
@@ -204,6 +235,17 @@ describe('ArtToken', function () {
                 sender: buyer,
             });
         });
+
+        /**
+         * case 1: RegulationMode.Regulated or RegulationMode.None
+         *  - should transfer to a non-contract account
+         *  - should transfer to a partner contract
+         *  - should fail if a token is transferred to a non-partner contract
+         * case 2: RegulationMode.Unregulated
+         *  - should transfer to a non-contract account
+         *  - should transfer to a partner contract
+         *  - should transfer to a non-partner contract
+         */
 
         it(`should transfer to a non-contract account`, async () => {
             const tx = await artToken.connect(buyer).transferFrom(buyer, randomAccount, TOKEN_ID);
@@ -224,7 +266,7 @@ describe('ArtToken', function () {
         it(`should fail if a token is transferred to a non-partner contract`, async () => {
             const tx = artToken.connect(buyer).transferFrom(buyer, usdc, TOKEN_ID);
 
-            await expect(tx).to.eventually.rejectedWith('ArtTokenUnauthorizedAccount');
+            await expect(tx).eventually.rejectedWith('ArtTokenUnauthorizedAccount');
         });
     });
 
@@ -235,12 +277,13 @@ describe('ArtToken', function () {
             const tokenMintingPermit: TokenMintingPermit.TypeStruct = {
                 tokenId: TOKEN_ID,
                 minter: buyerAddr,
-                price: MIN_PRICE,
-                fee: MIN_FEE,
+                currency: usdcAddr,
+                price: TOKEN_PRICE,
+                fee: TOKEN_FEE,
                 tokenURI: TOKEN_URI,
                 tokenConfig: TOKEN_CONFIG,
                 participants: [institutionAddr],
-                rewards: [MIN_PRICE],
+                rewards: [TOKEN_PRICE],
                 deadline: latestBlockTimestamp + HOUR,
             };
 
@@ -253,6 +296,18 @@ describe('ArtToken', function () {
                 sender: buyer,
             });
         });
+
+        /**
+         * case 1: RegulationMode.Regulated or RegulationMode.None
+         *  - should provide the approval to a non-contract account
+         *  - should provide the approval to a partner contract
+         *  - should fail if the approval is provided to a non-partner contract
+         *  - should fail if a token is transferred by a non-partner contract with approval
+         * case 2: RegulationMode.Unregulated
+         *  - should provide the approval to a non-contract account
+         *  - should provide the approval to a partner contract
+         *  - should provide the approval to a non-partner contract
+         */
 
         it(`should provide the approval to a non-contract account`, async () => {
             const tx = await artToken.connect(buyer).approve(randomAccountAddr, TOKEN_ID);
@@ -273,7 +328,7 @@ describe('ArtToken', function () {
         it(`should fail if approval is provided to a non-partner contract`, async () => {
             const tx = artToken.connect(buyer).approve(usdc, TOKEN_ID);
 
-            await expect(tx).to.eventually.rejectedWith('ArtTokenUnauthorizedAccount');
+            await expect(tx).eventually.rejectedWith('ArtTokenUnauthorizedAccount');
         });
     });
 
@@ -284,12 +339,13 @@ describe('ArtToken', function () {
             const tokenMintingPermit: TokenMintingPermit.TypeStruct = {
                 tokenId: TOKEN_ID,
                 minter: buyerAddr,
-                price: MIN_PRICE,
-                fee: MIN_FEE,
+                currency: usdcAddr,
+                price: TOKEN_PRICE,
+                fee: TOKEN_FEE,
                 tokenURI: TOKEN_URI,
                 tokenConfig: TOKEN_CONFIG,
                 participants: [institutionAddr],
-                rewards: [MIN_PRICE],
+                rewards: [TOKEN_PRICE],
                 deadline: latestBlockTimestamp + HOUR,
             };
 
@@ -302,6 +358,18 @@ describe('ArtToken', function () {
                 sender: buyer,
             });
         });
+
+        /**
+         * case 1: RegulationMode.Regulated or RegulationMode.None
+         *  - should provide the approval to a non-contract account
+         *  - should provide the approval to a partner contract
+         *  - should fail if the approval is provided to a non-partner contract
+         *  - should fail if a token is transferred by a non-partner contract with approval
+         * case 2: RegulationMode.Unregulated
+         *  - should provide the approval to a non-contract account
+         *  - should provide the approval to a partner contract
+         *  - should provide the approval to a non-partner contract
+         */
 
         it(`should provide the approval to a non-contract account`, async () => {
             const tx = await artToken.connect(buyer).setApprovalForAll(randomAccountAddr, true);
@@ -322,7 +390,7 @@ describe('ArtToken', function () {
         it(`should fail if approval is provided to a non-partner contract`, async () => {
             const tx = artToken.connect(buyer).setApprovalForAll(usdc, true);
 
-            await expect(tx).to.eventually.rejectedWith('ArtTokenUnauthorizedAccount');
+            await expect(tx).eventually.rejectedWith('ArtTokenUnauthorizedAccount');
         });
     });
 

@@ -35,6 +35,14 @@ interface IArtToken is IERC721 {
     function mint(TokenMintingPermit.Type calldata permit, bytes calldata permitSignature) external;
 
     /**
+     * @notice Sets the token URI for a given token.
+     *
+     * @param tokenId The ID of the token to update.
+     * @param _tokenURI The new token URI.
+     */
+    function setTokenURI(uint256 tokenId, string memory _tokenURI) external;
+
+    /**
      * @notice Returns whether `tokenId` has already been minted (i.e., is reserved).
      *
      * @param tokenId Token identifier to query.
@@ -55,8 +63,11 @@ interface IArtToken is IERC721 {
     /// @dev Thrown when an action involves an account that is not authorized by the contract rules.
     error ArtTokenUnauthorizedAccount(address account);
 
-    /// @dev Thrown when an empty string is passed as a token URI where a non-empty value is required.
-    error ArtTokenEmptyTokenURI();
+    /// @dev Thrown when a token does not exist.
+    error ArtTokenNonexistentToken(uint256 tokenId);
+
+    /// @dev Thrown when a currency is invalid.
+    error ArtTokenCurrencyInvalid();
 
     /// @dev Thrown when `price` supplied to {buy} is below the minimum configured price.
     error ArtTokenInvalidPrice();

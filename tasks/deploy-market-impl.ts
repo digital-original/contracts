@@ -3,7 +3,7 @@ import { ProtocolConfig } from '../types/environment';
 import { deploy } from '../scripts/deploy';
 
 /*
-npx hardhat deploy-market-impl--network fork
+npx hardhat deploy-market-impl --network fork
 */
 
 task('deploy-market-impl').setAction(async (taskArgs: Record<string, string>, hardhat) => {
