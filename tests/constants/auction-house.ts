@@ -21,6 +21,7 @@ export const AUCTION_CREATION_PERMIT_TYPE = {
 export const MIN_AUCTION_DURATION = 1800;
 
 export const AUCTION_ID = 1;
+export const NON_EXISTENT_AUCTION_ID = 9999;
 export const SECOND_AUCTION_ID = 2;
 
 export const AUCTION_STEP = 1_000_000n;

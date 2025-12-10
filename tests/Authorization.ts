@@ -90,7 +90,7 @@ describe('Authorization', function () {
                 sender: buyer,
             });
 
-            await expect(tx).to.be.rejectedWith('AuthorizationDeadlineExpired');
+            await expect(tx).rejectedWith('AuthorizationDeadlineExpired');
         });
 
         it(`should fail if the signer is invalid`, async () => {
@@ -116,7 +116,7 @@ describe('Authorization', function () {
                 sender: buyer,
             });
 
-            await expect(tx).to.be.rejectedWith('AuthorizationUnauthorizedAction');
+            await expect(tx).rejectedWith('AuthorizationUnauthorizedAction');
         });
     });
 });

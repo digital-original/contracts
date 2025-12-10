@@ -129,32 +129,36 @@ describe('Market', function () {
                 sender: taker,
             });
 
+            const orderInvalidated = await market.orderInvalidated(maker, orderHash);
+
+            expect(orderInvalidated).equal(true);
+
             await expect(tx)
-                .to.be.emit(usdc, 'Transfer')
+                .emit(usdc, 'Transfer')
                 .withArgs(takerAddr, marketAddr, ORDER_PRICE + BID_SIDE_FEE);
 
             await expect(tx)
-                .to.be.emit(usdc, 'Transfer') //
+                .emit(usdc, 'Transfer')
                 .withArgs(marketAddr, financierAddr, BID_SIDE_FEE);
 
-            await expect(tx)
-                .to.be.emit(usdc, 'Transfer')
+            await expect(tx) //
+                .emit(usdc, 'Transfer')
                 .withArgs(marketAddr, makerAddr, askSideReward);
 
             await expect(tx)
-                .to.be.emit(usdc, 'Transfer')
+                .emit(usdc, 'Transfer')
                 .withArgs(marketAddr, institutionAddr, institutionReward);
 
             await expect(tx)
-                .to.be.emit(usdc, 'Transfer')
+                .emit(usdc, 'Transfer')
                 .withArgs(marketAddr, financierAddr, platformReward);
 
-            await expect(tx)
-                .to.be.emit(artToken, 'Transfer') //
+            await expect(tx) //
+                .emit(artToken, 'Transfer')
                 .withArgs(makerAddr, takerAddr, TOKEN_ID);
 
             await expect(tx)
-                .to.be.emit(market, 'AskOrderExecuted')
+                .emit(market, 'AskOrderExecuted')
                 .withArgs(
                     orderHash,
                     artTokenAddr,
@@ -164,8 +168,6 @@ describe('Market', function () {
                     TOKEN_ID,
                     ORDER_PRICE,
                 );
-
-            await expect(market.orderInvalidated(maker, orderHash)).eventually.equal(true);
         });
 
         it(`should execute the order with zero maker fee`, async () => {
@@ -203,9 +205,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx)
-                .to.be.emit(usdc, 'Transfer')
-                .withArgs(marketAddr, makerAddr, ORDER_PRICE); // Full price to maker
+            await expect(tx).emit(usdc, 'Transfer').withArgs(marketAddr, makerAddr, ORDER_PRICE); // Full price to maker
         });
 
         it(`should execute the order with zero taker fee`, async () => {
@@ -243,8 +243,8 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx)
-                .to.be.emit(usdc, 'Transfer')
+            await expect(tx) //
+                .emit(usdc, 'Transfer')
                 .withArgs(takerAddr, marketAddr, ORDER_PRICE); // Only price, no fee
         });
 
@@ -284,7 +284,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).eventually.rejectedWith('MarketOrderOutsideOfTimeRange');
+            await expect(tx).rejectedWith('MarketOrderOutsideOfTimeRange');
         });
 
         it(`should fail if the order end time is less than the current time`, async () => {
@@ -323,7 +323,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).eventually.rejectedWith('MarketOrderOutsideOfTimeRange');
+            await expect(tx).rejectedWith('MarketOrderOutsideOfTimeRange');
         });
 
         it(`should fail if the order signer is not the maker`, async () => {
@@ -359,7 +359,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).eventually.rejectedWith('MarketUnauthorizedOrder');
+            await expect(tx).rejectedWith('MarketUnauthorizedOrder');
         });
 
         it(`should fail if the permit order hash and the order hash do not match`, async () => {
@@ -395,7 +395,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).eventually.rejectedWith('MarketInvalidOrderHash');
+            await expect(tx).rejectedWith('MarketInvalidOrderHash');
         });
 
         it(`should fail if the permit signer is not the market signer`, async () => {
@@ -431,7 +431,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).eventually.rejectedWith('AuthorizationUnauthorizedAction');
+            await expect(tx).rejectedWith('AuthorizationUnauthorizedAction');
         });
 
         it(`should fail if the order is invalidated`, async () => {
@@ -471,7 +471,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).eventually.rejectedWith('MarketOrderInvalidated');
+            await expect(tx).rejectedWith('MarketOrderInvalidated');
         });
 
         it(`should fail if the order side is not Ask`, async () => {
@@ -507,7 +507,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).eventually.rejectedWith('MarketInvalidOrderSide');
+            await expect(tx).rejectedWith('MarketInvalidOrderSide');
         });
 
         it(`should fail if the ask side fee is greater than or equal to the price`, async () => {
@@ -543,7 +543,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).eventually.rejectedWith('MarketInvalidAskSideFee');
+            await expect(tx).rejectedWith('MarketInvalidAskSideFee');
         });
 
         it(`should fail if the currency is not allowed`, async () => {
@@ -579,7 +579,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).eventually.rejectedWith('MarketCurrencyInvalid');
+            await expect(tx).rejectedWith('MarketCurrencyInvalid');
         });
 
         it(`should fail if the sender is not the permitted taker`, async () => {
@@ -615,7 +615,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).eventually.rejectedWith('MarketUnauthorizedAccount');
+            await expect(tx).rejectedWith('MarketUnauthorizedAccount');
         });
 
         it(`should fail if the permit deadline has expired`, async () => {
@@ -651,7 +651,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).eventually.rejectedWith('AuthorizationDeadlineExpired');
+            await expect(tx).rejectedWith('AuthorizationDeadlineExpired');
         });
 
         it(`should fail if the sum of rewards is greater than the ask side fee`, async () => {
@@ -689,7 +689,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).eventually.rejectedWith('SafeERC20BulkTransferIncorrectTotalAmount');
+            await expect(tx).rejectedWith('SafeERC20BulkTransferIncorrectTotalAmount');
         });
 
         it(`should fail if the sum of rewards is less than the ask side fee`, async () => {
@@ -725,7 +725,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).eventually.rejectedWith('SafeERC20BulkTransferIncorrectTotalAmount');
+            await expect(tx).rejectedWith('SafeERC20BulkTransferIncorrectTotalAmount');
         });
     });
 
@@ -804,32 +804,36 @@ describe('Market', function () {
                 sender: taker,
             });
 
+            const orderInvalidated = await market.orderInvalidated(maker, orderHash);
+
+            expect(orderInvalidated).equal(true);
+
             await expect(tx)
-                .to.be.emit(usdc, 'Transfer')
+                .emit(usdc, 'Transfer')
                 .withArgs(makerAddr, marketAddr, ORDER_PRICE + BID_SIDE_FEE);
 
             await expect(tx)
-                .to.be.emit(usdc, 'Transfer') //
+                .emit(usdc, 'Transfer')
                 .withArgs(marketAddr, financierAddr, BID_SIDE_FEE);
 
-            await expect(tx)
-                .to.be.emit(usdc, 'Transfer')
+            await expect(tx) //
+                .emit(usdc, 'Transfer')
                 .withArgs(marketAddr, takerAddr, askSideReward);
 
             await expect(tx)
-                .to.be.emit(usdc, 'Transfer')
+                .emit(usdc, 'Transfer')
                 .withArgs(marketAddr, institutionAddr, institutionReward);
 
             await expect(tx)
-                .to.be.emit(usdc, 'Transfer')
+                .emit(usdc, 'Transfer')
                 .withArgs(marketAddr, financierAddr, platformReward);
 
-            await expect(tx)
-                .to.be.emit(artToken, 'Transfer') //
+            await expect(tx) //
+                .emit(artToken, 'Transfer')
                 .withArgs(takerAddr, makerAddr, TOKEN_ID);
 
             await expect(tx)
-                .to.be.emit(market, 'BidOrderExecuted')
+                .emit(market, 'BidOrderExecuted')
                 .withArgs(
                     orderHash,
                     artTokenAddr,
@@ -839,8 +843,6 @@ describe('Market', function () {
                     TOKEN_ID,
                     ORDER_PRICE,
                 );
-
-            await expect(market.orderInvalidated(maker, orderHash)).eventually.equal(true);
         });
 
         it(`should execute the order with zero maker fee`, async () => {
@@ -878,8 +880,8 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx)
-                .to.be.emit(usdc, 'Transfer')
+            await expect(tx) //
+                .emit(usdc, 'Transfer')
                 .withArgs(makerAddr, marketAddr, ORDER_PRICE); // Only price, no fee from maker
         });
 
@@ -918,8 +920,8 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx)
-                .to.be.emit(usdc, 'Transfer')
+            await expect(tx) //
+                .emit(usdc, 'Transfer')
                 .withArgs(marketAddr, takerAddr, ORDER_PRICE); // Full price to taker
         });
 
@@ -959,7 +961,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).eventually.rejectedWith('MarketOrderOutsideOfTimeRange');
+            await expect(tx).rejectedWith('MarketOrderOutsideOfTimeRange');
         });
 
         it(`should fail if the order end time is less than the current time`, async () => {
@@ -998,7 +1000,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).eventually.rejectedWith('MarketOrderOutsideOfTimeRange');
+            await expect(tx).rejectedWith('MarketOrderOutsideOfTimeRange');
         });
 
         it(`should fail if the order signer is not the maker`, async () => {
@@ -1034,7 +1036,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).eventually.rejectedWith('MarketUnauthorizedOrder');
+            await expect(tx).rejectedWith('MarketUnauthorizedOrder');
         });
 
         it(`should fail if the permit order hash and the order hash do not match`, async () => {
@@ -1070,7 +1072,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).eventually.rejectedWith('MarketInvalidOrderHash');
+            await expect(tx).rejectedWith('MarketInvalidOrderHash');
         });
 
         it(`should fail if the permit signer is not the market signer`, async () => {
@@ -1106,7 +1108,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).eventually.rejectedWith('AuthorizationUnauthorizedAction');
+            await expect(tx).rejectedWith('AuthorizationUnauthorizedAction');
         });
 
         it(`should fail if the order is invalidated`, async () => {
@@ -1146,7 +1148,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).eventually.rejectedWith('MarketOrderInvalidated');
+            await expect(tx).rejectedWith('MarketOrderInvalidated');
         });
 
         it(`should fail if the order side is not Bid`, async () => {
@@ -1182,7 +1184,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).eventually.rejectedWith('MarketInvalidOrderSide');
+            await expect(tx).rejectedWith('MarketInvalidOrderSide');
         });
 
         it(`should fail if the ask side fee is greater than or equal to the price`, async () => {
@@ -1218,7 +1220,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).eventually.rejectedWith('MarketInvalidAskSideFee');
+            await expect(tx).rejectedWith('MarketInvalidAskSideFee');
         });
 
         it(`should fail if the currency is not allowed`, async () => {
@@ -1254,7 +1256,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).eventually.rejectedWith('MarketCurrencyInvalid');
+            await expect(tx).rejectedWith('MarketCurrencyInvalid');
         });
 
         it(`should fail if the sender is not the permitted taker`, async () => {
@@ -1290,7 +1292,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).eventually.rejectedWith('MarketUnauthorizedAccount');
+            await expect(tx).rejectedWith('MarketUnauthorizedAccount');
         });
 
         it(`should fail if the permit deadline has expired`, async () => {
@@ -1326,7 +1328,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).eventually.rejectedWith('AuthorizationDeadlineExpired');
+            await expect(tx).rejectedWith('AuthorizationDeadlineExpired');
         });
 
         it(`should fail if the sum of rewards is greater than the ask side fee`, async () => {
@@ -1364,7 +1366,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).eventually.rejectedWith('SafeERC20BulkTransferIncorrectTotalAmount');
+            await expect(tx).rejectedWith('SafeERC20BulkTransferIncorrectTotalAmount');
         });
 
         it(`should fail if the sum of rewards is less than the ask side fee`, async () => {
@@ -1400,19 +1402,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).eventually.rejectedWith('SafeERC20BulkTransferIncorrectTotalAmount');
-        });
-    });
-
-    describe(`method 'orderInvalidated'`, () => {
-        it(`should return the correct value`, async () => {
-            const orderHash = randomBytes(32);
-
-            await expect(market.orderInvalidated(maker, orderHash)).eventually.equal(false);
-
-            await market.connect(maker).invalidateOrder(maker, orderHash);
-
-            await expect(market.orderInvalidated(maker, orderHash)).eventually.equal(true);
+            await expect(tx).rejectedWith('SafeERC20BulkTransferIncorrectTotalAmount');
         });
     });
 
@@ -1426,7 +1416,9 @@ describe('Market', function () {
 
             expect(invalidated).equal(true);
 
-            await expect(tx).to.be.emit(market, 'OrderInvalidated').withArgs(makerAddr, orderHash);
+            await expect(tx) //
+                .emit(market, 'OrderInvalidated')
+                .withArgs(makerAddr, orderHash);
         });
 
         it(`should invalidate the order if the sender is the market admin`, async () => {
@@ -1438,7 +1430,9 @@ describe('Market', function () {
 
             expect(invalidated).equal(true);
 
-            await expect(tx).to.be.emit(market, 'OrderInvalidated').withArgs(makerAddr, orderHash);
+            await expect(tx) //
+                .emit(market, 'OrderInvalidated')
+                .withArgs(makerAddr, orderHash);
         });
 
         it(`should fail when trying to invalidate an already invalidated order`, async () => {
@@ -1450,7 +1444,7 @@ describe('Market', function () {
             // Second invalidation attempt
             const tx = market.connect(maker).invalidateOrder(maker, orderHash);
 
-            await expect(tx).eventually.rejectedWith('MarketOrderInvalidated');
+            await expect(tx).rejectedWith('MarketOrderInvalidated');
         });
 
         it(`should fail if the sender is not the maker or the market admin`, async () => {
@@ -1458,7 +1452,23 @@ describe('Market', function () {
 
             const tx = market.connect(randomAccount).invalidateOrder(maker, orderHash);
 
-            await expect(tx).eventually.rejectedWith('MarketUnauthorizedAccount');
+            await expect(tx).rejectedWith('MarketUnauthorizedAccount');
+        });
+    });
+
+    describe(`method 'orderInvalidated'`, () => {
+        it(`should return the correct value`, async () => {
+            const orderHash = randomBytes(32);
+
+            const orderInvalidatedBefore = await market.orderInvalidated(maker, orderHash);
+
+            expect(orderInvalidatedBefore).equal(false);
+
+            await market.connect(maker).invalidateOrder(maker, orderHash);
+
+            const orderInvalidatedAfter = await market.orderInvalidated(maker, orderHash);
+
+            expect(orderInvalidatedAfter).equal(true);
         });
     });
 });

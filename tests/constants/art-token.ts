@@ -20,7 +20,9 @@ export const TOKEN_MINTING_PERMIT_TYPE = {
 };
 
 export const TOKEN_ID = 1;
+export const NON_EXISTENT_TOKEN_ID = 9999;
 export const TOKEN_URI = 'ipfs://QmbQ9c4KN5FcGreai5rjTRUs1N2FFMaY819JGZZMGDcSLQ';
+export const SECOND_TOKEN_URI = 'ipfs://QmbqKeWzBDUwKzVye3RxeD67N7rQrfgTaPTevucfbP3BST';
 
 export const TOKEN_PRICE = 1_000_000_000n;
 export const TOKEN_FEE = 100_000_000n;

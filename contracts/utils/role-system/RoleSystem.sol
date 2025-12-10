@@ -98,6 +98,7 @@ contract RoleSystem is IRoleSystem {
      * @inheritdoc IRoleSystem
      */
     function hasRole(bytes32 role, address account) public view returns (bool) {
+        // TODO: Split method into internal and external to avoid redundant zero-address checks
         _requireNotZeroAddress(account);
 
         RoleSystemStorage.Layout storage $ = RoleSystemStorage.layout();
@@ -109,6 +110,7 @@ contract RoleSystem is IRoleSystem {
      * @inheritdoc IRoleSystem
      */
     function uniqueRoleOwner(bytes32 uniqueRole) public view returns (address owner) {
+        // TODO: Split method into internal and external to avoid redundant zero-address checks
         RoleSystemStorage.Layout storage $ = RoleSystemStorage.layout();
 
         owner = $.uniqueRoleOwner[uniqueRole];

@@ -4,7 +4,15 @@ import { ArtToken, AuctionHouse, USDC, Market } from '../typechain-types';
 import { AuctionCreationPermit } from '../typechain-types/contracts/auction-house/AuctionHouse';
 import { TokenMintingPermit } from '../typechain-types/contracts/art-token/ArtToken';
 import { HOUR, ONE_HUNDRED } from './constants/general';
-import { TOKEN_CONFIG, TOKEN_FEE, TOKEN_ID, TOKEN_PRICE, TOKEN_URI } from './constants/art-token';
+import {
+    NON_EXISTENT_TOKEN_ID,
+    SECOND_TOKEN_URI,
+    TOKEN_CONFIG,
+    TOKEN_FEE,
+    TOKEN_ID,
+    TOKEN_PRICE,
+    TOKEN_URI,
+} from './constants/art-token';
 import { AUCTION_FEE, AUCTION_ID, AUCTION_PRICE, AUCTION_STEP } from './constants/auction-house';
 import { getSigners } from './utils/get-signers';
 import { getLatestBlockTimestamp } from './utils/get-latest-block-timestamp';
@@ -16,26 +24,13 @@ describe('ArtToken', function () {
     /**
      * TODO:
      *
-     * > CurrencyManager:
-     *  - should fail if the currency is not allowed
-     *
      * > ArtTokenRoyaltyManager:
      *  - should return correct creator address
      *  - should return correct default creator address
      *  - should return correct royalty amount
      *
-     * > `setTokenURI` method:
-     *  - should set the token URI
-     *  - should fail if the caller is the art token admin
-     *  - should fail if the token does not exist
-     *
      * > `mintFromAuctionHouse` method:
      *  - should fail if the caller is not the auction house
-     *
-     * > `mint` method:
-     *  - should fail if the caller is not the allowed minter
-     *  - should fail if the currency is not allowed
-     *  - check the set token config
      *
      * > ArtTokenConfigManager:
      *  > `updateTokenCreator` method:
@@ -58,19 +53,27 @@ describe('ArtToken', function () {
 
     let artTokenSigner: Signer, artTokenSignerAddr: string;
     let financier: Signer, financierAddr: string;
+    let admin: Signer, adminAddr: string;
     let institution: Signer, institutionAddr: string;
     let buyer: Signer, buyerAddr: string;
     let randomAccount: Signer, randomAccountAddr: string;
 
     before(async () => {
         [
-            [artTokenSigner, financier, institution, buyer, randomAccount],
-            [artTokenSignerAddr, financierAddr, institutionAddr, buyerAddr, randomAccountAddr],
+            [artTokenSigner, financier, admin, institution, buyer, randomAccount],
+            [
+                artTokenSignerAddr,
+                financierAddr,
+                adminAddr,
+                institutionAddr,
+                buyerAddr,
+                randomAccountAddr,
+            ],
         ] = await getSigners();
     });
 
     beforeEach(async () => {
-        const all = await deployAll({ signer: artTokenSigner, financier });
+        const all = await deployAll({ signer: artTokenSigner, financier, admin });
 
         artToken = all.artToken;
         artTokenAddr = all.artTokenAddr;
@@ -114,24 +117,106 @@ describe('ArtToken', function () {
             });
 
             await expect(tx)
-                .to.be.emit(usdc, 'Transfer')
+                .emit(usdc, 'Transfer')
                 .withArgs(buyerAddr, artTokenAddr, TOKEN_PRICE + TOKEN_FEE);
 
             await expect(tx)
-                .to.be.emit(usdc, 'Transfer')
+                .emit(usdc, 'Transfer')
                 .withArgs(artTokenAddr, institutionAddr, institutionReward);
 
             await expect(tx)
-                .to.be.emit(usdc, 'Transfer')
+                .emit(usdc, 'Transfer')
                 .withArgs(artTokenAddr, financierAddr, platformReward);
 
             await expect(tx)
-                .to.be.emit(usdc, 'Transfer')
+                .emit(usdc, 'Transfer')
                 .withArgs(artTokenAddr, financierAddr, TOKEN_FEE);
 
-            await expect(tx)
-                .to.be.emit(artToken, 'Transfer')
+            await expect(tx) //
+                .emit(artToken, 'Transfer')
                 .withArgs(ZeroAddress, buyerAddr, TOKEN_ID);
+        });
+
+        it(`should set correct token config`, async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
+
+            const tokenMintingPermit: TokenMintingPermit.TypeStruct = {
+                tokenId: TOKEN_ID,
+                minter: buyerAddr,
+                currency: usdcAddr,
+                price: TOKEN_PRICE,
+                fee: TOKEN_FEE,
+                tokenURI: TOKEN_URI,
+                tokenConfig: TOKEN_CONFIG,
+                participants: [institutionAddr],
+                rewards: [TOKEN_PRICE],
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            await ArtTokenUtils.mint({
+                artToken,
+                permit: tokenMintingPermit,
+                permitSigner: artTokenSigner,
+                sender: buyer,
+            });
+
+            const tokenCreator = await artToken.tokenCreator(TOKEN_ID);
+            const tokenRegulationMode = await artToken.tokenRegulationMode(TOKEN_ID);
+
+            expect(tokenCreator).equal(TOKEN_CONFIG.creator);
+            expect(tokenRegulationMode).equal(TOKEN_CONFIG.regulationMode);
+        });
+
+        it(`should fail if the caller is not the allowed minter`, async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
+
+            const tokenMintingPermit: TokenMintingPermit.TypeStruct = {
+                tokenId: TOKEN_ID,
+                minter: buyerAddr, // Not allowed minter
+                currency: usdcAddr,
+                price: TOKEN_PRICE,
+                fee: TOKEN_FEE,
+                tokenURI: TOKEN_URI,
+                tokenConfig: TOKEN_CONFIG,
+                participants: [institutionAddr],
+                rewards: [TOKEN_PRICE],
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            const tx = ArtTokenUtils.mint({
+                artToken,
+                permit: tokenMintingPermit,
+                permitSigner: artTokenSigner,
+                sender: randomAccount,
+            });
+
+            await expect(tx).rejectedWith('ArtTokenUnauthorizedAccount');
+        });
+
+        it(`should fail if the currency is not allowed`, async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
+
+            const tokenMintingPermit: TokenMintingPermit.TypeStruct = {
+                tokenId: TOKEN_ID,
+                minter: buyerAddr,
+                currency: randomAccountAddr, // Not allowed currency
+                price: TOKEN_PRICE,
+                fee: TOKEN_FEE,
+                tokenURI: TOKEN_URI,
+                tokenConfig: TOKEN_CONFIG,
+                participants: [institutionAddr],
+                rewards: [TOKEN_PRICE],
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            const tx = ArtTokenUtils.mint({
+                artToken,
+                permit: tokenMintingPermit,
+                permitSigner: artTokenSigner,
+                sender: buyer,
+            });
+
+            await expect(tx).rejectedWith('ArtTokenCurrencyInvalid');
         });
 
         it(`should fail if the token is reserved by an auction`, async () => {
@@ -179,7 +264,7 @@ describe('ArtToken', function () {
                 sender: buyer,
             });
 
-            await expect(tx).to.be.rejectedWith('ArtTokenTokenReserved');
+            await expect(tx).rejectedWith('ArtTokenTokenReserved');
         });
 
         it(`should fail if the permit signer is not the art token signer`, async () => {
@@ -205,7 +290,7 @@ describe('ArtToken', function () {
                 sender: buyer,
             });
 
-            await expect(tx).to.be.rejectedWith('AuthorizationUnauthorizedAction');
+            await expect(tx).rejectedWith('AuthorizationUnauthorizedAction');
         });
     });
 
@@ -251,22 +336,22 @@ describe('ArtToken', function () {
             const tx = await artToken.connect(buyer).transferFrom(buyer, randomAccount, TOKEN_ID);
 
             await expect(tx)
-                .to.be.emit(artToken, 'Transfer')
+                .emit(artToken, 'Transfer')
                 .withArgs(buyerAddr, randomAccountAddr, TOKEN_ID);
         });
 
         it(`should transfer to a partner contract`, async () => {
             const tx = await artToken.connect(buyer).transferFrom(buyer, market, TOKEN_ID);
 
-            await expect(tx)
-                .to.be.emit(artToken, 'Transfer')
+            await expect(tx) //
+                .emit(artToken, 'Transfer')
                 .withArgs(buyerAddr, marketAddr, TOKEN_ID);
         });
 
         it(`should fail if a token is transferred to a non-partner contract`, async () => {
             const tx = artToken.connect(buyer).transferFrom(buyer, usdc, TOKEN_ID);
 
-            await expect(tx).eventually.rejectedWith('ArtTokenUnauthorizedAccount');
+            await expect(tx).rejectedWith('ArtTokenUnauthorizedAccount');
         });
     });
 
@@ -313,22 +398,22 @@ describe('ArtToken', function () {
             const tx = await artToken.connect(buyer).approve(randomAccountAddr, TOKEN_ID);
 
             await expect(tx)
-                .to.be.emit(artToken, 'Approval')
+                .emit(artToken, 'Approval')
                 .withArgs(buyerAddr, randomAccountAddr, TOKEN_ID);
         });
 
         it(`should provide the approval to a partner contract`, async () => {
             const tx = await artToken.connect(buyer).approve(market, TOKEN_ID);
 
-            await expect(tx)
-                .to.be.emit(artToken, 'Approval')
+            await expect(tx) //
+                .emit(artToken, 'Approval')
                 .withArgs(buyerAddr, marketAddr, TOKEN_ID);
         });
 
         it(`should fail if approval is provided to a non-partner contract`, async () => {
             const tx = artToken.connect(buyer).approve(usdc, TOKEN_ID);
 
-            await expect(tx).eventually.rejectedWith('ArtTokenUnauthorizedAccount');
+            await expect(tx).rejectedWith('ArtTokenUnauthorizedAccount');
         });
     });
 
@@ -375,22 +460,22 @@ describe('ArtToken', function () {
             const tx = await artToken.connect(buyer).setApprovalForAll(randomAccountAddr, true);
 
             await expect(tx)
-                .to.be.emit(artToken, 'ApprovalForAll')
+                .emit(artToken, 'ApprovalForAll')
                 .withArgs(buyerAddr, randomAccountAddr, true);
         });
 
         it(`should provide the approval to a partner contract`, async () => {
             const tx = await artToken.connect(buyer).setApprovalForAll(market, true);
 
-            await expect(tx)
-                .to.be.emit(artToken, 'ApprovalForAll')
+            await expect(tx) //
+                .emit(artToken, 'ApprovalForAll')
                 .withArgs(buyerAddr, marketAddr, true);
         });
 
         it(`should fail if approval is provided to a non-partner contract`, async () => {
             const tx = artToken.connect(buyer).setApprovalForAll(usdc, true);
 
-            await expect(tx).eventually.rejectedWith('ArtTokenUnauthorizedAccount');
+            await expect(tx).rejectedWith('ArtTokenUnauthorizedAccount');
         });
     });
 
@@ -411,6 +496,56 @@ describe('ArtToken', function () {
             const authorized = await artToken.recipientAuthorized(usdc);
 
             expect(authorized).equal(false);
+        });
+    });
+
+    describe(`method 'setTokenURI'`, () => {
+        beforeEach(async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
+
+            const tokenMintingPermit: TokenMintingPermit.TypeStruct = {
+                tokenId: TOKEN_ID,
+                minter: buyerAddr,
+                currency: usdcAddr,
+                price: TOKEN_PRICE,
+                fee: TOKEN_FEE,
+                tokenURI: TOKEN_URI,
+                tokenConfig: TOKEN_CONFIG,
+                participants: [institutionAddr],
+                rewards: [TOKEN_PRICE],
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            await usdc.connect(buyer).mintAndApprove(artToken, MaxInt256);
+
+            await ArtTokenUtils.mint({
+                artToken,
+                permit: tokenMintingPermit,
+                permitSigner: artTokenSigner,
+                sender: buyer,
+            });
+        });
+
+        it(`should set the new token URI`, async () => {
+            const tx = await artToken.connect(admin).setTokenURI(TOKEN_ID, SECOND_TOKEN_URI);
+
+            await expect(tx).emit(artToken, 'MetadataUpdate').withArgs(TOKEN_ID);
+
+            const tokenURI = await artToken.tokenURI(TOKEN_ID);
+
+            expect(tokenURI).equal(SECOND_TOKEN_URI);
+        });
+
+        it(`should fail if the caller is not the art token admin`, async () => {
+            const tx = artToken.connect(randomAccount).setTokenURI(TOKEN_ID, SECOND_TOKEN_URI);
+
+            await expect(tx).rejectedWith('RoleSystemUnauthorizedAccount');
+        });
+
+        it(`should fail if the token does not exist`, async () => {
+            const tx = artToken.connect(admin).setTokenURI(NON_EXISTENT_TOKEN_ID, SECOND_TOKEN_URI);
+
+            await expect(tx).rejectedWith('ArtTokenNonexistentToken');
         });
     });
 });
