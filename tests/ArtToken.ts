@@ -8,12 +8,19 @@ import {
     NON_EXISTENT_TOKEN_ID,
     SECOND_TOKEN_URI,
     TOKEN_CONFIG,
+    TOKEN_CREATOR_ADDR,
     TOKEN_FEE,
     TOKEN_ID,
     TOKEN_PRICE,
+    TOKEN_ROYALTY_PERCENT,
     TOKEN_URI,
 } from './constants/art-token';
 import { AUCTION_FEE, AUCTION_ID, AUCTION_PRICE, AUCTION_STEP } from './constants/auction-house';
+import {
+    REGULATION_MODE_NONE,
+    REGULATION_MODE_REGULATED,
+    REGULATION_MODE_UNREGULATED,
+} from './constants/token-config';
 import { getSigners } from './utils/get-signers';
 import { getLatestBlockTimestamp } from './utils/get-latest-block-timestamp';
 import { deployAll } from './utils/deploy-all';
@@ -24,25 +31,19 @@ describe('ArtToken', function () {
     /**
      * TODO:
      *
-     * > ArtTokenRoyaltyManager:
-     *  - should return correct creator address
-     *  - should return correct default creator address
-     *  - should return correct royalty amount
-     *
-     * > `mintFromAuctionHouse` method:
-     *  - should fail if the caller is not the auction house
-     *
      * > ArtTokenConfigManager:
      *  > `updateTokenCreator` method:
      *    - should update the token creator
      *    - should fail if the caller is not the art token admin
+     *
      *  > `updateTokenRegulationMode` method:
      *    - should update the token regulation mode
      *    - should fail if the caller is not the art token admin
      *
-     *  (-) should return correct default creator address
-     *  (-) should return correct default regulation mode
+     *  > `tokenCreator` method:
      *  - should return correct token-specific creator address
+     *
+     *  > `tokenRegulationMode` method:
      *  - should return correct token-specific regulation mode
      *
      */
@@ -294,6 +295,16 @@ describe('ArtToken', function () {
         });
     });
 
+    describe(`method 'mintFromAuctionHouse'`, () => {
+        it(`should fail if the caller is not the auction house`, async () => {
+            const tx = artToken
+                .connect(randomAccount)
+                .mintFromAuctionHouse(randomAccountAddr, TOKEN_ID, TOKEN_URI, TOKEN_CONFIG);
+
+            await expect(tx).rejectedWith('ArtTokenUnauthorizedAccount');
+        });
+    });
+
     describe(`method 'transferFrom'`, () => {
         beforeEach(async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
@@ -321,38 +332,57 @@ describe('ArtToken', function () {
             });
         });
 
-        /**
-         * case 1: RegulationMode.Regulated or RegulationMode.None
-         *  - should transfer to a non-contract account
-         *  - should transfer to a partner contract
-         *  - should fail if a token is transferred to a non-partner contract
-         * case 2: RegulationMode.Unregulated
-         *  - should transfer to a non-contract account
-         *  - should transfer to a partner contract
-         *  - should transfer to a non-partner contract
-         */
+        for (const regulationMode of [
+            REGULATION_MODE_NONE,
+            REGULATION_MODE_UNREGULATED,
+            REGULATION_MODE_REGULATED,
+        ]) {
+            describe(`Regulation mode is '${regulationMode}'`, () => {
+                beforeEach(async () => {
+                    await artToken
+                        .connect(admin)
+                        .updateTokenRegulationMode(TOKEN_ID, regulationMode);
+                });
 
-        it(`should transfer to a non-contract account`, async () => {
-            const tx = await artToken.connect(buyer).transferFrom(buyer, randomAccount, TOKEN_ID);
+                it(`should transfer to a non-contract account`, async () => {
+                    const tx = await artToken
+                        .connect(buyer)
+                        .transferFrom(buyer, randomAccount, TOKEN_ID);
 
-            await expect(tx)
-                .emit(artToken, 'Transfer')
-                .withArgs(buyerAddr, randomAccountAddr, TOKEN_ID);
-        });
+                    await expect(tx)
+                        .emit(artToken, 'Transfer')
+                        .withArgs(buyerAddr, randomAccountAddr, TOKEN_ID);
+                });
 
-        it(`should transfer to a partner contract`, async () => {
-            const tx = await artToken.connect(buyer).transferFrom(buyer, market, TOKEN_ID);
+                it(`should transfer to a partner contract`, async () => {
+                    const tx = await artToken.connect(buyer).transferFrom(buyer, market, TOKEN_ID);
 
-            await expect(tx) //
-                .emit(artToken, 'Transfer')
-                .withArgs(buyerAddr, marketAddr, TOKEN_ID);
-        });
+                    await expect(tx)
+                        .emit(artToken, 'Transfer')
+                        .withArgs(buyerAddr, marketAddr, TOKEN_ID);
+                });
 
-        it(`should fail if a token is transferred to a non-partner contract`, async () => {
-            const tx = artToken.connect(buyer).transferFrom(buyer, usdc, TOKEN_ID);
+                if ([REGULATION_MODE_NONE, REGULATION_MODE_REGULATED].includes(regulationMode)) {
+                    it(`should fail if a token is transferred to a non-partner contract`, async () => {
+                        const tx = artToken.connect(buyer).transferFrom(buyer, usdc, TOKEN_ID);
 
-            await expect(tx).rejectedWith('ArtTokenUnauthorizedAccount');
-        });
+                        await expect(tx).rejectedWith('ArtTokenUnauthorizedAccount');
+                    });
+                }
+
+                if ([REGULATION_MODE_UNREGULATED].includes(regulationMode)) {
+                    it(`should transfer to a non-partner contract`, async () => {
+                        const tx = await artToken
+                            .connect(buyer)
+                            .transferFrom(buyer, usdc, TOKEN_ID);
+
+                        await expect(tx)
+                            .emit(artToken, 'Transfer')
+                            .withArgs(buyerAddr, usdcAddr, TOKEN_ID);
+                    });
+                }
+            });
+        }
     });
 
     describe(`method 'approve'`, () => {
@@ -382,39 +412,57 @@ describe('ArtToken', function () {
             });
         });
 
-        /**
-         * case 1: RegulationMode.Regulated or RegulationMode.None
-         *  - should provide the approval to a non-contract account
-         *  - should provide the approval to a partner contract
-         *  - should fail if the approval is provided to a non-partner contract
-         *  - should fail if a token is transferred by a non-partner contract with approval
-         * case 2: RegulationMode.Unregulated
-         *  - should provide the approval to a non-contract account
-         *  - should provide the approval to a partner contract
-         *  - should provide the approval to a non-partner contract
-         */
+        for (const regulationMode of [
+            REGULATION_MODE_NONE,
+            REGULATION_MODE_UNREGULATED,
+            REGULATION_MODE_REGULATED,
+        ]) {
+            describe(`Regulation mode is '${regulationMode}'`, () => {
+                beforeEach(async () => {
+                    await artToken
+                        .connect(admin)
+                        .updateTokenRegulationMode(TOKEN_ID, regulationMode);
+                });
 
-        it(`should provide the approval to a non-contract account`, async () => {
-            const tx = await artToken.connect(buyer).approve(randomAccountAddr, TOKEN_ID);
+                it(`should provide the approval to a non-contract account`, async () => {
+                    const tx = await artToken.connect(buyer).approve(randomAccountAddr, TOKEN_ID);
 
-            await expect(tx)
-                .emit(artToken, 'Approval')
-                .withArgs(buyerAddr, randomAccountAddr, TOKEN_ID);
-        });
+                    await expect(tx)
+                        .emit(artToken, 'Approval')
+                        .withArgs(buyerAddr, randomAccountAddr, TOKEN_ID);
+                });
 
-        it(`should provide the approval to a partner contract`, async () => {
-            const tx = await artToken.connect(buyer).approve(market, TOKEN_ID);
+                it(`should provide the approval to a partner contract`, async () => {
+                    const tx = await artToken.connect(buyer).approve(market, TOKEN_ID);
 
-            await expect(tx) //
-                .emit(artToken, 'Approval')
-                .withArgs(buyerAddr, marketAddr, TOKEN_ID);
-        });
+                    await expect(tx)
+                        .emit(artToken, 'Approval')
+                        .withArgs(buyerAddr, marketAddr, TOKEN_ID);
+                });
 
-        it(`should fail if approval is provided to a non-partner contract`, async () => {
-            const tx = artToken.connect(buyer).approve(usdc, TOKEN_ID);
+                if ([REGULATION_MODE_NONE, REGULATION_MODE_REGULATED].includes(regulationMode)) {
+                    it(`should fail if approval is provided to a non-partner contract`, async () => {
+                        const tx = artToken.connect(buyer).approve(usdc, TOKEN_ID);
 
-            await expect(tx).rejectedWith('ArtTokenUnauthorizedAccount');
-        });
+                        await expect(tx).rejectedWith('ArtTokenUnauthorizedAccount');
+                    });
+
+                    it(
+                        `should fail if a token is transferred by a non-partner contract with approval`,
+                    );
+                }
+
+                if ([REGULATION_MODE_UNREGULATED].includes(regulationMode)) {
+                    it(`should provide the approval to a non-partner contract`, async () => {
+                        const tx = await artToken.connect(buyer).approve(usdc, TOKEN_ID);
+
+                        await expect(tx)
+                            .emit(artToken, 'Approval')
+                            .withArgs(buyerAddr, usdc, TOKEN_ID);
+                    });
+                }
+            });
+        }
     });
 
     describe(`method 'setApprovalForAll'`, () => {
@@ -444,58 +492,96 @@ describe('ArtToken', function () {
             });
         });
 
-        /**
-         * case 1: RegulationMode.Regulated or RegulationMode.None
-         *  - should provide the approval to a non-contract account
-         *  - should provide the approval to a partner contract
-         *  - should fail if the approval is provided to a non-partner contract
-         *  - should fail if a token is transferred by a non-partner contract with approval
-         * case 2: RegulationMode.Unregulated
-         *  - should provide the approval to a non-contract account
-         *  - should provide the approval to a partner contract
-         *  - should provide the approval to a non-partner contract
-         */
+        for (const regulationMode of [
+            REGULATION_MODE_NONE,
+            REGULATION_MODE_UNREGULATED,
+            REGULATION_MODE_REGULATED,
+        ]) {
+            describe(`Regulation mode is '${regulationMode}'`, () => {
+                beforeEach(async () => {
+                    await artToken
+                        .connect(admin)
+                        .updateTokenRegulationMode(TOKEN_ID, regulationMode);
+                });
 
-        it(`should provide the approval to a non-contract account`, async () => {
-            const tx = await artToken.connect(buyer).setApprovalForAll(randomAccountAddr, true);
+                it(`should provide the approval to a non-contract account`, async () => {
+                    const tx = await artToken
+                        .connect(buyer)
+                        .setApprovalForAll(randomAccountAddr, true);
 
-            await expect(tx)
-                .emit(artToken, 'ApprovalForAll')
-                .withArgs(buyerAddr, randomAccountAddr, true);
-        });
+                    await expect(tx)
+                        .emit(artToken, 'ApprovalForAll')
+                        .withArgs(buyerAddr, randomAccountAddr, true);
+                });
 
-        it(`should provide the approval to a partner contract`, async () => {
-            const tx = await artToken.connect(buyer).setApprovalForAll(market, true);
+                it(`should provide the approval to a partner contract`, async () => {
+                    const tx = await artToken.connect(buyer).setApprovalForAll(market, true);
 
-            await expect(tx) //
-                .emit(artToken, 'ApprovalForAll')
-                .withArgs(buyerAddr, marketAddr, true);
-        });
+                    await expect(tx)
+                        .emit(artToken, 'ApprovalForAll')
+                        .withArgs(buyerAddr, marketAddr, true);
+                });
 
-        it(`should fail if approval is provided to a non-partner contract`, async () => {
-            const tx = artToken.connect(buyer).setApprovalForAll(usdc, true);
+                it(`should fail if approval is provided to a non-partner contract`, async () => {
+                    const tx = artToken.connect(buyer).setApprovalForAll(usdc, true);
 
-            await expect(tx).rejectedWith('ArtTokenUnauthorizedAccount');
-        });
+                    await expect(tx).rejectedWith('ArtTokenUnauthorizedAccount');
+                });
+
+                if ([REGULATION_MODE_NONE, REGULATION_MODE_REGULATED].includes(regulationMode)) {
+                    it(
+                        `should fail if a token is transferred by a non-partner contract with approval`,
+                    );
+                }
+            });
+        }
     });
 
-    describe(`method 'recipientAuthorized'`, () => {
-        it(`should return 'true' for a non-contract account`, async () => {
-            const authorized = await artToken.recipientAuthorized(randomAccount);
+    describe(`method 'royaltyInfo'`, () => {
+        beforeEach(async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
 
-            expect(authorized).equal(true);
+            const tokenMintingPermit: TokenMintingPermit.TypeStruct = {
+                tokenId: TOKEN_ID,
+                minter: buyerAddr,
+                currency: usdcAddr,
+                price: TOKEN_PRICE,
+                fee: TOKEN_FEE,
+                tokenURI: TOKEN_URI,
+                tokenConfig: TOKEN_CONFIG,
+                participants: [institutionAddr],
+                rewards: [TOKEN_PRICE],
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            await usdc.connect(buyer).mintAndApprove(artToken, MaxInt256);
+
+            await ArtTokenUtils.mint({
+                artToken,
+                permit: tokenMintingPermit,
+                permitSigner: artTokenSigner,
+                sender: buyer,
+            });
         });
 
-        it(`should return 'true' for a partner contract`, async () => {
-            const authorized = await artToken.recipientAuthorized(market);
+        it(`should return correct receiver address`, async () => {
+            const [receiver] = await artToken.royaltyInfo(TOKEN_ID, TOKEN_PRICE);
 
-            expect(authorized).equal(true);
+            expect(receiver).equal(TOKEN_CREATOR_ADDR);
         });
 
-        it(`should return 'false' for a non-partner contract`, async () => {
-            const authorized = await artToken.recipientAuthorized(usdc);
+        it(`should return correct default receiver address`, async () => {
+            await artToken.connect(admin).updateTokenCreator(TOKEN_ID, ZeroAddress);
 
-            expect(authorized).equal(false);
+            const [receiver] = await artToken.royaltyInfo(TOKEN_ID, TOKEN_PRICE);
+
+            expect(receiver).equal(financierAddr);
+        });
+
+        it(`should return correct royalty amount`, async () => {
+            const [_, royaltyAmount] = await artToken.royaltyInfo(TOKEN_ID, TOKEN_PRICE);
+
+            expect(royaltyAmount).equal((TOKEN_PRICE * TOKEN_ROYALTY_PERCENT) / ONE_HUNDRED);
         });
     });
 
@@ -546,6 +632,26 @@ describe('ArtToken', function () {
             const tx = artToken.connect(admin).setTokenURI(NON_EXISTENT_TOKEN_ID, SECOND_TOKEN_URI);
 
             await expect(tx).rejectedWith('ArtTokenNonexistentToken');
+        });
+    });
+
+    describe(`method 'recipientAuthorized'`, () => {
+        it(`should return 'true' for a non-contract account`, async () => {
+            const authorized = await artToken.recipientAuthorized(randomAccount);
+
+            expect(authorized).equal(true);
+        });
+
+        it(`should return 'true' for a partner contract`, async () => {
+            const authorized = await artToken.recipientAuthorized(market);
+
+            expect(authorized).equal(true);
+        });
+
+        it(`should return 'false' for a non-partner contract`, async () => {
+            const authorized = await artToken.recipientAuthorized(usdc);
+
+            expect(authorized).equal(false);
         });
     });
 });

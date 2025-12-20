@@ -50,7 +50,7 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
         OrderExecutionPermit.Type calldata permit,
         bytes calldata orderSignature,
         bytes calldata permitSignature
-    ) external {
+    ) external payable {
         if (order.side != Order.Side.Ask) {
             revert MarketInvalidOrderSide();
         }

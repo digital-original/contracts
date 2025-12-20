@@ -57,12 +57,12 @@ interface IAuctionHouse {
     /**
      * @notice Places the first bid on an auction that has no current bidder.
      */
-    function raiseInitial(uint256 auctionId, uint256 newPrice) external;
+    function raiseInitial(uint256 auctionId, uint256 newPrice) external payable;
 
     /**
      * @notice Places a bid higher than the current highest bid by at least `step`.
      */
-    function raise(uint256 auctionId, uint256 newPrice) external;
+    function raise(uint256 auctionId, uint256 newPrice) external payable;
 
     /**
      * @notice Finalizes the auction, mints the token to the highest bidder

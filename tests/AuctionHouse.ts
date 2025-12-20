@@ -574,9 +574,7 @@ describe(`AuctionHouse`, () => {
             await expect(tx).rejectedWith('AuctionHouseAuctionEnded');
         });
 
-        it.skip(`should fail if the buyer is unauthorized`, async () => {
-            // TODO
-        });
+        it(`should fail if the buyer is unauthorized`);
     });
 
     describe(`method 'raise'`, () => {
@@ -689,9 +687,7 @@ describe(`AuctionHouse`, () => {
             await expect(tx).rejectedWith('AuctionHouseBuyerNotExists');
         });
 
-        it.skip(`should fail if the buyer is unauthorized`, async () => {
-            // TODO
-        });
+        it(`should fail if the buyer is unauthorized`);
     });
 
     describe(`method 'finish'`, async () => {

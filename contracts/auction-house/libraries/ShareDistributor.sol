@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {SafeERC20BulkTransfer} from "../../utils/SafeERC20BulkTransfer.sol";
+import {ONE_HUNDRED_PERCENT_IN_BP} from "../../utils/Constants.sol";
 
 /**
  * @title ShareDistributor
@@ -11,9 +12,6 @@ import {SafeERC20BulkTransfer} from "../../utils/SafeERC20BulkTransfer.sol";
  *         based on specified shares.
  */
 library ShareDistributor {
-    /// @notice Represents 100% in basis points (100.00%).
-    uint256 internal constant ONE_HUNDRED_PERCENT_IN_BP = 10_000;
-
     /**
      * @notice Distributes a given amount of an ERC20 token to a list of participants.
      *

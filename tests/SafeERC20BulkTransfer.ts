@@ -1,3 +1,3 @@
 describe('SafeERC20BulkTransfer', function () {
-    // TODO
+    it('should perform bulk transfer successfully');
 });

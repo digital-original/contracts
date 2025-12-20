@@ -209,7 +209,14 @@ contract AuctionHouse is IAuctionHouse, EIP712Domain, RoleSystem, Authorization,
     function raiseInitial(
         uint256 auctionId,
         uint256 newPrice
-    ) external authorizedBuyer(msg.sender) auctionExists(auctionId) auctionNotEnded(auctionId) withoutBuyer(auctionId) {
+    )
+        external
+        payable
+        authorizedBuyer(msg.sender)
+        auctionExists(auctionId)
+        auctionNotEnded(auctionId)
+        withoutBuyer(auctionId)
+    {
         AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
 
         if (newPrice < $.auction[auctionId].price) {
@@ -246,7 +253,14 @@ contract AuctionHouse is IAuctionHouse, EIP712Domain, RoleSystem, Authorization,
     function raise(
         uint256 auctionId,
         uint256 newPrice
-    ) external authorizedBuyer(msg.sender) auctionExists(auctionId) auctionNotEnded(auctionId) withBuyer(auctionId) {
+    )
+        external
+        payable
+        authorizedBuyer(msg.sender)
+        auctionExists(auctionId)
+        auctionNotEnded(auctionId)
+        withBuyer(auctionId)
+    {
         AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
 
         Auction.Type memory _auction = $.auction[auctionId];

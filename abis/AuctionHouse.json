@@ -808,7 +808,7 @@
         ],
         "name": "raise",
         "outputs": [],
-        "stateMutability": "nonpayable",
+        "stateMutability": "payable",
         "type": "function"
     },
     {
@@ -826,7 +826,7 @@
         ],
         "name": "raiseInitial",
         "outputs": [],
-        "stateMutability": "nonpayable",
+        "stateMutability": "payable",
         "type": "function"
     },
     {

@@ -32,7 +32,7 @@ interface IArtToken is IERC721 {
      * @param permit The `TokenMintingPermit` struct containing the sale details.
      * @param permitSignature The EIP-712 signature of the `permit`, signed by the art-token signer.
      */
-    function mint(TokenMintingPermit.Type calldata permit, bytes calldata permitSignature) external;
+    function mint(TokenMintingPermit.Type calldata permit, bytes calldata permitSignature) external payable;
 
     /**
      * @notice Sets the token URI for a given token.

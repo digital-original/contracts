@@ -34,7 +34,6 @@ contract ArtToken is
     ArtTokenConfigManager,
     ArtTokenRoyaltyManager
 {
-    // TODO: need to implement method for validation mint conditions (tokenId, URI, config, etc)
     using TokenMintingPermit for TokenMintingPermit.Type;
 
     /// @notice Address of the accompanying AuctionHouse contract.
@@ -77,7 +76,7 @@ contract ArtToken is
     /**
      * @inheritdoc IArtToken
      */
-    function mint(TokenMintingPermit.Type calldata permit, bytes calldata permitSignature) external {
+    function mint(TokenMintingPermit.Type calldata permit, bytes calldata permitSignature) external payable {
         _requireAuthorizedAction(permit.hash(), permit.deadline, permitSignature);
 
         if (permit.minter != msg.sender) {

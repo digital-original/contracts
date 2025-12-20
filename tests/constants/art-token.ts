@@ -1,4 +1,5 @@
 import { TokenConfig } from '../../typechain-types/contracts/art-token/ArtToken';
+import { ONE_HUNDRED } from './general';
 import { REGULATION_MODE_REGULATED } from './token-config';
 
 export const ART_TOKEN_DOMAIN_NAME = 'ArtToken';
@@ -26,6 +27,7 @@ export const SECOND_TOKEN_URI = 'ipfs://QmbqKeWzBDUwKzVye3RxeD67N7rQrfgTaPTevucf
 
 export const TOKEN_PRICE = 1_000_000_000n;
 export const TOKEN_FEE = 100_000_000n;
+export const TOKEN_ROYALTY_PERCENT = ONE_HUNDRED / 20n; // 5%
 
 export const TOKEN_CREATOR_ADDR = '0x1000000000000000000000000000000000000000';
 export const TOKEN_REGULATION_MODE = REGULATION_MODE_REGULATED;
