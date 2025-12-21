@@ -28,25 +28,6 @@ import { ArtTokenUtils } from './utils/art-token-utils';
 import { AuctionHouseUtils } from './utils/auction-house-utils';
 
 describe('ArtToken', function () {
-    /**
-     * TODO:
-     *
-     * > ArtTokenConfigManager:
-     *  > `updateTokenCreator` method:
-     *    - should update the token creator
-     *    - should fail if the caller is not the art token admin
-     *
-     *  > `updateTokenRegulationMode` method:
-     *    - should update the token regulation mode
-     *    - should fail if the caller is not the art token admin
-     *
-     *  > `tokenCreator` method:
-     *  - should return correct token-specific creator address
-     *
-     *  > `tokenRegulationMode` method:
-     *  - should return correct token-specific regulation mode
-     *
-     */
     let artToken: ArtToken, artTokenAddr: string;
     let auctionHouse: AuctionHouse, auctionHouseAddr: string;
     let market: Market, marketAddr: string;
@@ -154,7 +135,7 @@ describe('ArtToken', function () {
                 deadline: latestBlockTimestamp + HOUR,
             };
 
-            await ArtTokenUtils.mint({
+            const tx = await ArtTokenUtils.mint({
                 artToken,
                 permit: tokenMintingPermit,
                 permitSigner: artTokenSigner,
@@ -166,6 +147,8 @@ describe('ArtToken', function () {
 
             expect(tokenCreator).equal(TOKEN_CONFIG.creator);
             expect(tokenRegulationMode).equal(TOKEN_CONFIG.regulationMode);
+
+            await expect(tx).emit(artToken, 'TokenConfigUpdated').withArgs(TOKEN_ID);
         });
 
         it(`should fail if the caller is not the allowed minter`, async () => {
@@ -652,6 +635,86 @@ describe('ArtToken', function () {
             const authorized = await artToken.recipientAuthorized(usdc);
 
             expect(authorized).equal(false);
+        });
+    });
+
+    describe(`ArtTokenConfigManager`, () => {
+        beforeEach(async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
+
+            const tokenMintingPermit: TokenMintingPermit.TypeStruct = {
+                tokenId: TOKEN_ID,
+                minter: buyerAddr,
+                currency: usdcAddr,
+                price: TOKEN_PRICE,
+                fee: TOKEN_FEE,
+                tokenURI: TOKEN_URI,
+                tokenConfig: TOKEN_CONFIG,
+                participants: [institutionAddr],
+                rewards: [TOKEN_PRICE],
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            await usdc.connect(buyer).mintAndApprove(artToken, MaxInt256);
+
+            await ArtTokenUtils.mint({
+                artToken,
+                permit: tokenMintingPermit,
+                permitSigner: artTokenSigner,
+                sender: buyer,
+            });
+        });
+
+        describe(`method 'updateTokenCreator'`, () => {
+            it(`should update the token creator`, async () => {
+                const tokenCreatorBefore = await artToken.tokenCreator(TOKEN_ID);
+
+                expect(tokenCreatorBefore).not.equal(institutionAddr);
+
+                const tx = await artToken
+                    .connect(admin)
+                    .updateTokenCreator(TOKEN_ID, institutionAddr);
+
+                const tokenCreatorAfter = await artToken.tokenCreator(TOKEN_ID);
+
+                expect(tokenCreatorAfter).equal(institutionAddr);
+
+                await expect(tx).emit(artToken, 'TokenConfigUpdated').withArgs(TOKEN_ID);
+            });
+
+            it(`should fail if the caller is not the art token admin`, async () => {
+                const tx = artToken
+                    .connect(randomAccount)
+                    .updateTokenCreator(TOKEN_ID, randomAccountAddr);
+
+                await expect(tx).rejectedWith('RoleSystemUnauthorizedAccount');
+            });
+        });
+
+        describe(`method 'updateTokenRegulationMode'`, () => {
+            it(`should update the token regulation mode`, async () => {
+                const tokenRegulationModeBefore = await artToken.tokenRegulationMode(TOKEN_ID);
+
+                expect(tokenRegulationModeBefore).not.equal(REGULATION_MODE_UNREGULATED);
+
+                const tx = await artToken
+                    .connect(admin)
+                    .updateTokenRegulationMode(TOKEN_ID, REGULATION_MODE_UNREGULATED);
+
+                const tokenRegulationModeAfter = await artToken.tokenRegulationMode(TOKEN_ID);
+
+                expect(tokenRegulationModeAfter).equal(REGULATION_MODE_UNREGULATED);
+
+                await expect(tx).emit(artToken, 'TokenConfigUpdated').withArgs(TOKEN_ID);
+            });
+
+            it(`should fail if the caller is not the art token admin`, async () => {
+                const tx = artToken
+                    .connect(randomAccount)
+                    .updateTokenRegulationMode(TOKEN_ID, REGULATION_MODE_UNREGULATED);
+
+                await expect(tx).rejectedWith('RoleSystemUnauthorizedAccount');
+            });
         });
     });
 });
