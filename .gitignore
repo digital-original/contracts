@@ -11,7 +11,11 @@ artifacts
 
 venv
 docs
+
 config.yaml
 config.env.yaml
+config.chain.yaml
+config.collection.yaml
+config.market.yaml
 
 NOTES.md

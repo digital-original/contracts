@@ -1,0 +1,11 @@
+sepolia:
+    chainId: 11155111
+    url: ''
+    deployerPrivateKey: ''
+    main: ''
+
+ethereum:
+    chainId: 1
+    url: ''
+    deployerPrivateKey: ''
+    main: ''

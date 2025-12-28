@@ -1,15 +1,8 @@
 sepolia:
-    # dev
     market:
         proxy: ''
         impl: ''
         admin: ''
-
-    # local
-    # market:
-    #     proxy: ''
-    #     impl: ''
-    #     admin: ''
 
 ethereum:
     market:
