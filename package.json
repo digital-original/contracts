@@ -8,7 +8,7 @@
         "fork": "hardhat node",
         "lint": "solhint 'contracts/**'",
         "format": "prettier --write .",
-        "prepare": "husky && test -f config.env.yaml || cp config.env.example.yaml config.env.yaml",
+        "prepare": "husky && source ./init.sh",
         "est": "docker run -it --rm -v $PWD:/src trailofbits/eth-security-toolbox",
         "slither": "ENV_MODE=test slither ./ --config-file ./slither.config.json"
     },
