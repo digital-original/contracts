@@ -8,7 +8,9 @@ import {
 import {
     ERC721EnumerableUpgradeable
 } from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
+import {IERC165} from "@openzeppelin/contracts/interfaces/IERC165.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {IERC2981} from "@openzeppelin/contracts/interfaces/IERC2981.sol";
 
 /**
  * @title ArtTokenBase
@@ -17,7 +19,7 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
  *         protocol's ArtToken contracts. Relies on OpenZeppelin upgradeable libraries and
  *         bundles the Enumerable and URIStorage extensions in a single inheritance tree.
  */
-abstract contract ArtTokenBase is ERC721EnumerableUpgradeable, ERC721URIStorageUpgradeable {
+abstract contract ArtTokenBase is ERC721EnumerableUpgradeable, ERC721URIStorageUpgradeable, IERC2981 {
     /**
      * @notice Initializes the token with a `name` and a `symbol`.
      *
@@ -58,12 +60,13 @@ abstract contract ArtTokenBase is ERC721EnumerableUpgradeable, ERC721URIStorageU
     }
 
     /**
-     * @dev An override required by Solidity.
+     * @notice Returns true if the contract implements the interface defined by
+     *         `interfaceId`. See the corresponding EIP-165 standard for more details.
      */
     function supportsInterface(
         bytes4 interfaceId
-    ) public view override(ERC721EnumerableUpgradeable, ERC721URIStorageUpgradeable) returns (bool) {
-        return super.supportsInterface(interfaceId);
+    ) public view override(ERC721EnumerableUpgradeable, ERC721URIStorageUpgradeable, IERC165) returns (bool) {
+        return interfaceId == type(IERC2981).interfaceId || super.supportsInterface(interfaceId);
     }
 
     /**

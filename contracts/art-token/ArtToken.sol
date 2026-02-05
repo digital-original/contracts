@@ -12,6 +12,7 @@ import {Roles} from "../utils/Roles.sol";
 import {IAuctionHouse} from "../auction-house/IAuctionHouse.sol";
 import {ArtTokenConfigManager} from "./art-token-config-manager/ArtTokenConfigManager.sol";
 import {TokenMintingPermit} from "./libraries/TokenMintingPermit.sol";
+import {ArtTokenRoyaltyManager} from "./ArtTokenRoyaltyManager.sol";
 import {ArtTokenBase} from "./ArtTokenBase.sol";
 import {IArtToken} from "./IArtToken.sol";
 
@@ -22,7 +23,15 @@ import {IArtToken} from "./IArtToken.sol";
  *         logic, integrates EIP-712 permits and enforces optional transfer
  *         restrictions for regulated collections.
  */
-contract ArtToken is IArtToken, ArtTokenBase, EIP712Domain, RoleSystem, Authorization, ArtTokenConfigManager {
+contract ArtToken is
+    IArtToken,
+    ArtTokenBase,
+    EIP712Domain,
+    RoleSystem,
+    Authorization,
+    ArtTokenConfigManager,
+    ArtTokenRoyaltyManager
+{
     // TODO: need to implement method for validation mint conditions (tokenId, URI, config, etc)
     using SafeERC20 for IERC20;
     using TokenMintingPermit for TokenMintingPermit.Type;
