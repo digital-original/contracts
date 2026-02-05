@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import {IERC2981} from "@openzeppelin/contracts/interfaces/IERC2981.sol";
 import {ArtTokenConfigManager} from "./art-token-config-manager/ArtTokenConfigManager.sol";
+import {ONE_HUNDRED_PERCENT_IN_BP} from "../utils/Constants.sol";
 
 /**
  * @title ArtTokenRoyaltyManager
@@ -14,14 +15,9 @@ import {ArtTokenConfigManager} from "./art-token-config-manager/ArtTokenConfigMa
  */
 abstract contract ArtTokenRoyaltyManager is IERC2981, ArtTokenConfigManager {
     /**
-     * @notice The royalty percentage in basis points (500 = 5%).
+     * @notice The royalty percentage in basis points - 5%.
      */
-    uint256 public constant ROYALTY_PERCENT_IN_BP = 500; // 5%
-
-    /**
-     * @notice One hundred percent represented in basis points (10000 = 100%).
-     */
-    uint256 public constant ONE_HUNDRED_PERCENT_IN_BP = 10000; // 100% in basis points
+    uint256 public constant ROYALTY_PERCENT_IN_BP = ONE_HUNDRED_PERCENT_IN_BP / 20; // 5%
 
     /**
      * @notice Calculates the royalty payment for a token sale, returning the recipient's address and the royalty amount.

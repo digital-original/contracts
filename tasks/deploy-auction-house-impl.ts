@@ -1,7 +1,6 @@
 import { task } from 'hardhat/config';
 import { ProtocolConfig } from '../types/environment';
 import { deploy } from '../scripts/deploy';
-import { etherToWeiForErc20 } from './utils/ether-to-wei-for-erc20';
 import { hoursToSeconds } from './utils/hours-to-seconds';
 
 /*
@@ -22,12 +21,9 @@ task('deploy-auction-house-impl').setAction(async (taskArgs: Record<string, stri
     console.groupEnd();
     console.log('-'.repeat(process.stdout.columns));
 
-    const { usdc, main } = config;
-    const { minPriceUsd, minFeeUsd, minAuctionDurationHours, artToken, auctionHouse } =
-        config.collection;
+    const { main } = config;
+    const { minAuctionDurationHours, artToken, auctionHouse } = config.collection;
 
-    const minPrice = await etherToWeiForErc20(usdc, minPriceUsd);
-    const minFee = await etherToWeiForErc20(usdc, minFeeUsd);
     const minAuctionDuration = hoursToSeconds(minAuctionDurationHours);
 
     console.log(`Deploying AuctionHouse Impl...`);
@@ -36,11 +32,6 @@ task('deploy-auction-house-impl').setAction(async (taskArgs: Record<string, stri
     console.log(`main: ${main}`);
     console.log(`artToken: ${artToken.proxy}`);
     console.log(`auctionHouse: ${auctionHouse.proxy}`);
-    console.log(`usdc: ${usdc}`);
-    console.log(`minPriceUsd: ${minPriceUsd}`);
-    console.log(`minPrice: ${minPrice}`);
-    console.log(`minFeeUsd: ${minFeeUsd}`);
-    console.log(`minFee: ${minFee}`);
     console.log(`minAuctionDurationHours: ${minAuctionDurationHours}`);
     console.log(`minAuctionDuration: ${minAuctionDuration}`);
     console.groupEnd();
@@ -49,15 +40,7 @@ task('deploy-auction-house-impl').setAction(async (taskArgs: Record<string, stri
 
     const { receipt, contractAddr: auctionHouseImplAddr } = await deploy({
         name: 'AuctionHouse',
-        constructorArgs: [
-            auctionHouse.proxy,
-            main,
-            artToken.proxy,
-            usdc,
-            minAuctionDuration,
-            minPrice,
-            minFee,
-        ],
+        constructorArgs: [auctionHouse.proxy, main, artToken.proxy, minAuctionDuration],
     });
 
     console.log(`Transaction broadcasted`);

@@ -8,7 +8,6 @@ import { OwnershipTransferredEvent } from '../../typechain-types/@openzeppelin/c
 import { DeployedEvent } from '../../typechain-types/contracts/tests/AllDeployer';
 import { deploy } from '../../scripts/deploy';
 import { MIN_AUCTION_DURATION } from '../constants/auction-house';
-import { MIN_FEE, MIN_PRICE } from '../constants/min-price-and-fee';
 
 type Params = {
     signer: AddressLike;
@@ -27,7 +26,7 @@ export async function deployAll(params: Params, deployer?: Signer) {
     const { receipt } = await deploy(
         {
             name: 'AllDeployer',
-            constructorArgs: [signer, financier, admin, MIN_PRICE, MIN_FEE, MIN_AUCTION_DURATION],
+            constructorArgs: [signer, financier, admin, MIN_AUCTION_DURATION],
         },
         deployer,
     );

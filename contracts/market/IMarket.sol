@@ -78,7 +78,7 @@ interface IMarket {
         OrderExecutionPermit.Type calldata permit,
         bytes calldata orderSignature,
         bytes calldata permitSignature
-    ) external;
+    ) external payable;
 
     /**
      * @notice Executes a buy-side order (bid).

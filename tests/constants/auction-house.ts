@@ -5,6 +5,7 @@ export const AUCTION_CREATION_PERMIT_TYPE = {
     AuctionCreationPermit: [
         { name: 'auctionId', type: 'uint256' },
         { name: 'tokenId', type: 'uint256' },
+        { name: 'currency', type: 'address' },
         { name: 'price', type: 'uint256' },
         { name: 'fee', type: 'uint256' },
         { name: 'step', type: 'uint256' },
@@ -17,7 +18,12 @@ export const AUCTION_CREATION_PERMIT_TYPE = {
     ],
 };
 
-export const AUCTION_ID = 1;
-export const SECOND_AUCTION_ID = 2;
-export const AUCTION_STEP = 1_000_000n;
 export const MIN_AUCTION_DURATION = 1800;
+
+export const AUCTION_ID = 1;
+export const NON_EXISTENT_AUCTION_ID = 9999;
+export const SECOND_AUCTION_ID = 2;
+
+export const AUCTION_STEP = 1_000_000n;
+export const AUCTION_PRICE = 1_000_000_000n;
+export const AUCTION_FEE = 100_000_000n;

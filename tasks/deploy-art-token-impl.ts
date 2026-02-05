@@ -1,7 +1,6 @@
 import { task } from 'hardhat/config';
 import { ProtocolConfig } from '../types/environment';
 import { deploy } from '../scripts/deploy';
-import { etherToWeiForErc20 } from './utils/ether-to-wei-for-erc20';
 
 /*
 npx hardhat deploy-art-token-impl --network fork
@@ -22,11 +21,8 @@ task('deploy-art-token-impl').setAction(async (taskArgs: Record<string, string>,
     console.groupEnd();
     console.log('-'.repeat(process.stdout.columns));
 
-    const { usdc, main } = config;
-    const { minPriceUsd, minFeeUsd, artToken, auctionHouse } = config.collection;
-
-    const minPrice = await etherToWeiForErc20(usdc, minPriceUsd);
-    const minFee = await etherToWeiForErc20(usdc, minFeeUsd);
+    const { main } = config;
+    const { artToken, auctionHouse } = config.collection;
 
     console.log(`Deploying ArtToken Impl...`);
     console.log(`\n`);
@@ -34,18 +30,13 @@ task('deploy-art-token-impl').setAction(async (taskArgs: Record<string, string>,
     console.log(`main: ${main}`);
     console.log(`artToken: ${artToken.proxy}`);
     console.log(`auctionHouse: ${auctionHouse.proxy}`);
-    console.log(`usdc: ${usdc}`);
-    console.log(`minPriceUsd: ${minPriceUsd}`);
-    console.log(`minPrice: ${minPrice}`);
-    console.log(`minFee: ${minFeeUsd}`);
-    console.log(`minFee: ${minFee}`);
     console.groupEnd();
     console.log(`\n`);
     console.log(`Transaction broadcasting...`);
 
     const { receipt, contractAddr: artTokenImplAddr } = await deploy({
         name: 'ArtToken',
-        constructorArgs: [artToken.proxy, main, auctionHouse.proxy, usdc, minPrice, minFee],
+        constructorArgs: [artToken.proxy, main, auctionHouse.proxy],
     });
 
     console.log(`Transaction broadcasted`);

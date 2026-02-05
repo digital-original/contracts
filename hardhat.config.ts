@@ -1,6 +1,5 @@
 import fs from 'fs';
 import yaml from 'js-yaml';
-import dotenv from 'dotenv';
 
 import { parseEther } from 'ethers';
 import '@nomicfoundation/hardhat-toolbox';
@@ -10,43 +9,24 @@ import './tasks';
 import type { HardhatUserConfig } from 'hardhat/config';
 import type { NetworksUserConfig } from 'hardhat/types';
 import type {
-    ChainConfigTop,
+    ChainConfigYaml,
     CollectionConfig,
-    CollectionConfigTop,
+    CollectionConfigYaml,
+    EnvConfigYaml,
     MarketConfig,
-    MarketConfigTop,
+    MarketConfigYaml,
     ProtocolConfig,
 } from './types/environment';
 
-dotenv.config(); // TODO: Migrate params from `.env` to `config.env.yaml`
+const envConfigYaml = <EnvConfigYaml>yaml.load(fs.readFileSync('./config.env.yaml', 'utf8'));
+const chainConfigYaml = <ChainConfigYaml>yaml.load(fs.readFileSync('./config.chain.yaml', 'utf8'));
 
-const ENV_MODE = String(process.env.ENV_MODE);
-const COLLECTION = <'do' | 'dn'>String(process.env.COLLECTION);
-const CHAIN_TO_FORK = String(process.env.CHAIN_TO_FORK);
-const FORKED_CHAIN = String(process.env.FORKED_CHAIN);
-const FORKED_CHAIN_URL = String(process.env.FORKED_CHAIN_URL);
-const FORKED_CHAIN_ID = Number(process.env.FORKED_CHAIN_ID);
-const REPORT_GAS = Boolean(process.env.REPORT_GAS === 'true');
-const ETHERSCAN_API_KEY = String(process.env.ETHERSCAN_API_KEY);
-const COINMARKETCAP_API_KEY = String(process.env.COINMARKETCAP_API_KEY);
-
-const chainConfigTop = <ChainConfigTop>yaml.load(fs.readFileSync('./config.env.yaml', 'utf8'));
-const marketConfigTop = <MarketConfigTop>yaml.load(fs.readFileSync('./config.market.yaml', 'utf8'));
-let collectionConfigTop: CollectionConfigTop;
-
-if (COLLECTION == 'do') {
-    collectionConfigTop = <CollectionConfigTop>(
-        yaml.load(fs.readFileSync('./config.do.yaml', 'utf8'))
-    );
-} else if (COLLECTION == 'dn') {
-    collectionConfigTop = <CollectionConfigTop>(
-        yaml.load(fs.readFileSync('./config.dn.yaml', 'utf8'))
-    );
-} else if (ENV_MODE === 'test') {
-    // skip
-} else {
-    throw new Error(`Invalid 'COLLECTION' value: ${COLLECTION}`);
-}
+const collectionConfigYaml = <CollectionConfigYaml>(
+    yaml.load(fs.readFileSync('./config.collection.yaml', 'utf8'))
+);
+const marketConfigYaml = <MarketConfigYaml>(
+    yaml.load(fs.readFileSync('./config.market.yaml', 'utf8'))
+);
 
 const hardhatBaseConfig: HardhatUserConfig = {
     solidity: {
@@ -69,11 +49,11 @@ const hardhatBaseConfig: HardhatUserConfig = {
         artifacts: './artifacts',
     },
     gasReporter: {
-        enabled: REPORT_GAS,
+        enabled: envConfigYaml.reportGas,
         token: 'eth',
         currency: 'usd',
         gasPrice: 10,
-        coinmarketcap: COINMARKETCAP_API_KEY,
+        coinmarketcap: envConfigYaml.coinmarketcapApiKey,
     },
 };
 
@@ -86,27 +66,25 @@ const hardhatTestConfig: HardhatUserConfig = {
 };
 
 const hardhatEtherscanConfig: HardhatUserConfig = {
-    etherscan: { apiKey: ETHERSCAN_API_KEY },
+    etherscan: { apiKey: envConfigYaml.etherscanApiKey },
 };
 
 function buildHardhatConfig(): HardhatUserConfig {
-    if (ENV_MODE === 'test') {
+    if (String(process.env.ENV_MODE) === 'test') {
         return { ...hardhatBaseConfig, ...hardhatTestConfig };
     }
 
     const hardhatNetworksConfig: NetworksUserConfig = {};
 
-    for (const [chainName, chainConfig] of Object.entries(chainConfigTop)) {
-        const collectionConfig = collectionConfigTop[chainName];
-        const marketConfig = marketConfigTop[chainName];
+    for (const [chainName, chainConfig] of Object.entries(chainConfigYaml)) {
+        const collectionConfig = collectionConfigYaml[chainName];
+        const marketConfig = marketConfigYaml[chainName];
 
-        const { chainId, url, deployerPrivateKey, usdc, main } = chainConfig;
+        const { chainId, url, deployerPrivateKey, main } = chainConfig;
 
         const collection: CollectionConfig = {
-            name: collectionConfigTop.name,
-            symbol: collectionConfigTop.symbol,
-            minPriceUsd: collectionConfig.minPriceUsd,
-            minFeeUsd: collectionConfig.minFeeUsd,
+            name: collectionConfigYaml.name,
+            symbol: collectionConfigYaml.symbol,
             minAuctionDurationHours: collectionConfig.minAuctionDurationHours,
             artToken: collectionConfig.artToken,
             auctionHouse: collectionConfig.auctionHouse,
@@ -118,7 +96,6 @@ function buildHardhatConfig(): HardhatUserConfig {
 
         const protocolConfig: ProtocolConfig = {
             main,
-            usdc,
             collection,
             market,
         };
@@ -131,20 +108,20 @@ function buildHardhatConfig(): HardhatUserConfig {
         };
     }
 
-    if (FORKED_CHAIN_ID && FORKED_CHAIN_URL && FORKED_CHAIN) {
+    if (envConfigYaml.fork.name && envConfigYaml.fork.chainId && envConfigYaml.fork.url) {
         hardhatNetworksConfig['fork'] = {
-            ...hardhatNetworksConfig[FORKED_CHAIN],
-            chainId: FORKED_CHAIN_ID,
-            url: FORKED_CHAIN_URL,
+            ...hardhatNetworksConfig[envConfigYaml.fork.name],
+            chainId: envConfigYaml.fork.chainId,
+            url: envConfigYaml.fork.url,
         };
     }
 
-    if (CHAIN_TO_FORK) {
+    if (envConfigYaml.fork.name) {
         hardhatNetworksConfig['hardhat'] = {
-            forking: { url: chainConfigTop[CHAIN_TO_FORK].url },
+            forking: { url: chainConfigYaml[envConfigYaml.fork.name].url },
             accounts: [
                 {
-                    privateKey: chainConfigTop[CHAIN_TO_FORK].deployerPrivateKey,
+                    privateKey: chainConfigYaml[envConfigYaml.fork.name].deployerPrivateKey,
                     balance: parseEther('100').toString(),
                 },
             ],

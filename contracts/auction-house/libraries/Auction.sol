@@ -19,6 +19,7 @@ library Auction {
      * @param tokenURI The metadata URI for the token.
      * @param participants The addresses of the participants in the revenue share.
      * @param shares The corresponding shares for each participant.
+     * @param currency The token used for payment.
      */
     struct Type {
         uint256 tokenId;
@@ -31,5 +32,6 @@ library Auction {
         string tokenURI;
         address[] participants;
         uint256[] shares;
+        address currency;
     }
 }

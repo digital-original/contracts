@@ -3,10 +3,9 @@ import { Signer, MaxInt256, randomBytes } from 'ethers';
 import { ArtToken, Market, USDC } from '../typechain-types';
 import { TokenMintingPermit } from '../typechain-types/contracts/art-token/ArtToken';
 import { Order, OrderExecutionPermit } from '../typechain-types/contracts/market/Market';
-import { TOKEN_CONFIG, TOKEN_ID, TOKEN_URI } from './constants/art-token';
-import { MIN_FEE, MIN_PRICE } from './constants/min-price-and-fee';
-import { PRICE, ASK_SIDE_FEE, BID_SIDE_FEE, ASK_SIDE, BID_SIDE } from './constants/market';
-import { HOUR } from './constants/time';
+import { TOKEN_CONFIG, TOKEN_FEE, TOKEN_ID, TOKEN_PRICE, TOKEN_URI } from './constants/art-token';
+import { HOUR } from './constants/general';
+import { ORDER_PRICE, ASK_SIDE_FEE, BID_SIDE_FEE, ASK_SIDE, BID_SIDE } from './constants/market';
 import { getSigners } from './utils/get-signers';
 import { getLatestBlockTimestamp } from './utils/get-latest-block-timestamp';
 import { deployAll } from './utils/deploy-all';
@@ -67,12 +66,13 @@ describe('Market', function () {
             const tokenMintingPermit: TokenMintingPermit.TypeStruct = {
                 tokenId: TOKEN_ID,
                 minter: makerAddr,
-                price: MIN_PRICE,
-                fee: MIN_FEE,
+                currency: usdcAddr,
+                price: TOKEN_PRICE,
+                fee: TOKEN_FEE,
                 tokenURI: TOKEN_URI,
                 tokenConfig: TOKEN_CONFIG,
                 participants: [institutionAddr],
-                rewards: [MIN_PRICE],
+                rewards: [TOKEN_PRICE],
                 deadline: latestBlockTimestamp + HOUR,
             };
 
@@ -93,9 +93,9 @@ describe('Market', function () {
         it(`should execute the order`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
-            const askSideReward = PRICE - ASK_SIDE_FEE;
-            const institutionReward = PRICE - askSideReward - 100n;
-            const platformReward = PRICE - askSideReward - institutionReward;
+            const askSideReward = ORDER_PRICE - ASK_SIDE_FEE;
+            const platformReward = 100n;
+            const institutionReward = ASK_SIDE_FEE - platformReward;
 
             const order: Order.TypeStruct = {
                 side: ASK_SIDE,
@@ -103,7 +103,7 @@ describe('Market', function () {
                 currency: usdcAddr,
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: PRICE,
+                price: ORDER_PRICE,
                 makerFee: ASK_SIDE_FEE,
                 startTime: latestBlockTimestamp,
                 endTime: latestBlockTimestamp + HOUR,
@@ -129,35 +129,45 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx)
-                .to.be.emit(usdc, 'Transfer')
-                .withArgs(takerAddr, marketAddr, PRICE + BID_SIDE_FEE);
+            const orderInvalidated = await market.orderInvalidated(maker, orderHash);
+
+            expect(orderInvalidated).equal(true);
 
             await expect(tx)
-                .to.be.emit(usdc, 'Transfer') //
+                .emit(usdc, 'Transfer')
+                .withArgs(takerAddr, marketAddr, ORDER_PRICE + BID_SIDE_FEE);
+
+            await expect(tx)
+                .emit(usdc, 'Transfer')
                 .withArgs(marketAddr, financierAddr, BID_SIDE_FEE);
 
-            await expect(tx)
-                .to.be.emit(usdc, 'Transfer')
+            await expect(tx) //
+                .emit(usdc, 'Transfer')
                 .withArgs(marketAddr, makerAddr, askSideReward);
 
             await expect(tx)
-                .to.be.emit(usdc, 'Transfer')
+                .emit(usdc, 'Transfer')
                 .withArgs(marketAddr, institutionAddr, institutionReward);
 
             await expect(tx)
-                .to.be.emit(usdc, 'Transfer')
+                .emit(usdc, 'Transfer')
                 .withArgs(marketAddr, financierAddr, platformReward);
 
-            await expect(tx)
-                .to.be.emit(artToken, 'Transfer') //
+            await expect(tx) //
+                .emit(artToken, 'Transfer')
                 .withArgs(makerAddr, takerAddr, TOKEN_ID);
 
             await expect(tx)
-                .to.be.emit(market, 'AskOrderExecuted')
-                .withArgs(orderHash, artTokenAddr, usdcAddr, makerAddr, takerAddr, TOKEN_ID, PRICE);
-
-            await expect(market.orderInvalidated(maker, orderHash)).to.eventually.equal(true);
+                .emit(market, 'AskOrderExecuted')
+                .withArgs(
+                    orderHash,
+                    artTokenAddr,
+                    usdcAddr,
+                    makerAddr,
+                    takerAddr,
+                    TOKEN_ID,
+                    ORDER_PRICE,
+                );
         });
 
         it(`should execute the order with zero maker fee`, async () => {
@@ -169,7 +179,7 @@ describe('Market', function () {
                 currency: usdcAddr,
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: PRICE,
+                price: ORDER_PRICE,
                 makerFee: 0n, // Zero fee
                 startTime: latestBlockTimestamp,
                 endTime: latestBlockTimestamp + HOUR,
@@ -195,7 +205,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).to.be.emit(usdc, 'Transfer').withArgs(marketAddr, makerAddr, PRICE); // Full price to maker
+            await expect(tx).emit(usdc, 'Transfer').withArgs(marketAddr, makerAddr, ORDER_PRICE); // Full price to maker
         });
 
         it(`should execute the order with zero taker fee`, async () => {
@@ -207,7 +217,7 @@ describe('Market', function () {
                 currency: usdcAddr,
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: PRICE,
+                price: ORDER_PRICE,
                 makerFee: ASK_SIDE_FEE,
                 startTime: latestBlockTimestamp,
                 endTime: latestBlockTimestamp + HOUR,
@@ -233,7 +243,9 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).to.be.emit(usdc, 'Transfer').withArgs(takerAddr, marketAddr, PRICE); // Only price, no fee
+            await expect(tx) //
+                .emit(usdc, 'Transfer')
+                .withArgs(takerAddr, marketAddr, ORDER_PRICE); // Only price, no fee
         });
 
         it(`should fail if the order start time is greater than the current time`, async () => {
@@ -248,7 +260,7 @@ describe('Market', function () {
                 currency: usdcAddr,
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: PRICE,
+                price: ORDER_PRICE,
                 makerFee: ASK_SIDE_FEE,
                 startTime,
                 endTime,
@@ -272,7 +284,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).to.eventually.rejectedWith('MarketOrderOutsideOfTimeRange');
+            await expect(tx).rejectedWith('MarketOrderOutsideOfTimeRange');
         });
 
         it(`should fail if the order end time is less than the current time`, async () => {
@@ -287,7 +299,7 @@ describe('Market', function () {
                 currency: usdcAddr,
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: PRICE,
+                price: ORDER_PRICE,
                 makerFee: ASK_SIDE_FEE,
                 startTime,
                 endTime,
@@ -311,7 +323,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).to.eventually.rejectedWith('MarketOrderOutsideOfTimeRange');
+            await expect(tx).rejectedWith('MarketOrderOutsideOfTimeRange');
         });
 
         it(`should fail if the order signer is not the maker`, async () => {
@@ -323,7 +335,7 @@ describe('Market', function () {
                 currency: usdcAddr,
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: PRICE,
+                price: ORDER_PRICE,
                 makerFee: ASK_SIDE_FEE,
                 startTime: latestBlockTimestamp,
                 endTime: latestBlockTimestamp + HOUR,
@@ -347,7 +359,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).to.eventually.rejectedWith('MarketUnauthorizedOrder');
+            await expect(tx).rejectedWith('MarketUnauthorizedOrder');
         });
 
         it(`should fail if the permit order hash and the order hash do not match`, async () => {
@@ -359,7 +371,7 @@ describe('Market', function () {
                 currency: usdcAddr,
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: PRICE,
+                price: ORDER_PRICE,
                 makerFee: ASK_SIDE_FEE,
                 startTime: latestBlockTimestamp,
                 endTime: latestBlockTimestamp + HOUR,
@@ -383,7 +395,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).to.eventually.rejectedWith('MarketInvalidOrderHash');
+            await expect(tx).rejectedWith('MarketInvalidOrderHash');
         });
 
         it(`should fail if the permit signer is not the market signer`, async () => {
@@ -395,7 +407,7 @@ describe('Market', function () {
                 currency: usdcAddr,
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: PRICE,
+                price: ORDER_PRICE,
                 makerFee: ASK_SIDE_FEE,
                 startTime: latestBlockTimestamp,
                 endTime: latestBlockTimestamp + HOUR,
@@ -419,7 +431,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).to.eventually.rejectedWith('AuthorizationUnauthorizedAction');
+            await expect(tx).rejectedWith('AuthorizationUnauthorizedAction');
         });
 
         it(`should fail if the order is invalidated`, async () => {
@@ -431,7 +443,7 @@ describe('Market', function () {
                 currency: usdcAddr,
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: PRICE,
+                price: ORDER_PRICE,
                 makerFee: ASK_SIDE_FEE,
                 startTime: latestBlockTimestamp,
                 endTime: latestBlockTimestamp + HOUR,
@@ -459,7 +471,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).to.eventually.rejectedWith('MarketOrderInvalidated');
+            await expect(tx).rejectedWith('MarketOrderInvalidated');
         });
 
         it(`should fail if the order side is not Ask`, async () => {
@@ -471,7 +483,7 @@ describe('Market', function () {
                 currency: usdcAddr,
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: PRICE,
+                price: ORDER_PRICE,
                 makerFee: ASK_SIDE_FEE,
                 startTime: latestBlockTimestamp,
                 endTime: latestBlockTimestamp + HOUR,
@@ -495,7 +507,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).to.eventually.rejectedWith('MarketInvalidOrderSide');
+            await expect(tx).rejectedWith('MarketInvalidOrderSide');
         });
 
         it(`should fail if the ask side fee is greater than or equal to the price`, async () => {
@@ -507,8 +519,8 @@ describe('Market', function () {
                 currency: usdcAddr,
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: PRICE,
-                makerFee: PRICE, // Fee equals price
+                price: ORDER_PRICE,
+                makerFee: ORDER_PRICE, // Fee equals price
                 startTime: latestBlockTimestamp,
                 endTime: latestBlockTimestamp + HOUR,
             };
@@ -531,7 +543,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).to.eventually.rejectedWith('MarketInvalidAskSideFee');
+            await expect(tx).rejectedWith('MarketInvalidAskSideFee');
         });
 
         it(`should fail if the currency is not allowed`, async () => {
@@ -543,7 +555,7 @@ describe('Market', function () {
                 currency: randomAccountAddr, // Invalid currency
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: PRICE,
+                price: ORDER_PRICE,
                 makerFee: ASK_SIDE_FEE,
                 startTime: latestBlockTimestamp,
                 endTime: latestBlockTimestamp + HOUR,
@@ -567,10 +579,10 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).to.eventually.rejectedWith('MarketCurrencyInvalid');
+            await expect(tx).rejectedWith('MarketCurrencyInvalid');
         });
 
-        it(`should fail if the permit taker is not the sender`, async () => {
+        it(`should fail if the sender is not the permitted taker`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
             const order: Order.TypeStruct = {
@@ -579,7 +591,7 @@ describe('Market', function () {
                 currency: usdcAddr,
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: PRICE,
+                price: ORDER_PRICE,
                 makerFee: ASK_SIDE_FEE,
                 startTime: latestBlockTimestamp,
                 endTime: latestBlockTimestamp + HOUR,
@@ -603,7 +615,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).to.eventually.rejectedWith('MarketUnauthorizedAccount');
+            await expect(tx).rejectedWith('MarketUnauthorizedAccount');
         });
 
         it(`should fail if the permit deadline has expired`, async () => {
@@ -615,7 +627,7 @@ describe('Market', function () {
                 currency: usdcAddr,
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: PRICE,
+                price: ORDER_PRICE,
                 makerFee: ASK_SIDE_FEE,
                 startTime: latestBlockTimestamp,
                 endTime: latestBlockTimestamp + HOUR,
@@ -639,7 +651,81 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).to.eventually.rejectedWith('AuthorizationDeadlineExpired');
+            await expect(tx).rejectedWith('AuthorizationDeadlineExpired');
+        });
+
+        it(`should fail if the sum of rewards is greater than the ask side fee`, async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
+
+            const order: Order.TypeStruct = {
+                side: ASK_SIDE,
+                collection: artTokenAddr,
+                currency: usdcAddr,
+                maker: makerAddr,
+                tokenId: TOKEN_ID,
+                price: ORDER_PRICE,
+                makerFee: ASK_SIDE_FEE,
+                startTime: latestBlockTimestamp,
+                endTime: latestBlockTimestamp + HOUR,
+            };
+
+            const orderExecutionPermit: OrderExecutionPermit.TypeStruct = {
+                orderHash: MarketUtils.hashOrder(order),
+                taker: takerAddr,
+                takerFee: BID_SIDE_FEE,
+                participants: [institutionAddr],
+                rewards: [ASK_SIDE_FEE + 1n], // Incorrect rewards sum
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            await usdc.connect(taker).transfer(marketAddr, 1n);
+
+            const tx = MarketUtils.executeAsk({
+                market,
+                order,
+                permit: orderExecutionPermit,
+                orderSigner: maker,
+                permitSigner: marketSigner,
+                sender: taker,
+            });
+
+            await expect(tx).rejectedWith('SafeERC20BulkTransferIncorrectTotalAmount');
+        });
+
+        it(`should fail if the sum of rewards is less than the ask side fee`, async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
+
+            const order: Order.TypeStruct = {
+                side: ASK_SIDE,
+                collection: artTokenAddr,
+                currency: usdcAddr,
+                maker: makerAddr,
+                tokenId: TOKEN_ID,
+                price: ORDER_PRICE,
+                makerFee: ASK_SIDE_FEE,
+                startTime: latestBlockTimestamp,
+                endTime: latestBlockTimestamp + HOUR,
+            };
+
+            const orderExecutionPermit: OrderExecutionPermit.TypeStruct = {
+                orderHash: MarketUtils.hashOrder(order),
+                taker: takerAddr,
+                takerFee: BID_SIDE_FEE,
+                participants: [institutionAddr],
+                rewards: [ASK_SIDE_FEE - 1n], // Incorrect rewards sum
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            const tx = MarketUtils.executeAsk({
+                market,
+                order,
+                permit: orderExecutionPermit,
+                orderSigner: maker,
+                permitSigner: marketSigner,
+                sender: taker,
+            });
+
+            await expect(tx).rejectedWith('SafeERC20BulkTransferIncorrectTotalAmount');
         });
     });
 
@@ -648,18 +734,20 @@ describe('Market', function () {
          * MAKER is BID_SIDE
          * TAKER is ASK_SIDE
          */
+
         beforeEach(async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
             const tokenMintingPermit: TokenMintingPermit.TypeStruct = {
                 tokenId: TOKEN_ID,
                 minter: takerAddr,
-                price: MIN_PRICE,
-                fee: MIN_FEE,
+                currency: usdcAddr,
+                price: TOKEN_PRICE,
+                fee: TOKEN_FEE,
                 tokenURI: TOKEN_URI,
                 tokenConfig: TOKEN_CONFIG,
                 participants: [institutionAddr],
-                rewards: [MIN_PRICE],
+                rewards: [TOKEN_PRICE],
                 deadline: latestBlockTimestamp + HOUR,
             };
 
@@ -680,9 +768,9 @@ describe('Market', function () {
         it(`should execute the order`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
-            const askSideReward = PRICE - ASK_SIDE_FEE;
-            const institutionReward = PRICE - askSideReward - 100n;
-            const platformReward = PRICE - askSideReward - institutionReward;
+            const askSideReward = ORDER_PRICE - ASK_SIDE_FEE;
+            const platformReward = 100n;
+            const institutionReward = ASK_SIDE_FEE - platformReward;
 
             const order: Order.TypeStruct = {
                 side: BID_SIDE,
@@ -690,7 +778,7 @@ describe('Market', function () {
                 currency: usdcAddr,
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: PRICE,
+                price: ORDER_PRICE,
                 makerFee: BID_SIDE_FEE,
                 startTime: latestBlockTimestamp,
                 endTime: latestBlockTimestamp + HOUR,
@@ -716,35 +804,45 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx)
-                .to.be.emit(usdc, 'Transfer')
-                .withArgs(makerAddr, marketAddr, PRICE + BID_SIDE_FEE);
+            const orderInvalidated = await market.orderInvalidated(maker, orderHash);
+
+            expect(orderInvalidated).equal(true);
 
             await expect(tx)
-                .to.be.emit(usdc, 'Transfer') //
+                .emit(usdc, 'Transfer')
+                .withArgs(makerAddr, marketAddr, ORDER_PRICE + BID_SIDE_FEE);
+
+            await expect(tx)
+                .emit(usdc, 'Transfer')
                 .withArgs(marketAddr, financierAddr, BID_SIDE_FEE);
 
-            await expect(tx)
-                .to.be.emit(usdc, 'Transfer')
+            await expect(tx) //
+                .emit(usdc, 'Transfer')
                 .withArgs(marketAddr, takerAddr, askSideReward);
 
             await expect(tx)
-                .to.be.emit(usdc, 'Transfer')
+                .emit(usdc, 'Transfer')
                 .withArgs(marketAddr, institutionAddr, institutionReward);
 
             await expect(tx)
-                .to.be.emit(usdc, 'Transfer')
+                .emit(usdc, 'Transfer')
                 .withArgs(marketAddr, financierAddr, platformReward);
 
-            await expect(tx)
-                .to.be.emit(artToken, 'Transfer') //
+            await expect(tx) //
+                .emit(artToken, 'Transfer')
                 .withArgs(takerAddr, makerAddr, TOKEN_ID);
 
             await expect(tx)
-                .to.be.emit(market, 'BidOrderExecuted')
-                .withArgs(orderHash, artTokenAddr, usdcAddr, makerAddr, takerAddr, TOKEN_ID, PRICE);
-
-            await expect(market.orderInvalidated(maker, orderHash)).to.eventually.equal(true);
+                .emit(market, 'BidOrderExecuted')
+                .withArgs(
+                    orderHash,
+                    artTokenAddr,
+                    usdcAddr,
+                    makerAddr,
+                    takerAddr,
+                    TOKEN_ID,
+                    ORDER_PRICE,
+                );
         });
 
         it(`should execute the order with zero maker fee`, async () => {
@@ -756,7 +854,7 @@ describe('Market', function () {
                 currency: usdcAddr,
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: PRICE,
+                price: ORDER_PRICE,
                 makerFee: 0n, // Zero fee
                 startTime: latestBlockTimestamp,
                 endTime: latestBlockTimestamp + HOUR,
@@ -782,7 +880,9 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).to.be.emit(usdc, 'Transfer').withArgs(makerAddr, marketAddr, PRICE); // Only price, no fee from maker
+            await expect(tx) //
+                .emit(usdc, 'Transfer')
+                .withArgs(makerAddr, marketAddr, ORDER_PRICE); // Only price, no fee from maker
         });
 
         it(`should execute the order with zero taker fee`, async () => {
@@ -794,7 +894,7 @@ describe('Market', function () {
                 currency: usdcAddr,
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: PRICE,
+                price: ORDER_PRICE,
                 makerFee: BID_SIDE_FEE,
                 startTime: latestBlockTimestamp,
                 endTime: latestBlockTimestamp + HOUR,
@@ -820,7 +920,9 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).to.be.emit(usdc, 'Transfer').withArgs(marketAddr, takerAddr, PRICE); // Full price to taker
+            await expect(tx) //
+                .emit(usdc, 'Transfer')
+                .withArgs(marketAddr, takerAddr, ORDER_PRICE); // Full price to taker
         });
 
         it(`should fail if the order start time is greater than the current time`, async () => {
@@ -835,7 +937,7 @@ describe('Market', function () {
                 currency: usdcAddr,
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: PRICE,
+                price: ORDER_PRICE,
                 makerFee: BID_SIDE_FEE,
                 startTime,
                 endTime,
@@ -859,7 +961,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).to.eventually.rejectedWith('MarketOrderOutsideOfTimeRange');
+            await expect(tx).rejectedWith('MarketOrderOutsideOfTimeRange');
         });
 
         it(`should fail if the order end time is less than the current time`, async () => {
@@ -874,7 +976,7 @@ describe('Market', function () {
                 currency: usdcAddr,
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: PRICE,
+                price: ORDER_PRICE,
                 makerFee: BID_SIDE_FEE,
                 startTime,
                 endTime,
@@ -898,7 +1000,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).to.eventually.rejectedWith('MarketOrderOutsideOfTimeRange');
+            await expect(tx).rejectedWith('MarketOrderOutsideOfTimeRange');
         });
 
         it(`should fail if the order signer is not the maker`, async () => {
@@ -910,7 +1012,7 @@ describe('Market', function () {
                 currency: usdcAddr,
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: PRICE,
+                price: ORDER_PRICE,
                 makerFee: BID_SIDE_FEE,
                 startTime: latestBlockTimestamp,
                 endTime: latestBlockTimestamp + HOUR,
@@ -934,7 +1036,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).to.eventually.rejectedWith('MarketUnauthorizedOrder');
+            await expect(tx).rejectedWith('MarketUnauthorizedOrder');
         });
 
         it(`should fail if the permit order hash and the order hash do not match`, async () => {
@@ -946,7 +1048,7 @@ describe('Market', function () {
                 currency: usdcAddr,
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: PRICE,
+                price: ORDER_PRICE,
                 makerFee: BID_SIDE_FEE,
                 startTime: latestBlockTimestamp,
                 endTime: latestBlockTimestamp + HOUR,
@@ -970,7 +1072,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).to.eventually.rejectedWith('MarketInvalidOrderHash');
+            await expect(tx).rejectedWith('MarketInvalidOrderHash');
         });
 
         it(`should fail if the permit signer is not the market signer`, async () => {
@@ -982,7 +1084,7 @@ describe('Market', function () {
                 currency: usdcAddr,
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: PRICE,
+                price: ORDER_PRICE,
                 makerFee: BID_SIDE_FEE,
                 startTime: latestBlockTimestamp,
                 endTime: latestBlockTimestamp + HOUR,
@@ -1006,7 +1108,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).to.eventually.rejectedWith('AuthorizationUnauthorizedAction');
+            await expect(tx).rejectedWith('AuthorizationUnauthorizedAction');
         });
 
         it(`should fail if the order is invalidated`, async () => {
@@ -1018,7 +1120,7 @@ describe('Market', function () {
                 currency: usdcAddr,
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: PRICE,
+                price: ORDER_PRICE,
                 makerFee: BID_SIDE_FEE,
                 startTime: latestBlockTimestamp,
                 endTime: latestBlockTimestamp + HOUR,
@@ -1046,7 +1148,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).to.eventually.rejectedWith('MarketOrderInvalidated');
+            await expect(tx).rejectedWith('MarketOrderInvalidated');
         });
 
         it(`should fail if the order side is not Bid`, async () => {
@@ -1058,7 +1160,7 @@ describe('Market', function () {
                 currency: usdcAddr,
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: PRICE,
+                price: ORDER_PRICE,
                 makerFee: BID_SIDE_FEE,
                 startTime: latestBlockTimestamp,
                 endTime: latestBlockTimestamp + HOUR,
@@ -1082,7 +1184,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).to.eventually.rejectedWith('MarketInvalidOrderSide');
+            await expect(tx).rejectedWith('MarketInvalidOrderSide');
         });
 
         it(`should fail if the ask side fee is greater than or equal to the price`, async () => {
@@ -1094,7 +1196,7 @@ describe('Market', function () {
                 currency: usdcAddr,
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: PRICE,
+                price: ORDER_PRICE,
                 makerFee: BID_SIDE_FEE,
                 startTime: latestBlockTimestamp,
                 endTime: latestBlockTimestamp + HOUR,
@@ -1103,7 +1205,7 @@ describe('Market', function () {
             const orderExecutionPermit: OrderExecutionPermit.TypeStruct = {
                 orderHash: MarketUtils.hashOrder(order),
                 taker: takerAddr,
-                takerFee: PRICE, // Fee equals price
+                takerFee: ORDER_PRICE, // Fee equals price
                 participants: [institutionAddr],
                 rewards: [ASK_SIDE_FEE],
                 deadline: latestBlockTimestamp + HOUR,
@@ -1118,7 +1220,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).to.eventually.rejectedWith('MarketInvalidAskSideFee');
+            await expect(tx).rejectedWith('MarketInvalidAskSideFee');
         });
 
         it(`should fail if the currency is not allowed`, async () => {
@@ -1130,7 +1232,7 @@ describe('Market', function () {
                 currency: randomAccountAddr, // Invalid currency
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: PRICE,
+                price: ORDER_PRICE,
                 makerFee: BID_SIDE_FEE,
                 startTime: latestBlockTimestamp,
                 endTime: latestBlockTimestamp + HOUR,
@@ -1154,10 +1256,10 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).to.eventually.rejectedWith('MarketCurrencyInvalid');
+            await expect(tx).rejectedWith('MarketCurrencyInvalid');
         });
 
-        it(`should fail if the permit taker is not the sender`, async () => {
+        it(`should fail if the sender is not the permitted taker`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
             const order: Order.TypeStruct = {
@@ -1166,7 +1268,7 @@ describe('Market', function () {
                 currency: usdcAddr,
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: PRICE,
+                price: ORDER_PRICE,
                 makerFee: BID_SIDE_FEE,
                 startTime: latestBlockTimestamp,
                 endTime: latestBlockTimestamp + HOUR,
@@ -1190,7 +1292,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).to.eventually.rejectedWith('MarketUnauthorizedAccount');
+            await expect(tx).rejectedWith('MarketUnauthorizedAccount');
         });
 
         it(`should fail if the permit deadline has expired`, async () => {
@@ -1202,7 +1304,7 @@ describe('Market', function () {
                 currency: usdcAddr,
                 maker: makerAddr,
                 tokenId: TOKEN_ID,
-                price: PRICE,
+                price: ORDER_PRICE,
                 makerFee: BID_SIDE_FEE,
                 startTime: latestBlockTimestamp,
                 endTime: latestBlockTimestamp + HOUR,
@@ -1226,19 +1328,81 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).to.eventually.rejectedWith('AuthorizationDeadlineExpired');
+            await expect(tx).rejectedWith('AuthorizationDeadlineExpired');
         });
-    });
 
-    describe(`method 'orderInvalidated'`, () => {
-        it(`should return the correct value`, async () => {
-            const orderHash = randomBytes(32);
+        it(`should fail if the sum of rewards is greater than the ask side fee`, async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
 
-            await expect(market.orderInvalidated(maker, orderHash)).to.eventually.equal(false);
+            const order: Order.TypeStruct = {
+                side: BID_SIDE,
+                collection: artTokenAddr,
+                currency: usdcAddr,
+                maker: makerAddr,
+                tokenId: TOKEN_ID,
+                price: ORDER_PRICE,
+                makerFee: BID_SIDE_FEE,
+                startTime: latestBlockTimestamp,
+                endTime: latestBlockTimestamp + HOUR,
+            };
 
-            await market.connect(maker).invalidateOrder(maker, orderHash);
+            const orderExecutionPermit: OrderExecutionPermit.TypeStruct = {
+                orderHash: MarketUtils.hashOrder(order),
+                taker: takerAddr,
+                takerFee: ASK_SIDE_FEE,
+                participants: [institutionAddr],
+                rewards: [ASK_SIDE_FEE + 1n], // Incorrect rewards sum
+                deadline: latestBlockTimestamp + HOUR,
+            };
 
-            await expect(market.orderInvalidated(maker, orderHash)).to.eventually.equal(true);
+            await usdc.connect(taker).transfer(marketAddr, 1n);
+
+            const tx = MarketUtils.executeBid({
+                market,
+                order,
+                permit: orderExecutionPermit,
+                orderSigner: maker,
+                permitSigner: marketSigner,
+                sender: taker,
+            });
+
+            await expect(tx).rejectedWith('SafeERC20BulkTransferIncorrectTotalAmount');
+        });
+
+        it(`should fail if the sum of rewards is less than the ask side fee`, async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
+
+            const order: Order.TypeStruct = {
+                side: BID_SIDE,
+                collection: artTokenAddr,
+                currency: usdcAddr,
+                maker: makerAddr,
+                tokenId: TOKEN_ID,
+                price: ORDER_PRICE,
+                makerFee: BID_SIDE_FEE,
+                startTime: latestBlockTimestamp,
+                endTime: latestBlockTimestamp + HOUR,
+            };
+
+            const orderExecutionPermit: OrderExecutionPermit.TypeStruct = {
+                orderHash: MarketUtils.hashOrder(order),
+                taker: takerAddr,
+                takerFee: ASK_SIDE_FEE,
+                participants: [institutionAddr],
+                rewards: [ASK_SIDE_FEE - 1n], // Incorrect rewards sum
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            const tx = MarketUtils.executeBid({
+                market,
+                order,
+                permit: orderExecutionPermit,
+                orderSigner: maker,
+                permitSigner: marketSigner,
+                sender: taker,
+            });
+
+            await expect(tx).rejectedWith('SafeERC20BulkTransferIncorrectTotalAmount');
         });
     });
 
@@ -1252,7 +1416,9 @@ describe('Market', function () {
 
             expect(invalidated).equal(true);
 
-            await expect(tx).to.be.emit(market, 'OrderInvalidated').withArgs(makerAddr, orderHash);
+            await expect(tx) //
+                .emit(market, 'OrderInvalidated')
+                .withArgs(makerAddr, orderHash);
         });
 
         it(`should invalidate the order if the sender is the market admin`, async () => {
@@ -1264,7 +1430,9 @@ describe('Market', function () {
 
             expect(invalidated).equal(true);
 
-            await expect(tx).to.be.emit(market, 'OrderInvalidated').withArgs(makerAddr, orderHash);
+            await expect(tx) //
+                .emit(market, 'OrderInvalidated')
+                .withArgs(makerAddr, orderHash);
         });
 
         it(`should fail when trying to invalidate an already invalidated order`, async () => {
@@ -1276,7 +1444,7 @@ describe('Market', function () {
             // Second invalidation attempt
             const tx = market.connect(maker).invalidateOrder(maker, orderHash);
 
-            await expect(tx).to.eventually.rejectedWith('MarketOrderInvalidated');
+            await expect(tx).rejectedWith('MarketOrderInvalidated');
         });
 
         it(`should fail if the sender is not the maker or the market admin`, async () => {
@@ -1284,7 +1452,23 @@ describe('Market', function () {
 
             const tx = market.connect(randomAccount).invalidateOrder(maker, orderHash);
 
-            await expect(tx).to.eventually.rejectedWith('MarketUnauthorizedAccount');
+            await expect(tx).rejectedWith('MarketUnauthorizedAccount');
+        });
+    });
+
+    describe(`method 'orderInvalidated'`, () => {
+        it(`should return the correct value`, async () => {
+            const orderHash = randomBytes(32);
+
+            const orderInvalidatedBefore = await market.orderInvalidated(maker, orderHash);
+
+            expect(orderInvalidatedBefore).equal(false);
+
+            await market.connect(maker).invalidateOrder(maker, orderHash);
+
+            const orderInvalidatedAfter = await market.orderInvalidated(maker, orderHash);
+
+            expect(orderInvalidatedAfter).equal(true);
         });
     });
 });

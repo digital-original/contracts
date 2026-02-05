@@ -7,7 +7,7 @@ import {
     AUCTION_HOUSE_DOMAIN_VERSION,
     AUCTION_CREATION_PERMIT_TYPE,
 } from '../constants/auction-house';
-import { ArtTokenUtils } from './art-token-utils';
+import { TokenConfigUtils } from './token-config-utils';
 
 type CreateArgs = {
     auctionHouse: AuctionHouse;
@@ -22,7 +22,7 @@ export class AuctionHouseUtils {
 
         const domain = await this.buildDomain(auctionHouse);
 
-        const tokenConfigHash = ArtTokenUtils.hashTokenConfig(permit.tokenConfig);
+        const tokenConfigHash = TokenConfigUtils.hash(permit.tokenConfig);
 
         const permitSignature = await permitSigner.signTypedData(
             domain,

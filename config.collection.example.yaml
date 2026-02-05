@@ -1,0 +1,24 @@
+name: 'DigitalOriginal'
+symbol: 'DO'
+
+sepolia:
+    minAuctionDurationHours: 0.25
+    artToken:
+        proxy: ''
+        impl: ''
+        admin: ''
+    auctionHouse:
+        proxy: ''
+        impl: ''
+        admin: ''
+
+ethereum:
+    minAuctionDurationHours: 24
+    artToken:
+        proxy: ''
+        impl: ''
+        admin: ''
+    auctionHouse:
+        proxy: ''
+        impl: ''
+        admin: ''

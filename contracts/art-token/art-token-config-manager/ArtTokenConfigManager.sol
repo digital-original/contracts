@@ -18,7 +18,6 @@ abstract contract ArtTokenConfigManager is IArtTokenConfigManager, RoleSystem {
     /**
      * @inheritdoc IArtTokenConfigManager
      */
-    // TODO: Should I add validation for null value?
     function updateTokenCreator(uint256 tokenId, address creator) external onlyRole(Roles.ADMIN_ROLE) {
         ArtTokenConfigManagerStorage.Layout storage $ = ArtTokenConfigManagerStorage.layout();
 

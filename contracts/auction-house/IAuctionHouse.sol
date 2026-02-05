@@ -33,8 +33,17 @@ interface IAuctionHouse {
 
     /**
      * @notice Emitted when {finish} successfully settles the auction.
+     *
+     * @param auctionId Identifier of the auction that was sold.
      */
     event Sold(uint256 indexed auctionId);
+
+    /**
+     * @notice Emitted when an auction is cancelled.
+     *
+     * @param auctionId Identifier of the auction that was cancelled.
+     */
+    event Cancelled(uint256 indexed auctionId);
 
     /**
      * @notice Creates a new auction with parameters validated and authorized via
@@ -48,12 +57,12 @@ interface IAuctionHouse {
     /**
      * @notice Places the first bid on an auction that has no current bidder.
      */
-    function raiseInitial(uint256 auctionId, uint256 price) external;
+    function raiseInitial(uint256 auctionId, uint256 newPrice) external payable;
 
     /**
      * @notice Places a bid higher than the current highest bid by at least `step`.
      */
-    function raise(uint256 auctionId, uint256 price) external;
+    function raise(uint256 auctionId, uint256 newPrice) external payable;
 
     /**
      * @notice Finalizes the auction, mints the token to the highest bidder
@@ -62,20 +71,26 @@ interface IAuctionHouse {
     function finish(uint256 auctionId) external;
 
     /**
+     * @notice Cancels an auction.
+     */
+    function cancel(uint256 auctionId) external;
+
+    /**
      * @notice Returns the full auction struct for `auctionId`.
+     *
+     * @param auctionId The ID of the auction to retrieve.
      */
     function auction(uint256 auctionId) external view returns (Auction.Type memory);
 
     /**
      * @notice Indicates whether any active auction has reserved `tokenId`.
+     *
+     * @param tokenId The ID of the token to check.
      */
     function tokenReserved(uint256 tokenId) external view returns (bool reserved);
 
     /// @dev Thrown when an action is attempted by an unauthorized account.
     error AuctionHouseUnauthorizedAccount(address account);
-
-    /// @dev Thrown when an empty string is supplied as `tokenURI`.
-    error AuctionHouseEmptyTokenURI();
 
     /// @dev Thrown when `price` provided is below minimum allowed.
     error AuctionHouseInvalidPrice();
@@ -88,6 +103,9 @@ interface IAuctionHouse {
 
     /// @dev Thrown when `endTime` is outside the permitted window.
     error AuctionHouseInvalidEndTime();
+
+    /// @dev Thrown when a currency is invalid.
+    error AuctionHouseInvalidCurrency();
 
     /// @dev Thrown when the token is already reserved by an auction.
     error AuctionHouseTokenReserved();

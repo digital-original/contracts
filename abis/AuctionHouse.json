@@ -17,23 +17,8 @@
                 "type": "address"
             },
             {
-                "internalType": "address",
-                "name": "usdc",
-                "type": "address"
-            },
-            {
                 "internalType": "uint256",
                 "name": "minAuctionDuration",
-                "type": "uint256"
-            },
-            {
-                "internalType": "uint256",
-                "name": "minPrice",
-                "type": "uint256"
-            },
-            {
-                "internalType": "uint256",
-                "name": "minFee",
                 "type": "uint256"
             }
         ],
@@ -94,7 +79,7 @@
     },
     {
         "inputs": [],
-        "name": "AuctionHouseEmptyTokenURI",
+        "name": "AuctionHouseInvalidCurrency",
         "type": "error"
     },
     {
@@ -168,32 +153,6 @@
     {
         "inputs": [],
         "name": "AuthorizationUnauthorizedAction",
-        "type": "error"
-    },
-    {
-        "inputs": [],
-        "name": "DistributionParticipantsSharesMismatch",
-        "type": "error"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "sharesSum",
-                "type": "uint256"
-            }
-        ],
-        "name": "DistributionSharesSumInvalid",
-        "type": "error"
-    },
-    {
-        "inputs": [],
-        "name": "DistributionZeroAddress",
-        "type": "error"
-    },
-    {
-        "inputs": [],
-        "name": "DistributionZeroShare",
         "type": "error"
     },
     {
@@ -287,6 +246,26 @@
         "type": "error"
     },
     {
+        "inputs": [],
+        "name": "SafeERC20BulkTransferIncorrectTotalAmount",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "SafeERC20BulkTransferInvalidInputLengths",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "SafeERC20BulkTransferZeroAddress",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "SafeERC20BulkTransferZeroValue",
+        "type": "error"
+    },
+    {
         "inputs": [
             {
                 "internalType": "address",
@@ -296,6 +275,45 @@
         ],
         "name": "SafeERC20FailedOperation",
         "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "ShareDistributorParticipantsSharesMismatch",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "sharesSum",
+                "type": "uint256"
+            }
+        ],
+        "name": "ShareDistributorSharesSumInvalid",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "ShareDistributorZeroAddress",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "ShareDistributorZeroShare",
+        "type": "error"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "uint256",
+                "name": "auctionId",
+                "type": "uint256"
+            }
+        ],
+        "name": "Cancelled",
+        "type": "event"
     },
     {
         "anonymous": false,
@@ -326,6 +344,25 @@
             }
         ],
         "name": "Created",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "currency",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "bool",
+                "name": "allowed",
+                "type": "bool"
+            }
+        ],
+        "name": "CurrencyStatusUpdated",
         "type": "event"
     },
     {
@@ -502,45 +539,6 @@
         "type": "function"
     },
     {
-        "inputs": [],
-        "name": "MIN_FEE",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "MIN_PRICE",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "USDC",
-        "outputs": [
-            {
-                "internalType": "contract IERC20",
-                "name": "",
-                "type": "address"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
         "inputs": [
             {
                 "internalType": "uint256",
@@ -601,6 +599,11 @@
                         "internalType": "uint256[]",
                         "name": "shares",
                         "type": "uint256[]"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "currency",
+                        "type": "address"
                     }
                 ],
                 "internalType": "struct Auction.Type",
@@ -609,6 +612,19 @@
             }
         ],
         "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "auctionId",
+                "type": "uint256"
+            }
+        ],
+        "name": "cancel",
+        "outputs": [],
+        "stateMutability": "nonpayable",
         "type": "function"
     },
     {
@@ -624,6 +640,11 @@
                         "internalType": "uint256",
                         "name": "tokenId",
                         "type": "uint256"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "currency",
+                        "type": "address"
                     },
                     {
                         "internalType": "uint256",
@@ -701,6 +722,25 @@
     {
         "inputs": [
             {
+                "internalType": "address",
+                "name": "currency",
+                "type": "address"
+            }
+        ],
+        "name": "currencyAllowed",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "allowed",
+                "type": "bool"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
                 "internalType": "uint256",
                 "name": "auctionId",
                 "type": "uint256"
@@ -768,7 +808,7 @@
         ],
         "name": "raise",
         "outputs": [],
-        "stateMutability": "nonpayable",
+        "stateMutability": "payable",
         "type": "function"
     },
     {
@@ -786,7 +826,7 @@
         ],
         "name": "raiseInitial",
         "outputs": [],
-        "stateMutability": "nonpayable",
+        "stateMutability": "payable",
         "type": "function"
     },
     {
@@ -861,6 +901,24 @@
             }
         ],
         "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "currency",
+                "type": "address"
+            },
+            {
+                "internalType": "bool",
+                "name": "allowed",
+                "type": "bool"
+            }
+        ],
+        "name": "updateCurrencyStatus",
+        "outputs": [],
+        "stateMutability": "nonpayable",
         "type": "function"
     }
 ]

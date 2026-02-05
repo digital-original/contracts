@@ -1,9 +1,8 @@
 import { expect } from 'chai';
 import { Signer, MaxInt256 } from 'ethers';
 import { ArtToken, USDC } from '../typechain-types';
-import { MIN_FEE, MIN_PRICE } from './constants/min-price-and-fee';
-import { TOKEN_CONFIG, TOKEN_ID, TOKEN_URI } from './constants/art-token';
-import { HOUR } from './constants/time';
+import { HOUR } from './constants/general';
+import { TOKEN_CONFIG, TOKEN_FEE, TOKEN_ID, TOKEN_PRICE, TOKEN_URI } from './constants/art-token';
 import { getSigners } from './utils/get-signers';
 import { getLatestBlockTimestamp } from './utils/get-latest-block-timestamp';
 import { deployAll } from './utils/deploy-all';
@@ -50,12 +49,13 @@ describe('Authorization', function () {
             const tokenMintingPermit: TokenMintingPermit.TypeStruct = {
                 tokenId: TOKEN_ID,
                 minter: buyerAddr,
-                price: MIN_PRICE,
-                fee: MIN_FEE,
+                currency: usdcAddr,
+                price: TOKEN_PRICE,
+                fee: TOKEN_FEE,
                 tokenURI: TOKEN_URI,
                 tokenConfig: TOKEN_CONFIG,
                 participants: [institutionAddr],
-                rewards: [MIN_PRICE],
+                rewards: [TOKEN_PRICE],
                 deadline: latestBlockTimestamp + HOUR,
             };
 
@@ -73,12 +73,13 @@ describe('Authorization', function () {
             const tokenMintingPermit: TokenMintingPermit.TypeStruct = {
                 tokenId: TOKEN_ID,
                 minter: buyerAddr,
-                price: MIN_PRICE,
-                fee: MIN_FEE,
+                currency: usdcAddr,
+                price: TOKEN_PRICE,
+                fee: TOKEN_FEE,
                 tokenURI: TOKEN_URI,
                 tokenConfig: TOKEN_CONFIG,
                 participants: [institutionAddr],
-                rewards: [MIN_PRICE],
+                rewards: [TOKEN_PRICE],
                 deadline: latestBlockTimestamp - HOUR, // Wrong deadline
             };
 
@@ -89,7 +90,7 @@ describe('Authorization', function () {
                 sender: buyer,
             });
 
-            await expect(tx).to.be.rejectedWith('AuthorizationDeadlineExpired');
+            await expect(tx).rejectedWith('AuthorizationDeadlineExpired');
         });
 
         it(`should fail if the signer is invalid`, async () => {
@@ -98,12 +99,13 @@ describe('Authorization', function () {
             const tokenMintingPermit: TokenMintingPermit.TypeStruct = {
                 tokenId: TOKEN_ID,
                 minter: buyerAddr,
-                price: MIN_PRICE,
-                fee: MIN_FEE,
+                currency: usdcAddr,
+                price: TOKEN_PRICE,
+                fee: TOKEN_FEE,
                 tokenURI: TOKEN_URI,
                 tokenConfig: TOKEN_CONFIG,
                 participants: [institutionAddr],
-                rewards: [MIN_PRICE],
+                rewards: [TOKEN_PRICE],
                 deadline: latestBlockTimestamp + HOUR,
             };
 
@@ -114,7 +116,7 @@ describe('Authorization', function () {
                 sender: buyer,
             });
 
-            await expect(tx).to.be.rejectedWith('AuthorizationUnauthorizedAction');
+            await expect(tx).rejectedWith('AuthorizationUnauthorizedAction');
         });
     });
 });

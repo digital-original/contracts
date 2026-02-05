@@ -15,21 +15,6 @@
                 "internalType": "address",
                 "name": "auctionHouse",
                 "type": "address"
-            },
-            {
-                "internalType": "address",
-                "name": "usdc",
-                "type": "address"
-            },
-            {
-                "internalType": "uint256",
-                "name": "minPrice",
-                "type": "uint256"
-            },
-            {
-                "internalType": "uint256",
-                "name": "minFee",
-                "type": "uint256"
             }
         ],
         "stateMutability": "nonpayable",
@@ -70,7 +55,7 @@
     },
     {
         "inputs": [],
-        "name": "ArtTokenEmptyTokenURI",
+        "name": "ArtTokenCurrencyInvalid",
         "type": "error"
     },
     {
@@ -92,6 +77,17 @@
             }
         ],
         "name": "ArtTokenMisconfiguration",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "tokenId",
+                "type": "uint256"
+            }
+        ],
+        "name": "ArtTokenNonexistentToken",
         "type": "error"
     },
     {
@@ -444,6 +440,25 @@
         "inputs": [
             {
                 "indexed": false,
+                "internalType": "address",
+                "name": "currency",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "bool",
+                "name": "allowed",
+                "type": "bool"
+            }
+        ],
+        "name": "CurrencyStatusUpdated",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
                 "internalType": "uint64",
                 "name": "version",
                 "type": "uint64"
@@ -614,38 +629,12 @@
     },
     {
         "inputs": [],
-        "name": "MIN_FEE",
+        "name": "ROYALTY_PERCENT_IN_BP",
         "outputs": [
             {
                 "internalType": "uint256",
                 "name": "",
                 "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "MIN_PRICE",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "USDC",
-        "outputs": [
-            {
-                "internalType": "contract IERC20",
-                "name": "",
-                "type": "address"
             }
         ],
         "stateMutability": "view",
@@ -683,6 +672,25 @@
                 "internalType": "uint256",
                 "name": "",
                 "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "currency",
+                "type": "address"
+            }
+        ],
+        "name": "currencyAllowed",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "allowed",
+                "type": "bool"
             }
         ],
         "stateMutability": "view",
@@ -806,6 +814,11 @@
                         "type": "address"
                     },
                     {
+                        "internalType": "address",
+                        "name": "currency",
+                        "type": "address"
+                    },
+                    {
                         "internalType": "uint256",
                         "name": "price",
                         "type": "uint256"
@@ -865,7 +878,7 @@
         ],
         "name": "mint",
         "outputs": [],
-        "stateMutability": "nonpayable",
+        "stateMutability": "payable",
         "type": "function"
     },
     {
@@ -980,6 +993,35 @@
     {
         "inputs": [
             {
+                "internalType": "uint256",
+                "name": "tokenId",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "salePrice",
+                "type": "uint256"
+            }
+        ],
+        "name": "royaltyInfo",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "receiver",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "royaltyAmount",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
                 "internalType": "address",
                 "name": "from",
                 "type": "address"
@@ -1042,6 +1084,24 @@
             }
         ],
         "name": "setApprovalForAll",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "tokenId",
+                "type": "uint256"
+            },
+            {
+                "internalType": "string",
+                "name": "_tokenURI",
+                "type": "string"
+            }
+        ],
+        "name": "setTokenURI",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -1268,6 +1328,24 @@
             }
         ],
         "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "currency",
+                "type": "address"
+            },
+            {
+                "internalType": "bool",
+                "name": "allowed",
+                "type": "bool"
+            }
+        ],
+        "name": "updateCurrencyStatus",
+        "outputs": [],
+        "stateMutability": "nonpayable",
         "type": "function"
     },
     {

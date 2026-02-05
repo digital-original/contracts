@@ -9,25 +9,39 @@
 Digital Original (DO) is a modular on-chain framework for managing primary sales and secondary markets of digital collectibles (NFTs).
 This repository hosts all **Solidity smart-contracts, tests and tooling** required to deploy and operate the protocol.
 
+## 🧩 Features
+
+- **Primary Sales & Minting**: Directly mint and purchase NFTs with built-in revenue distribution.
+- **Secondary Markets**: Peer-to-peer trading of NFTs with off-chain order matching.
+- **Auction House**: English-style auctions for primary NFT sales.
+- **EIP-712 Permits**: Gas-efficient and secure transactions with cryptographic authorization.
+- **Role-Based Access Control**: Granular control over contract functions and administrative actions.
+- **Flexible Fee Structures**: Configurable maker and taker fees for market transactions.
+- **Multi-Currency Support**: Support for multiple ERC-20 tokens for payments.
+- **Upgradeable Contracts**: Upgradeable contract architecture for future improvements.
+
 ## 📚 Contracts
 
 ### ArtToken
+
 The `ArtToken` contract is an upgradeable ERC-721 NFT implementation that serves as the core collectible in the Digital Original ecosystem. Key features:
 
-- **Primary Sales**: Supports direct minting and purchasing through the `buy()` function with built-in revenue distribution
+- **Primary Sales**: Supports direct minting and purchasing through the `mint()` function with built-in revenue distribution
 - **EIP-712 Permits**: All primary sales require cryptographic authorization from designated signers
 - **Compliance & Regulation**: Optional transfer restrictions for regulated tokens
 - **AuctionHouse Integration**: Works seamlessly with the AuctionHouse for auction-based primary sales
 - **Revenue Splitting**: Automatic distribution of sale proceeds among multiple participants according to predefined shares
 
 ### AuctionHouse
+
 The `AuctionHouse` contract manages English-style auctions for primary NFT sales. Key features:
 
 - **Auction Creation**: Authorized creation of time-bound auctions with EIP-712 signatures
 - **Bidding System**: Progressive bidding with minimum raise steps and automatic refunds to outbid participants
-- **USDC Integration**: All bids and settlements are conducted in USDC for stable pricing
+- **Multi-Currency**: Configurable support for multiple ERC-20 payment currencies
 
 ### Market
+
 The `Market` contract facilitates peer-to-peer secondary trading of NFTs through off-chain order matching. Key features:
 
 - **Order Types**: Supports both sell-side (ask) and buy-side (bid) orders
@@ -38,28 +52,19 @@ The `Market` contract facilitates peer-to-peer secondary trading of NFTs through
 - **Revenue Sharing**: Built-in mechanism for distributing fees among multiple participants
 - **Security**: Time-bound orders with replay protection and signature verification
 
-## 🗂 Repository Layout
+## 🏃🏽 Getting Started
 
-```
-contracts/           Solidity sources
-├─ art-token/         ▸ `ArtToken` and base logic
-├─ auction-house/     ▸ `AuctionHouse` contracts
-├─ market/            ▸ `Market` and order libs
-├─ utils/             ▸  Shared libraries & helpers
-tests/                Hardhat unit tests (TypeScript)
-scripts/              Re-usable deployment scripts
-tasks/                Hardhat CLI tasks (`npx hardhat <task>`)
-abis/                 Pre-generated ABIs
-```
+### 📋 Prerequisites
+- [Node.js](https://nodejs.org/) (v24+)
+- [Python](https://www.python.org/) (for static analysis)
 
-## ⚡️ Quick Start
-
+### ⚡️ Quick Start
 ```bash
 # 1. install deps
 npm install
 
-# 2. copy environment templates and adjust values
-cp config.env.example.yaml config.env.yaml
+# 2. init config templates
+source ./init.sh
 
 # 3. compile
 npm run compile
@@ -68,36 +73,69 @@ npm run compile
 npm run test
 ```
 
-### Local fork
+### ⚙️ Configuration
 
-Spin up a mainnet-fork (uses `config.env.yaml` for URL):
-
-```bash
-npm run fork
-# in another terminal you can deploy the collection
-npx hardhat deploy-collection --network fork
-```
-
-## 🔧 Configuration Files
-
-* `config.env.yaml` – chain URLs, private keys, API keys (never commit real secrets)
-* `config.do.yaml` / `config.dn.yaml` – collection parameters
-* `config.market.yaml` – market parameters
+The project uses YAML files for configuration. You'll need to create your own configuration files by copying the example files and editing them with your desired settings.
 
 Every Hardhat network entry gets enriched with a `protocolConfig` object at runtime, see `hardhat.config.ts`.
 
-## 🛠 NPM Scripts
+1. **Environment Config:** Copy `config.env.example.yaml` to `config.env.yaml` and add your API keys (e.g., Etherscan, CoinMarketCap).
 
-| Script | Description |
-| ------ | ----------- |
-| `npm run compile` | Clean & compile contracts |
-| `npm run test` | Execute TypeScript test-suite |
-| `npm run fork` | Start a local Hardhat node (optionally forking) |
+2. **Chain Config:** Copy `config.chain.example.yaml` to `config.chain.yaml` and add your RPC URLs and deployer private keys for the desired networks.
+
+3. **Collection Config:** Copy `config.collection.example.yaml` to `config.collection.yaml` and configure the art token collection parameters.
+
+4. **Market Config:** Copy `config.market.example.yaml` to `config.market.yaml` and configure the marketplace parameters.
+
+### 🍴 Local Fork
+
+Spin up a mainnet-fork using the URL from `config.chain.yaml`:
+```bash
+npm run fork
+```
+
+In a separate terminal, you can then use hardhat tasks:
+```bash
+npx hardhat deploy-collection --network fork
+```
+
+### 📜 NPM Scripts
+
+| Script            | Description                                                        |
+| ----------------- | ------------------------------------------------------------------ |
+| `npm run compile` | Clean & compile contracts                                          |
+| `npm run test`    | Execute TypeScript test-suite                                      |
+| `npm run fork`    | Start a local Hardhat node (optionally forking)                    |
 | `npm run slither` | Static analysis using [Slither](https://github.com/crytic/slither) |
-| `npm run lint` | Lint Solidity with Solhint |
-| `npm run format` | Auto-format using Prettier |
+| `npm run lint`    | Lint Solidity with Solhint                                         |
+| `npm run format`  | Auto-format using Prettier                                         |
 
-## 🛡️ Slither Static Analysis
+### 👷🏽 Hardhat Tasks
+
+- **Deploy Collection**:
+    ```bash
+    npx hardhat deploy-collection --network <network>
+    ```
+- **Deploy Market**:
+    ```bash
+    npx hardhat deploy-market --network <network>
+    ```
+- **Deploy Individual Implementations**:
+    ```bash
+    npx hardhat deploy-art-token-impl --network <network>
+    npx hardhat deploy-auction-house-impl --network <network>
+    npx hardhat deploy-market-impl --network <network>
+    ```
+- **Verify Contracts on Etherscan**:
+    ```bash
+    npx hardhat verify-art-token --network <network>
+    npx hardhat verify-auction-house --network <network>
+    npx hardhat verify-market --network <network>
+    ```
+
+To see a full list of available tasks, run `npx hardhat --help`.
+
+## 🛡️ Static Analysis
 
 To run Slither for smart contract security analysis, you need to set up a Python virtual environment first:
 
@@ -123,28 +161,6 @@ The Slither configuration is defined in `slither.config.json`. After running, yo
 ```bash
 deactivate
 ```
-
-## 🤖 Hardhat Tasks
-
-```bash
-# Deploy collection (ArtToken + AuctionHouse proxies)
-npx hardhat deploy-collection --network <network>
-
-# Deploy individual implementations
-npx hardhat deploy-art-token-impl --network <network>
-npx hardhat deploy-auction-house-impl --network <network>
-npx hardhat deploy-market-impl --network <network>
-
-# Deploy Market proxy
-npx hardhat deploy-market --network <network>
-
-# Verify on Etherscan
-npx hardhat verify-art-token --network <network>
-npx hardhat verify-auction-house --network <network>
-npx hardhat verify-market --network <network>
-```
-
-Run `npx hardhat --help` to list all available tasks.
 
 ## 📜 License
 

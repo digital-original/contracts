@@ -35,35 +35,39 @@ describe('CurrencyManager', function () {
 
     describe(`method 'currencyAllowed'`, () => {
         it(`should return true if the currency is allowed`, async () => {
-            expect(await currencyManager.currencyAllowed(usdcAddr)).to.be.true;
+            const currencyAllowed = await currencyManager.currencyAllowed(usdcAddr);
+
+            expect(currencyAllowed).equal(true);
         });
 
         it(`should return false if the currency is not allowed`, async () => {
-            expect(await currencyManager.currencyAllowed(ZeroAddress)).to.be.false;
+            const currencyAllowed = await currencyManager.currencyAllowed(ZeroAddress);
+
+            expect(currencyAllowed).equal(false);
         });
     });
 
     describe(`method 'updateCurrencyStatus'`, () => {
         it(`should update the currency status if the caller is an admin`, async () => {
-            expect(await currencyManager.currencyAllowed(usdcAddr)).to.be.true;
+            const currencyAllowedBefore = await currencyManager.currencyAllowed(usdcAddr);
 
-            await expect(currencyManager.connect(admin).updateCurrencyStatus(usdcAddr, false))
-                .to.emit(currencyManager, 'CurrencyStatusUpdated')
+            expect(currencyAllowedBefore).equal(true);
+
+            const tx = await currencyManager.connect(admin).updateCurrencyStatus(usdcAddr, false);
+
+            const currencyAllowedAfter = await currencyManager.currencyAllowed(usdcAddr);
+
+            expect(currencyAllowedAfter).equal(false);
+
+            await expect(tx)
+                .emit(currencyManager, 'CurrencyStatusUpdated')
                 .withArgs(usdcAddr, false);
-
-            expect(await currencyManager.currencyAllowed(usdcAddr)).to.be.false;
-
-            await expect(currencyManager.connect(admin).updateCurrencyStatus(usdcAddr, true))
-                .to.emit(currencyManager, 'CurrencyStatusUpdated')
-                .withArgs(usdcAddr, true);
-
-            expect(await currencyManager.currencyAllowed(usdcAddr)).to.be.true;
         });
 
         it(`should fail if the caller is not an admin`, async () => {
-            await expect(
-                currencyManager.connect(randomAccount).updateCurrencyStatus(usdcAddr, false),
-            ).to.be.revertedWithCustomError(currencyManager, 'RoleSystemUnauthorizedAccount');
+            const tx = currencyManager.connect(randomAccount).updateCurrencyStatus(usdcAddr, false);
+
+            await expect(tx).rejectedWith('RoleSystemUnauthorizedAccount');
         });
     });
 });

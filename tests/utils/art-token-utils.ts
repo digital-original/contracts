@@ -1,18 +1,15 @@
-import { Signer, TypedDataDomain, TypedDataEncoder } from 'ethers';
+import { Signer, TypedDataDomain } from 'ethers';
 import {
     ART_TOKEN_DOMAIN_NAME,
     ART_TOKEN_DOMAIN_VERSION,
-    TOKEN_CONFIG_TYPE,
     TOKEN_MINTING_PERMIT_TYPE,
 } from '../constants/art-token';
+import { TokenConfigUtils } from './token-config-utils';
 import { ArtToken } from '../../typechain-types';
 import { getChainId } from './get-chain-id';
-import {
-    TokenConfig,
-    TokenMintingPermit,
-} from '../../typechain-types/contracts/art-token/ArtToken';
+import { TokenMintingPermit } from '../../typechain-types/contracts/art-token/ArtToken';
 
-type BuyArgs = {
+type MintArgs = {
     artToken: ArtToken;
     permit: TokenMintingPermit.TypeStruct;
     permitSigner: Signer;
@@ -20,12 +17,12 @@ type BuyArgs = {
 };
 
 export class ArtTokenUtils {
-    static async mint(args: BuyArgs) {
+    static async mint(args: MintArgs) {
         const { artToken, permit, permitSigner, sender } = args;
 
         const domain = await this.buildDomain(artToken);
 
-        const tokenConfigHash = this.hashTokenConfig(permit.tokenConfig);
+        const tokenConfigHash = TokenConfigUtils.hash(permit.tokenConfig);
 
         const permitSignature = await permitSigner.signTypedData(
             domain,
@@ -34,10 +31,6 @@ export class ArtTokenUtils {
         );
 
         return artToken.connect(sender).mint(permit, permitSignature);
-    }
-
-    static hashTokenConfig(tokenConfig: TokenConfig.TypeStruct) {
-        return TypedDataEncoder.from(TOKEN_CONFIG_TYPE).hash(tokenConfig);
     }
 
     static async buildDomain(artToken: ArtToken): Promise<TypedDataDomain> {

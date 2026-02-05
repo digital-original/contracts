@@ -30,8 +30,8 @@ library SafeERC20BulkTransfer {
     function safeTransfer(
         IERC20 currency,
         uint256 amount,
-        address[] calldata receivers,
-        uint256[] calldata values
+        address[] memory receivers,
+        uint256[] memory values
     ) internal {
         uint256 receiversCount = receivers.length;
 
