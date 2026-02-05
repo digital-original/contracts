@@ -3,6 +3,11 @@
         "inputs": [
             {
                 "internalType": "address",
+                "name": "proxy",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
                 "name": "main",
                 "type": "address"
             },
@@ -58,93 +63,32 @@
         "type": "error"
     },
     {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "auctionId",
-                "type": "uint256"
-            },
-            {
-                "internalType": "uint256",
-                "name": "endTime",
-                "type": "uint256"
-            },
-            {
-                "internalType": "uint256",
-                "name": "blockTime",
-                "type": "uint256"
-            }
-        ],
+        "inputs": [],
         "name": "AuctionHouseAuctionEnded",
         "type": "error"
     },
     {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "auctionId",
-                "type": "uint256"
-            }
-        ],
+        "inputs": [],
         "name": "AuctionHouseAuctionExists",
         "type": "error"
     },
     {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "auctionId",
-                "type": "uint256"
-            },
-            {
-                "internalType": "uint256",
-                "name": "endTime",
-                "type": "uint256"
-            },
-            {
-                "internalType": "uint256",
-                "name": "blockTime",
-                "type": "uint256"
-            }
-        ],
+        "inputs": [],
         "name": "AuctionHouseAuctionNotEnded",
         "type": "error"
     },
     {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "auctionId",
-                "type": "uint256"
-            }
-        ],
-        "name": "AuctionHouseAuctionNotExist",
+        "inputs": [],
+        "name": "AuctionHouseAuctionNotExists",
         "type": "error"
     },
     {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "auctionId",
-                "type": "uint256"
-            },
-            {
-                "internalType": "address",
-                "name": "buyer",
-                "type": "address"
-            }
-        ],
+        "inputs": [],
         "name": "AuctionHouseBuyerExists",
         "type": "error"
     },
     {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "auctionId",
-                "type": "uint256"
-            }
-        ],
+        "inputs": [],
         "name": "AuctionHouseBuyerNotExists",
         "type": "error"
     },
@@ -154,51 +98,17 @@
         "type": "error"
     },
     {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "buyer",
-                "type": "address"
-            }
-        ],
-        "name": "AuctionHouseInvalidBuyer",
-        "type": "error"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "endTime",
-                "type": "uint256"
-            },
-            {
-                "internalType": "uint256",
-                "name": "blockTime",
-                "type": "uint256"
-            }
-        ],
+        "inputs": [],
         "name": "AuctionHouseInvalidEndTime",
         "type": "error"
     },
     {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "value",
-                "type": "uint256"
-            }
-        ],
+        "inputs": [],
         "name": "AuctionHouseInvalidFee",
         "type": "error"
     },
     {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "value",
-                "type": "uint256"
-            }
-        ],
+        "inputs": [],
         "name": "AuctionHouseInvalidPrice",
         "type": "error"
     },
@@ -222,58 +132,79 @@
         "inputs": [
             {
                 "internalType": "uint256",
-                "name": "amount",
-                "type": "uint256"
-            },
-            {
-                "internalType": "uint256",
                 "name": "minAmount",
                 "type": "uint256"
             }
         ],
-        "name": "AuctionHouseRaiseTooSmall",
+        "name": "AuctionHouseRaiseTooLow",
         "type": "error"
     },
     {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "tokenId",
-                "type": "uint256"
-            }
-        ],
+        "inputs": [],
         "name": "AuctionHouseTokenReserved",
         "type": "error"
     },
     {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "auctionId",
-                "type": "uint256"
-            }
-        ],
+        "inputs": [],
         "name": "AuctionHouseTokenSold",
         "type": "error"
     },
     {
-        "inputs": [],
-        "name": "AuctionHouseZeroId",
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "account",
+                "type": "address"
+            }
+        ],
+        "name": "AuctionHouseUnauthorizedAccount",
         "type": "error"
     },
     {
         "inputs": [],
-        "name": "DistributionInvalidSharesCount",
+        "name": "AuthorizationDeadlineExpired",
         "type": "error"
     },
     {
         "inputs": [],
-        "name": "DistributionInvalidSharesSum",
+        "name": "AuthorizationUnauthorizedAction",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "DistributionParticipantsSharesMismatch",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "shareSum",
+                "type": "uint256"
+            }
+        ],
+        "name": "DistributionSharesSumTooBig",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "shareSum",
+                "type": "uint256"
+            }
+        ],
+        "name": "DistributionSharesSumTooLow",
         "type": "error"
     },
     {
         "inputs": [],
         "name": "DistributionZeroAddress",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "DistributionZeroShare",
         "type": "error"
     },
     {
@@ -304,23 +235,29 @@
         "type": "error"
     },
     {
-        "inputs": [],
-        "name": "EIP712ExpiredSignature",
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "argIndex",
+                "type": "uint256"
+            }
+        ],
+        "name": "EIP712DomainMisconfiguration",
         "type": "error"
     },
     {
         "inputs": [],
-        "name": "EIP712InvalidSignature",
-        "type": "error"
-    },
-    {
-        "inputs": [],
-        "name": "EIP712SignerZeroAddress",
+        "name": "EIP712SignatureZeroAddress",
         "type": "error"
     },
     {
         "inputs": [],
         "name": "FailedInnerCall",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "MathOverflowedMulDiv",
         "type": "error"
     },
     {
@@ -337,22 +274,6 @@
     {
         "inputs": [],
         "name": "RoleSystemNotMain",
-        "type": "error"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "account",
-                "type": "address"
-            },
-            {
-                "internalType": "bytes32",
-                "name": "neededRole",
-                "type": "bytes32"
-            }
-        ],
-        "name": "RoleSystemUnauthorizedAccount",
         "type": "error"
     },
     {
@@ -483,38 +404,19 @@
         "inputs": [
             {
                 "indexed": true,
-                "internalType": "address",
-                "name": "from",
-                "type": "address"
-            },
-            {
-                "indexed": true,
-                "internalType": "address",
-                "name": "to",
-                "type": "address"
-            },
-            {
-                "indexed": true,
                 "internalType": "bytes32",
                 "name": "role",
                 "type": "bytes32"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "newOwner",
+                "type": "address"
             }
         ],
         "name": "UniqueRoleTransferred",
         "type": "event"
-    },
-    {
-        "inputs": [],
-        "name": "ADMIN_ROLE",
-        "outputs": [
-            {
-                "internalType": "bytes32",
-                "name": "",
-                "type": "bytes32"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
     },
     {
         "inputs": [],
@@ -544,7 +446,20 @@
     },
     {
         "inputs": [],
-        "name": "FINANCIAL_ROLE",
+        "name": "DOMAIN_SEPARATOR",
+        "outputs": [
+            {
+                "internalType": "bytes32",
+                "name": "",
+                "type": "bytes32"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "DOMAIN_TYPE_HASH",
         "outputs": [
             {
                 "internalType": "bytes32",
@@ -800,7 +715,7 @@
                 "type": "address"
             }
         ],
-        "name": "grandRole",
+        "name": "grantRole",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -838,7 +753,7 @@
             },
             {
                 "internalType": "uint256",
-                "name": "price",
+                "name": "newPrice",
                 "type": "uint256"
             }
         ],
@@ -856,7 +771,7 @@
             },
             {
                 "internalType": "uint256",
-                "name": "price",
+                "name": "newPrice",
                 "type": "uint256"
             }
         ],
@@ -895,7 +810,7 @@
         "outputs": [
             {
                 "internalType": "bool",
-                "name": "",
+                "name": "reserved",
                 "type": "bool"
             }
         ],
@@ -911,7 +826,7 @@
             },
             {
                 "internalType": "address",
-                "name": "to",
+                "name": "newOwner",
                 "type": "address"
             }
         ],
@@ -928,11 +843,11 @@
                 "type": "bytes32"
             }
         ],
-        "name": "uniqueRoleAccount",
+        "name": "uniqueRoleOwner",
         "outputs": [
             {
                 "internalType": "address",
-                "name": "account",
+                "name": "owner",
                 "type": "address"
             }
         ],

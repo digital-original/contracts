@@ -15,3 +15,8 @@ export const CREATE_PERMIT_TYPE = {
         { name: 'deadline', type: 'uint256' },
     ],
 };
+
+export const AUCTION_ID = 1;
+export const SECOND_AUCTION_ID = 2;
+export const AUCTION_STEP = 1_000_000n;
+export const MIN_AUCTION_DURATION = 1800;

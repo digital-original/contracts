@@ -4,22 +4,34 @@ pragma solidity ^0.8.20;
 /**
  * @title IRoleSystem
  *
- * @notice RoleSystem contract interface.
+ * @notice Interface describing the on-chain role-based access-control system
+ *         used by the protocol. Provides both multi-owner roles (grant/revoke)
+ *         and unique roles (single owner, transferable).
  */
 interface IRoleSystem {
-    /* ############################################################
-                                ROLES
-    ############################################################ */
-
     /**
-     * @dev Emitted when `account` is granted `role`.
+     * @notice Emitted when `role` is granted to `account`.
+     *
+     * @param role    Identifier of the role granted.
+     * @param account Recipient account that now possesses the role.
      */
     event RoleGranted(bytes32 indexed role, address indexed account);
 
     /**
-     * @dev Emitted when `account` is revoked `role`.
+     * @notice Emitted when `role` is revoked from `account`.
+     *
+     * @param role    Identifier of the role revoked.
+     * @param account Account that lost the role.
      */
     event RoleRevoked(bytes32 indexed role, address indexed account);
+
+    /**
+     * @notice Emitted when ownership of a unique role is transferred.
+     *
+     * @param role     Identifier of the unique role.
+     * @param newOwner Address that becomes the new (sole) owner of the role.
+     */
+    event UniqueRoleTransferred(bytes32 indexed role, address indexed newOwner);
 
     /**
      * @notice Grants `role` to `account`.
@@ -27,7 +39,7 @@ interface IRoleSystem {
      * @param role The role to be granted.
      * @param account The account for granting the role.
      */
-    function grandRole(bytes32 role, address account) external;
+    function grantRole(bytes32 role, address account) external;
 
     /**
      * @notice Revokes `role` from `account`.
@@ -38,64 +50,51 @@ interface IRoleSystem {
     function revokeRole(bytes32 role, address account) external;
 
     /**
-     * @notice Returns true if the account is granted the role, false in if not granted.
+     * @notice Transfers `uniqueRole` from the previous role owner to `newOwner`.
      *
-     * @param role The role to check.
-     * @param account The account to check.
+     * @dev Passing the zero address as `newOwner` will effectively revoke the
+     *      role without assigning it to anyone.
      *
-     * @dev Throws if the account is zero account.
+     * @param uniqueRole The role to be transferred.
+     * @param newOwner   The new owner of the unique role (may be address(0)).
+     */
+    function transferUniqueRole(bytes32 uniqueRole, address newOwner) external;
+
+    /**
+     * @notice Checks if `account` has been granted `role`.
+     *
+     * @dev Reverts with {RoleSystemZeroAddress} when `account` is the zero address.
+     *
+     * @param role    The role to query.
+     * @param account The account to query.
+     * @return true if `account` possesses `role`, false otherwise.
      */
     function hasRole(bytes32 role, address account) external view returns (bool);
 
-    /* ############################################################
-                            UNIQUE_ROLES
-    ############################################################ */
-
     /**
-     * @dev Emitted when `role` is transferred form `from` account to `to` account
+     * @notice Returns the sole owner of `uniqueRole`.
+     *
+     * @dev Reverts with {RoleSystemZeroAddress} when the role is currently
+     *      unassigned.
+     *
+     * @param uniqueRole The unique role to query.
+     * @return owner Address of the current role owner.
      */
-    event UniqueRoleTransferred(address indexed from, address indexed to, bytes32 indexed role);
+    function uniqueRoleOwner(bytes32 uniqueRole) external view returns (address owner);
 
     /**
-     * @notice Transfers `uniqueRole` from the previous role owner to `account`.
-     *
-     * @dev Transfer a unique role to zero account to revoke the role.
-     *
-     * @param uniqueRole The role to be transferred.
-     * @param to The account of the new role owner.
-     */
-    function transferUniqueRole(bytes32 uniqueRole, address to) external;
-
-    /**
-     * @notice Returns the account of the unique role owner.
-     *
-     * @param uniqueRole The unique role of the wanted account.
-     *
-     * @dev Throws if the wanted account is zero account.
-     */
-    function uniqueRoleAccount(bytes32 uniqueRole) external view returns (address account);
-
-    /* ############################################################
-                                ERRORS
-    ############################################################ */
-
-    /**
-     * @dev The sender is not the main account.
+     * @dev Thrown when a function restricted to the main role owner is called
+     *      by another account.
      */
     error RoleSystemNotMain();
 
     /**
-     * @dev Zero address was detected.
+     * @dev Thrown when the zero address is supplied where a non-zero address is required.
      */
     error RoleSystemZeroAddress();
 
     /**
-     * @dev The account does not have the needed role.
-     */
-    error RoleSystemUnauthorizedAccount(address account, bytes32 neededRole);
-
-    /**
-     * @dev The constructor argument under index `argIndex` is invalid.
+     * @dev Thrown when a constructor argument at index `argIndex` is invalid.
      */
     error RoleSystemMisconfiguration(uint256 argIndex);
 }

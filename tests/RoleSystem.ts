@@ -1,96 +1,86 @@
 import { expect } from 'chai';
+import { Signer, ZeroAddress } from 'ethers';
 import { ethers } from 'hardhat';
+import { deploy } from '../scripts/deploy';
+import { RoleSystem } from '../typechain-types';
+import { ADMIN_ROLE } from './constants/roles';
 import { getSigners } from './utils/get-signers';
-import { ArtToken } from '../typechain-types';
-import { Signer } from '../types/environment';
-import { deployProtocol } from '../scripts/deploy-protocol';
 
 describe('RoleSystem', function () {
-    let roleSystem: ArtToken, roleSystemAddr: string;
+    let roleSystem: RoleSystem, roleSystemAddr: string;
 
     let main: Signer, mainAddr: string;
     let account: Signer, accountAddr: string;
-
-    const someRole = ethers.keccak256(Buffer.from('SOME_ROLE'));
 
     before(async () => {
         [[main, account], [mainAddr, accountAddr]] = await getSigners();
     });
 
     beforeEach(async () => {
-        const { artToken: _artToken, artTokenAddr: _artTokenAddr } = await deployProtocol({
-            name: 'TestToken',
-            symbol: 'TT',
-            main,
-            usdc: '0xffffffffffffffffffffffffffffffffffffffff',
-            minPriceUsd: 10,
-            minFeeUsd: 10,
-            minAuctionDurationHours: 1,
-            regulated: true,
+        const { contractAddr } = await deploy({
+            name: 'RoleSystem',
+            constructorArgs: [main],
         });
 
-        roleSystem = _artToken.connect(main);
-        roleSystemAddr = _artTokenAddr;
+        roleSystem = await ethers.getContractAt('RoleSystem', contractAddr, main);
+        roleSystemAddr = contractAddr;
     });
 
     describe(`roles`, () => {
-        describe(`method 'grandRole'`, () => {
-            it(`should grand`, async () => {
-                const transaction = await roleSystem.grandRole(someRole, account);
+        describe(`method 'grantRole'`, () => {
+            it(`should grant`, async () => {
+                const transaction = await roleSystem.grantRole(ADMIN_ROLE, account);
 
-                await Promise.all([
-                    expect(transaction)
-                        .to.be.emit(roleSystem, 'RoleGranted')
-                        .withArgs(someRole, accountAddr),
-                    expect(roleSystem.hasRole(someRole, account)).to.eventually.equal(true),
-                ]);
+                await expect(transaction)
+                    .to.be.emit(roleSystem, 'RoleGranted')
+                    .withArgs(ADMIN_ROLE, accountAddr);
+
+                await expect(roleSystem.hasRole(ADMIN_ROLE, account)).to.eventually.equal(true);
             });
 
-            it(`should fail if sender is not main`, async () => {
+            it(`should fail if a sender is not the main account`, async () => {
                 await expect(
-                    roleSystem.connect(account).grandRole(someRole, account),
+                    roleSystem.connect(account).grantRole(ADMIN_ROLE, account),
                 ).to.eventually.rejectedWith('RoleSystemNotMain');
             });
         });
 
         describe(`method 'revokeRole'`, () => {
             beforeEach(async () => {
-                await roleSystem.grandRole(someRole, account);
+                await roleSystem.grantRole(ADMIN_ROLE, account);
             });
 
             it(`should revoke`, async () => {
-                const transaction = await roleSystem.revokeRole(someRole, account);
+                const transaction = await roleSystem.revokeRole(ADMIN_ROLE, account);
 
-                await Promise.all([
-                    expect(transaction)
-                        .to.be.emit(roleSystem, 'RoleRevoked')
-                        .withArgs(someRole, accountAddr),
-                    expect(roleSystem.hasRole(someRole, account)).to.eventually.equal(false),
-                ]);
+                await expect(transaction)
+                    .to.be.emit(roleSystem, 'RoleRevoked')
+                    .withArgs(ADMIN_ROLE, accountAddr);
+
+                await expect(roleSystem.hasRole(ADMIN_ROLE, account)).to.eventually.equal(false);
             });
 
-            it(`should fail if sender is not main`, async () => {
+            it(`should fail if a sender is not the main account`, async () => {
                 await expect(
-                    roleSystem.connect(account).revokeRole(someRole, account),
+                    roleSystem.connect(account).revokeRole(ADMIN_ROLE, account),
                 ).to.eventually.rejectedWith('RoleSystemNotMain');
             });
         });
 
         describe(`method 'hasRole'`, () => {
-            it(`should work correctly`, async () => {
-                await roleSystem.grandRole(someRole, account);
+            it(`should return correct value`, async () => {
+                await roleSystem.grantRole(ADMIN_ROLE, account);
 
-                await expect(roleSystem.hasRole(someRole, account)).to.eventually.equal(true);
+                await expect(roleSystem.hasRole(ADMIN_ROLE, account)).to.eventually.equal(true);
 
-                await roleSystem.revokeRole(someRole, account);
+                await roleSystem.revokeRole(ADMIN_ROLE, account);
 
-                await expect(roleSystem.hasRole(someRole, account)).to.eventually.equal(false);
+                await expect(roleSystem.hasRole(ADMIN_ROLE, account)).to.eventually.equal(false);
             });
 
-            it(`should fail if account is null`, async () => {
-                await expect(
-                    roleSystem.hasRole(someRole, ethers.ZeroAddress),
-                ).to.eventually.rejectedWith('RoleSystemZeroAddress');
+            it(`should fail if the account is zero`, async () => {
+                await expect(roleSystem.hasRole(ADMIN_ROLE, ZeroAddress)) //
+                    .to.eventually.rejectedWith('RoleSystemZeroAddress');
             });
         });
     });
@@ -98,42 +88,38 @@ describe('RoleSystem', function () {
     describe(`unique roles`, () => {
         describe(`method 'transferUniqueRole'`, () => {
             it(`should transfer`, async () => {
-                const transaction1 = await roleSystem.transferUniqueRole(someRole, account);
+                const tx1 = await roleSystem.transferUniqueRole(ADMIN_ROLE, account);
 
-                await expect(transaction1)
+                await expect(tx1)
                     .to.be.emit(roleSystem, 'UniqueRoleTransferred')
-                    .withArgs(ethers.ZeroAddress, accountAddr, someRole);
+                    .withArgs(ADMIN_ROLE, accountAddr);
 
-                const transaction2 = await roleSystem.transferUniqueRole(
-                    someRole,
-                    ethers.ZeroAddress,
-                );
+                const tx2 = await roleSystem.transferUniqueRole(ADMIN_ROLE, ZeroAddress);
 
-                await expect(transaction2)
+                await expect(tx2)
                     .to.be.emit(roleSystem, 'UniqueRoleTransferred')
-                    .withArgs(accountAddr, ethers.ZeroAddress, someRole);
+                    .withArgs(ADMIN_ROLE, ZeroAddress);
             });
 
-            it(`should fail if sender is not main`, async () => {
-                await expect(
-                    roleSystem.connect(account).transferUniqueRole(someRole, account),
-                ).to.eventually.rejectedWith('RoleSystemNotMain');
+            it(`should fail if a sender is not the main account`, async () => {
+                const tx = roleSystem.connect(account).transferUniqueRole(ADMIN_ROLE, account);
+
+                await expect(tx).to.eventually.rejectedWith('RoleSystemNotMain');
             });
         });
 
-        describe(`method 'uniqueRoleAccount'`, () => {
-            it(`should return account`, async () => {
-                await roleSystem.transferUniqueRole(someRole, account);
+        describe(`method 'uniqueRoleOwner'`, () => {
+            it(`should return the owner`, async () => {
+                await roleSystem.transferUniqueRole(ADMIN_ROLE, account);
 
-                await expect(roleSystem.uniqueRoleAccount(someRole)).to.eventually.equal(
-                    accountAddr,
-                );
+                await expect(roleSystem.uniqueRoleOwner(ADMIN_ROLE)) //
+                    .to.eventually.equal(accountAddr);
             });
 
-            it(`should fail if account is null`, async () => {
-                await expect(roleSystem.uniqueRoleAccount(someRole)).to.eventually.rejectedWith(
-                    'RoleSystemZeroAddress',
-                );
+            it(`should fail if the role does not have an owner`, async () => {
+                const tx = roleSystem.uniqueRoleOwner(ADMIN_ROLE);
+
+                await expect(tx).to.eventually.rejectedWith('RoleSystemZeroAddress');
             });
         });
     });

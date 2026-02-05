@@ -1,15 +1,54 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.20;
 
-import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import {ArtToken} from "../art-token/ArtToken.sol";
 import {AuctionHouse} from "../auction-house/AuctionHouse.sol";
+import {Deployment} from "./Deployment.sol";
 
+/**
+ * @title Deployer
+ *
+ * @notice Helper contract that deploys and wires together fresh instances of
+ *         `ArtToken` and `AuctionHouse` behind transparent upgradeable
+ *         proxies. Intended for deterministic deployments during initial
+ *         protocol setup.
+ *
+ * @dev The contract self-destructs implicitly after construction (no storage is
+ *      written). It relies on {Deployment.calculateContractAddress} to
+ *      pre-compute the proxy addresses, ensuring that the implementation
+ *      constructors can reference each other before the proxies exist.
+ */
 contract Deployer {
+    /// @notice Emitted once the proxy contracts are deployed and initialised.
+    /// @param artToken     Address of the newly deployed ArtToken proxy.
+    /// @param auctionHouse Address of the newly deployed AuctionHouse proxy.
     event Deployed(address artToken, address auctionHouse);
 
-    error DeployerIncorrectAddress();
-
+    /**
+     * @notice Deploys upgradeable `ArtToken` and `AuctionHouse` instances.
+     *
+     * @dev The constructor performs the following steps:
+     *      1. Computes the expected proxy addresses using the current
+     *         contract nonce (deploy order is deterministic).
+     *      2. Deploys the implementation contracts, passing the computed
+     *         proxy addresses so they can reference each other.
+     *      3. Deploys the transparent proxies via {Deployment.deployUpgradeableContract}.
+     *      4. Reverts with {DeployerIncorrectAddress} if the actual proxy
+     *         addresses do not match the pre-computed ones (should never
+     *         happen unless the deployment order changes).
+     *      5. Calls `initialize` on the ArtToken proxy to set `name` and
+     *         `symbol`.
+     *      6. Emits {Deployed}.
+     *
+     * @param name                ERC-721 collection name.
+     * @param symbol              ERC-721 collection symbol.
+     * @param main                Address that will be set as {RoleSystem.MAIN}.
+     * @param usdc                Address of the USDC token contract.
+     * @param minPrice            Global minimum primary-sale price.
+     * @param minFee              Global minimum platform fee.
+     * @param minAuctionDuration  Minimum auction duration (seconds) enforced by AuctionHouse.
+     * @param regulated           Whether the ArtToken collection is transfer-restricted.
+     */
     constructor(
         string memory name,
         string memory symbol,
@@ -20,82 +59,44 @@ contract Deployer {
         uint256 minAuctionDuration,
         bool regulated
     ) {
-        address _artToken = _contractAddressFrom(address(this), 4);
+        address calculatedArtTokenProxy = Deployment.calculateContractAddress(address(this), 3);
+        address calculatedAuctionHouseProxy = Deployment.calculateContractAddress(address(this), 4);
+
+        address artTokenImpl = address(
+            new ArtToken(
+                calculatedArtTokenProxy,
+                main,
+                calculatedAuctionHouseProxy,
+                usdc,
+                minPrice,
+                minFee,
+                regulated //
+            )
+        );
 
         address auctionHouseImpl = address(
-            new AuctionHouse(main, _artToken, usdc, minAuctionDuration, minPrice, minFee)
+            new AuctionHouse(
+                calculatedAuctionHouseProxy,
+                main,
+                calculatedArtTokenProxy,
+                usdc,
+                minAuctionDuration,
+                minPrice,
+                minFee
+            )
         );
-        address auctionHouse = _deployUpgradeable(auctionHouseImpl, main);
 
-        address artTokenImpl = address(new ArtToken(main, auctionHouse, usdc, minPrice, minFee, regulated));
-        address artToken = _deployUpgradeable(artTokenImpl, main);
+        address artTokenProxy = Deployment.deployUpgradeableContract(artTokenImpl, main);
+        address auctionHouseProxy = Deployment.deployUpgradeableContract(auctionHouseImpl, main);
 
-        if (_artToken != artToken) {
-            revert DeployerIncorrectAddress();
-        }
+        if (artTokenProxy != calculatedArtTokenProxy) revert DeployerIncorrectAddress();
+        if (auctionHouseProxy != calculatedAuctionHouseProxy) revert DeployerIncorrectAddress();
 
-        ArtToken(_artToken).initialize(name, symbol);
+        ArtToken(artTokenProxy).initialize(name, symbol);
 
-        emit Deployed(_artToken, auctionHouse);
+        emit Deployed(artTokenProxy, auctionHouseProxy);
     }
 
-    function _deployUpgradeable(address impl, address owner) private returns (address) {
-        return address(new TransparentUpgradeableProxy(impl, owner, ""));
-    }
-
-    function _contractAddressFrom(address deployer, uint256 nonce) private pure returns (address) {
-        if (nonce == 0x00)
-            return
-                address(
-                    uint160(uint256(keccak256(abi.encodePacked(bytes1(0xd6), bytes1(0x94), deployer, bytes1(0x80)))))
-                );
-        if (nonce <= 0x7f)
-            return
-                address(
-                    uint160(
-                        uint256(keccak256(abi.encodePacked(bytes1(0xd6), bytes1(0x94), deployer, bytes1(uint8(nonce)))))
-                    )
-                );
-        if (nonce <= 0xff)
-            return
-                address(
-                    uint160(
-                        uint256(
-                            keccak256(
-                                abi.encodePacked(bytes1(0xd7), bytes1(0x94), deployer, bytes1(0x81), uint8(nonce))
-                            )
-                        )
-                    )
-                );
-        if (nonce <= 0xffff)
-            return
-                address(
-                    uint160(
-                        uint256(
-                            keccak256(
-                                abi.encodePacked(bytes1(0xd8), bytes1(0x94), deployer, bytes1(0x82), uint16(nonce))
-                            )
-                        )
-                    )
-                );
-        if (nonce <= 0xffffff)
-            return
-                address(
-                    uint160(
-                        uint256(
-                            keccak256(
-                                abi.encodePacked(bytes1(0xd9), bytes1(0x94), deployer, bytes1(0x83), uint24(nonce))
-                            )
-                        )
-                    )
-                );
-        return
-            address(
-                uint160(
-                    uint256(
-                        keccak256(abi.encodePacked(bytes1(0xda), bytes1(0x94), deployer, bytes1(0x84), uint32(nonce)))
-                    )
-                )
-            );
-    }
+    /// @dev Thrown when the proxies are not deployed at the expected deterministic addresses.
+    error DeployerIncorrectAddress();
 }
