@@ -35,7 +35,6 @@ task('verify-art-token').setAction(async (taskArgs: Record<string, string>, hard
     const usdc = config.usdc;
     const minPrice = await etherToWeiForErc20(usdc, config.collection.minPriceUsd);
     const minFee = await etherToWeiForErc20(usdc, config.collection.minFeeUsd);
-    const regulated = config.collection.regulated;
 
     console.log(`Verify ArtToken...`);
     console.log(`\n`);
@@ -58,7 +57,6 @@ task('verify-art-token').setAction(async (taskArgs: Record<string, string>, hard
     console.log(`usdc: ${usdc}`);
     console.log(`minPrice: ${minPrice}`);
     console.log(`minFee: ${minFee}`);
-    console.log(`regulated: ${regulated}`);
     console.groupEnd();
 
     console.groupEnd();
@@ -82,7 +80,7 @@ task('verify-art-token').setAction(async (taskArgs: Record<string, string>, hard
     await hardhat.run('verify:verify', {
         contract: 'contracts/art-token/ArtToken.sol:ArtToken',
         address: impl,
-        constructorArguments: [proxy, main, auctionHouse, usdc, minPrice, minFee, regulated],
+        constructorArguments: [proxy, main, auctionHouse, usdc, minPrice, minFee],
     });
     console.log('-'.repeat(process.stdout.columns));
 });

@@ -9,6 +9,8 @@ import {Authorization} from "../utils/Authorization.sol";
 import {Distribution} from "../utils/Distribution.sol";
 import {Roles} from "../utils/Roles.sol";
 import {IArtToken} from "../art-token/IArtToken.sol";
+import {AuctionCreationPermit} from "./libraries/AuctionCreationPermit.sol";
+import {Auction} from "./libraries/Auction.sol";
 import {AuctionHouseStorage} from "./AuctionHouseStorage.sol";
 import {IAuctionHouse} from "./IAuctionHouse.sol";
 
@@ -22,27 +24,7 @@ import {IAuctionHouse} from "./IAuctionHouse.sol";
  */
 contract AuctionHouse is IAuctionHouse, EIP712Domain, RoleSystem, Authorization {
     using SafeERC20 for IERC20;
-
-    /**
-     * @notice EIP-712 struct type-hash used to validate `CreatePermit` signatures
-     *         supplied to {create}.
-     */
-    // prettier-ignore
-    bytes32 public constant CREATE_PERMIT_TYPE_HASH =
-        keccak256(
-            "CreatePermit("
-                "uint256 auctionId,"
-                "uint256 tokenId,"
-                "string tokenURI,"
-                "uint256 price,"
-                "uint256 fee,"
-                "uint256 step,"
-                "uint256 endTime,"
-                "address[] participants,"
-                "uint256[] shares,"
-                "uint256 deadline"
-            ")"
-        );
+    using AuctionCreationPermit for AuctionCreationPermit.Type;
 
     /// @notice Address of the associated {ArtToken} contract.
     IArtToken public immutable ART_TOKEN;
@@ -167,96 +149,67 @@ contract AuctionHouse is IAuctionHouse, EIP712Domain, RoleSystem, Authorization 
 
     /**
      * @inheritdoc IAuctionHouse
-     *
-     * @dev Flow:
-     *  1. Validates `params` and the EIP-712 permit signed by the auction-house signer.
-     *  2. Writes a new {IAuctionHouse.Auction} struct to storage and maps `params.tokenId` to
-     *     `params.auctionId`.
-     *  3. Emits {Created}.
-     *
-     *  Validation details:
-     *   - Reverts {AuctionHouseEmptyTokenURI} when `tokenURI` is empty.
-     *   - Reverts {AuctionHouseInvalidPrice}, {AuctionHouseInvalidFee}, {AuctionHouseInvalidStep}
-     *     when monetary params are below minima.
-     *   - Reverts {AuctionHouseInvalidEndTime} if `endTime` is not within the `[block.timestamp +
-     *     MIN_DURATION, block.timestamp + MAX_DURATION]` window.
-     *   - Reverts {AuctionHouseTokenReserved} when the token is already locked by another auction
-     *     or minted.
-     *   - Reverts {AuctionHouseAuctionExists} if `auctionId` is already used.
-     *
-     * @param params See {IAuctionHouse.CreateParams}.
      */
-    function create(CreateParams calldata params) external auctionNotExist(params.auctionId) {
-        bytes32 structHash = keccak256(
-            abi.encode(
-                CREATE_PERMIT_TYPE_HASH,
-                params.auctionId,
-                params.tokenId,
-                keccak256(bytes(params.tokenURI)),
-                params.price,
-                params.fee,
-                params.step,
-                params.endTime,
-                keccak256(abi.encodePacked(params.participants)),
-                keccak256(abi.encodePacked(params.shares)),
-                params.deadline
-            )
-        );
+    function create(
+        AuctionCreationPermit.Type calldata permit,
+        bytes calldata permitSignature
+    ) external auctionNotExist(permit.auctionId) {
+        _requireAuthorizedAction(permit.hash(), permit.deadline, permitSignature);
 
-        _requireAuthorizedAction(structHash, params.deadline, params.signature);
-
-        if (bytes(params.tokenURI).length == 0) {
+        if (bytes(permit.tokenURI).length == 0) {
             revert AuctionHouseEmptyTokenURI();
         }
 
-        if (params.price < MIN_PRICE) {
+        if (permit.price < MIN_PRICE) {
             revert AuctionHouseInvalidPrice();
         }
 
-        if (params.fee < MIN_FEE) {
+        if (permit.fee < MIN_FEE) {
             revert AuctionHouseInvalidFee();
         }
 
-        if (params.step == 0) {
+        if (permit.step == 0) {
             revert AuctionHouseInvalidStep();
         }
 
-        if (params.endTime < block.timestamp + MIN_DURATION) {
+        if (permit.endTime < block.timestamp + MIN_DURATION) {
             revert AuctionHouseInvalidEndTime();
         }
 
-        if (params.endTime > block.timestamp + MAX_DURATION) {
+        if (permit.endTime > block.timestamp + MAX_DURATION) {
             revert AuctionHouseInvalidEndTime();
         }
 
-        if (tokenReserved(params.tokenId)) {
+        if (tokenReserved(permit.tokenId)) {
             revert AuctionHouseTokenReserved();
         }
 
-        if (ART_TOKEN.tokenReserved(params.tokenId)) {
+        if (ART_TOKEN.tokenReserved(permit.tokenId)) {
             revert AuctionHouseTokenReserved();
         }
 
-        Distribution.requireValidConditions(params.participants, params.shares);
+        Distribution.requireValidConditions(permit.participants, permit.shares);
 
         AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
 
-        $.auction[params.auctionId] = Auction({
-            tokenId: params.tokenId,
-            price: params.price,
-            fee: params.fee,
-            step: params.step,
-            endTime: params.endTime,
+        $.auction[permit.auctionId] = Auction.Type({
+            tokenId: permit.tokenId,
+            price: permit.price,
+            fee: permit.fee,
+            step: permit.step,
+            endTime: permit.endTime,
             buyer: address(0),
             sold: false,
-            tokenURI: params.tokenURI,
-            participants: params.participants,
-            shares: params.shares
+            tokenURI: permit.tokenURI,
+            participants: permit.participants,
+            shares: permit.shares
         });
 
-        $.tokenAuctionId[params.tokenId] = params.auctionId;
+        $.tokenAuctionId[permit.tokenId] = permit.auctionId;
 
-        emit Created(params.auctionId, params.tokenId, params.price, params.endTime);
+        $.tokenConfig[permit.tokenId] = permit.tokenConfig;
+
+        emit Created(permit.auctionId, permit.tokenId, permit.price, permit.endTime);
     }
 
     /**
@@ -311,7 +264,7 @@ contract AuctionHouse is IAuctionHouse, EIP712Domain, RoleSystem, Authorization 
     ) external authorizedBuyer(msg.sender) auctionExists(auctionId) auctionNotEnded(auctionId) withBuyer(auctionId) {
         AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
 
-        Auction memory _auction = $.auction[auctionId];
+        Auction.Type memory _auction = $.auction[auctionId];
 
         uint256 price = _auction.price;
         address buyer = _auction.buyer;
@@ -336,7 +289,7 @@ contract AuctionHouse is IAuctionHouse, EIP712Domain, RoleSystem, Authorization 
      *
      * @dev Finalizes the auction after `endTime`:
      *   1. Marks auction as sold and emits {Sold}.
-     *   2. Mints the NFT to the stored `buyer` via {ArtToken.mint}.
+     *   2. Mints the NFT to the stored `buyer` via {ArtToken.mintFromAuctionHouse}.
      *   3. Transfers the platform `fee` to the treasury (owner of {Roles.FINANCIAL_ROLE}).
      *   4. Splits the sale `price` among `participants` according to `shares` using
      *      {Distribution.distribute}.
@@ -348,7 +301,7 @@ contract AuctionHouse is IAuctionHouse, EIP712Domain, RoleSystem, Authorization 
     function finish(uint256 auctionId) external auctionExists(auctionId) auctionEnded(auctionId) withBuyer(auctionId) {
         AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
 
-        Auction memory _auction = $.auction[auctionId];
+        Auction.Type memory _auction = $.auction[auctionId];
 
         if (_auction.sold) {
             revert AuctionHouseTokenSold();
@@ -358,7 +311,12 @@ contract AuctionHouse is IAuctionHouse, EIP712Domain, RoleSystem, Authorization 
 
         emit Sold(auctionId);
 
-        ART_TOKEN.mint(_auction.buyer, _auction.tokenId, _auction.tokenURI);
+        ART_TOKEN.mintFromAuctionHouse(
+            _auction.buyer,
+            _auction.tokenId,
+            _auction.tokenURI,
+            $.tokenConfig[_auction.tokenId]
+        );
 
         USDC.safeTransfer(uniqueRoleOwner(Roles.FINANCIAL_ROLE), _auction.fee);
 
@@ -368,7 +326,7 @@ contract AuctionHouse is IAuctionHouse, EIP712Domain, RoleSystem, Authorization 
     /**
      * @inheritdoc IAuctionHouse
      */
-    function auction(uint256 auctionId) external view auctionExists(auctionId) returns (Auction memory) {
+    function auction(uint256 auctionId) external view auctionExists(auctionId) returns (Auction.Type memory) {
         AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
 
         return $.auction[auctionId];

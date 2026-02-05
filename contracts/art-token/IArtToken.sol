@@ -2,53 +2,37 @@
 pragma solidity ^0.8.20;
 
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {TokenConfig} from "../utils/TokenConfig.sol";
+import {TokenMintingPermit} from "./libraries/TokenMintingPermit.sol";
 
 /**
  * @title IArtToken
  *
- * @notice Interface of the DigitalOriginal ERC-721 ArtToken contracts. Extends the ERC-721 standard
- *         with primary-sale logic, EIP-712 permits and compliance helpers used by the protocol.
+ * @notice Interface of the DigitalOriginal ERC-721 ArtToken contracts.
  */
 interface IArtToken is IERC721 {
-    /**
-     * @notice Parameters accepted by {buy}.
-     *
-     * @param tokenId Identifier of the token to be minted and purchased.
-     * @param tokenURI Metadata URI that will be permanently associated with the token.
-     * @param price Total purchase price denominated in the settlement token (USDC).
-     * @param fee Platform fee that will be additionally charged to the buyer.
-     * @param participants Addresses that will receive a portion of `price`.
-     * @param shares Number of shares assigned to each participant; must sum to
-     *               {Distribution.TOTAL_SHARE} in the implementation.
-     * @param signature EIP-712 signature issued by the art-token signer authorizing the purchase.
-     * @param deadline Latest UNIX timestamp at which the signature remains valid.
-     */
-    struct BuyParams {
-        uint256 tokenId;
-        string tokenURI;
-        uint256 price;
-        uint256 fee;
-        address[] participants;
-        uint256[] shares;
-        bytes signature;
-        uint256 deadline;
-    }
-
     /**
      * @notice Mints `tokenId` and transfers it to `to`.
      *
      * @param to Address that will receive the newly minted token.
      * @param tokenId Unique identifier of the token to mint.
      * @param _tokenURI Metadata URI that will be associated with the token.
+     * @param tokenConfig The configuration for the token, including creator and regulation mode.
      */
-    function mint(address to, uint256 tokenId, string memory _tokenURI) external;
+    function mintFromAuctionHouse(
+        address to,
+        uint256 tokenId,
+        string memory _tokenURI,
+        TokenConfig.Type calldata tokenConfig
+    ) external;
 
     /**
      * @notice Primary sale helper: mints the token and immediately transfers it to the caller.
      *
-     * @param params See {BuyParams}.
+     * @param permit The `TokenMintingPermit` struct containing the sale details.
+     * @param permitSignature The EIP-712 signature of the `permit`, signed by the art-token signer.
      */
-    function buy(BuyParams calldata params) external;
+    function mint(TokenMintingPermit.Type calldata permit, bytes calldata permitSignature) external;
 
     /**
      * @notice Returns whether `tokenId` has already been minted (i.e., is reserved).

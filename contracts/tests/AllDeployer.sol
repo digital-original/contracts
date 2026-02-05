@@ -17,8 +17,7 @@ contract AllDeployer {
         address admin,
         uint256 minPrice,
         uint256 minFee,
-        uint256 minAuctionDuration,
-        bool regulated
+        uint256 minAuctionDuration
     ) {
         address usdc = address(new USDC());
         address calculatedArtTokenProxy = Deployment.calculateContractAddress(address(this), 5);
@@ -33,8 +32,7 @@ contract AllDeployer {
                     calculatedAuctionHouseProxy,
                     usdc,
                     minPrice,
-                    minFee,
-                    regulated
+                    minFee
                 )
             );
 

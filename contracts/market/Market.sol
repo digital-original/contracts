@@ -14,7 +14,7 @@ import {SafeERC20BulkTransfer} from "../utils/SafeERC20BulkTransfer.sol";
 import {MarketStorage} from "./MarketStorage.sol";
 import {IMarket} from "./IMarket.sol";
 import {Order} from "./libraries/Order.sol";
-import {ExecutionPermit} from "./libraries/ExecutionPermit.sol";
+import {OrderExecutionPermit} from "./libraries/OrderExecutionPermit.sol";
 
 /**
  * @title Market
@@ -25,7 +25,7 @@ import {ExecutionPermit} from "./libraries/ExecutionPermit.sol";
  */
 contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authorization {
     using Order for Order.Type;
-    using ExecutionPermit for ExecutionPermit.Type;
+    using OrderExecutionPermit for OrderExecutionPermit.Type;
 
     /**
      * @notice Contract constructor.
@@ -47,11 +47,11 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
      */
     function executeAsk(
         Order.Type calldata order,
-        ExecutionPermit.Type calldata permit,
+        OrderExecutionPermit.Type calldata permit,
         bytes calldata orderSignature,
         bytes calldata permitSignature
     ) external {
-        if (order.side != Order.Side.ASK) {
+        if (order.side != Order.Side.Ask) {
             revert MarketInvalidOrderSide();
         }
 
@@ -119,11 +119,11 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
      */
     function executeBid(
         Order.Type calldata order,
-        ExecutionPermit.Type calldata permit,
+        OrderExecutionPermit.Type calldata permit,
         bytes calldata orderSignature,
         bytes calldata permitSignature
     ) external {
-        if (order.side != Order.Side.BID) {
+        if (order.side != Order.Side.Bid) {
             revert MarketInvalidOrderSide();
         }
 

@@ -23,7 +23,7 @@ task('deploy-art-token-impl').setAction(async (taskArgs: Record<string, string>,
     console.log('-'.repeat(process.stdout.columns));
 
     const { usdc, main } = config;
-    const { minPriceUsd, minFeeUsd, regulated, artToken, auctionHouse } = config.collection;
+    const { minPriceUsd, minFeeUsd, artToken, auctionHouse } = config.collection;
 
     const minPrice = await etherToWeiForErc20(usdc, minPriceUsd);
     const minFee = await etherToWeiForErc20(usdc, minFeeUsd);
@@ -39,22 +39,13 @@ task('deploy-art-token-impl').setAction(async (taskArgs: Record<string, string>,
     console.log(`minPrice: ${minPrice}`);
     console.log(`minFee: ${minFeeUsd}`);
     console.log(`minFee: ${minFee}`);
-    console.log(`regulated: ${regulated}`);
     console.groupEnd();
     console.log(`\n`);
     console.log(`Transaction broadcasting...`);
 
     const { receipt, contractAddr: artTokenImplAddr } = await deploy({
         name: 'ArtToken',
-        constructorArgs: [
-            artToken.proxy,
-            main,
-            auctionHouse.proxy,
-            usdc,
-            minPrice,
-            minFee,
-            regulated,
-        ],
+        constructorArgs: [artToken.proxy, main, auctionHouse.proxy, usdc, minPrice, minFee],
     });
 
     console.log(`Transaction broadcasted`);

@@ -4,7 +4,6 @@ symbol: 'DO'
 sepolia:
     minPriceUsd: 100
     minFeeUsd: 100
-    regulated: true
     minAuctionDurationHours: 0.25
 
     # dev
@@ -30,7 +29,6 @@ sepolia:
 ethereum:
     minPriceUsd: 100
     minFeeUsd: 100
-    regulated: true
     minAuctionDurationHours: 24
     artToken:
         proxy: '0x653cdB21a83b59374C194002Da332D683F5678aA'

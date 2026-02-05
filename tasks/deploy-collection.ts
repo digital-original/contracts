@@ -24,8 +24,7 @@ task('deploy-collection').setAction(async (taskArgs: Record<string, string>, har
     console.log('-'.repeat(process.stdout.columns));
 
     const { usdc, main } = config;
-    const { name, symbol, minPriceUsd, minFeeUsd, regulated, minAuctionDurationHours } =
-        config.collection;
+    const { name, symbol, minPriceUsd, minFeeUsd, minAuctionDurationHours } = config.collection;
 
     const minPrice = await etherToWeiForErc20(usdc, minPriceUsd);
     const minFee = await etherToWeiForErc20(usdc, minFeeUsd);
@@ -42,7 +41,6 @@ task('deploy-collection').setAction(async (taskArgs: Record<string, string>, har
     console.log(`minPrice: ${minPrice}`);
     console.log(`minFeeUsd: ${minFeeUsd}`);
     console.log(`minFee: ${minFee}`);
-    console.log(`regulated: ${regulated}`);
     console.log(`minAuctionDurationHours: ${minAuctionDurationHours}`);
     console.log(`minAuctionDuration: ${minAuctionDuration}`);
     console.groupEnd();
@@ -68,7 +66,6 @@ task('deploy-collection').setAction(async (taskArgs: Record<string, string>, har
         symbol,
         minPrice,
         minFee,
-        regulated,
         minAuctionDuration,
     });
 

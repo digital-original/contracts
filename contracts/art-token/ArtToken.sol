@@ -6,9 +6,12 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {EIP712Domain} from "../utils/EIP712Domain.sol";
 import {RoleSystem} from "../utils/role-system/RoleSystem.sol";
 import {Authorization} from "../utils/Authorization.sol";
-import {Distribution} from "../utils/Distribution.sol";
+import {SafeERC20BulkTransfer} from "../utils/SafeERC20BulkTransfer.sol";
+import {TokenConfig} from "../utils/TokenConfig.sol";
 import {Roles} from "../utils/Roles.sol";
 import {IAuctionHouse} from "../auction-house/IAuctionHouse.sol";
+import {ArtTokenConfigManager} from "./art-token-config-manager/ArtTokenConfigManager.sol";
+import {TokenMintingPermit} from "./libraries/TokenMintingPermit.sol";
 import {ArtTokenBase} from "./ArtTokenBase.sol";
 import {IArtToken} from "./IArtToken.sol";
 
@@ -16,58 +19,25 @@ import {IArtToken} from "./IArtToken.sol";
  * @title ArtToken
  *
  * @notice Upgradeable ERC-721 token used by DigitalOriginal protocols. Adds primary-sale
- *         logic via `buy`, integrates EIP-712 permits and enforces optional transfer
+ *         logic, integrates EIP-712 permits and enforces optional transfer
  *         restrictions for regulated collections.
  */
-contract ArtToken is IArtToken, ArtTokenBase, EIP712Domain, RoleSystem, Authorization {
+contract ArtToken is IArtToken, ArtTokenBase, EIP712Domain, RoleSystem, Authorization, ArtTokenConfigManager {
+    // TODO: need to implement method for validation mint conditions (tokenId, URI, config, etc)
     using SafeERC20 for IERC20;
-
-    /**
-     * @notice EIP-712 struct type-hash used to validate `BuyPermit` signatures
-     *         supplied to {buy}.
-     *
-     * @dev The `sender` field, which is part of the signed data, is implicitly set to
-     *      `msg.sender` during the execution of the {buy} function. This ensures that the permit
-     *      can only be used by the intended buyer.
-     */
-    // prettier-ignore
-    bytes32 public constant BUY_PERMIT_TYPE_HASH =
-        keccak256(
-            "BuyPermit("
-                "uint256 tokenId,"
-                "string tokenURI,"
-                "address sender,"
-                "uint256 price,"
-                "uint256 fee,"
-                "address[] participants,"
-                "uint256[] shares,"
-                "uint256 deadline"
-            ")"
-        );
+    using TokenMintingPermit for TokenMintingPermit.Type;
 
     /// @notice Address of the accompanying AuctionHouse contract.
     IAuctionHouse public immutable AUCTION_HOUSE;
 
-    /// @notice Settlement token (USDC) accepted by `buy`.
+    /// @notice Settlement token.
     IERC20 public immutable USDC;
 
-    /// @notice Minimum allowed primary-sale price (protocol-level constant).
+    /// @notice Minimum allowed primary-sale price.
     uint256 public immutable MIN_PRICE;
 
-    /// @notice Minimum allowed platform fee (protocol-level constant).
+    /// @notice Minimum allowed platform fee.
     uint256 public immutable MIN_FEE;
-
-    /// @notice If true, transfers are limited to EOAs and partners only.
-    bool public immutable REGULATED;
-
-    /// @notice Restricts a function so it can only be called by {AUCTION_HOUSE}.
-    modifier onlyAuctionHouse() {
-        if (msg.sender != address(AUCTION_HOUSE)) {
-            revert ArtTokenUnauthorizedAccount(msg.sender);
-        }
-
-        _;
-    }
 
     /**
      * @notice Contract constructor.
@@ -77,9 +47,8 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712Domain, RoleSystem, Authoriz
      * @param main Address that will be set as {RoleSystem.MAIN}.
      * @param auctionHouse Address of the AuctionHouse contract.
      * @param usdc Address of the USDC token contract.
-     * @param minPrice Absolute minimum `price` accepted by `buy`.
-     * @param minFee Absolute minimum `fee` accepted by `buy`.
-     * @param regulated Whether transfer restrictions are enabled.
+     * @param minPrice Absolute minimum `price` accepted for a primary sale.
+     * @param minFee Absolute minimum `fee` accepted for a primary sale.
      */
     constructor(
         address proxy,
@@ -87,8 +56,7 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712Domain, RoleSystem, Authoriz
         address auctionHouse,
         address usdc,
         uint256 minPrice,
-        uint256 minFee,
-        bool regulated
+        uint256 minFee
     ) EIP712Domain(proxy, "ArtToken", "1") RoleSystem(main) {
         if (auctionHouse == address(0)) revert ArtTokenMisconfiguration(2);
         if (usdc == address(0)) revert ArtTokenMisconfiguration(3);
@@ -99,85 +67,53 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712Domain, RoleSystem, Authoriz
         USDC = IERC20(usdc);
         MIN_PRICE = minPrice;
         MIN_FEE = minFee;
-        REGULATED = regulated;
     }
 
     /**
      * @inheritdoc IArtToken
-     *
-     * @dev Only the {AUCTION_HOUSE} contract is authorized to call this function. The call will
-     *      revert if `_tokenURI` is empty or if `tokenId` has already been minted.
      */
-    function mint(address to, uint256 tokenId, string memory _tokenURI) external onlyAuctionHouse {
-        if (bytes(_tokenURI).length == 0) {
-            revert ArtTokenEmptyTokenURI();
+    function mintFromAuctionHouse(
+        address to,
+        uint256 tokenId,
+        string calldata _tokenURI,
+        TokenConfig.Type calldata tokenConfig
+    ) external {
+        if (msg.sender != address(AUCTION_HOUSE)) {
+            revert ArtTokenUnauthorizedAccount(msg.sender);
         }
 
-        _safeMintAndSetTokenURI(to, tokenId, _tokenURI);
+        _mint(to, tokenId, _tokenURI, tokenConfig);
     }
 
     /**
      * @inheritdoc IArtToken
-     *
-     * @dev Workflow:
-     *  1. Recreates the EIP-712 digest for the supplied {BuyParams} and verifies the
-     *     signature via {_requireAuthorizedAction}.
-     *  2. Performs runtime checks listed below. Any failure reverts with a contract-specific
-     *     error.
-     *  3. Mints the token directly to `msg.sender` (buyer).
-     *  4. Pulls `price + fee` USDC from the buyer.
-     *  5. Splits `price` among `participants` according to `shares` via
-     *     {Distribution.safeDistribute}.
-     *  6. Sends `fee` to the protocol treasury (owner of {Roles.FINANCIAL_ROLE}).
-     *
-     *  Runtime requirements:
-     *   - `params.tokenURI` must be non-empty → {ArtTokenEmptyTokenURI}.
-     *   - `params.price` ≥ {MIN_PRICE} → {ArtTokenInvalidPrice}.
-     *   - `params.fee`   ≥ {MIN_FEE}   → {ArtTokenInvalidFee}.
-     *   - `AUCTION_HOUSE.tokenReserved(tokenId)` must be false → {ArtTokenTokenReserved}.
-     *
-     * @param params Packed struct containing all buy parameters (see {IArtToken.BuyParams}).
      */
-    function buy(BuyParams calldata params) external {
-        bytes32 structHash = keccak256(
-            abi.encode(
-                BUY_PERMIT_TYPE_HASH,
-                params.tokenId,
-                keccak256(bytes(params.tokenURI)),
-                msg.sender,
-                params.price,
-                params.fee,
-                keccak256(abi.encodePacked(params.participants)),
-                keccak256(abi.encodePacked(params.shares)),
-                params.deadline
-            )
-        );
+    function mint(TokenMintingPermit.Type calldata permit, bytes calldata permitSignature) external {
+        _requireAuthorizedAction(permit.hash(), permit.deadline, permitSignature);
 
-        _requireAuthorizedAction(structHash, params.deadline, params.signature);
-
-        if (bytes(params.tokenURI).length == 0) {
-            revert ArtTokenEmptyTokenURI();
+        if (permit.minter != msg.sender) {
+            revert ArtTokenUnauthorizedAccount(msg.sender);
         }
 
-        if (params.price < MIN_PRICE) {
+        if (permit.price < MIN_PRICE) {
             revert ArtTokenInvalidPrice();
         }
 
-        if (params.fee < MIN_FEE) {
+        if (permit.fee < MIN_FEE) {
             revert ArtTokenInvalidFee();
         }
 
-        if (AUCTION_HOUSE.tokenReserved(params.tokenId)) {
+        if (AUCTION_HOUSE.tokenReserved(permit.tokenId)) {
             revert ArtTokenTokenReserved();
         }
 
-        _safeMintAndSetTokenURI(msg.sender, params.tokenId, params.tokenURI);
+        _mint(permit.minter, permit.tokenId, permit.tokenURI, permit.tokenConfig);
 
-        USDC.safeTransferFrom(msg.sender, address(this), params.price + params.fee);
+        USDC.safeTransferFrom(msg.sender, address(this), permit.price + permit.fee);
 
-        Distribution.safeDistribute(USDC, params.price, params.participants, params.shares);
+        SafeERC20BulkTransfer.safeTransfer(USDC, permit.price, permit.participants, permit.rewards);
 
-        USDC.safeTransfer(uniqueRoleOwner(Roles.FINANCIAL_ROLE), params.fee);
+        USDC.safeTransfer(uniqueRoleOwner(Roles.FINANCIAL_ROLE), permit.fee);
     }
 
     /**
@@ -191,11 +127,30 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712Domain, RoleSystem, Authoriz
      * @inheritdoc IArtToken
      */
     function recipientAuthorized(address account) public view returns (bool authorized) {
-        if (REGULATED) {
-            return account.code.length == 0 || hasRole(Roles.PARTNER_ROLE, account);
-        } else {
-            return true;
+        return account.code.length == 0 || hasRole(Roles.PARTNER_ROLE, account);
+    }
+
+    /**
+     * @notice Internal function to mint a new token.
+     * @dev This function is called by both `mintFromAuctionHouse` and `mint`. It handles the core
+     *      minting logic and sets the token URI and configuration.
+     * @param to The address that will receive the newly minted token.
+     * @param tokenId The unique identifier of the token to mint.
+     * @param _tokenURI The metadata URI that will be associated with the token.
+     * @param tokenConfig The configuration for the token.
+     */
+    function _mint(
+        address to,
+        uint256 tokenId,
+        string calldata _tokenURI,
+        TokenConfig.Type calldata tokenConfig
+    ) internal {
+        if (bytes(_tokenURI).length == 0) {
+            revert ArtTokenEmptyTokenURI();
         }
+
+        _safeMintAndSetTokenURI(to, tokenId, _tokenURI);
+        _setTokenConfig(tokenId, tokenConfig);
     }
 
     /// @dev Reverts unless `account` passes {recipientAuthorized}.
@@ -211,9 +166,11 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712Domain, RoleSystem, Authoriz
      * @dev Hook that ensures both the recipient and the authorizing address are compliant with
      *      the collection's rules before any token transfer occurs.
      */
-    function _beforeTransfer(address to, uint256 /* tokenId */, address auth) internal view override {
-        _requireAuthorizedRecipient(to);
-        _requireAuthorizedRecipient(auth);
+    function _beforeTransfer(address to, uint256 tokenId, address auth) internal view override {
+        if (_tokenRegulationMode(tokenId) == TokenConfig.RegulationMode.Regulated) {
+            _requireAuthorizedRecipient(to);
+            _requireAuthorizedRecipient(auth);
+        }
     }
 
     /**
@@ -222,8 +179,10 @@ contract ArtToken is IArtToken, ArtTokenBase, EIP712Domain, RoleSystem, Authoriz
      * @dev Hook that ensures the recipient of an approval is compliant with the collection's
      *      rules.
      */
-    function _beforeApprove(address to, uint256 /* tokenId */) internal view override {
-        _requireAuthorizedRecipient(to);
+    function _beforeApprove(address to, uint256 tokenId) internal view override {
+        if (_tokenRegulationMode(tokenId) == TokenConfig.RegulationMode.Regulated) {
+            _requireAuthorizedRecipient(to);
+        }
     }
 
     /**

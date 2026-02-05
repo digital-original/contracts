@@ -9,7 +9,6 @@ export type ChainConfig = {
 export type CollectionConfig = CollectionData & {
     minPriceUsd: number;
     minFeeUsd: number;
-    regulated: boolean;
     minAuctionDurationHours: number;
     artToken: UpgradeableContractConfig;
     auctionHouse: UpgradeableContractConfig;

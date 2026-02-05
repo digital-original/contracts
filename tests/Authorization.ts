@@ -1,15 +1,14 @@
 import { expect } from 'chai';
 import { Signer, MaxInt256 } from 'ethers';
 import { ArtToken, USDC } from '../typechain-types';
-import { BuyPermitStruct } from '../types/art-token';
 import { MIN_FEE, MIN_PRICE } from './constants/min-price-and-fee';
-import { TOTAL_SHARE } from './constants/distribution';
-import { TOKEN_ID, TOKEN_URI } from './constants/art-token';
+import { TOKEN_CONFIG, TOKEN_ID, TOKEN_URI } from './constants/art-token';
 import { HOUR } from './constants/time';
 import { getSigners } from './utils/get-signers';
 import { getLatestBlockTimestamp } from './utils/get-latest-block-timestamp';
 import { deployAll } from './utils/deploy-all';
 import { ArtTokenUtils } from './utils/art-token-utils';
+import { TokenMintingPermit } from '../typechain-types/contracts/art-token/ArtToken';
 
 describe('Authorization', function () {
     let artToken: ArtToken, artTokenAddr: string;
@@ -47,22 +46,22 @@ describe('Authorization', function () {
 
         it(`should allow the action`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
-            const deadline = latestBlockTimestamp + HOUR;
 
-            const buyPermit: BuyPermitStruct = {
+            const tokenMintingPermit: TokenMintingPermit.TypeStruct = {
                 tokenId: TOKEN_ID,
-                tokenURI: TOKEN_URI,
-                sender: buyerAddr,
+                minter: buyerAddr,
                 price: MIN_PRICE,
                 fee: MIN_FEE,
+                tokenURI: TOKEN_URI,
+                tokenConfig: TOKEN_CONFIG,
                 participants: [institutionAddr],
-                shares: [TOTAL_SHARE],
-                deadline,
+                rewards: [MIN_PRICE],
+                deadline: latestBlockTimestamp + HOUR,
             };
 
-            await ArtTokenUtils.buy({
+            await ArtTokenUtils.mint({
                 artToken,
-                permit: buyPermit,
+                permit: tokenMintingPermit,
                 permitSigner: artTokenSigner,
                 sender: buyer,
             });
@@ -70,22 +69,22 @@ describe('Authorization', function () {
 
         it(`should fail the action if the deadline has expired`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
-            const deadline = latestBlockTimestamp - HOUR;
 
-            const buyPermit: BuyPermitStruct = {
+            const tokenMintingPermit: TokenMintingPermit.TypeStruct = {
                 tokenId: TOKEN_ID,
-                tokenURI: TOKEN_URI,
-                sender: buyerAddr,
+                minter: buyerAddr,
                 price: MIN_PRICE,
                 fee: MIN_FEE,
+                tokenURI: TOKEN_URI,
+                tokenConfig: TOKEN_CONFIG,
                 participants: [institutionAddr],
-                shares: [TOTAL_SHARE],
-                deadline,
+                rewards: [MIN_PRICE],
+                deadline: latestBlockTimestamp - HOUR, // Wrong deadline
             };
 
-            const tx = ArtTokenUtils.buy({
+            const tx = ArtTokenUtils.mint({
                 artToken,
-                permit: buyPermit,
+                permit: tokenMintingPermit,
                 permitSigner: artTokenSigner,
                 sender: buyer,
             });
@@ -95,23 +94,23 @@ describe('Authorization', function () {
 
         it(`should fail if the signer is invalid`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
-            const deadline = latestBlockTimestamp + HOUR;
 
-            const buyPermit: BuyPermitStruct = {
+            const tokenMintingPermit: TokenMintingPermit.TypeStruct = {
                 tokenId: TOKEN_ID,
-                tokenURI: TOKEN_URI,
-                sender: buyerAddr,
+                minter: buyerAddr,
                 price: MIN_PRICE,
                 fee: MIN_FEE,
+                tokenURI: TOKEN_URI,
+                tokenConfig: TOKEN_CONFIG,
                 participants: [institutionAddr],
-                shares: [TOTAL_SHARE],
-                deadline,
+                rewards: [MIN_PRICE],
+                deadline: latestBlockTimestamp + HOUR,
             };
 
-            const tx = ArtTokenUtils.buy({
+            const tx = ArtTokenUtils.mint({
                 artToken,
-                permit: buyPermit,
-                permitSigner: randomAccount,
+                permit: tokenMintingPermit,
+                permitSigner: randomAccount, // Wrong signer
                 sender: buyer,
             });
 

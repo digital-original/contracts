@@ -558,7 +558,7 @@
                         "type": "uint256"
                     }
                 ],
-                "internalType": "struct ExecutionPermit.Type",
+                "internalType": "struct OrderExecutionPermit.Type",
                 "name": "permit",
                 "type": "tuple"
             },
@@ -665,7 +665,7 @@
                         "type": "uint256"
                     }
                 ],
-                "internalType": "struct ExecutionPermit.Type",
+                "internalType": "struct OrderExecutionPermit.Type",
                 "name": "permit",
                 "type": "tuple"
             },

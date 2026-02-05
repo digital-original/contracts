@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.20;
 
+import {Auction} from "./libraries/Auction.sol";
+import {AuctionCreationPermit} from "./libraries/AuctionCreationPermit.sol";
+
 /**
  * @title IAuctionHouse
  *
@@ -9,63 +12,6 @@ pragma solidity ^0.8.20;
  *         distribution.
  */
 interface IAuctionHouse {
-    /**
-     * @notice In-memory representation of an auction.
-     *
-     * @param tokenId Identifier of the token being sold.
-     * @param price Current highest bid (or starting price).
-     * @param fee Platform fee that will be added to the final payment.
-     * @param step Minimum raise step expressed in settlement-token units.
-     * @param endTime UNIX timestamp after which the auction can be finalized.
-     * @param buyer Current highest bidder.
-     * @param sold Flag indicating whether `finish` has been called.
-     * @param tokenURI Metadata URI for lazy-minting upon settlement.
-     * @param participants Revenue-sharing recipients.
-     * @param shares Number of shares assigned to each participant.
-     */
-    struct Auction {
-        uint256 tokenId;
-        uint256 price;
-        uint256 fee;
-        uint256 step;
-        uint256 endTime;
-        address buyer;
-        bool sold;
-        string tokenURI;
-        address[] participants;
-        uint256[] shares;
-    }
-
-    /**
-     * @notice Parameters accepted by {create}.
-     *
-     * @param auctionId Unique identifier chosen by the caller.
-     * @param tokenId Identifier of the token that will be minted/sold.
-     * @param tokenURI Metadata URI.
-     * @param price Starting price.
-     * @param fee Platform fee.
-     * @param step Minimum raise increment.
-     * @param endTime Auction end timestamp.
-     * @param participants Revenue-sharing recipients.
-     * @param shares Shares for each participant.
-     * @param signature EIP-712 signature issued by the auction-house signer authorizing the
-     *                  auction.
-     * @param deadline Expiration timestamp for the signature.
-     */
-    struct CreateParams {
-        uint256 auctionId;
-        uint256 tokenId;
-        string tokenURI;
-        uint256 price;
-        uint256 fee;
-        uint256 step;
-        uint256 endTime;
-        address[] participants;
-        uint256[] shares;
-        bytes signature;
-        uint256 deadline;
-    }
-
     /**
      * @notice Emitted after a successful call to {create}.
      *
@@ -94,9 +40,10 @@ interface IAuctionHouse {
      * @notice Creates a new auction with parameters validated and authorized via
      *         an EIP-712 signature.
      *
-     * @param params See {CreateParams}.
+     * @param permit The `AuctionCreationPermit` struct containing the auction details.
+     * @param permitSignature The EIP-712 signature of the `permit`, signed by the auction-house signer.
      */
-    function create(CreateParams calldata params) external;
+    function create(AuctionCreationPermit.Type calldata permit, bytes calldata permitSignature) external;
 
     /**
      * @notice Places the first bid on an auction that has no current bidder.
@@ -117,7 +64,7 @@ interface IAuctionHouse {
     /**
      * @notice Returns the full auction struct for `auctionId`.
      */
-    function auction(uint256 auctionId) external view returns (Auction memory);
+    function auction(uint256 auctionId) external view returns (Auction.Type memory);
 
     /**
      * @notice Indicates whether any active auction has reserved `tokenId`.

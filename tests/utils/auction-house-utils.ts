@@ -1,16 +1,17 @@
 import { Signer, TypedDataDomain } from 'ethers';
 import { AuctionHouse } from '../../typechain-types';
-import { CreatePermitStruct } from '../../types/auction-house';
+import { AuctionCreationPermit } from '../../typechain-types/contracts/auction-house/AuctionHouse';
 import { getChainId } from './get-chain-id';
 import {
     AUCTION_HOUSE_DOMAIN_NAME,
     AUCTION_HOUSE_DOMAIN_VERSION,
-    CREATE_PERMIT_TYPE,
+    AUCTION_CREATION_PERMIT_TYPE,
 } from '../constants/auction-house';
+import { ArtTokenUtils } from './art-token-utils';
 
 type CreateArgs = {
     auctionHouse: AuctionHouse;
-    permit: CreatePermitStruct;
+    permit: AuctionCreationPermit.TypeStruct;
     permitSigner: Signer;
     sender: Signer;
 };
@@ -21,12 +22,15 @@ export class AuctionHouseUtils {
 
         const domain = await this.buildDomain(auctionHouse);
 
-        const signature = await permitSigner.signTypedData(domain, CREATE_PERMIT_TYPE, permit);
+        const tokenConfigHash = ArtTokenUtils.hashTokenConfig(permit.tokenConfig);
 
-        return auctionHouse.connect(sender).create({
-            ...permit,
-            signature,
-        });
+        const permitSignature = await permitSigner.signTypedData(
+            domain,
+            AUCTION_CREATION_PERMIT_TYPE,
+            { ...permit, tokenConfig: tokenConfigHash },
+        );
+
+        return auctionHouse.connect(sender).create(permit, permitSignature);
     }
 
     static async buildDomain(auctionHouse: AuctionHouse): Promise<TypedDataDomain> {

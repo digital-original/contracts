@@ -73,7 +73,6 @@ const hardhatBaseConfig: HardhatUserConfig = {
         token: 'eth',
         currency: 'usd',
         gasPrice: 10,
-        src: 'contracts',
         coinmarketcap: COINMARKETCAP_API_KEY,
     },
 };
@@ -108,7 +107,6 @@ function buildHardhatConfig(): HardhatUserConfig {
             symbol: collectionConfigTop.symbol,
             minPriceUsd: collectionConfig.minPriceUsd,
             minFeeUsd: collectionConfig.minFeeUsd,
-            regulated: collectionConfig.regulated,
             minAuctionDurationHours: collectionConfig.minAuctionDurationHours,
             artToken: collectionConfig.artToken,
             auctionHouse: collectionConfig.auctionHouse,
