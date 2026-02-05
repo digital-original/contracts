@@ -1,43 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.20;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
-import {SafeERC20BulkTransfer} from "../../utils/SafeERC20BulkTransfer.sol";
 import {ONE_HUNDRED_PERCENT_IN_BP} from "../../utils/Constants.sol";
 
-/**
- * @title ShareDistributor
- * @notice A library for distributing a total amount of an ERC20 token among multiple participants
- *         based on specified shares.
- */
-library ShareDistributor {
-    /**
-     * @notice Distributes a given amount of an ERC20 token to a list of participants.
-     *
-     * @dev Calculates rewards and uses {SafeERC20BulkTransfer} to transfer the amounts.
-     *
-     * @param currency The address of the ERC20 token to distribute.
-     * @param amount The total amount of the token to be distributed.
-     * @param participants An array of addresses for the recipients.
-     * @param shares An array of shares (in basis points) corresponding to each participant.
-     */
-    function distribute(
-        address currency,
-        uint256 amount,
-        address[] memory participants,
-        uint256[] memory shares
-    ) internal {
-        uint256[] memory rewards = calculateRewards(amount, shares);
-
-        SafeERC20BulkTransfer.safeTransfer(
-            IERC20(currency),
-            amount,
-            participants,
-            rewards //
-        );
-    }
-
+library ShareUtils {
     /**
      * @notice Calculates the individual reward amounts from a total amount based on shares.
      *
@@ -86,20 +53,20 @@ library ShareDistributor {
         uint256 participantsCount = participants.length;
 
         if (participantsCount != shares.length) {
-            revert ShareDistributorParticipantsSharesMismatch();
+            revert ShareUtilsParticipantsSharesMismatch();
         }
 
         uint256 sharesSum = 0;
 
         for (uint256 i = 0; i < participantsCount; ) {
             if (participants[i] == address(0)) {
-                revert ShareDistributorZeroAddress();
+                revert ShareUtilsZeroAddress();
             }
 
             uint256 share = shares[i];
 
             if (share == 0) {
-                revert ShareDistributorZeroShare();
+                revert ShareUtilsZeroShare();
             }
 
             sharesSum += share;
@@ -110,19 +77,19 @@ library ShareDistributor {
         }
 
         if (sharesSum != ONE_HUNDRED_PERCENT_IN_BP) {
-            revert ShareDistributorSharesSumInvalid(sharesSum);
+            revert ShareUtilsInvalidSum(sharesSum);
         }
     }
 
     /// @dev Thrown when `participants.length != shares.length`.
-    error ShareDistributorParticipantsSharesMismatch();
+    error ShareUtilsParticipantsSharesMismatch();
 
     /// @dev Thrown when a share value is zero.
-    error ShareDistributorZeroShare();
+    error ShareUtilsZeroShare();
 
     /// @dev Thrown when a participant address is zero.
-    error ShareDistributorZeroAddress();
+    error ShareUtilsZeroAddress();
 
     /// @dev Thrown when `sum(shares) != ONE_HUNDRED_PERCENT_IN_BP`.
-    error ShareDistributorSharesSumInvalid(uint256 sharesSum);
+    error ShareUtilsInvalidSum(uint256 sharesSum);
 }

@@ -1,16 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.20;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {EIP712Domain} from "../utils/EIP712Domain.sol";
 import {EIP712Signature} from "../utils/EIP712Signature.sol";
 import {RoleSystem} from "../utils/role-system/RoleSystem.sol";
 import {CurrencyManager} from "../utils/currency-manager/CurrencyManager.sol";
+import {CurrencyTransfer} from "../utils/CurrencyTransfer.sol";
 import {Roles} from "../utils/Roles.sol";
 import {Authorization} from "../utils/Authorization.sol";
-import {SafeERC20BulkTransfer} from "../utils/SafeERC20BulkTransfer.sol";
 import {MarketStorage} from "./MarketStorage.sol";
 import {IMarket} from "./IMarket.sol";
 import {Order} from "./libraries/Order.sol";
@@ -23,7 +21,7 @@ import {OrderExecutionPermit} from "./libraries/OrderExecutionPermit.sol";
  *         through off-chain orders. It supports both sell-side (ask) and buy-side (bid) orders,
  *         which are authorized via EIP-712 signatures.
  */
-contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authorization {
+contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authorization, CurrencyTransfer {
     using Order for Order.Type;
     using OrderExecutionPermit for OrderExecutionPermit.Type;
 
@@ -33,7 +31,10 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
      * @param proxy Proxy address used for EIP-712 verifying contract.
      * @param main Address that will be set as {RoleSystem.MAIN}.
      */
-    constructor(address proxy, address main) EIP712Domain(proxy, "Market", "1") RoleSystem(main) {}
+    constructor(
+        address proxy,
+        address main
+    ) EIP712Domain(proxy, "Market", "1") RoleSystem(main) CurrencyTransfer(address(0)) {}
 
     /**
      * @inheritdoc IMarket
@@ -80,7 +81,7 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
         _invalidateOrder(maker, permit.orderHash);
 
         _distribute(
-            IERC20(order.currency),
+            order.currency,
             maker, // askSide - maker
             msg.sender, // bidSide - taker
             order.price,
@@ -152,7 +153,7 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
         _invalidateOrder(maker, permit.orderHash);
 
         _distribute(
-            IERC20(order.currency),
+            order.currency,
             msg.sender, // askSide - taker
             maker, // bidSide - maker
             order.price,
@@ -214,7 +215,7 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
      * @param rewards The corresponding rewards for each participant.
      */
     function _distribute(
-        IERC20 currency,
+        address currency,
         address askSide,
         address bidSide,
         uint256 price,
@@ -223,13 +224,13 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
         address[] calldata participants,
         uint256[] calldata rewards
     ) internal {
-        SafeERC20.safeTransferFrom(currency, bidSide, address(this), price + bidSideFee);
+        _receiveCurrency(currency, bidSide, price + bidSideFee);
 
-        SafeERC20.safeTransfer(currency, askSide, price - askSideFee);
+        _sendCurrency(currency, askSide, price - askSideFee);
 
-        SafeERC20.safeTransfer(currency, uniqueRoleOwner(Roles.FINANCIAL_ROLE), bidSideFee);
+        _sendCurrency(currency, uniqueRoleOwner(Roles.FINANCIAL_ROLE), bidSideFee);
 
-        SafeERC20BulkTransfer.safeTransfer(currency, askSideFee, participants, rewards);
+        _sendCurrencyBatch(currency, askSideFee, participants, rewards);
     }
 
     /**

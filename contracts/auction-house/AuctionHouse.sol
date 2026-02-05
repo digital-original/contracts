@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.20;
 
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {EIP712Domain} from "../utils/EIP712Domain.sol";
 import {RoleSystem} from "../utils/role-system/RoleSystem.sol";
 import {Authorization} from "../utils/Authorization.sol";
-import {ShareDistributor} from "./libraries/ShareDistributor.sol";
 import {CurrencyManager} from "../utils/currency-manager/CurrencyManager.sol";
+import {CurrencyTransfer} from "../utils/CurrencyTransfer.sol";
 import {Roles} from "../utils/Roles.sol";
 import {IArtToken} from "../art-token/IArtToken.sol";
+import {ShareUtils} from "./libraries/ShareUtils.sol";
 import {AuctionCreationPermit} from "./libraries/AuctionCreationPermit.sol";
 import {Auction} from "./libraries/Auction.sol";
 import {AuctionHouseStorage} from "./AuctionHouseStorage.sol";
@@ -23,7 +22,7 @@ import {IAuctionHouse} from "./IAuctionHouse.sol";
  *         USDC and, after the auction ends, the highest bidder receives the token while funds are
  *         split between participants and the protocol treasury.
  */
-contract AuctionHouse is IAuctionHouse, EIP712Domain, RoleSystem, Authorization, CurrencyManager {
+contract AuctionHouse is IAuctionHouse, EIP712Domain, RoleSystem, Authorization, CurrencyManager, CurrencyTransfer {
     using AuctionCreationPermit for AuctionCreationPermit.Type;
 
     /// @notice Address of the associated {ArtToken} contract.
@@ -77,7 +76,7 @@ contract AuctionHouse is IAuctionHouse, EIP712Domain, RoleSystem, Authorization,
 
     /// @notice Ensures the auction already has a highest bidder recorded.
     /// @dev Reverts with {AuctionHouseBuyerNotExists} otherwise.
-    modifier withBuyer(uint256 auctionId) {
+    modifier auctionWithBuyer(uint256 auctionId) {
         if (_auctionWithBuyer(auctionId)) {
             _;
         } else {
@@ -87,7 +86,7 @@ contract AuctionHouse is IAuctionHouse, EIP712Domain, RoleSystem, Authorization,
 
     /// @notice Ensures the auction currently has no buyer.
     /// @dev Reverts with {AuctionHouseBuyerExists} if a buyer is present.
-    modifier withoutBuyer(uint256 auctionId) {
+    modifier auctionWithoutBuyer(uint256 auctionId) {
         if (_auctionWithBuyer(auctionId)) {
             revert AuctionHouseBuyerExists();
         } else {
@@ -118,7 +117,7 @@ contract AuctionHouse is IAuctionHouse, EIP712Domain, RoleSystem, Authorization,
         address main,
         address artToken,
         uint256 minAuctionDuration
-    ) EIP712Domain(proxy, "AuctionHouse", "1") RoleSystem(main) {
+    ) EIP712Domain(proxy, "AuctionHouse", "1") RoleSystem(main) CurrencyTransfer(address(0)) {
         if (artToken == address(0)) revert AuctionHouseMisconfiguration(2);
         if (minAuctionDuration == 0) revert AuctionHouseMisconfiguration(3);
 
@@ -167,7 +166,7 @@ contract AuctionHouse is IAuctionHouse, EIP712Domain, RoleSystem, Authorization,
             revert AuctionHouseTokenReserved();
         }
 
-        ShareDistributor.requireValidConditions(permit.participants, permit.shares);
+        ShareUtils.requireValidConditions(permit.participants, permit.shares);
 
         AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
 
@@ -215,7 +214,7 @@ contract AuctionHouse is IAuctionHouse, EIP712Domain, RoleSystem, Authorization,
         authorizedBuyer(msg.sender)
         auctionExists(auctionId)
         auctionNotEnded(auctionId)
-        withoutBuyer(auctionId)
+        auctionWithoutBuyer(auctionId)
     {
         AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
 
@@ -228,12 +227,7 @@ contract AuctionHouse is IAuctionHouse, EIP712Domain, RoleSystem, Authorization,
 
         emit Raised(auctionId, msg.sender, newPrice);
 
-        SafeERC20.safeTransferFrom(
-            IERC20($.auction[auctionId].currency),
-            msg.sender,
-            address(this),
-            newPrice + $.auction[auctionId].fee
-        );
+        _receiveCurrency($.auction[auctionId].currency, msg.sender, newPrice + $.auction[auctionId].fee);
     }
 
     /**
@@ -259,40 +253,27 @@ contract AuctionHouse is IAuctionHouse, EIP712Domain, RoleSystem, Authorization,
         authorizedBuyer(msg.sender)
         auctionExists(auctionId)
         auctionNotEnded(auctionId)
-        withBuyer(auctionId)
+        auctionWithBuyer(auctionId)
     {
         AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
 
         Auction.Type memory _auction = $.auction[auctionId];
 
-        uint256 step = _auction.step;
         uint256 price = _auction.price;
-        uint256 fee = _auction.fee;
-        address currency = _auction.currency;
+        address buyer = _auction.buyer;
 
-        if (newPrice < price + step) {
-            revert AuctionHouseRaiseTooLow(price + step);
+        if (newPrice < price + _auction.step) {
+            revert AuctionHouseRaiseTooLow(price + _auction.step);
         }
 
         emit Raised(auctionId, msg.sender, newPrice);
 
-        SafeERC20.safeTransferFrom(
-            IERC20(currency),
-            msg.sender,
-            address(this),
-            newPrice + fee //
-        );
+        _receiveCurrency(_auction.currency, msg.sender, newPrice + _auction.fee);
 
-        address buyer = _auction.buyer;
-
-        $.auction[auctionId].buyer = msg.sender;
         $.auction[auctionId].price = newPrice;
+        $.auction[auctionId].buyer = msg.sender;
 
-        SafeERC20.safeTransfer(
-            IERC20(currency),
-            buyer,
-            price + fee //
-        );
+        _sendCurrency(_auction.currency, buyer, price + _auction.fee);
     }
 
     /**
@@ -309,7 +290,9 @@ contract AuctionHouse is IAuctionHouse, EIP712Domain, RoleSystem, Authorization,
      *
      * @param auctionId Identifier of the auction to settle.
      */
-    function finish(uint256 auctionId) external auctionExists(auctionId) auctionEnded(auctionId) withBuyer(auctionId) {
+    function finish(
+        uint256 auctionId
+    ) external auctionExists(auctionId) auctionEnded(auctionId) auctionWithBuyer(auctionId) {
         AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
 
         Auction.Type memory _auction = $.auction[auctionId];
@@ -329,19 +312,13 @@ contract AuctionHouse is IAuctionHouse, EIP712Domain, RoleSystem, Authorization,
             $.tokenConfig[_auction.tokenId]
         );
 
-        address currency = _auction.currency;
+        _sendCurrency(_auction.currency, uniqueRoleOwner(Roles.FINANCIAL_ROLE), _auction.fee);
 
-        SafeERC20.safeTransfer(
-            IERC20(currency),
-            uniqueRoleOwner(Roles.FINANCIAL_ROLE),
-            _auction.fee //
-        );
-
-        ShareDistributor.distribute(
-            currency,
+        _sendCurrencyBatch(
+            _auction.currency,
             _auction.price,
             _auction.participants,
-            _auction.shares //
+            ShareUtils.calculateRewards(_auction.price, _auction.shares)
         );
     }
 
@@ -356,7 +333,13 @@ contract AuctionHouse is IAuctionHouse, EIP712Domain, RoleSystem, Authorization,
      */
     function cancel(
         uint256 auctionId
-    ) external auctionExists(auctionId) auctionNotEnded(auctionId) withoutBuyer(auctionId) onlyRole(Roles.ADMIN_ROLE) {
+    )
+        external
+        auctionExists(auctionId)
+        auctionNotEnded(auctionId)
+        auctionWithoutBuyer(auctionId)
+        onlyRole(Roles.ADMIN_ROLE)
+    {
         AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
 
         // Mark the auction as ended by setting endTime to current timestamp

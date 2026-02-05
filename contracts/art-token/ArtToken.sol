@@ -1,14 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.20;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {EIP712Domain} from "../utils/EIP712Domain.sol";
 import {RoleSystem} from "../utils/role-system/RoleSystem.sol";
 import {Authorization} from "../utils/Authorization.sol";
 import {CurrencyManager} from "../utils/currency-manager/CurrencyManager.sol";
-import {SafeERC20BulkTransfer} from "../utils/SafeERC20BulkTransfer.sol";
 import {TokenConfig} from "../utils/TokenConfig.sol";
+import {CurrencyTransfer} from "../utils/CurrencyTransfer.sol";
 import {Roles} from "../utils/Roles.sol";
 import {IAuctionHouse} from "../auction-house/IAuctionHouse.sol";
 import {ArtTokenConfigManager} from "./art-token-config-manager/ArtTokenConfigManager.sol";
@@ -32,7 +30,8 @@ contract ArtToken is
     Authorization,
     CurrencyManager,
     ArtTokenConfigManager,
-    ArtTokenRoyaltyManager
+    ArtTokenRoyaltyManager,
+    CurrencyTransfer
 {
     using TokenMintingPermit for TokenMintingPermit.Type;
 
@@ -51,7 +50,7 @@ contract ArtToken is
         address proxy,
         address main,
         address auctionHouse
-    ) EIP712Domain(proxy, "ArtToken", "1") RoleSystem(main) {
+    ) EIP712Domain(proxy, "ArtToken", "1") RoleSystem(main) CurrencyTransfer(address(0)) {
         if (auctionHouse == address(0)) revert ArtTokenMisconfiguration(2);
 
         AUCTION_HOUSE = IAuctionHouse(auctionHouse);
@@ -99,15 +98,13 @@ contract ArtToken is
             revert ArtTokenCurrencyInvalid();
         }
 
-        IERC20 currency = IERC20(permit.currency);
-
         _mint(permit.minter, permit.tokenId, permit.tokenURI, permit.tokenConfig);
 
-        SafeERC20.safeTransferFrom(currency, msg.sender, address(this), permit.price + permit.fee);
+        _receiveCurrency(permit.currency, msg.sender, permit.price + permit.fee);
 
-        SafeERC20BulkTransfer.safeTransfer(currency, permit.price, permit.participants, permit.rewards);
+        _sendCurrencyBatch(permit.currency, permit.price, permit.participants, permit.rewards);
 
-        SafeERC20.safeTransfer(currency, uniqueRoleOwner(Roles.FINANCIAL_ROLE), permit.fee);
+        _sendCurrency(permit.currency, uniqueRoleOwner(Roles.FINANCIAL_ROLE), permit.fee);
     }
 
     /**
