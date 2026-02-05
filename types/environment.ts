@@ -1,10 +1,4 @@
-type UpgradeableContractConfig = {
-    proxy: string;
-    impl: string;
-    admin: string;
-};
-
-export type ConfigEnv = {
+export type ChainConfig = {
     chainId: number;
     url: string;
     deployerPrivateKey: string;
@@ -12,14 +6,7 @@ export type ConfigEnv = {
     main: string;
 };
 
-export type RecordConfigEnv = Record<string, ConfigEnv>;
-
-export type CollectionData = {
-    name: string;
-    symbol: string;
-};
-
-export type ConfigCollection = CollectionData & {
+export type CollectionConfig = CollectionData & {
     minPriceUsd: number;
     minFeeUsd: number;
     regulated: boolean;
@@ -28,7 +15,34 @@ export type ConfigCollection = CollectionData & {
     auctionHouse: UpgradeableContractConfig;
 };
 
-export type RecordConfigCollection = CollectionData &
-    Record<string, Omit<ConfigCollection, keyof CollectionData>>;
+export type MarketConfig = {
+    market: UpgradeableContractConfig;
+};
 
-export type ChainConfig = ConfigEnv & ConfigCollection;
+export type ProtocolConfig = Pick<ChainConfig, 'main' | 'usdc'> & {
+    collection: CollectionConfig;
+    market: MarketConfig;
+};
+
+export type ChainConfigTop = {
+    [chainName: string]: ChainConfig;
+};
+
+export type CollectionConfigTop = CollectionData & {
+    [chainName: string]: Omit<CollectionConfig, keyof CollectionData>;
+};
+
+export type MarketConfigTop = {
+    [chainName: string]: MarketConfig;
+};
+
+type UpgradeableContractConfig = {
+    proxy: string;
+    impl: string;
+    admin: string;
+};
+
+type CollectionData = {
+    name: string;
+    symbol: string;
+};

@@ -28,7 +28,7 @@ describe('RoleSystem', function () {
 
     describe(`roles`, () => {
         describe(`method 'grantRole'`, () => {
-            it(`should grant`, async () => {
+            it(`should grant a role`, async () => {
                 const transaction = await roleSystem.grantRole(ADMIN_ROLE, account);
 
                 await expect(transaction)
@@ -38,7 +38,7 @@ describe('RoleSystem', function () {
                 await expect(roleSystem.hasRole(ADMIN_ROLE, account)).to.eventually.equal(true);
             });
 
-            it(`should fail if a sender is not the main account`, async () => {
+            it(`should fail if the sender is not the main account`, async () => {
                 await expect(
                     roleSystem.connect(account).grantRole(ADMIN_ROLE, account),
                 ).to.eventually.rejectedWith('RoleSystemNotMain');
@@ -50,7 +50,7 @@ describe('RoleSystem', function () {
                 await roleSystem.grantRole(ADMIN_ROLE, account);
             });
 
-            it(`should revoke`, async () => {
+            it(`should revoke a role`, async () => {
                 const transaction = await roleSystem.revokeRole(ADMIN_ROLE, account);
 
                 await expect(transaction)
@@ -60,7 +60,7 @@ describe('RoleSystem', function () {
                 await expect(roleSystem.hasRole(ADMIN_ROLE, account)).to.eventually.equal(false);
             });
 
-            it(`should fail if a sender is not the main account`, async () => {
+            it(`should fail if the sender is not the main account`, async () => {
                 await expect(
                     roleSystem.connect(account).revokeRole(ADMIN_ROLE, account),
                 ).to.eventually.rejectedWith('RoleSystemNotMain');
@@ -68,7 +68,7 @@ describe('RoleSystem', function () {
         });
 
         describe(`method 'hasRole'`, () => {
-            it(`should return correct value`, async () => {
+            it(`should return the correct value`, async () => {
                 await roleSystem.grantRole(ADMIN_ROLE, account);
 
                 await expect(roleSystem.hasRole(ADMIN_ROLE, account)).to.eventually.equal(true);
@@ -78,7 +78,7 @@ describe('RoleSystem', function () {
                 await expect(roleSystem.hasRole(ADMIN_ROLE, account)).to.eventually.equal(false);
             });
 
-            it(`should fail if the account is zero`, async () => {
+            it(`should fail if the account is the zero address`, async () => {
                 await expect(roleSystem.hasRole(ADMIN_ROLE, ZeroAddress)) //
                     .to.eventually.rejectedWith('RoleSystemZeroAddress');
             });
@@ -87,7 +87,7 @@ describe('RoleSystem', function () {
 
     describe(`unique roles`, () => {
         describe(`method 'transferUniqueRole'`, () => {
-            it(`should transfer`, async () => {
+            it(`should transfer a unique role`, async () => {
                 const tx1 = await roleSystem.transferUniqueRole(ADMIN_ROLE, account);
 
                 await expect(tx1)
@@ -101,7 +101,7 @@ describe('RoleSystem', function () {
                     .withArgs(ADMIN_ROLE, ZeroAddress);
             });
 
-            it(`should fail if a sender is not the main account`, async () => {
+            it(`should fail if the sender is not the main account`, async () => {
                 const tx = roleSystem.connect(account).transferUniqueRole(ADMIN_ROLE, account);
 
                 await expect(tx).to.eventually.rejectedWith('RoleSystemNotMain');

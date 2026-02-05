@@ -8,7 +8,7 @@ import { TOKEN_ID, TOKEN_URI } from './constants/art-token';
 import { HOUR } from './constants/time';
 import { getSigners } from './utils/get-signers';
 import { getLatestBlockTimestamp } from './utils/get-latest-block-timestamp';
-import { deployProtocolTest } from './utils/deploy-protocol-test';
+import { deployAll } from './utils/deploy-all';
 import { ArtTokenUtils } from './utils/art-token-utils';
 
 describe('Distribution', function () {
@@ -28,15 +28,15 @@ describe('Distribution', function () {
     });
 
     beforeEach(async () => {
-        const protocol = await deployProtocolTest({
+        const all = await deployAll({
             signer: artTokenSigner,
             financier,
         });
 
-        artToken = protocol.artToken;
-        artTokenAddr = protocol.artTokenAddr;
-        usdc = protocol.usdc;
-        usdcAddr = protocol.usdcAddr;
+        artToken = all.artToken;
+        artTokenAddr = all.artTokenAddr;
+        usdc = all.usdc;
+        usdcAddr = all.usdcAddr;
     });
 
     describe(`method 'safeDistribute'`, () => {
@@ -44,7 +44,7 @@ describe('Distribution', function () {
             await usdc.connect(buyer).mintAndApprove(artToken, MaxInt256);
         });
 
-        it(`should distribute rewards between participants according to shares`, async () => {
+        it(`should distribute the price among participants according to shares`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
             const institutionShare = (TOTAL_SHARE / 5n) * 4n; // 80%
@@ -173,7 +173,7 @@ describe('Distribution', function () {
                 sender: buyer,
             });
 
-            await expect(tx).to.be.rejectedWith('DistributionSharesSumTooBig(10500)');
+            await expect(tx).to.be.rejectedWith('DistributionSharesSumInvalid(10500)');
         });
 
         it(`should fail if the total share is less than 100%`, async () => {
@@ -202,7 +202,7 @@ describe('Distribution', function () {
                 sender: buyer,
             });
 
-            await expect(tx).to.be.rejectedWith('DistributionSharesSumTooLow(8000)');
+            await expect(tx).to.be.rejectedWith('DistributionSharesSumInvalid(8000)');
         });
 
         it(`should fail if shares and participants are missing`, async () => {
@@ -228,7 +228,7 @@ describe('Distribution', function () {
                 sender: buyer,
             });
 
-            await expect(tx).to.be.rejectedWith('DistributionSharesSumTooLow(0)');
+            await expect(tx).to.be.rejectedWith('DistributionSharesSumInvalid(0)');
         });
     });
 });

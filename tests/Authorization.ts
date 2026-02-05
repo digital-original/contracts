@@ -8,7 +8,7 @@ import { TOKEN_ID, TOKEN_URI } from './constants/art-token';
 import { HOUR } from './constants/time';
 import { getSigners } from './utils/get-signers';
 import { getLatestBlockTimestamp } from './utils/get-latest-block-timestamp';
-import { deployProtocolTest } from './utils/deploy-protocol-test';
+import { deployAll } from './utils/deploy-all';
 import { ArtTokenUtils } from './utils/art-token-utils';
 
 describe('Authorization', function () {
@@ -29,15 +29,15 @@ describe('Authorization', function () {
     });
 
     beforeEach(async () => {
-        const protocol = await deployProtocolTest({
+        const all = await deployAll({
             signer: artTokenSigner,
             financier,
         });
 
-        artToken = protocol.artToken;
-        artTokenAddr = protocol.artTokenAddr;
-        usdc = protocol.usdc;
-        usdcAddr = protocol.usdcAddr;
+        artToken = all.artToken;
+        artTokenAddr = all.artTokenAddr;
+        usdc = all.usdc;
+        usdcAddr = all.usdcAddr;
     });
 
     describe(`method '_requireAuthorizedAction'`, () => {

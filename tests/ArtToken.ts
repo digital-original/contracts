@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { Signer, MaxInt256, ZeroAddress } from 'ethers';
-import { ArtToken, AuctionHouse, USDC, MarketMock } from '../typechain-types';
+import { ArtToken, AuctionHouse, USDC, Market } from '../typechain-types';
 import { BuyPermitStruct } from '../types/art-token';
 import { CreatePermitStruct } from '../types/auction-house';
 import { MIN_FEE, MIN_PRICE } from './constants/min-price-and-fee';
@@ -10,14 +10,14 @@ import { HOUR } from './constants/time';
 import { AUCTION_ID, AUCTION_STEP } from './constants/auction-house';
 import { getSigners } from './utils/get-signers';
 import { getLatestBlockTimestamp } from './utils/get-latest-block-timestamp';
-import { deployProtocolTest } from './utils/deploy-protocol-test';
+import { deployAll } from './utils/deploy-all';
 import { ArtTokenUtils } from './utils/art-token-utils';
 import { AuctionHouseUtils } from './utils/auction-house-utils';
 
 describe('ArtToken', function () {
     let artToken: ArtToken, artTokenAddr: string;
     let auctionHouse: AuctionHouse, auctionHouseAddr: string;
-    let market: MarketMock, marketAddr: string;
+    let market: Market, marketAddr: string;
     let usdc: USDC, usdcAddr: string;
 
     let artTokenSigner: Signer, artTokenSignerAddr: string;
@@ -34,16 +34,16 @@ describe('ArtToken', function () {
     });
 
     beforeEach(async () => {
-        const protocol = await deployProtocolTest({ signer: artTokenSigner, financier });
+        const all = await deployAll({ signer: artTokenSigner, financier });
 
-        artToken = protocol.artToken;
-        artTokenAddr = protocol.artTokenAddr;
-        auctionHouse = protocol.auctionHouse;
-        auctionHouseAddr = protocol.auctionHouseAddr;
-        market = protocol.marketMock;
-        marketAddr = protocol.marketMockAddr;
-        usdc = protocol.usdc;
-        usdcAddr = protocol.usdcAddr;
+        artToken = all.artToken;
+        artTokenAddr = all.artTokenAddr;
+        auctionHouse = all.auctionHouse;
+        auctionHouseAddr = all.auctionHouseAddr;
+        market = all.market;
+        marketAddr = all.marketAddr;
+        usdc = all.usdc;
+        usdcAddr = all.usdcAddr;
     });
 
     describe(`method 'buy'`, () => {
@@ -51,7 +51,7 @@ describe('ArtToken', function () {
             await usdc.connect(buyer).mintAndApprove(artToken, MaxInt256);
         });
 
-        it(`should mint the token, distribute reward, and charge fee`, async () => {
+        it(`should mint the token, distribute price, and charge a fee`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
             const institutionShare = (TOTAL_SHARE / 5n) * 4n; // 80%
@@ -99,7 +99,7 @@ describe('ArtToken', function () {
                 .withArgs(ZeroAddress, buyerAddr, TOKEN_ID);
         });
 
-        it(`should fail if the token is reserved by the auction`, async () => {
+        it(`should fail if the token is reserved by an auction`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
             const createPermit: CreatePermitStruct = {
@@ -215,7 +215,7 @@ describe('ArtToken', function () {
                 .withArgs(buyerAddr, marketAddr, TOKEN_ID);
         });
 
-        it(`should fail if a token is attempted to be transferred to a non-partner contract`, async () => {
+        it(`should fail if a token is transferred to a non-partner contract`, async () => {
             const tx = artToken.connect(buyer).transferFrom(buyer, usdc, TOKEN_ID);
 
             await expect(tx).to.eventually.rejectedWith('ArtTokenUnauthorizedAccount');
@@ -263,7 +263,7 @@ describe('ArtToken', function () {
                 .withArgs(buyerAddr, marketAddr, TOKEN_ID);
         });
 
-        it(`should fail if the approval is attempted to be provided to a non-partner contract`, async () => {
+        it(`should fail if approval is provided to a non-partner contract`, async () => {
             const tx = artToken.connect(buyer).approve(usdc, TOKEN_ID);
 
             await expect(tx).to.eventually.rejectedWith('ArtTokenUnauthorizedAccount');
@@ -311,7 +311,7 @@ describe('ArtToken', function () {
                 .withArgs(buyerAddr, marketAddr, true);
         });
 
-        it(`should fail if the approval is attempted to be provided to a non-partner contract`, async () => {
+        it(`should fail if approval is provided to a non-partner contract`, async () => {
             const tx = artToken.connect(buyer).setApprovalForAll(usdc, true);
 
             await expect(tx).to.eventually.rejectedWith('ArtTokenUnauthorizedAccount');

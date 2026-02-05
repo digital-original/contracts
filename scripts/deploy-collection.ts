@@ -1,39 +1,49 @@
-import { ethers } from 'hardhat';
-import { AddressLike, Signer } from 'ethers';
+import { AddressLike, Numeric, Signer } from 'ethers';
 import {
     UpgradedEvent,
     AdminChangedEvent,
-} from '../../typechain-types/@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol/TransparentUpgradeableProxy';
-import { OwnershipTransferredEvent } from '../../typechain-types/@openzeppelin/contracts/proxy/transparent/ProxyAdmin';
-import { DeployedEvent } from '../../typechain-types/contracts/tests/DeployerTest';
-import { deploy } from '../../scripts/deploy';
-import { MIN_AUCTION_DURATION } from '../constants/auction-house';
-import { MIN_FEE, MIN_PRICE } from '../constants/min-price-and-fee';
-import { REGULATED } from '../constants/art-token';
+} from '../typechain-types/@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol/TransparentUpgradeableProxy';
+import { OwnershipTransferredEvent } from '../typechain-types/@openzeppelin/contracts/proxy/transparent/ProxyAdmin';
+import { DeployedEvent } from '../typechain-types/contracts/utils/CollectionDeployer';
+import { deploy } from './deploy';
 
 type Params = {
-    signer: AddressLike;
-    financier: AddressLike;
+    name: string;
+    symbol: string;
+    main: AddressLike;
+    usdc: AddressLike;
+    minPrice: Numeric;
+    minFee: Numeric;
+    regulated: boolean;
+    minAuctionDuration: number;
 };
 
 // prettier-ignore
-export async function deployProtocolTest(params: Params, deployer?: Signer) {
+export async function deployCollection(params: Params, deployer?: Signer) {
+    const { ethers } = await import('hardhat');
+
     const {
-        signer,
-        financier,
+        name,
+        symbol,
+        main,
+        usdc,
+        minPrice,
+        minFee,
+        regulated,
+        minAuctionDuration,
     } = params;
 
     const { receipt } = await deploy(
         {
-            name: 'DeployerTest',
-            constructorArgs: [signer, financier, MIN_PRICE, MIN_FEE, MIN_AUCTION_DURATION, REGULATED],
+            name: 'CollectionDeployer',
+            constructorArgs: [name, symbol, main, usdc, minPrice, minFee, minAuctionDuration, regulated],
         },
         deployer,
     );
 
     const Proxy = await ethers.getContractFactory('TransparentUpgradeableProxy');
     const ProxyAdmin = await ethers.getContractFactory('ProxyAdmin');
-    const Deployer = await ethers.getContractFactory('DeployerTest');
+    const Deployer = await ethers.getContractFactory('CollectionDeployer');
 
     const ArtToken_Proxy_UpgradedEvent = <
         UpgradedEvent.LogDescription
@@ -59,33 +69,27 @@ export async function deployProtocolTest(params: Params, deployer?: Signer) {
         AdminChangedEvent.LogDescription
     >(<unknown>Proxy.interface.parseLog(<any>receipt.logs[5]));
 
+    // const ArtToken_Proxy_InitializedEvent = receipt.logs[6];
+
     const Deployer_DeployedEvent = <
         DeployedEvent.LogDescription
-    >(<unknown>Deployer.interface.parseLog(<any>receipt.logs[6]));
+    >(<unknown>Deployer.interface.parseLog(<any>receipt.logs[7]));
 
     const artTokenAddr = Deployer_DeployedEvent.args.artToken;
     const artTokenImplAddr = ArtToken_Proxy_UpgradedEvent.args.implementation;
     const artTokenProxyAdminAddr = ArtToken_Proxy_AdminChangedEvent.args.newAdmin;
-    const artTokenProxyAdminOwner = ArtToken_ProxyAdmin_OwnershipTransferredEvent.args.newOwner;
+    const artTokenProxyAdminOwnerAddr = ArtToken_ProxyAdmin_OwnershipTransferredEvent.args.newOwner;
 
     const auctionHouseAddr = Deployer_DeployedEvent.args.auctionHouse;
     const auctionHouseImplAddr = AuctionHouse_Proxy_UpgradedEvent.args.implementation;
     const auctionHouseProxyAdminAddr = AuctionHouse_Proxy_AdminChangedEvent.args.newAdmin;
-    const auctionHouseProxyAdminOwner = AuctionHouse_ProxyAdmin_OwnershipTransferredEvent.args.newOwner;
-
-    const marketMockAddr = Deployer_DeployedEvent.args.marketMock;
-
-    const usdcAddr = Deployer_DeployedEvent.args.usdc;
+    const auctionHouseProxyAdminOwnerAddr = AuctionHouse_ProxyAdmin_OwnershipTransferredEvent.args.newOwner;
 
     const artToken = await ethers.getContractAt('ArtToken', artTokenAddr);
     const artTokenProxyAdmin = await ethers.getContractAt('ProxyAdmin', artTokenProxyAdminAddr);
 
     const auctionHouse = await ethers.getContractAt('AuctionHouse', auctionHouseAddr);
     const auctionHouseProxyAdmin = await ethers.getContractAt('ProxyAdmin', auctionHouseProxyAdminAddr);
-
-    const marketMock = await ethers.getContractAt('MarketMock', marketMockAddr);
-
-    const usdc = await ethers.getContractAt('USDC', usdcAddr);
 
     return {
         receipt,
@@ -94,20 +98,14 @@ export async function deployProtocolTest(params: Params, deployer?: Signer) {
         artTokenAddr,
         artTokenProxyAdmin,
         artTokenProxyAdminAddr,
-        artTokenProxyAdminOwner,
+        artTokenProxyAdminOwnerAddr,
         artTokenImplAddr,
 
         auctionHouse,
         auctionHouseAddr,
         auctionHouseProxyAdmin,
         auctionHouseProxyAdminAddr,
-        auctionHouseProxyAdminOwner,
+        auctionHouseProxyAdminOwnerAddr,
         auctionHouseImplAddr,
-
-        marketMock,
-        marketMockAddr,
-
-        usdcAddr,
-        usdc,
     };
 }

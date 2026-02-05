@@ -15,14 +15,10 @@ import {IAuctionHouse} from "./IAuctionHouse.sol";
 /**
  * @title AuctionHouse
  *
- * @notice Upgradeable English-auction contract that conducts primary sales for
- *         NFTs minted by {ArtToken}. Users create auctions via an authorized
- *         EIP-712 permit, place bids in USDC and, after the auction ends,
- *         the highest bidder receives the token while funds are split between
- *         participants and the protocol treasury.
- *
- * @dev Implements {IAuctionHouse}. Uses mix-ins for EIP-712 domain
- *      separation, role management and signature authorization.
+ * @notice Upgradeable English-auction contract that conducts primary sales for NFTs minted by
+ *         {ArtToken}. Users create auctions via an authorized EIP-712 permit, place bids in
+ *         USDC and, after the auction ends, the highest bidder receives the token while funds are
+ *         split between participants and the protocol treasury.
  */
 contract AuctionHouse is IAuctionHouse, EIP712Domain, RoleSystem, Authorization {
     using SafeERC20 for IERC20;
@@ -31,19 +27,20 @@ contract AuctionHouse is IAuctionHouse, EIP712Domain, RoleSystem, Authorization 
      * @notice EIP-712 struct type-hash used to validate `CreatePermit` signatures
      *         supplied to {create}.
      */
+    // prettier-ignore
     bytes32 public constant CREATE_PERMIT_TYPE_HASH =
         keccak256(
             "CreatePermit("
-            "uint256 auctionId,"
-            "uint256 tokenId,"
-            "string tokenURI,"
-            "uint256 price,"
-            "uint256 fee,"
-            "uint256 step,"
-            "uint256 endTime,"
-            "address[] participants,"
-            "uint256[] shares,"
-            "uint256 deadline"
+                "uint256 auctionId,"
+                "uint256 tokenId,"
+                "string tokenURI,"
+                "uint256 price,"
+                "uint256 fee,"
+                "uint256 step,"
+                "uint256 endTime,"
+                "address[] participants,"
+                "uint256[] shares,"
+                "uint256 deadline"
             ")"
         );
 
@@ -138,13 +135,13 @@ contract AuctionHouse is IAuctionHouse, EIP712Domain, RoleSystem, Authorization 
     /**
      * @notice Contract constructor.
      *
-     * @param proxy              Proxy address used for EIP-712 verifying contract.
-     * @param main               Address that will be set as {RoleSystem.MAIN}.
-     * @param artToken           Address of the {ArtToken} contract.
-     * @param usdc               Address of the USDC ERC-20 token.
+     * @param proxy Proxy address used for EIP-712 verifying contract.
+     * @param main Address that will be set as {RoleSystem.MAIN}.
+     * @param artToken Address of the {ArtToken} contract.
+     * @param usdc Address of the USDC ERC-20 token.
      * @param minAuctionDuration Minimum auction duration (seconds).
-     * @param minPrice           Minimum starting price/bid.
-     * @param minFee             Minimum platform fee.
+     * @param minPrice Minimum starting price/bid.
+     * @param minFee Minimum platform fee.
      */
     constructor(
         address proxy,
@@ -172,19 +169,19 @@ contract AuctionHouse is IAuctionHouse, EIP712Domain, RoleSystem, Authorization 
      * @inheritdoc IAuctionHouse
      *
      * @dev Flow:
-     *  1. Validates `params` and the EIP-712 permit signed by the protocol signer.
-     *  2. Writes a new {IAuctionHouse.Auction} struct to storage and maps
-     *     `params.tokenId` to `params.auctionId`.
+     *  1. Validates `params` and the EIP-712 permit signed by the auction-house signer.
+     *  2. Writes a new {IAuctionHouse.Auction} struct to storage and maps `params.tokenId` to
+     *     `params.auctionId`.
      *  3. Emits {Created}.
      *
      *  Validation details:
      *   - Reverts {AuctionHouseEmptyTokenURI} when `tokenURI` is empty.
-     *   - Reverts {AuctionHouseInvalidPrice}, {AuctionHouseInvalidFee},
-     *     {AuctionHouseInvalidStep} when monetary params are below minima.
-     *   - Reverts {AuctionHouseInvalidEndTime} if `endTime` is not within the
-     *     `[block.timestamp + MIN_DURATION, block.timestamp + MAX_DURATION]` window.
-     *   - Reverts {AuctionHouseTokenReserved} when the token is already locked
-     *     by another auction or minted.
+     *   - Reverts {AuctionHouseInvalidPrice}, {AuctionHouseInvalidFee}, {AuctionHouseInvalidStep}
+     *     when monetary params are below minima.
+     *   - Reverts {AuctionHouseInvalidEndTime} if `endTime` is not within the `[block.timestamp +
+     *     MIN_DURATION, block.timestamp + MAX_DURATION]` window.
+     *   - Reverts {AuctionHouseTokenReserved} when the token is already locked by another auction
+     *     or minted.
      *   - Reverts {AuctionHouseAuctionExists} if `auctionId` is already used.
      *
      * @param params See {IAuctionHouse.CreateParams}.
@@ -271,10 +268,10 @@ contract AuctionHouse is IAuctionHouse, EIP712Domain, RoleSystem, Authorization 
      *   - Stores the caller as `buyer` and `newPrice` as `price`.
      *   - Emits {Raised}.
      *
-     *  Reverts with {AuctionHouseRaiseTooLow} if `newPrice < initial price`.
+     * Reverts with {AuctionHouseRaiseTooLow} if `newPrice < initial price`.
      *
      * @param auctionId Identifier of the auction that has no current buyer.
-     * @param newPrice  First bid amount in USDC.
+     * @param newPrice First bid amount in USDC.
      */
     function raiseInitial(
         uint256 auctionId,
@@ -302,11 +299,11 @@ contract AuctionHouse is IAuctionHouse, EIP712Domain, RoleSystem, Authorization 
      *   - Refunds `oldPrice + fee` to the previously highest `buyer`.
      *   - Updates storage and emits {Raised}.
      *
-     *  Reverts with {AuctionHouseRaiseTooLow} when `newPrice` is less than
-     *  `current price + step`.
+     * Reverts with {AuctionHouseRaiseTooLow} when `newPrice` is less than
+     * `current price + step`.
      *
      * @param auctionId Identifier of the auction with an existing buyer.
-     * @param newPrice  New highest bid in USDC.
+     * @param newPrice New highest bid in USDC.
      */
     function raise(
         uint256 auctionId,
@@ -340,12 +337,11 @@ contract AuctionHouse is IAuctionHouse, EIP712Domain, RoleSystem, Authorization 
      * @dev Finalizes the auction after `endTime`:
      *   1. Marks auction as sold and emits {Sold}.
      *   2. Mints the NFT to the stored `buyer` via {ArtToken.mint}.
-     *   3. Transfers the platform `fee` to the treasury (owner of
-     *      {Roles.FINANCIAL_ROLE}).
-     *   4. Splits the sale `price` among `participants` according to `shares`
-     *      using {Distribution.distribute}.
+     *   3. Transfers the platform `fee` to the treasury (owner of {Roles.FINANCIAL_ROLE}).
+     *   4. Splits the sale `price` among `participants` according to `shares` using
+     *      {Distribution.distribute}.
      *
-     *  Reverts with {AuctionHouseTokenSold} if already settled.
+     * Reverts with {AuctionHouseTokenSold} if already settled.
      *
      * @param auctionId Identifier of the auction to settle.
      */
@@ -381,8 +377,8 @@ contract AuctionHouse is IAuctionHouse, EIP712Domain, RoleSystem, Authorization 
     /**
      * @inheritdoc IAuctionHouse
      *
-     * @return reserved True if the token is currently locked by an active
-     *                  auction or an ended auction with a buyer.
+     * @return reserved True if the token is currently locked by an active auction or an ended
+     *                  auction with a buyer.
      */
     function tokenReserved(uint256 tokenId) public view returns (bool reserved) {
         AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();

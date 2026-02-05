@@ -2,22 +2,21 @@
 pragma solidity ^0.8.20;
 
 /**
- * @title RoleSystemStorage
+ * @title MarketStorage
  *
- * @notice Defines the storage layout for {RoleSystem}. Using a deterministic slot makes the
- *         module safe for use behind proxies and alongside other upgradeable components.
+ * @notice Defines the storage layout for {Market}. Using a deterministic slot
+ * makes the module safe for use behind proxies and alongside other upgradeable components.
  */
-library RoleSystemStorage {
+library MarketStorage {
     /// @dev Unique storage slot for the layout, computed using EIP-7201 convention.
     bytes32 private constant STORAGE_SLOT =
-        keccak256(abi.encode(uint256(keccak256("digital-original.storage.RoleSystem")) - 1)) & ~bytes32(uint256(0xff));
+        keccak256(abi.encode(uint256(keccak256("digital-original.storage.Market")) - 1)) & ~bytes32(uint256(0xff));
 
     /**
-     * @custom:storage-location erc7201:digital-original.storage.RoleSystem
+     * @custom:storage-location erc7201:digital-original.storage.Market
      */
     struct Layout {
-        mapping(bytes32 role => mapping(address => bool)) hasRole;
-        mapping(bytes32 role => address) uniqueRoleOwner;
+        mapping(address maker => mapping(bytes32 orderHash => bool)) orderInvalidated;
     }
 
     /**
