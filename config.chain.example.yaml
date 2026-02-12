@@ -3,9 +3,11 @@ sepolia:
     url: ''
     deployerPrivateKey: ''
     main: ''
+    wrappedEther: ''
 
 ethereum:
     chainId: 1
     url: ''
     deployerPrivateKey: ''
     main: ''
+    wrappedEther: ''

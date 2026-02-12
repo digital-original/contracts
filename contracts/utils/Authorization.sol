@@ -38,7 +38,7 @@ abstract contract Authorization is EIP712Domain, RoleSystem {
 
         address signer = EIP712Signature.recover(DOMAIN_SEPARATOR, messageHash, signature);
 
-        if (uniqueRoleOwner(Roles.SIGNER_ROLE) != signer) {
+        if (_uniqueRoleOwner(Roles.SIGNER_ROLE) != signer) {
             revert AuthorizationUnauthorizedAction();
         }
     }

@@ -26,7 +26,13 @@ abstract contract CurrencyManager is ICurrencyManager, RoleSystem {
     /**
      * @inheritdoc ICurrencyManager
      */
-    function currencyAllowed(address currency) public view returns (bool allowed) {
-        return CurrencyManagerStorage.layout().allowed[currency];
+    function currencyAllowed(address currency) external view returns (bool allowed) {
+        return _currencyAllowed(currency);
+    }
+
+    function _currencyAllowed(address currency) internal view returns (bool allowed) {
+        CurrencyManagerStorage.Layout storage $ = CurrencyManagerStorage.layout();
+
+        return $.allowed[currency];
     }
 }

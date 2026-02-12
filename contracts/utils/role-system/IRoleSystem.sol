@@ -29,9 +29,10 @@ interface IRoleSystem {
      * @notice Emitted when ownership of a unique role is transferred.
      *
      * @param role Identifier of the unique role.
-     * @param newOwner Address that becomes the new (sole) owner of the role.
+     * @param oldOwner Address of the previous owner of the role.
+     * @param newOwner Address that becomes the new owner of the role.
      */
-    event UniqueRoleTransferred(bytes32 indexed role, address indexed newOwner);
+    event UniqueRoleTransferred(bytes32 indexed role, address indexed oldOwner, address indexed newOwner);
 
     /**
      * @notice Grants `role` to `account`.
@@ -63,19 +64,15 @@ interface IRoleSystem {
     /**
      * @notice Checks if `account` has been granted `role`.
      *
-     * @dev Reverts with {RoleSystemZeroAddress} when `account` is the zero address.
-     *
      * @param role The role to query.
      * @param account The account to query.
      *
-     * @return true if `account` possesses `role`, false otherwise.
+     * @return hasRole True if `account` possesses `role`, false otherwise.
      */
-    function hasRole(bytes32 role, address account) external view returns (bool);
+    function hasRole(bytes32 role, address account) external view returns (bool hasRole);
 
     /**
-     * @notice Returns the sole owner of `uniqueRole`.
-     *
-     * @dev Reverts with {RoleSystemZeroAddress} when the role is currently unassigned.
+     * @notice Returns the owner of `uniqueRole`.
      *
      * @param uniqueRole The unique role to query.
      *
@@ -102,7 +99,17 @@ interface IRoleSystem {
     error RoleSystemZeroAddress();
 
     /**
+     * @dev Thrown when attempting to grant a role to an account that already has it.
+     */
+    error RoleSystemAlreadyHasRole(bytes32 role, address account);
+
+    /**
+     * @dev Thrown when attempting to revoke a role from an account that does not have it.
+     */
+    error RoleSystemMissingRole(bytes32 role, address account);
+
+    /**
      * @dev Thrown when a constructor argument at index `argIndex` is invalid.
      */
-    error RoleSystemMisconfiguration(uint256 argIndex);
+    error RoleSystemMisconfiguration(uint8 argIndex);
 }

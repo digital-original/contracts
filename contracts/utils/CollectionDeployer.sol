@@ -41,9 +41,16 @@ contract CollectionDeployer {
      * @param name ERC-721 collection name.
      * @param symbol ERC-721 collection symbol.
      * @param main Address that will be set as {RoleSystem.MAIN}.
+     * @param wrappedEther Address of the Wrapped Ether contract.
      * @param minAuctionDuration Minimum auction duration (seconds) enforced by AuctionHouse.
      */
-    constructor(string memory name, string memory symbol, address main, uint256 minAuctionDuration) {
+    constructor(
+        string memory name,
+        string memory symbol,
+        address main,
+        address wrappedEther,
+        uint256 minAuctionDuration
+    ) {
         address calculatedArtTokenProxy = Deployment.calculateContractAddress(address(this), 3);
         address calculatedAuctionHouseProxy = Deployment.calculateContractAddress(address(this), 4);
 
@@ -51,6 +58,7 @@ contract CollectionDeployer {
             new ArtToken(
                 calculatedArtTokenProxy,
                 main,
+                wrappedEther,
                 calculatedAuctionHouseProxy //
             )
         );
@@ -59,6 +67,7 @@ contract CollectionDeployer {
             new AuctionHouse(
                 calculatedAuctionHouseProxy,
                 main,
+                wrappedEther,
                 calculatedArtTokenProxy,
                 minAuctionDuration //
             )

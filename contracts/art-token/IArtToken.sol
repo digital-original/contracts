@@ -79,5 +79,5 @@ interface IArtToken is IERC721 {
     error ArtTokenTokenReserved();
 
     /// @dev Thrown when a constructor argument under the provided `argIndex` is invalid (e.g., zero address).
-    error ArtTokenMisconfiguration(uint256 argIndex);
+    error ArtTokenMisconfiguration(uint8 argIndex);
 }

@@ -37,7 +37,7 @@ contract RoleSystem is IRoleSystem {
      * @param role The role required to call the function.
      */
     modifier onlyRole(bytes32 role) {
-        if (!hasRole(role, msg.sender)) {
+        if (!_hasRole(role, msg.sender)) {
             revert RoleSystemUnauthorizedAccount(msg.sender, role);
         }
 
@@ -65,6 +65,10 @@ contract RoleSystem is IRoleSystem {
 
         RoleSystemStorage.Layout storage $ = RoleSystemStorage.layout();
 
+        if ($.hasRole[role][account]) {
+            revert RoleSystemAlreadyHasRole(role, account);
+        }
+
         $.hasRole[role][account] = true;
 
         emit RoleGranted(role, account);
@@ -78,6 +82,10 @@ contract RoleSystem is IRoleSystem {
 
         RoleSystemStorage.Layout storage $ = RoleSystemStorage.layout();
 
+        if (!$.hasRole[role][account]) {
+            revert RoleSystemMissingRole(role, account);
+        }
+
         $.hasRole[role][account] = false;
 
         emit RoleRevoked(role, account);
@@ -89,17 +97,21 @@ contract RoleSystem is IRoleSystem {
     function transferUniqueRole(bytes32 uniqueRole, address newOwner) external onlyMain {
         RoleSystemStorage.Layout storage $ = RoleSystemStorage.layout();
 
+        address oldOwner = $.uniqueRoleOwner[uniqueRole];
+
+        if (oldOwner == newOwner) {
+            revert RoleSystemAlreadyHasRole(uniqueRole, newOwner);
+        }
+
         $.uniqueRoleOwner[uniqueRole] = newOwner;
 
-        emit UniqueRoleTransferred(uniqueRole, newOwner);
+        emit UniqueRoleTransferred(uniqueRole, oldOwner, newOwner);
     }
 
     /**
      * @inheritdoc IRoleSystem
      */
-    function hasRole(bytes32 role, address account) public view returns (bool) {
-        _requireNotZeroAddress(account);
-
+    function hasRole(bytes32 role, address account) external view returns (bool) {
         RoleSystemStorage.Layout storage $ = RoleSystemStorage.layout();
 
         return $.hasRole[role][account];
@@ -108,7 +120,38 @@ contract RoleSystem is IRoleSystem {
     /**
      * @inheritdoc IRoleSystem
      */
-    function uniqueRoleOwner(bytes32 uniqueRole) public view returns (address owner) {
+    function uniqueRoleOwner(bytes32 uniqueRole) external view returns (address) {
+        RoleSystemStorage.Layout storage $ = RoleSystemStorage.layout();
+
+        return $.uniqueRoleOwner[uniqueRole];
+    }
+
+    /**
+     * @notice Internal variant of {hasRole} that reverts when `account` is the zero address.
+     *
+     * @param role The role to query.
+     * @param account The account to query.
+     *
+     * @return True if `account` possesses `role`, false otherwise.
+     */
+    function _hasRole(bytes32 role, address account) internal view returns (bool) {
+        _requireNotZeroAddress(account);
+
+        RoleSystemStorage.Layout storage $ = RoleSystemStorage.layout();
+
+        return $.hasRole[role][account];
+    }
+
+    /**
+     * @notice Internal variant of {uniqueRoleOwner} that reverts when the role is unassigned.
+     *
+     * @dev Reverts with {RoleSystemZeroAddress} when the role is currently unassigned.
+     *
+     * @param uniqueRole The unique role to query.
+     *
+     * @return owner Address of the current role owner.
+     */
+    function _uniqueRoleOwner(bytes32 uniqueRole) internal view returns (address owner) {
         RoleSystemStorage.Layout storage $ = RoleSystemStorage.layout();
 
         owner = $.uniqueRoleOwner[uniqueRole];

@@ -1,14 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.20;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {EIP712Domain} from "../utils/EIP712Domain.sol";
 import {RoleSystem} from "../utils/role-system/RoleSystem.sol";
 import {Authorization} from "../utils/Authorization.sol";
 import {CurrencyManager} from "../utils/currency-manager/CurrencyManager.sol";
-import {SafeERC20BulkTransfer} from "../utils/SafeERC20BulkTransfer.sol";
 import {TokenConfig} from "../utils/TokenConfig.sol";
+import {CurrencyTransfers} from "../utils/CurrencyTransfers.sol";
 import {Roles} from "../utils/Roles.sol";
 import {IAuctionHouse} from "../auction-house/IAuctionHouse.sol";
 import {ArtTokenConfigManager} from "./art-token-config-manager/ArtTokenConfigManager.sol";
@@ -32,7 +30,8 @@ contract ArtToken is
     Authorization,
     CurrencyManager,
     ArtTokenConfigManager,
-    ArtTokenRoyaltyManager
+    ArtTokenRoyaltyManager,
+    CurrencyTransfers
 {
     using TokenMintingPermit for TokenMintingPermit.Type;
 
@@ -45,13 +44,15 @@ contract ArtToken is
      * @param proxy Address of the proxy that will ultimately own the implementation
      *              (used for EIP-712 domain separator).
      * @param main Address that will be set as {RoleSystem.MAIN}.
+     * @param wrappedEther Address of the Wrapped Ether contract.
      * @param auctionHouse Address of the AuctionHouse contract.
      */
     constructor(
         address proxy,
         address main,
+        address wrappedEther,
         address auctionHouse
-    ) EIP712Domain(proxy, "ArtToken", "1") RoleSystem(main) {
+    ) EIP712Domain(proxy, "ArtToken", "1") RoleSystem(main) CurrencyTransfers(wrappedEther) {
         if (auctionHouse == address(0)) revert ArtTokenMisconfiguration(2);
 
         AUCTION_HOUSE = IAuctionHouse(auctionHouse);
@@ -95,19 +96,17 @@ contract ArtToken is
             revert ArtTokenTokenReserved();
         }
 
-        if (!currencyAllowed(permit.currency)) {
+        if (!_currencyAllowed(permit.currency)) {
             revert ArtTokenCurrencyInvalid();
         }
 
-        IERC20 currency = IERC20(permit.currency);
-
         _mint(permit.minter, permit.tokenId, permit.tokenURI, permit.tokenConfig);
 
-        SafeERC20.safeTransferFrom(currency, msg.sender, address(this), permit.price + permit.fee);
+        _receiveCurrency(permit.currency, msg.sender, permit.price + permit.fee);
 
-        SafeERC20BulkTransfer.safeTransfer(currency, permit.price, permit.participants, permit.rewards);
+        _sendCurrencyBatch(permit.currency, permit.price, permit.participants, permit.rewards);
 
-        SafeERC20.safeTransfer(currency, uniqueRoleOwner(Roles.FINANCIAL_ROLE), permit.fee);
+        _sendCurrency(permit.currency, _uniqueRoleOwner(Roles.FINANCIAL_ROLE), permit.fee);
     }
 
     /**
@@ -131,8 +130,8 @@ contract ArtToken is
     /**
      * @inheritdoc IArtToken
      */
-    function recipientAuthorized(address account) public view returns (bool authorized) {
-        return account.code.length == 0 || hasRole(Roles.PARTNER_ROLE, account);
+    function recipientAuthorized(address account) external view returns (bool authorized) {
+        return _recipientAuthorized(account);
     }
 
     /**
@@ -164,9 +163,22 @@ contract ArtToken is
      * @param account The account to check.
      */
     function _requireAuthorizedRecipient(address account) private view {
-        if (!recipientAuthorized(account)) {
+        if (!_recipientAuthorized(account)) {
             revert ArtTokenUnauthorizedAccount(account);
         }
+    }
+
+    /**
+     * @notice Returns whether `account` passes the collection's compliance rules.
+     *
+     * @dev This function checks if the account is an EOA or has the PARTNER_ROLE.
+     *
+     * @param account Address to query.
+     *
+     * @return True if the account can receive or manage tokens.
+     */
+    function _recipientAuthorized(address account) internal view returns (bool) {
+        return account.code.length == 0 || _hasRole(Roles.PARTNER_ROLE, account);
     }
 
     /**

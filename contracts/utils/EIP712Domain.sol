@@ -58,5 +58,5 @@ contract EIP712Domain {
      * @dev Thrown when a constructor argument at position `argIndex` is invalid (zero address or
      *      empty string).
      */
-    error EIP712DomainMisconfiguration(uint256 argIndex);
+    error EIP712DomainMisconfiguration(uint8 argIndex);
 }

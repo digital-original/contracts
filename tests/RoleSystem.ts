@@ -85,12 +85,6 @@ describe('RoleSystem', function () {
 
                 expect(hasRoleAfterRevoke).equal(false);
             });
-
-            it(`should fail if the account is the zero address`, async () => {
-                const hasRole = roleSystem.hasRole(ADMIN_ROLE, ZeroAddress);
-
-                await expect(hasRole).rejectedWith('RoleSystemZeroAddress');
-            });
         });
     });
 
@@ -99,15 +93,15 @@ describe('RoleSystem', function () {
             it(`should transfer a unique role`, async () => {
                 const tx1 = await roleSystem.transferUniqueRole(ADMIN_ROLE, account);
 
-                await expect(tx1)
+                await expect(tx1) //
                     .emit(roleSystem, 'UniqueRoleTransferred')
-                    .withArgs(ADMIN_ROLE, accountAddr);
+                    .withArgs(ADMIN_ROLE, ZeroAddress, accountAddr);
 
                 const tx2 = await roleSystem.transferUniqueRole(ADMIN_ROLE, ZeroAddress);
 
-                await expect(tx2)
+                await expect(tx2) //
                     .emit(roleSystem, 'UniqueRoleTransferred')
-                    .withArgs(ADMIN_ROLE, ZeroAddress);
+                    .withArgs(ADMIN_ROLE, accountAddr, ZeroAddress);
             });
 
             it(`should fail if the sender is not the main account`, async () => {
@@ -124,12 +118,6 @@ describe('RoleSystem', function () {
                 const uniqueRoleOwner = await roleSystem.uniqueRoleOwner(ADMIN_ROLE);
 
                 expect(uniqueRoleOwner).equal(accountAddr);
-            });
-
-            it(`should fail if the role does not have an owner`, async () => {
-                const tx = roleSystem.uniqueRoleOwner(ADMIN_ROLE);
-
-                await expect(tx).rejectedWith('RoleSystemZeroAddress');
             });
         });
     });

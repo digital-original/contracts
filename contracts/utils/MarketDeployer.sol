@@ -29,11 +29,12 @@ contract MarketDeployer {
      *      5. Emits {Deployed}.
      *
      * @param main Address that will be set as {RoleSystem.MAIN}.
+     * @param wrappedEther Address of the Wrapped Ether contract.
      */
-    constructor(address main) {
+    constructor(address main, address wrappedEther) {
         address calculatedMarketProxy = Deployment.calculateContractAddress(address(this), 2);
 
-        address marketImpl = address(new Market(calculatedMarketProxy, main));
+        address marketImpl = address(new Market(calculatedMarketProxy, main, wrappedEther));
 
         address marketProxy = Deployment.deployUpgradeableContract(marketImpl, main);
 

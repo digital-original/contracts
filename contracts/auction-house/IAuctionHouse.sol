@@ -86,6 +86,9 @@ interface IAuctionHouse {
      * @notice Indicates whether any active auction has reserved `tokenId`.
      *
      * @param tokenId The ID of the token to check.
+     *
+     * @return reserved True if the token is currently locked by an active auction or an ended
+     *                  auction with a buyer.
      */
     function tokenReserved(uint256 tokenId) external view returns (bool reserved);
 
@@ -135,5 +138,5 @@ interface IAuctionHouse {
     error AuctionHouseRaiseTooLow(uint256 minAmount);
 
     /// @dev Thrown when constructor argument at `argIndex` is invalid.
-    error AuctionHouseMisconfiguration(uint256 argIndex);
+    error AuctionHouseMisconfiguration(uint8 argIndex);
 }

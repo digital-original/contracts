@@ -133,11 +133,11 @@ describe('Market', function () {
 
             expect(orderInvalidated).equal(true);
 
-            await expect(tx)
+            await expect(tx) //
                 .emit(usdc, 'Transfer')
                 .withArgs(takerAddr, marketAddr, ORDER_PRICE + BID_SIDE_FEE);
 
-            await expect(tx)
+            await expect(tx) //
                 .emit(usdc, 'Transfer')
                 .withArgs(marketAddr, financierAddr, BID_SIDE_FEE);
 
@@ -145,11 +145,11 @@ describe('Market', function () {
                 .emit(usdc, 'Transfer')
                 .withArgs(marketAddr, makerAddr, askSideReward);
 
-            await expect(tx)
+            await expect(tx) //
                 .emit(usdc, 'Transfer')
                 .withArgs(marketAddr, institutionAddr, institutionReward);
 
-            await expect(tx)
+            await expect(tx) //
                 .emit(usdc, 'Transfer')
                 .withArgs(marketAddr, financierAddr, platformReward);
 
@@ -157,7 +157,7 @@ describe('Market', function () {
                 .emit(artToken, 'Transfer')
                 .withArgs(makerAddr, takerAddr, TOKEN_ID);
 
-            await expect(tx)
+            await expect(tx) //
                 .emit(market, 'AskOrderExecuted')
                 .withArgs(
                     orderHash,
@@ -205,7 +205,9 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).emit(usdc, 'Transfer').withArgs(marketAddr, makerAddr, ORDER_PRICE); // Full price to maker
+            await expect(tx) //
+                .emit(usdc, 'Transfer')
+                .withArgs(marketAddr, makerAddr, ORDER_PRICE); // Full price to maker
         });
 
         it(`should execute the order with zero taker fee`, async () => {
@@ -689,7 +691,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).rejectedWith('SafeERC20BulkTransferIncorrectTotalAmount');
+            await expect(tx).rejectedWith('CurrencyTransfersIncorrectTotalAmount');
         });
 
         it(`should fail if the sum of rewards is less than the ask side fee`, async () => {
@@ -725,7 +727,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).rejectedWith('SafeERC20BulkTransferIncorrectTotalAmount');
+            await expect(tx).rejectedWith('CurrencyTransfersIncorrectTotalAmount');
         });
     });
 
@@ -808,11 +810,11 @@ describe('Market', function () {
 
             expect(orderInvalidated).equal(true);
 
-            await expect(tx)
+            await expect(tx) //
                 .emit(usdc, 'Transfer')
                 .withArgs(makerAddr, marketAddr, ORDER_PRICE + BID_SIDE_FEE);
 
-            await expect(tx)
+            await expect(tx) //
                 .emit(usdc, 'Transfer')
                 .withArgs(marketAddr, financierAddr, BID_SIDE_FEE);
 
@@ -820,11 +822,11 @@ describe('Market', function () {
                 .emit(usdc, 'Transfer')
                 .withArgs(marketAddr, takerAddr, askSideReward);
 
-            await expect(tx)
+            await expect(tx) //
                 .emit(usdc, 'Transfer')
                 .withArgs(marketAddr, institutionAddr, institutionReward);
 
-            await expect(tx)
+            await expect(tx) //
                 .emit(usdc, 'Transfer')
                 .withArgs(marketAddr, financierAddr, platformReward);
 
@@ -832,7 +834,7 @@ describe('Market', function () {
                 .emit(artToken, 'Transfer')
                 .withArgs(takerAddr, makerAddr, TOKEN_ID);
 
-            await expect(tx)
+            await expect(tx) //
                 .emit(market, 'BidOrderExecuted')
                 .withArgs(
                     orderHash,
@@ -1366,7 +1368,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).rejectedWith('SafeERC20BulkTransferIncorrectTotalAmount');
+            await expect(tx).rejectedWith('CurrencyTransfersIncorrectTotalAmount');
         });
 
         it(`should fail if the sum of rewards is less than the ask side fee`, async () => {
@@ -1402,7 +1404,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).rejectedWith('SafeERC20BulkTransferIncorrectTotalAmount');
+            await expect(tx).rejectedWith('CurrencyTransfersIncorrectTotalAmount');
         });
     });
 

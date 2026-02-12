@@ -144,5 +144,5 @@ interface IMarket {
     error MarketInvalidAskSideFee();
 
     /// @dev Thrown when a constructor argument at `argIndex` is invalid.
-    error MarketMisconfiguration(uint256 argIndex);
+    error MarketMisconfiguration(uint8 argIndex);
 }
