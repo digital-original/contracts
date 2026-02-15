@@ -21,18 +21,19 @@ task('deploy-market').setAction(async (taskArgs: Record<string, string>, hardhat
     console.groupEnd();
     console.log('-'.repeat(process.stdout.columns));
 
-    const { main } = config;
+    const { main, wrappedEther } = config;
 
     console.log(`Deploying Market...`);
     console.log(`\n`);
     console.group('Params:');
     console.log(`main: ${main}`);
+    console.log(`wrappedEther: ${wrappedEther}`);
     console.groupEnd();
     console.log(`\n`);
     console.log(`Transaction broadcasting...`);
 
     const { receipt, marketAddr, marketProxyAdminAddr, marketProxyAdminOwnerAddr, marketImplAddr } =
-        await deployMarket({ main });
+        await deployMarket({ main, wrappedEther });
 
     console.log(`Transaction broadcasted`);
     console.log(`Transaction hash - ${receipt.hash}`);

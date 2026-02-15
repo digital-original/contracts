@@ -9,18 +9,19 @@ import { deploy } from './deploy';
 
 type Params = {
     main: AddressLike;
+    wrappedEther: AddressLike;
 };
 
 // prettier-ignore
 export async function deployMarket(params: Params, deployer?: Signer) {
     const { ethers } = await import('hardhat');
 
-    const { main } = params;
+    const { main, wrappedEther } = params;
 
     const { receipt } = await deploy(
         {
             name: 'MarketDeployer',
-            constructorArgs: [main],
+            constructorArgs: [main, wrappedEther],
         },
         deployer,
     );

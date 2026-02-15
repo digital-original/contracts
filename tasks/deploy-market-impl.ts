@@ -21,21 +21,21 @@ task('deploy-market-impl').setAction(async (taskArgs: Record<string, string>, ha
     console.groupEnd();
     console.log('-'.repeat(process.stdout.columns));
 
-    const proxyAddr = config.market.market.proxy;
-    const mainAddr = config.main;
+    const { main, wrappedEther, market } = config;
 
     console.log(`Deploying Market Impl...`);
     console.log(`\n`);
     console.group('Params:');
-    console.log(`proxy: ${proxyAddr}`);
-    console.log(`main: ${mainAddr}`);
+    console.log(`proxy: ${market.proxy}`);
+    console.log(`main: ${main}`);
+    console.log(`wrappedEther: ${wrappedEther}`);
     console.groupEnd();
     console.log(`\n`);
     console.log(`Transaction broadcasting...`);
 
-    const { receipt, contractAddr: marketImplAddr } = await deploy({
+    const { receipt, contractAddr } = await deploy({
         name: 'Market',
-        constructorArgs: [proxyAddr, mainAddr],
+        constructorArgs: [market.proxy, main, wrappedEther],
     });
 
     console.log(`Transaction broadcasted`);
@@ -43,7 +43,7 @@ task('deploy-market-impl').setAction(async (taskArgs: Record<string, string>, ha
     console.log('-'.repeat(process.stdout.columns));
 
     console.group('Result:');
-    console.log(`Market Impl - ${marketImplAddr}`);
+    console.log(`Market Impl - ${contractAddr}`);
     console.groupEnd();
     console.log('-'.repeat(process.stdout.columns));
 });

@@ -10,17 +10,14 @@ import type { HardhatUserConfig } from 'hardhat/config';
 import type { NetworksUserConfig } from 'hardhat/types';
 import type {
     ChainConfigYaml,
-    CollectionConfig,
     CollectionConfigYaml,
     EnvConfigYaml,
-    MarketConfig,
     MarketConfigYaml,
     ProtocolConfig,
 } from './types/environment';
 
 const envConfigYaml = <EnvConfigYaml>yaml.load(fs.readFileSync('./config.env.yaml', 'utf8'));
 const chainConfigYaml = <ChainConfigYaml>yaml.load(fs.readFileSync('./config.chain.yaml', 'utf8'));
-
 const collectionConfigYaml = <CollectionConfigYaml>(
     yaml.load(fs.readFileSync('./config.collection.yaml', 'utf8'))
 );
@@ -77,34 +74,21 @@ function buildHardhatConfig(): HardhatUserConfig {
     const hardhatNetworksConfig: NetworksUserConfig = {};
 
     for (const [chainName, chainConfig] of Object.entries(chainConfigYaml)) {
-        const collectionConfig = collectionConfigYaml[chainName];
-        const marketConfig = marketConfigYaml[chainName];
-
-        const { chainId, url, deployerPrivateKey, main } = chainConfig;
-
-        const collection: CollectionConfig = {
-            name: collectionConfigYaml.name,
-            symbol: collectionConfigYaml.symbol,
-            minAuctionDurationHours: collectionConfig.minAuctionDurationHours,
-            artToken: collectionConfig.artToken,
-            auctionHouse: collectionConfig.auctionHouse,
-        };
-
-        const market: MarketConfig = {
-            market: marketConfig.market,
-        };
+        const { chainId, url, deployerPrivateKey, main, wrappedEther } = chainConfig;
 
         const protocolConfig: ProtocolConfig = {
+            collection: collectionConfigYaml[chainName],
+            market: marketConfigYaml[chainName],
             main,
-            collection,
-            market,
+            wrappedEther,
         };
 
         hardhatNetworksConfig[chainName] = {
             chainId,
             url,
             accounts: [deployerPrivateKey],
-            ...{ protocolConfig },
+            // @ts-ignore
+            protocolConfig,
         };
     }
 

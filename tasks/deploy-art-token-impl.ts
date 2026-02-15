@@ -21,22 +21,23 @@ task('deploy-art-token-impl').setAction(async (taskArgs: Record<string, string>,
     console.groupEnd();
     console.log('-'.repeat(process.stdout.columns));
 
-    const { main } = config;
+    const { main, wrappedEther } = config;
     const { artToken, auctionHouse } = config.collection;
 
     console.log(`Deploying ArtToken Impl...`);
     console.log(`\n`);
     console.group('Params:');
+    console.log(`proxy: ${artToken.proxy}`);
     console.log(`main: ${main}`);
-    console.log(`artToken: ${artToken.proxy}`);
+    console.log(`wrappedEther: ${wrappedEther}`);
     console.log(`auctionHouse: ${auctionHouse.proxy}`);
     console.groupEnd();
     console.log(`\n`);
     console.log(`Transaction broadcasting...`);
 
-    const { receipt, contractAddr: artTokenImplAddr } = await deploy({
+    const { receipt, contractAddr } = await deploy({
         name: 'ArtToken',
-        constructorArgs: [artToken.proxy, main, auctionHouse.proxy],
+        constructorArgs: [artToken.proxy, main, wrappedEther, auctionHouse.proxy],
     });
 
     console.log(`Transaction broadcasted`);
@@ -44,7 +45,7 @@ task('deploy-art-token-impl').setAction(async (taskArgs: Record<string, string>,
     console.log('-'.repeat(process.stdout.columns));
 
     console.group('Result:');
-    console.log(`ArtToken Impl - ${artTokenImplAddr}`);
+    console.log(`ArtToken Impl - ${contractAddr}`);
     console.groupEnd();
     console.log('-'.repeat(process.stdout.columns));
 });

@@ -1,4 +1,4 @@
-import { AddressLike, Numeric, Signer } from 'ethers';
+import { AddressLike, Signer } from 'ethers';
 import {
     UpgradedEvent,
     AdminChangedEvent,
@@ -11,6 +11,7 @@ type Params = {
     name: string;
     symbol: string;
     main: AddressLike;
+    wrappedEther: AddressLike;
     minAuctionDuration: number;
 };
 
@@ -22,13 +23,14 @@ export async function deployCollection(params: Params, deployer?: Signer) {
         name,
         symbol,
         main,
+        wrappedEther,
         minAuctionDuration,
     } = params;
 
     const { receipt } = await deploy(
         {
             name: 'CollectionDeployer',
-            constructorArgs: [name, symbol, main, minAuctionDuration],
+            constructorArgs: [name, symbol, main, wrappedEther, minAuctionDuration],
         },
         deployer,
     );

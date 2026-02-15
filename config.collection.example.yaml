@@ -1,7 +1,6 @@
-name: 'DigitalOriginal'
-symbol: 'DO'
-
 sepolia:
+    name: 'DigitalOriginal'
+    symbol: 'DO'
     minAuctionDurationHours: 0.25
     artToken:
         proxy: ''
@@ -13,6 +12,8 @@ sepolia:
         admin: ''
 
 ethereum:
+    name: 'DigitalOriginal'
+    symbol: 'DO'
     minAuctionDurationHours: 24
     artToken:
         proxy: ''

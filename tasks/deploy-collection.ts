@@ -22,9 +22,8 @@ task('deploy-collection').setAction(async (taskArgs: Record<string, string>, har
     console.groupEnd();
     console.log('-'.repeat(process.stdout.columns));
 
-    const { main } = config;
+    const { main, wrappedEther } = config;
     const { name, symbol, minAuctionDurationHours } = config.collection;
-
     const minAuctionDuration = hoursToSeconds(minAuctionDurationHours);
 
     console.log(`Deploying collection...`);
@@ -33,6 +32,7 @@ task('deploy-collection').setAction(async (taskArgs: Record<string, string>, har
     console.log(`name: ${name}`);
     console.log(`symbol: ${symbol}`);
     console.log(`main: ${main}`);
+    console.log(`wrappedEther: ${wrappedEther}`);
     console.log(`minAuctionDurationHours: ${minAuctionDurationHours}`);
     console.log(`minAuctionDuration: ${minAuctionDuration}`);
     console.groupEnd();
@@ -52,9 +52,10 @@ task('deploy-collection').setAction(async (taskArgs: Record<string, string>, har
         auctionHouseProxyAdminAddr,
         auctionHouseProxyAdminOwnerAddr,
     } = await deployCollection({
-        main,
         name,
         symbol,
+        main,
+        wrappedEther,
         minAuctionDuration,
     });
 
