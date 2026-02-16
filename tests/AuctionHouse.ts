@@ -585,6 +585,62 @@ describe(`AuctionHouse`, () => {
         it(`should fail if the buyer is unauthorized`);
     });
 
+    describe(`method 'raiseInitial' with Ether`, () => {
+        beforeEach(async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
+
+            const auctionCreationPermit: AuctionCreationPermit.TypeStruct = {
+                auctionId: AUCTION_ID,
+                tokenId: TOKEN_ID,
+                currency: ETHER_ADDR,
+                price: AUCTION_PRICE,
+                fee: AUCTION_FEE,
+                step: AUCTION_STEP,
+                endTime: latestBlockTimestamp + HOUR,
+                tokenURI: TOKEN_URI,
+                tokenConfig: TOKEN_CONFIG,
+                participants: [institutionAddr],
+                shares: [ONE_HUNDRED],
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            await AuctionHouseUtils.create({
+                auctionHouse,
+                permit: auctionCreationPermit,
+                permitSigner: auctionHouseSigner,
+                sender: institution,
+            });
+        });
+
+        it(`should raise`, async () => {
+            const { price: initialPrice, fee } = await auctionHouse.auction(AUCTION_ID);
+
+            const tx = await auctionHouse
+                .connect(buyer)
+                .raiseInitial(AUCTION_ID, initialPrice, { value: initialPrice + fee });
+
+            await expect(tx).changeEtherBalance(auctionHouseAddr, initialPrice + fee);
+
+            await expect(tx).changeEtherBalance(buyerAddr, (initialPrice + fee) * -1n);
+        });
+
+        it(`should fail if incorrect amount of ether is sent`, async () => {
+            const { price: initialPrice, fee } = await auctionHouse.auction(AUCTION_ID);
+
+            const tx1 = auctionHouse
+                .connect(buyer)
+                .raiseInitial(AUCTION_ID, initialPrice, { value: initialPrice + fee + 1n }); // Incorrect amount
+
+            const tx2 = auctionHouse
+                .connect(buyer)
+                .raiseInitial(AUCTION_ID, initialPrice, { value: initialPrice + fee - 1n }); // Incorrect amount
+
+            await expect(tx1).rejectedWith('CurrencyTransfersIncorrectEtherValue');
+
+            await expect(tx2).rejectedWith('CurrencyTransfersIncorrectEtherValue');
+        });
+    });
+
     describe(`method 'raise'`, () => {
         beforeEach(async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
@@ -757,7 +813,23 @@ describe(`AuctionHouse`, () => {
             await expect(tx).changeEtherBalance(randomAccountAddr, initialPrice + fee);
         });
 
-        // TODO: should fail if incorrect amount of ether is sent
+        it(`should fail if incorrect amount of ether is sent`, async () => {
+            const { price: initialPrice, step, fee } = await auctionHouse.auction(AUCTION_ID);
+
+            const newPrice = initialPrice + step;
+
+            const tx1 = auctionHouse
+                .connect(buyer)
+                .raise(AUCTION_ID, newPrice, { value: newPrice + fee + 1n }); // Incorrect amount
+
+            const tx2 = auctionHouse
+                .connect(buyer)
+                .raise(AUCTION_ID, newPrice, { value: newPrice + fee - 1n }); // Incorrect amount
+
+            await expect(tx1).rejectedWith('CurrencyTransfersIncorrectEtherValue');
+
+            await expect(tx2).rejectedWith('CurrencyTransfersIncorrectEtherValue');
+        });
     });
 
     describe(`method 'finish'`, async () => {
@@ -809,6 +881,10 @@ describe(`AuctionHouse`, () => {
             await expect(tx) //
                 .emit(artToken, 'Transfer')
                 .withArgs(ZeroAddress, buyerAddr, TOKEN_ID);
+
+            await expect(tx) //
+                .emit(usdc, 'Transfer')
+                .withArgs(auctionHouseAddr, institutionAddr, price);
 
             await expect(tx) //
                 .emit(usdc, 'Transfer')
@@ -1015,7 +1091,7 @@ describe(`AuctionHouse`, () => {
         });
     });
 
-    describe(`ShareUtils`, () => {
+    describe(`currency distribution`, () => {
         beforeEach(async () => {
             await usdc.connect(buyer).mintAndApprove(auctionHouse, MaxInt256);
         });
@@ -1289,6 +1365,55 @@ describe(`AuctionHouse`, () => {
             });
 
             await expect(tx).rejectedWith('ShareUtilsZeroShare');
+        });
+    });
+
+    describe(`currency distribution with Ether`, () => {
+        it(`should distribute the price among participants according to shares`, async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
+            const endTime = latestBlockTimestamp + HOUR;
+
+            const institutionShare = (ONE_HUNDRED / 5n) * 4n; // 80%
+            const platformShare = ONE_HUNDRED / 5n; // 20%
+
+            const auctionCreationPermit: AuctionCreationPermit.TypeStruct = {
+                auctionId: AUCTION_ID,
+                tokenId: TOKEN_ID,
+                currency: ETHER_ADDR,
+                price: AUCTION_PRICE,
+                fee: AUCTION_FEE,
+                step: AUCTION_STEP,
+                endTime: endTime,
+                tokenURI: TOKEN_URI,
+                tokenConfig: TOKEN_CONFIG,
+                participants: [institutionAddr, financierAddr],
+                shares: [institutionShare, platformShare],
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            await AuctionHouseUtils.create({
+                auctionHouse,
+                permit: auctionCreationPermit,
+                permitSigner: auctionHouseSigner,
+                sender: institution,
+            });
+
+            await auctionHouse
+                .connect(buyer)
+                .raiseInitial(AUCTION_ID, AUCTION_PRICE, { value: AUCTION_PRICE + AUCTION_FEE });
+
+            await setNextBlockTimestamp(endTime);
+
+            const tx = await auctionHouse.connect(buyer).finish(AUCTION_ID);
+
+            const institutionReward = (AUCTION_PRICE * institutionShare) / ONE_HUNDRED;
+            const platformReward = (AUCTION_PRICE * platformShare) / ONE_HUNDRED;
+
+            await expect(tx).changeEtherBalance(auctionHouseAddr, (AUCTION_PRICE + AUCTION_FEE) * -1n);
+
+            await expect(tx).changeEtherBalance(institutionAddr, institutionReward);
+
+            await expect(tx).changeEtherBalance(financierAddr, platformReward + AUCTION_FEE);
         });
     });
 });

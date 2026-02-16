@@ -368,8 +368,6 @@ describe('ArtToken', function () {
                 value: TOKEN_PRICE + TOKEN_FEE - 1n, // Incorrect amount
             });
 
-            await expect(tx1).rejectedWith('CurrencyTransfersIncorrectEtherValue');
-
             const tx2 = ArtTokenUtils.mint({
                 artToken,
                 permit: tokenMintingPermit,
@@ -377,6 +375,8 @@ describe('ArtToken', function () {
                 sender: buyer,
                 value: TOKEN_PRICE + TOKEN_FEE + 1n, // Incorrect amount
             });
+
+            await expect(tx1).rejectedWith('CurrencyTransfersIncorrectEtherValue');
 
             await expect(tx2).rejectedWith('CurrencyTransfersIncorrectEtherValue');
         });

@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {ETHER} from "../utils/Constants.sol";
 import {EIP712Domain} from "../utils/EIP712Domain.sol";
 import {EIP712Signature} from "../utils/EIP712Signature.sol";
 import {RoleSystem} from "../utils/role-system/RoleSystem.sol";
@@ -142,7 +143,7 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
             revert MarketUnauthorizedAccount();
         }
 
-        if (!_currencyAllowed(order.currency)) {
+        if (!_currencyAllowed(order.currency) || order.currency == ETHER) {
             revert MarketCurrencyInvalid();
         }
 
