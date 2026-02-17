@@ -308,7 +308,7 @@ describe('ArtToken', function () {
     });
 
     describe(`method 'mint' with Ether`, () => {
-        it(`should mint, distribute price, and charge a fee`, async () => {
+        it(`should transfer ether correctly`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
             const institutionReward = (TOKEN_PRICE / 5n) * 4n; // 80%

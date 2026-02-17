@@ -612,7 +612,7 @@ describe(`AuctionHouse`, () => {
             });
         });
 
-        it(`should raise`, async () => {
+        it(`should transfer ether correctly`, async () => {
             const { price: initialPrice, fee } = await auctionHouse.auction(AUCTION_ID);
 
             const tx = await auctionHouse
@@ -797,7 +797,7 @@ describe(`AuctionHouse`, () => {
                 .raiseInitial(AUCTION_ID, AUCTION_PRICE, { value: AUCTION_PRICE + AUCTION_FEE });
         });
 
-        it(`should raise`, async () => {
+        it(`should transfer ether correctly`, async () => {
             const { price: initialPrice, step, fee } = await auctionHouse.auction(AUCTION_ID);
 
             const newPrice = initialPrice + step;
@@ -1369,7 +1369,7 @@ describe(`AuctionHouse`, () => {
     });
 
     describe(`currency distribution with Ether`, () => {
-        it(`should distribute the price among participants according to shares`, async () => {
+        it(`should transfer ether correctly`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
             const endTime = latestBlockTimestamp + HOUR;
 
@@ -1409,7 +1409,10 @@ describe(`AuctionHouse`, () => {
             const institutionReward = (AUCTION_PRICE * institutionShare) / ONE_HUNDRED;
             const platformReward = (AUCTION_PRICE * platformShare) / ONE_HUNDRED;
 
-            await expect(tx).changeEtherBalance(auctionHouseAddr, (AUCTION_PRICE + AUCTION_FEE) * -1n);
+            await expect(tx).changeEtherBalance(
+                auctionHouseAddr,
+                (AUCTION_PRICE + AUCTION_FEE) * -1n,
+            );
 
             await expect(tx).changeEtherBalance(institutionAddr, institutionReward);
 
