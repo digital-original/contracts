@@ -11,7 +11,6 @@ import {TokenConfig} from "../../utils/TokenConfig.sol";
  */
 library TokenMintingPermit {
     using TokenConfig for TokenConfig.Type;
-    using TokenMintingPermit for TokenMintingPermit.Type;
 
     /**
      * @notice Represents a token minting permit.

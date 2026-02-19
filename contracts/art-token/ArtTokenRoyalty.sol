@@ -6,14 +6,14 @@ import {ArtTokenConfigManager} from "./art-token-config-manager/ArtTokenConfigMa
 import {ONE_HUNDRED_PERCENT_IN_BP} from "../utils/Constants.sol";
 
 /**
- * @title ArtTokenRoyaltyManager
+ * @title ArtTokenRoyalty
  *
  * @notice Abstract contract that provides a basic implementation of the EIP-2981 royalty standard.
  *
  * @dev This implementation calculates a fixed 5% royalty on the sale price and designates the
  *      original token creator as the royalty recipient.
  */
-abstract contract ArtTokenRoyaltyManager is IERC2981, ArtTokenConfigManager {
+abstract contract ArtTokenRoyalty is IERC2981, ArtTokenConfigManager {
     /**
      * @notice The royalty percentage in basis points - 5%.
      */

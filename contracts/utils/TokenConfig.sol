@@ -51,4 +51,16 @@ library TokenConfig {
     function hash(Type calldata config) internal pure returns (bytes32) {
         return keccak256(abi.encode(TYPE_HASH, config.creator, config.regulationMode));
     }
+
+    function requirePopulated(TokenConfig.Type calldata tokenConfig) internal pure {
+        if (tokenConfig.creator == address(0)) {
+            revert TokenConfigNotPopulated();
+        }
+
+        if (tokenConfig.regulationMode == TokenConfig.RegulationMode.None) {
+            revert TokenConfigNotPopulated();
+        }
+    }
+
+    error TokenConfigNotPopulated();
 }

@@ -6,6 +6,7 @@ import {RoleSystem} from "../utils/role-system/RoleSystem.sol";
 import {Authorization} from "../utils/Authorization.sol";
 import {CurrencyManager} from "../utils/currency-manager/CurrencyManager.sol";
 import {CurrencyTransfers} from "../utils/CurrencyTransfers.sol";
+import {TokenConfig} from "../utils/TokenConfig.sol";
 import {Roles} from "../utils/Roles.sol";
 import {IArtToken} from "../art-token/IArtToken.sol";
 import {ShareUtils} from "./libraries/ShareUtils.sol";
@@ -23,6 +24,7 @@ import {IAuctionHouse} from "./IAuctionHouse.sol";
  *         split between participants and the protocol treasury.
  */
 contract AuctionHouse is IAuctionHouse, EIP712Domain, RoleSystem, Authorization, CurrencyManager, CurrencyTransfers {
+    using TokenConfig for TokenConfig.Type;
     using AuctionCreationPermit for AuctionCreationPermit.Type;
 
     /// @notice Address of the associated {ArtToken} contract.
@@ -134,7 +136,11 @@ contract AuctionHouse is IAuctionHouse, EIP712Domain, RoleSystem, Authorization,
         AuctionCreationPermit.Type calldata permit,
         bytes calldata permitSignature
     ) external auctionNotExist(permit.auctionId) {
+        AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
+
         _requireAuthorizedAction(permit.hash(), permit.deadline, permitSignature);
+
+        permit.tokenConfig.requirePopulated();
 
         if (permit.price == 0) {
             revert AuctionHouseInvalidPrice();
@@ -161,16 +167,14 @@ contract AuctionHouse is IAuctionHouse, EIP712Domain, RoleSystem, Authorization,
         }
 
         if (_tokenReserved(permit.tokenId)) {
-            revert AuctionHouseTokenReserved();
+            revert AuctionHouseTokenReserved($.tokenAuctionId[permit.tokenId]);
         }
 
-        if (ART_TOKEN.tokenReserved(permit.tokenId)) {
-            revert AuctionHouseTokenReserved();
+        if (ART_TOKEN.tokenExists(permit.tokenId)) {
+            revert AuctionHouseTokenAlreadyMinted();
         }
 
         ShareUtils.requireValidConditions(permit.participants, permit.shares);
-
-        AuctionHouseStorage.Layout storage $ = AuctionHouseStorage.layout();
 
         $.auction[permit.auctionId] = Auction.Type({
             tokenId: permit.tokenId,
@@ -390,6 +394,12 @@ contract AuctionHouse is IAuctionHouse, EIP712Domain, RoleSystem, Authorization,
 
         if (_auctionWithBuyer(auctionId)) {
             // The auction has a buyer
+
+            /**
+             * If a buyer exists, the token remains reserved by the auction
+             * even after the auction ends and the token is minted.
+             * This behavior fully matches the current logic.
+             */
             return true;
         }
 

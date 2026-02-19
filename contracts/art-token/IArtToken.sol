@@ -43,13 +43,13 @@ interface IArtToken is IERC721 {
     function setTokenURI(uint256 tokenId, string memory _tokenURI) external;
 
     /**
-     * @notice Returns whether `tokenId` has already been minted (i.e., is reserved).
+     * @notice Returns whether `tokenId` has already been minted.
      *
      * @param tokenId Token identifier to query.
      *
      * @return reserved True if the token exists, false otherwise.
      */
-    function tokenReserved(uint256 tokenId) external view returns (bool reserved);
+    function tokenExists(uint256 tokenId) external view returns (bool reserved);
 
     /**
      * @notice Checks whether `account` passes the collection's compliance rules.
@@ -75,8 +75,8 @@ interface IArtToken is IERC721 {
     /// @dev Thrown when `fee` supplied to {buy} is below the minimum configured fee.
     error ArtTokenInvalidFee();
 
-    /// @dev Thrown when attempting to mint or purchase a token that is already owned / reserved.
-    error ArtTokenTokenReserved();
+    /// @dev Thrown when attempting to mint or purchase a token that is reserved by an auction.
+    error ArtTokenTokenReservedByAuction();
 
     /// @dev Thrown when a constructor argument under the provided `argIndex` is invalid (e.g., zero address).
     error ArtTokenMisconfiguration(uint8 argIndex);

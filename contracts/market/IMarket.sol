@@ -19,8 +19,8 @@ interface IMarket {
      * @param currency Address of the settlement currency (ERC-20).
      * @param maker Address of the seller.
      * @param taker Address of the buyer.
-     * @param price The price at which the token was sold.
      * @param tokenId The identifier of the token that was sold.
+     * @param price The price at which the token was sold.
      */
     event AskOrderExecuted(
         bytes32 orderHash,
@@ -40,8 +40,8 @@ interface IMarket {
      * @param currency Address of the settlement currency (ERC-20).
      * @param maker Address of the buyer.
      * @param taker Address of the seller.
-     * @param price The price at which the token was bought.
      * @param tokenId The identifier of the token that was bought.
+     * @param price The price at which the token was bought.
      */
     event BidOrderExecuted(
         bytes32 orderHash,

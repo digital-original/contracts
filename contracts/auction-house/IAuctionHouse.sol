@@ -110,8 +110,12 @@ interface IAuctionHouse {
     /// @dev Thrown when a currency is invalid.
     error AuctionHouseInvalidCurrency();
 
-    /// @dev Thrown when the token is already reserved by an auction.
-    error AuctionHouseTokenReserved();
+    /// @dev Thrown when the token is already reserved by another auction.
+    /// @param existingAuctionId The ID of the auction that has reserved the token.
+    error AuctionHouseTokenReserved(uint256 existingAuctionId);
+
+    /// @dev Thrown when the token has already been minted.
+    error AuctionHouseTokenAlreadyMinted();
 
     /// @dev Thrown when trying to set a buyer but one already exists.
     error AuctionHouseBuyerExists();

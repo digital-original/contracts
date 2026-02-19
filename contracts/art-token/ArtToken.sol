@@ -11,7 +11,7 @@ import {Roles} from "../utils/Roles.sol";
 import {IAuctionHouse} from "../auction-house/IAuctionHouse.sol";
 import {ArtTokenConfigManager} from "./art-token-config-manager/ArtTokenConfigManager.sol";
 import {TokenMintingPermit} from "./libraries/TokenMintingPermit.sol";
-import {ArtTokenRoyaltyManager} from "./ArtTokenRoyaltyManager.sol";
+import {ArtTokenRoyalty} from "./ArtTokenRoyalty.sol";
 import {ArtTokenBase} from "./ArtTokenBase.sol";
 import {IArtToken} from "./IArtToken.sol";
 
@@ -30,9 +30,10 @@ contract ArtToken is
     Authorization,
     CurrencyManager,
     ArtTokenConfigManager,
-    ArtTokenRoyaltyManager,
+    ArtTokenRoyalty,
     CurrencyTransfers
 {
+    using TokenConfig for TokenConfig.Type;
     using TokenMintingPermit for TokenMintingPermit.Type;
 
     /// @notice Address of the accompanying AuctionHouse contract.
@@ -80,6 +81,8 @@ contract ArtToken is
     function mint(TokenMintingPermit.Type calldata permit, bytes calldata permitSignature) external payable {
         _requireAuthorizedAction(permit.hash(), permit.deadline, permitSignature);
 
+        permit.tokenConfig.requirePopulated();
+
         if (permit.minter != msg.sender) {
             revert ArtTokenUnauthorizedAccount(msg.sender);
         }
@@ -93,7 +96,7 @@ contract ArtToken is
         }
 
         if (AUCTION_HOUSE.tokenReserved(permit.tokenId)) {
-            revert ArtTokenTokenReserved();
+            revert ArtTokenTokenReservedByAuction();
         }
 
         if (!_currencyAllowed(permit.currency)) {
@@ -123,7 +126,7 @@ contract ArtToken is
     /**
      * @inheritdoc IArtToken
      */
-    function tokenReserved(uint256 tokenId) external view returns (bool reserved) {
+    function tokenExists(uint256 tokenId) external view returns (bool reserved) {
         return _ownerOf(tokenId) != address(0);
     }
 
