@@ -5,6 +5,7 @@ import {TokenConfig} from "../../utils/TokenConfig.sol";
 
 /**
  * @title AuctionCreationPermit
+ *
  * @notice EIP-712 struct for an auction creation permit, which authorizes the creation of a new auction with
  *         specified parameters.
  */

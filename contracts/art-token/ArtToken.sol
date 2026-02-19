@@ -112,7 +112,7 @@ contract ArtToken is
     /**
      * @inheritdoc IArtToken
      */
-    function setTokenURI(uint256 tokenId, string memory _tokenURI) external onlyRole(Roles.ADMIN_ROLE) {
+    function setTokenURI(uint256 tokenId, string calldata _tokenURI) external onlyRole(Roles.ADMIN_ROLE) {
         if (_ownerOf(tokenId) == address(0)) {
             revert ArtTokenNonexistentToken(tokenId);
         }

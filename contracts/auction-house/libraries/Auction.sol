@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 /**
  * @title Auction
+ *
  * @notice A library that defines the data structure for an auction.
  */
 library Auction {

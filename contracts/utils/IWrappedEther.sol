@@ -5,6 +5,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
  * @title IWrappedEther
+ *
  * @notice Defines the interface for the wrapped ether external contract.
  */
 interface IWrappedEther is IERC20 {

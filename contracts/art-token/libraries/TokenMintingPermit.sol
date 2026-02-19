@@ -5,6 +5,7 @@ import {TokenConfig} from "../../utils/TokenConfig.sol";
 
 /**
  * @title TokenMintingPermit
+ *
  * @notice EIP-712 struct for a token minting permit, which authorizes the minting of a new token with specified
  *         parameters.
  */

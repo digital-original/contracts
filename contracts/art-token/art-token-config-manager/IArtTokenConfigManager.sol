@@ -5,6 +5,7 @@ import {TokenConfig} from "../../utils/TokenConfig.sol";
 
 /**
  * @title IArtTokenConfigManager
+ *
  * @notice Manages configuration for individual tokens, such as creator and regulation mode.
  */
 interface IArtTokenConfigManager {

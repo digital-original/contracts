@@ -9,6 +9,7 @@ import {IArtTokenConfigManager} from "./IArtTokenConfigManager.sol";
 
 /**
  * @title ArtTokenConfigManager
+ *
  * @notice Abstract contract that implements the logic for managing token configurations.
  * @dev This contract is intended to be inherited by other contracts to provide token
  *      configuration management functionality. It uses `ArtTokenConfigManagerStorage`

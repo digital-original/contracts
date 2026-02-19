@@ -4,6 +4,6 @@
     ],
     "*.sol": [
         "prettier --write",
-        "solhint --max-warnings 0"
+        "solhint"
     ]
 }
