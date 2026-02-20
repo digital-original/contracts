@@ -47,9 +47,9 @@ interface IArtToken is IERC721 {
      *
      * @param tokenId Token identifier to query.
      *
-     * @return reserved True if the token exists, false otherwise.
+     * @return exists True if the token exists, false otherwise.
      */
-    function tokenExists(uint256 tokenId) external view returns (bool reserved);
+    function tokenExists(uint256 tokenId) external view returns (bool exists);
 
     /**
      * @notice Checks whether `account` passes the collection's compliance rules.

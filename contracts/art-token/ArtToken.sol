@@ -126,7 +126,7 @@ contract ArtToken is
     /**
      * @inheritdoc IArtToken
      */
-    function tokenExists(uint256 tokenId) external view returns (bool reserved) {
+    function tokenExists(uint256 tokenId) external view returns (bool exists) {
         return _ownerOf(tokenId) != address(0);
     }
 

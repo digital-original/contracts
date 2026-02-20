@@ -250,7 +250,7 @@ describe('ArtToken', function () {
                 sender: buyer,
             });
 
-            await expect(tx).rejectedWith('ArtTokenTokenReserved');
+            await expect(tx).rejectedWith('ArtTokenTokenReservedByAuction');
         });
 
         it(`should fail if the permit signer is not the art token signer`, async () => {
