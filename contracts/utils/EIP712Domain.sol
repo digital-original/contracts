@@ -3,18 +3,11 @@ pragma solidity ^0.8.20;
 
 /**
  * @title EIP712Domain
- *
  * @notice Minimal helper that constructs an EIP-712 domain separator once at deployment time and
  *         exposes it as an immutable constant.
- *
- * @dev Designed to be inherited by contracts that need typed-data signatures. Follows the standard
- *      domain schema:
- *      `EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)`.
  */
-contract EIP712Domain {
-    /**
-     * @dev Type-hash of the canonical EIP-712 domain.
-     */
+abstract contract EIP712Domain {
+    /// @dev Type-hash of the canonical EIP-712 domain.
     // prettier-ignore
     bytes32 public constant DOMAIN_TYPE_HASH =
         keccak256(
@@ -26,14 +19,11 @@ contract EIP712Domain {
             ")"
         );
 
-    /**
-     * @notice Fully-qualified EIP-712 domain separator for this contract.
-     */
+    /// @notice EIP-712 domain separator.
     bytes32 public immutable DOMAIN_SEPARATOR;
 
     /**
-     * @notice Contract constructor.
-     *
+     * @notice Initializes the immutable domain separator.
      * @param verifyingContract Address of the contract that will verify signatures (usually the proxy).
      * @param name Human-readable name of the signing domain.
      * @param version Current major version of the signing domain.
@@ -54,9 +44,6 @@ contract EIP712Domain {
         );
     }
 
-    /**
-     * @dev Thrown when a constructor argument at position `argIndex` is invalid (zero address or
-     *      empty string).
-     */
+    /// @dev Thrown when a constructor argument at index `argIndex` is invalid.
     error EIP712DomainMisconfiguration(uint8 argIndex);
 }

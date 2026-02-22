@@ -198,7 +198,7 @@ describe(`AuctionHouse`, () => {
                 sender: institution,
             });
 
-            await expect(tx).rejectedWith('AuctionHouseInvalidCurrency');
+            await expect(tx).rejectedWith('AuctionHouseUnsupportedCurrency');
         });
 
         it(`should fail if the auction duration is less than the minimum duration`, async () => {
@@ -301,7 +301,7 @@ describe(`AuctionHouse`, () => {
                 sender: institution,
             });
 
-            await expect(tx).rejectedWith('AuctionHouseAuctionExists');
+            await expect(tx).rejectedWith('AuctionHouseAuctionAlreadyExists');
         });
 
         it(`should fail if the token is already in an active auction`, async () => {
@@ -341,7 +341,7 @@ describe(`AuctionHouse`, () => {
                 sender: institution,
             });
 
-            await expect(tx).rejectedWith(`AuctionHouseTokenReserved(${AUCTION_ID})`);
+            await expect(tx).rejectedWith(`AuctionHouseTokenAlreadyReserved(${AUCTION_ID})`);
         });
 
         it(`should fail if the token is in an inactive auction with a buyer`, async () => {
@@ -389,7 +389,7 @@ describe(`AuctionHouse`, () => {
                 sender: institution,
             });
 
-            await expect(tx).rejectedWith(`AuctionHouseTokenReserved(${AUCTION_ID})`);
+            await expect(tx).rejectedWith(`AuctionHouseTokenAlreadyReserved(${AUCTION_ID})`);
         });
 
         it(`should fail if the token is already minted`, async () => {
@@ -442,7 +442,7 @@ describe(`AuctionHouse`, () => {
             await expect(tx).rejectedWith('AuctionHouseTokenAlreadyMinted');
         });
 
-        it(`should fail if the permit signer is not the auction house signer`, async () => {
+        it(`should fail if the permit signer is not the auction-house signer`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
             const auctionCreationPermit: AuctionCreationPermit.TypeStruct = {
@@ -557,7 +557,7 @@ describe(`AuctionHouse`, () => {
                 .connect(buyer)
                 .raiseInitial(NON_EXISTENT_AUCTION_ID, AUCTION_PRICE);
 
-            await expect(tx).rejectedWith('AuctionHouseAuctionNotExist');
+            await expect(tx).rejectedWith('AuctionHouseNonexistentAuction');
         });
 
         it(`should fail if the auction has a buyer`, async () => {
@@ -569,7 +569,7 @@ describe(`AuctionHouse`, () => {
 
             const tx = auctionHouse.connect(randomAccount).raiseInitial(AUCTION_ID, price);
 
-            await expect(tx).rejectedWith('AuctionHouseBuyerExists');
+            await expect(tx).rejectedWith('AuctionHouseUnexpectedBuyer');
         });
 
         it(`should fail if the auction has ended`, async () => {
@@ -579,10 +579,10 @@ describe(`AuctionHouse`, () => {
 
             const tx = auctionHouse.connect(buyer).raiseInitial(AUCTION_ID, price);
 
-            await expect(tx).rejectedWith('AuctionHouseAuctionEnded');
+            await expect(tx).rejectedWith('AuctionHouseAuctionAlreadyEnded');
         });
 
-        it(`should fail if the buyer is unauthorized`);
+        it(`should fail if the buyer is not compliant`);
     });
 
     describe(`method 'raiseInitial' with Ether`, () => {
@@ -740,7 +740,7 @@ describe(`AuctionHouse`, () => {
         it(`should fail if the auction does not exist`, async () => {
             const tx = auctionHouse.connect(buyer).raise(NON_EXISTENT_AUCTION_ID, AUCTION_PRICE);
 
-            await expect(tx).rejectedWith('AuctionHouseAuctionNotExist');
+            await expect(tx).rejectedWith('AuctionHouseNonexistentAuction');
         });
 
         it(`should fail if the auction has ended`, async () => {
@@ -752,7 +752,7 @@ describe(`AuctionHouse`, () => {
 
             const tx = auctionHouse.connect(buyer).raise(AUCTION_ID, initialPrice + step);
 
-            await expect(tx).rejectedWith('AuctionHouseAuctionEnded');
+            await expect(tx).rejectedWith('AuctionHouseAuctionAlreadyEnded');
         });
 
         it(`should fail if the auction does not have a buyer`, async () => {
@@ -760,10 +760,10 @@ describe(`AuctionHouse`, () => {
 
             const tx = auctionHouse.connect(buyer).raise(AUCTION_ID, initialPrice + step);
 
-            await expect(tx).rejectedWith('AuctionHouseBuyerNotExists');
+            await expect(tx).rejectedWith('AuctionHouseMissingBuyer');
         });
 
-        it(`should fail if the buyer is unauthorized`);
+        it(`should fail if the buyer is not compliant`);
     });
 
     describe(`method 'raise' with Ether`, () => {
@@ -910,7 +910,7 @@ describe(`AuctionHouse`, () => {
         it(`should fail if the auction does not exist`, async () => {
             const tx = auctionHouse.connect(buyer).finish(NON_EXISTENT_AUCTION_ID);
 
-            await expect(tx).rejectedWith('AuctionHouseAuctionNotExist');
+            await expect(tx).rejectedWith('AuctionHouseNonexistentAuction');
         });
 
         it(`should fail if the token has been sold`, async () => {
@@ -924,7 +924,7 @@ describe(`AuctionHouse`, () => {
 
             const tx = auctionHouse.connect(buyer).finish(AUCTION_ID);
 
-            await expect(tx).rejectedWith('AuctionHouseTokenSold');
+            await expect(tx).rejectedWith('AuctionHouseTokenAlreadySold');
         });
 
         it(`should fail if the auction has not ended`, async () => {
@@ -944,7 +944,7 @@ describe(`AuctionHouse`, () => {
 
             const tx = auctionHouse.connect(buyer).finish(AUCTION_ID);
 
-            await expect(tx).rejectedWith('AuctionHouseBuyerNotExists');
+            await expect(tx).rejectedWith('AuctionHouseMissingBuyer');
         });
     });
 
@@ -996,13 +996,13 @@ describe(`AuctionHouse`, () => {
 
             const tx2 = auctionHouse.connect(buyer).raiseInitial(AUCTION_ID, price);
 
-            await expect(tx2).rejectedWith('AuctionHouseAuctionEnded');
+            await expect(tx2).rejectedWith('AuctionHouseAuctionAlreadyEnded');
         });
 
         it(`should fail if the auction does not exist`, async () => {
             const tx = auctionHouse.connect(admin).cancel(SECOND_AUCTION_ID);
 
-            await expect(tx).rejectedWith('AuctionHouseAuctionNotExist');
+            await expect(tx).rejectedWith('AuctionHouseNonexistentAuction');
         });
 
         it(`should fail if the auction has a buyer`, async () => {
@@ -1010,7 +1010,7 @@ describe(`AuctionHouse`, () => {
 
             const tx = auctionHouse.connect(admin).cancel(AUCTION_ID);
 
-            await expect(tx).rejectedWith('AuctionHouseBuyerExists');
+            await expect(tx).rejectedWith('AuctionHouseUnexpectedBuyer');
         });
 
         it(`should fail if the auction has already ended`, async () => {
@@ -1020,7 +1020,7 @@ describe(`AuctionHouse`, () => {
 
             const tx = auctionHouse.connect(admin).cancel(AUCTION_ID);
 
-            await expect(tx).rejectedWith('AuctionHouseAuctionEnded');
+            await expect(tx).rejectedWith('AuctionHouseAuctionAlreadyEnded');
         });
 
         it(`should fail if the sender is not the auction house admin`, async () => {
@@ -1059,37 +1059,52 @@ describe(`AuctionHouse`, () => {
             await usdc.connect(buyer).mintAndApprove(auctionHouse, MaxInt256);
         });
 
+        it(`should return 'false' for a token that has never been put up for auction`, async () => {
+            const tokenReserved = await auctionHouse.tokenReserved(NON_EXISTENT_TOKEN_ID);
+
+            expect(tokenReserved).equal(false);
+        });
+
         it(`should return 'true' for a token that is in an active auction`, async () => {
             const tokenReserved = await auctionHouse.tokenReserved(TOKEN_ID);
 
             expect(tokenReserved).equal(true);
         });
 
-        it(`should return 'true' for a token that is in an inactive auction with a buyer`, async () => {
+        it(`should return 'false' for a token that has been sold`, async () => {
             const { price, endTime } = await auctionHouse.auction(AUCTION_ID);
 
             await auctionHouse.connect(buyer).raiseInitial(AUCTION_ID, price);
 
             await setNextBlockTimestamp(endTime);
 
-            const tokenReserved = await auctionHouse.tokenReserved(TOKEN_ID);
-
-            expect(tokenReserved).equal(true);
-        });
-
-        it(`should return 'false' for a token that has not been sold`, async () => {
-            const { endTime } = await auctionHouse.auction(AUCTION_ID);
-
-            await setNextBlockTimestamp(endTime);
-            await mine();
+            await auctionHouse.connect(buyer).finish(AUCTION_ID);
 
             const tokenReserved = await auctionHouse.tokenReserved(TOKEN_ID);
 
             expect(tokenReserved).equal(false);
         });
 
-        it(`should return 'false' for a token that has never been put up for auction`, async () => {
-            const tokenReserved = await auctionHouse.tokenReserved(NON_EXISTENT_TOKEN_ID);
+        it(`should return 'true' for a token that is in an ended auction with a buyer, but not yet finished`, async () => {
+            const { price, endTime } = await auctionHouse.auction(AUCTION_ID);
+
+            await auctionHouse.connect(buyer).raiseInitial(AUCTION_ID, price);
+
+            await setNextBlockTimestamp(endTime);
+            await mine();
+
+            const tokenReserved = await auctionHouse.tokenReserved(TOKEN_ID);
+
+            expect(tokenReserved).equal(true);
+        });
+
+        it(`should return 'false' for a token that is in an ended auction without a buyer`, async () => {
+            const { endTime } = await auctionHouse.auction(AUCTION_ID);
+
+            await setNextBlockTimestamp(endTime);
+            await mine();
+
+            const tokenReserved = await auctionHouse.tokenReserved(TOKEN_ID);
 
             expect(tokenReserved).equal(false);
         });
@@ -1287,7 +1302,7 @@ describe(`AuctionHouse`, () => {
             await expect(tx).rejectedWith('ShareUtilsInvalidSum(8000)');
         });
 
-        it(`should fail if shares and participants are missing`, async () => {
+        it(`should fail if participants are missing`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
             const auctionCreationPermit: AuctionCreationPermit.TypeStruct = {
@@ -1312,7 +1327,7 @@ describe(`AuctionHouse`, () => {
                 sender: institution,
             });
 
-            await expect(tx).rejectedWith('ShareUtilsInvalidSum(0)');
+            await expect(tx).rejectedWith('ShareUtilsInvalidParticipantsCount(0)');
         });
 
         it(`should fail if a participant address is zero`, async () => {

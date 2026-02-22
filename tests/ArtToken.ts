@@ -98,6 +98,12 @@ describe('ArtToken', function () {
                 sender: buyer,
             });
 
+            const tokenOwner = await artToken.ownerOf(TOKEN_ID);
+            const tokenURI = await artToken.tokenURI(TOKEN_ID);
+
+            expect(tokenOwner).equal(buyerAddr);
+            expect(tokenURI).equal(TOKEN_URI);
+
             await expect(tx) //
                 .emit(usdc, 'Transfer')
                 .withArgs(buyerAddr, artTokenAddr, TOKEN_PRICE + TOKEN_FEE);
@@ -202,7 +208,7 @@ describe('ArtToken', function () {
                 sender: buyer,
             });
 
-            await expect(tx).rejectedWith('ArtTokenCurrencyInvalid');
+            await expect(tx).rejectedWith('ArtTokenUnsupportedCurrency');
         });
 
         it(`should fail if the token is reserved by an auction`, async () => {
@@ -253,7 +259,7 @@ describe('ArtToken', function () {
             await expect(tx).rejectedWith('ArtTokenTokenReservedByAuction');
         });
 
-        it(`should fail if the permit signer is not the art token signer`, async () => {
+        it(`should fail if the permit signer is not the art-token signer`, async () => {
             const latestBlockTimestamp = await getLatestBlockTimestamp();
 
             const tokenMintingPermit: TokenMintingPermit.TypeStruct = {
@@ -382,11 +388,11 @@ describe('ArtToken', function () {
         });
     });
 
-    describe(`method 'mintFromAuctionHouse'`, () => {
+    describe(`method 'safeMintFromAuctionHouse'`, () => {
         it(`should fail if the caller is not the auction house`, async () => {
             const tx = artToken
                 .connect(randomAccount)
-                .mintFromAuctionHouse(randomAccountAddr, TOKEN_ID, TOKEN_URI, TOKEN_CONFIG);
+                .safeMintFromAuctionHouse(randomAccountAddr, TOKEN_ID, TOKEN_URI, TOKEN_CONFIG);
 
             await expect(tx).rejectedWith('ArtTokenUnauthorizedAccount');
         });
@@ -453,7 +459,7 @@ describe('ArtToken', function () {
                     it(`should fail if a token is transferred to a non-partner contract`, async () => {
                         const tx = artToken.connect(buyer).transferFrom(buyer, usdc, TOKEN_ID);
 
-                        await expect(tx).rejectedWith('ArtTokenUnauthorizedAccount');
+                        await expect(tx).rejectedWith('ArtTokenNonCompliantAccount');
                     });
                 }
 
@@ -531,7 +537,7 @@ describe('ArtToken', function () {
                     it(`should fail if approval is provided to a non-partner contract`, async () => {
                         const tx = artToken.connect(buyer).approve(usdc, TOKEN_ID);
 
-                        await expect(tx).rejectedWith('ArtTokenUnauthorizedAccount');
+                        await expect(tx).rejectedWith('ArtTokenNonCompliantAccount');
                     });
 
                     it(
@@ -612,7 +618,7 @@ describe('ArtToken', function () {
                 it(`should fail if approval is provided to a non-partner contract`, async () => {
                     const tx = artToken.connect(buyer).setApprovalForAll(usdc, true);
 
-                    await expect(tx).rejectedWith('ArtTokenUnauthorizedAccount');
+                    await expect(tx).rejectedWith('ArtTokenNonCompliantAccount');
                 });
 
                 if ([REGULATION_MODE_NONE, REGULATION_MODE_REGULATED].includes(regulationMode)) {
@@ -724,23 +730,23 @@ describe('ArtToken', function () {
         });
     });
 
-    describe(`method 'recipientAuthorized'`, () => {
+    describe(`method 'accountCompliant'`, () => {
         it(`should return 'true' for a non-contract account`, async () => {
-            const authorized = await artToken.recipientAuthorized(randomAccount);
+            const compliant = await artToken.accountCompliant(randomAccount);
 
-            expect(authorized).equal(true);
+            expect(compliant).equal(true);
         });
 
         it(`should return 'true' for a partner contract`, async () => {
-            const authorized = await artToken.recipientAuthorized(market);
+            const compliant = await artToken.accountCompliant(market);
 
-            expect(authorized).equal(true);
+            expect(compliant).equal(true);
         });
 
         it(`should return 'false' for a non-partner contract`, async () => {
-            const authorized = await artToken.recipientAuthorized(usdc);
+            const compliant = await artToken.accountCompliant(usdc);
 
-            expect(authorized).equal(false);
+            expect(compliant).equal(false);
         });
     });
 

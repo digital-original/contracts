@@ -4,16 +4,22 @@ pragma solidity ^0.8.20;
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {ONE_HUNDRED_PERCENT_IN_BP} from "../../utils/Constants.sol";
 
+/**
+ * @title ShareUtils
+ * @notice A library for calculating and validating share distributions.
+ * @dev This library provides functions to calculate individual reward amounts based on shares
+ *      and to validate the conditions for a share distribution.
+ */
 library ShareUtils {
+    /// @notice The maximum number of participants allowed in a share distribution.
+    uint256 private constant MAX_PARTICIPANTS = 10;
+
     /**
      * @notice Calculates the individual reward amounts from a total amount based on shares.
-     *
      * @dev The last participant receives the remaining amount to prevent loss from rounding errors.
-     *
-     * @param amount The total amount to be divided.
+     * @param amount The total amount to be distributed.
      * @param shares An array of shares (in basis points).
-     *
-     * @return rewards An array of calculated reward amounts for each participant.
+     * @return rewards An array of calculated reward amounts corresponding to each share.
      */
     function calculateRewards(
         uint256 amount,
@@ -32,7 +38,7 @@ library ShareUtils {
             rewards[i] = value;
 
             unchecked {
-                i++;
+                ++i;
             }
         }
 
@@ -42,15 +48,20 @@ library ShareUtils {
 
     /**
      * @notice Validates the conditions for a share distribution.
-     *
-     * @dev Checks for correct array lengths, non-zero addresses, non-zero shares, and that the
-     *      total shares sum up to 100%.
-     *
+     * @dev Checks for correct array lengths, non-zero addresses, non-zero shares,
+     *      and that the total shares sum up to 100%.
      * @param participants An array of addresses for the recipients.
      * @param shares An array of shares (in basis points).
      */
-    function requireValidConditions(address[] calldata participants, uint256[] calldata shares) internal pure {
+    function requireValidConditions(
+        address[] calldata participants,
+        uint256[] calldata shares
+    ) internal pure {
         uint256 participantsCount = participants.length;
+
+        if (participantsCount == 0 || participantsCount > MAX_PARTICIPANTS) {
+            revert ShareUtilsInvalidParticipantsCount(participantsCount);
+        }
 
         if (participantsCount != shares.length) {
             revert ShareUtilsParticipantsSharesMismatch();
@@ -72,7 +83,7 @@ library ShareUtils {
             sharesSum += share;
 
             unchecked {
-                i++;
+                ++i;
             }
         }
 
@@ -80,6 +91,10 @@ library ShareUtils {
             revert ShareUtilsInvalidSum(sharesSum);
         }
     }
+
+    /// @dev Thrown when the number of participants is zero or exceeds the maximum allowed.
+    /// @param participantsCount The actual number of participants provided.
+    error ShareUtilsInvalidParticipantsCount(uint256 participantsCount);
 
     /// @dev Thrown when `participants.length != shares.length`.
     error ShareUtilsParticipantsSharesMismatch();

@@ -3,14 +3,12 @@ pragma solidity ^0.8.20;
 
 /**
  * @title Order
- *
- * @notice EIP-712 struct for a market order, which can be either a sell-side (ask) or a buy-side
- *         (bid) order.
+ * @notice EIP-712 struct for a market order, which can be either a sell-side (ask) or
+ *         a buy-side (bid) order.
  */
 library Order {
     /**
      * @notice Indicates the side of the order.
-     *
      * @param Ask A sell-side order, where the maker is the seller.
      * @param Bid A buy-side order, where the maker is the buyer.
      */
@@ -21,10 +19,9 @@ library Order {
 
     /**
      * @notice Represents a market order.
-     *
      * @param side The side of the order (ask or bid).
      * @param collection Address of the ERC-721 collection contract.
-     * @param currency Address of the settlement currency (ERC-20).
+     * @param currency Address of the settlement currency.
      * @param maker Address of the order's creator.
      * @param tokenId The identifier of the token being traded.
      * @param price The price of the order.
@@ -63,9 +60,7 @@ library Order {
 
     /**
      * @notice Hashes an order using the EIP-712 standard.
-     *
      * @param order The order to hash.
-     *
      * @return orderHash The EIP-712 hash of the order.
      */
     function hash(Type calldata order) internal pure returns (bytes32) {

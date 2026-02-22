@@ -5,7 +5,6 @@ import {TokenConfig} from "../../utils/TokenConfig.sol";
 
 /**
  * @title TokenMintingPermit
- *
  * @notice EIP-712 struct for a token minting permit, which authorizes the minting of a new token with specified
  *         parameters.
  */
@@ -14,7 +13,6 @@ library TokenMintingPermit {
 
     /**
      * @notice Represents a token minting permit.
-     *
      * @param tokenId The ID of the token to be minted.
      * @param minter The address of the account that will mint the token.
      * @param currency The token used for payment.
@@ -59,9 +57,7 @@ library TokenMintingPermit {
 
     /**
      * @notice Hashes a token minting permit using the EIP-712 standard.
-     *
      * @param permit The permit to hash.
-     *
      * @return The EIP-712 hash of the permit.
      */
     function hash(Type calldata permit) internal pure returns (bytes32) {

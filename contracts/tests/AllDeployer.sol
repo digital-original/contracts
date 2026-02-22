@@ -20,13 +20,14 @@ contract AllDeployer {
         address auctionHouseProxy = Deployment.calculateContractAddress(address(this), 7);
         address marketProxy = Deployment.calculateContractAddress(address(this), 8);
 
+        // prettier-ignore
         {
             address artTokenImpl = address(
                 new ArtToken(
                     artTokenProxy,
                     address(this),
                     wrappedEther,
-                    auctionHouseProxy //
+                    auctionHouseProxy
                 )
             );
 
@@ -36,7 +37,7 @@ contract AllDeployer {
                     address(this),
                     wrappedEther,
                     artTokenProxy,
-                    minAuctionDuration //
+                    minAuctionDuration
                 )
             );
 
@@ -44,7 +45,7 @@ contract AllDeployer {
                 new Market(
                     marketProxy,
                     address(this),
-                    wrappedEther //
+                    wrappedEther
                 )
             );
 

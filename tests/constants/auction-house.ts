@@ -1,3 +1,5 @@
+import { id } from 'ethers';
+
 export const AUCTION_HOUSE_DOMAIN_NAME = 'AuctionHouse';
 export const AUCTION_HOUSE_DOMAIN_VERSION = '1';
 
@@ -20,9 +22,9 @@ export const AUCTION_CREATION_PERMIT_TYPE = {
 
 export const MIN_AUCTION_DURATION = 1800;
 
-export const AUCTION_ID = 1;
-export const NON_EXISTENT_AUCTION_ID = 9999;
-export const SECOND_AUCTION_ID = 2;
+export const AUCTION_ID = +id('AUCTION_ID').slice(0, 10);
+export const NON_EXISTENT_AUCTION_ID = +id('NON_EXISTENT_AUCTION_ID').slice(0, 10);
+export const SECOND_AUCTION_ID = +id('SECOND_AUCTION_ID').slice(0, 10);
 
 export const AUCTION_STEP = 1_000_000n;
 export const AUCTION_PRICE = 1_000_000_000n;

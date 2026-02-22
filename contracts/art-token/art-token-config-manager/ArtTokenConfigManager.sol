@@ -9,7 +9,6 @@ import {IArtTokenConfigManager} from "./IArtTokenConfigManager.sol";
 
 /**
  * @title ArtTokenConfigManager
- *
  * @notice Abstract contract that implements the logic for managing token configurations.
  * @dev This contract is intended to be inherited by other contracts to provide token
  *      configuration management functionality. It uses `ArtTokenConfigManagerStorage`
@@ -17,7 +16,10 @@ import {IArtTokenConfigManager} from "./IArtTokenConfigManager.sol";
  */
 abstract contract ArtTokenConfigManager is IArtTokenConfigManager, RoleSystem {
     /**
-     * @inheritdoc IArtTokenConfigManager
+     * @notice Updates the creator of a specific token.
+     * @dev Can only be called by an account with the `ADMIN_ROLE`.
+     * @param tokenId The ID of the token to update.
+     * @param creator The address of the new creator.
      */
     function updateTokenCreator(uint256 tokenId, address creator) external onlyRole(Roles.ADMIN_ROLE) {
         ArtTokenConfigManagerStorage.Layout storage $ = ArtTokenConfigManagerStorage.layout();
@@ -28,7 +30,10 @@ abstract contract ArtTokenConfigManager is IArtTokenConfigManager, RoleSystem {
     }
 
     /**
-     * @inheritdoc IArtTokenConfigManager
+     * @notice Updates the regulation mode of a specific token.
+     * @dev Can only be called by an account with the `ADMIN_ROLE`.
+     * @param tokenId The ID of the token to update.
+     * @param regulationMode The new regulation mode.
      */
     function updateTokenRegulationMode(
         uint256 tokenId,
@@ -42,7 +47,9 @@ abstract contract ArtTokenConfigManager is IArtTokenConfigManager, RoleSystem {
     }
 
     /**
-     * @inheritdoc IArtTokenConfigManager
+     * @notice Returns the creator of a specific token.
+     * @param tokenId The ID of the token to query.
+     * @return creator The address of the token's creator.
      */
     function tokenCreator(uint256 tokenId) external view returns (address creator) {
         ArtTokenConfigManagerStorage.Layout storage $ = ArtTokenConfigManagerStorage.layout();
@@ -51,9 +58,13 @@ abstract contract ArtTokenConfigManager is IArtTokenConfigManager, RoleSystem {
     }
 
     /**
-     * @inheritdoc IArtTokenConfigManager
+     * @notice Returns the regulation mode of a specific token.
+     * @param tokenId The ID of the token to query.
+     * @return regulationMode The regulation mode of the token.
      */
-    function tokenRegulationMode(uint256 tokenId) external view returns (TokenConfig.RegulationMode regulationMode) {
+    function tokenRegulationMode(
+        uint256 tokenId
+    ) external view returns (TokenConfig.RegulationMode regulationMode) {
         ArtTokenConfigManagerStorage.Layout storage $ = ArtTokenConfigManagerStorage.layout();
 
         return $.tokenConfig[tokenId].regulationMode;
@@ -96,7 +107,9 @@ abstract contract ArtTokenConfigManager is IArtTokenConfigManager, RoleSystem {
      * @param tokenId The ID of the token to query.
      * @return regulationMode The regulation mode of the token.
      */
-    function _tokenRegulationMode(uint256 tokenId) internal view returns (TokenConfig.RegulationMode regulationMode) {
+    function _tokenRegulationMode(
+        uint256 tokenId
+    ) internal view returns (TokenConfig.RegulationMode regulationMode) {
         ArtTokenConfigManagerStorage.Layout storage $ = ArtTokenConfigManagerStorage.layout();
 
         regulationMode = $.tokenConfig[tokenId].regulationMode;

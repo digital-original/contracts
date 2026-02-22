@@ -361,7 +361,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).rejectedWith('MarketUnauthorizedOrder');
+            await expect(tx).rejectedWith('MarketInvalidOrderSignature');
         });
 
         it(`should fail if the permit order hash and the order hash do not match`, async () => {
@@ -397,7 +397,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).rejectedWith('MarketInvalidOrderHash');
+            await expect(tx).rejectedWith('MarketOrderHashMismatch');
         });
 
         it(`should fail if the permit signer is not the market signer`, async () => {
@@ -581,7 +581,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).rejectedWith('MarketCurrencyInvalid');
+            await expect(tx).rejectedWith('MarketUnsupportedCurrency');
         });
 
         it(`should fail if the sender is not the permitted taker`, async () => {
@@ -1209,7 +1209,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).rejectedWith('MarketUnauthorizedOrder');
+            await expect(tx).rejectedWith('MarketInvalidOrderSignature');
         });
 
         it(`should fail if the permit order hash and the order hash do not match`, async () => {
@@ -1245,7 +1245,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).rejectedWith('MarketInvalidOrderHash');
+            await expect(tx).rejectedWith('MarketOrderHashMismatch');
         });
 
         it(`should fail if the permit signer is not the market signer`, async () => {
@@ -1429,7 +1429,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).rejectedWith('MarketCurrencyInvalid');
+            await expect(tx).rejectedWith('MarketUnsupportedCurrency');
         });
 
         it(`should fail if the sender is not the permitted taker`, async () => {
@@ -1613,7 +1613,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).rejectedWith('MarketCurrencyInvalid');
+            await expect(tx).rejectedWith('MarketUnsupportedCurrency');
         });
     });
 

@@ -18,6 +18,12 @@
             }
         ],
         "no-empty-blocks": "off",
-        "func-name-mixedcase": "off"
+        "func-name-mixedcase": "off",
+        "use-natspec": "off",
+        "gas-small-strings": "off",
+        "gas-indexed-events": "off",
+        "function-max-lines": "off",
+        "gas-strict-inequalities": "off",
+        "no-inline-assembly": "off"
     }
 }

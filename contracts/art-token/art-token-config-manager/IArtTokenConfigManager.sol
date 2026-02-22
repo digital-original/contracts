@@ -5,7 +5,6 @@ import {TokenConfig} from "../../utils/TokenConfig.sol";
 
 /**
  * @title IArtTokenConfigManager
- *
  * @notice Manages configuration for individual tokens, such as creator and regulation mode.
  */
 interface IArtTokenConfigManager {
@@ -17,7 +16,6 @@ interface IArtTokenConfigManager {
 
     /**
      * @notice Updates the creator of a specific token.
-     * @dev Can only be called by an account with the `ADMIN_ROLE`.
      * @param tokenId The ID of the token to update.
      * @param creator The address of the new creator.
      */
@@ -25,7 +23,6 @@ interface IArtTokenConfigManager {
 
     /**
      * @notice Updates the regulation mode of a specific token.
-     * @dev Can only be called by an account with the `ADMIN_ROLE`.
      * @param tokenId The ID of the token to update.
      * @param regulationMode The new regulation mode.
      */
@@ -43,7 +40,9 @@ interface IArtTokenConfigManager {
      * @param tokenId The ID of the token to query.
      * @return regulationMode The regulation mode of the token.
      */
-    function tokenRegulationMode(uint256 tokenId) external view returns (TokenConfig.RegulationMode regulationMode);
+    function tokenRegulationMode(
+        uint256 tokenId
+    ) external view returns (TokenConfig.RegulationMode regulationMode);
 
     /**
      * @dev Thrown when an unauthorized account attempts to call a restricted function.

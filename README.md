@@ -4,10 +4,10 @@
 ![tests](https://github.com/digital-original/contracts/actions/workflows/test.yml/badge.svg)
 ![license](https://img.shields.io/badge/license-GPLv3-blue)
 
-# Digital Original – Smart-Contracts Suite
+# Digital Original – Smart Contracts Suite
 
 Digital Original (DO) is a modular on-chain framework for managing primary sales and secondary markets of digital collectibles (NFTs).
-This repository hosts all **Solidity smart-contracts, tests and tooling** required to deploy and operate the protocol.
+This repository hosts all **Solidity smart contracts, tests and tooling** required to deploy and operate the protocol.
 
 ## 🧩 Features
 
@@ -17,7 +17,7 @@ This repository hosts all **Solidity smart-contracts, tests and tooling** requir
 - **EIP-712 Permits**: Gas-efficient and secure transactions with cryptographic authorization.
 - **Role-Based Access Control**: Granular control over contract functions and administrative actions.
 - **Flexible Fee Structures**: Configurable maker and taker fees for market transactions.
-- **Multi-Currency Support**: Support for multiple ERC-20 tokens for payments.
+- **Multi-Currency Support**: Configurable support for multiple payment currencies.
 - **Upgradeable Contracts**: Upgradeable contract architecture for future improvements.
 
 ## 📚 Contracts
@@ -38,7 +38,7 @@ The `AuctionHouse` contract manages English-style auctions for primary NFT sales
 
 - **Auction Creation**: Authorized creation of time-bound auctions with EIP-712 signatures
 - **Bidding System**: Progressive bidding with minimum raise steps and automatic refunds to outbid participants
-- **Multi-Currency**: Configurable support for multiple ERC-20 payment currencies
+- **Multi-Currency**: Configurable support for multiple payment currencies
 
 ### Market
 
@@ -46,7 +46,7 @@ The `Market` contract facilitates peer-to-peer secondary trading of NFTs through
 
 - **Order Types**: Supports both sell-side (ask) and buy-side (bid) orders
 - **Off-chain Orders**: Gas-efficient trading through EIP-712 signed orders executed on-chain
-- **Multi-Currency**: Configurable support for multiple ERC-20 payment currencies
+- **Multi-Currency**: Configurable support for multiple payment currencies
 - **Order Management**: Order invalidation capabilities for makers and admins
 - **Fee Structure**: Flexible fee system supporting both maker and taker fees
 - **Revenue Sharing**: Built-in mechanism for distributing fees among multiple participants

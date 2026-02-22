@@ -3,7 +3,6 @@ pragma solidity ^0.8.20;
 
 /**
  * @title Roles
- *
  * @notice Defines keccak256 hashed identifiers for role-based access control used across the
  *         protocol. These identifiers are consumed by the {RoleSystem} mix-in and contracts that
  *         inherit from it.

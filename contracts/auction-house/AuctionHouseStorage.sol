@@ -6,7 +6,6 @@ import {TokenConfig} from "../utils/TokenConfig.sol";
 
 /**
  * @title AuctionHouseStorage
- *
  * @notice Defines the storage layout for {AuctionHouse}. Using a deterministic slot makes the
  *         module safe for use behind proxies and alongside other upgradeable components.
  */
@@ -27,13 +26,11 @@ library AuctionHouseStorage {
 
     /**
      * @notice Returns a pointer to the storage layout.
-     *
      * @return $ The pointer to the Layout struct in storage.
      */
     function layout() internal pure returns (Layout storage $) {
         bytes32 slot = STORAGE_SLOT;
 
-        // solhint-disable-next-line
         assembly {
             $.slot := slot
         }

@@ -13,6 +13,11 @@
             },
             {
                 "internalType": "address",
+                "name": "wrappedEther",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
                 "name": "auctionHouse",
                 "type": "address"
             }
@@ -54,29 +59,25 @@
         "type": "error"
     },
     {
-        "inputs": [],
-        "name": "ArtTokenCurrencyInvalid",
-        "type": "error"
-    },
-    {
-        "inputs": [],
-        "name": "ArtTokenInvalidFee",
-        "type": "error"
-    },
-    {
-        "inputs": [],
-        "name": "ArtTokenInvalidPrice",
+        "inputs": [
+            {
+                "internalType": "uint8",
+                "name": "argIndex",
+                "type": "uint8"
+            }
+        ],
+        "name": "ArtTokenMisconfiguration",
         "type": "error"
     },
     {
         "inputs": [
             {
-                "internalType": "uint256",
-                "name": "argIndex",
-                "type": "uint256"
+                "internalType": "address",
+                "name": "account",
+                "type": "address"
             }
         ],
-        "name": "ArtTokenMisconfiguration",
+        "name": "ArtTokenNonCompliantAccount",
         "type": "error"
     },
     {
@@ -92,7 +93,7 @@
     },
     {
         "inputs": [],
-        "name": "ArtTokenTokenReserved",
+        "name": "ArtTokenTokenReservedByAuction",
         "type": "error"
     },
     {
@@ -108,12 +109,68 @@
     },
     {
         "inputs": [],
+        "name": "ArtTokenUnsupportedCurrency",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "ArtTokenZeroPrice",
+        "type": "error"
+    },
+    {
+        "inputs": [],
         "name": "AuthorizationDeadlineExpired",
         "type": "error"
     },
     {
         "inputs": [],
         "name": "AuthorizationUnauthorizedAction",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "CurrencyManagerZeroAddress",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "CurrencyTransfersIncorrectEtherValue",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "CurrencyTransfersIncorrectTotalAmount",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "CurrencyTransfersInvalidInputLengths",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint8",
+                "name": "argIndex",
+                "type": "uint8"
+            }
+        ],
+        "name": "CurrencyTransfersMisconfiguration",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "CurrencyTransfersUnexpectedEther",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "CurrencyTransfersZeroAddress",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "CurrencyTransfersZeroValue",
         "type": "error"
     },
     {
@@ -146,9 +203,9 @@
     {
         "inputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint8",
                 "name": "argIndex",
-                "type": "uint256"
+                "type": "uint8"
             }
         ],
         "name": "EIP712DomainMisconfiguration",
@@ -301,12 +358,44 @@
     {
         "inputs": [
             {
-                "internalType": "uint256",
+                "internalType": "bytes32",
+                "name": "role",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "address",
+                "name": "account",
+                "type": "address"
+            }
+        ],
+        "name": "RoleSystemAlreadyHasRole",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint8",
                 "name": "argIndex",
-                "type": "uint256"
+                "type": "uint8"
             }
         ],
         "name": "RoleSystemMisconfiguration",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "role",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "address",
+                "name": "account",
+                "type": "address"
+            }
+        ],
+        "name": "RoleSystemMissingRole",
         "type": "error"
     },
     {
@@ -336,26 +425,6 @@
         "type": "error"
     },
     {
-        "inputs": [],
-        "name": "SafeERC20BulkTransferIncorrectTotalAmount",
-        "type": "error"
-    },
-    {
-        "inputs": [],
-        "name": "SafeERC20BulkTransferInvalidInputLengths",
-        "type": "error"
-    },
-    {
-        "inputs": [],
-        "name": "SafeERC20BulkTransferZeroAddress",
-        "type": "error"
-    },
-    {
-        "inputs": [],
-        "name": "SafeERC20BulkTransferZeroValue",
-        "type": "error"
-    },
-    {
         "inputs": [
             {
                 "internalType": "address",
@@ -364,6 +433,11 @@
             }
         ],
         "name": "SafeERC20FailedOperation",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "TokenConfigNotPopulated",
         "type": "error"
     },
     {
@@ -568,6 +642,12 @@
             {
                 "indexed": true,
                 "internalType": "address",
+                "name": "oldOwner",
+                "type": "address"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
                 "name": "newOwner",
                 "type": "address"
             }
@@ -616,6 +696,19 @@
     },
     {
         "inputs": [],
+        "name": "GAS_LIMIT_ETHER_TRANSFER",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
         "name": "MAIN",
         "outputs": [
             {
@@ -635,6 +728,38 @@
                 "internalType": "uint256",
                 "name": "",
                 "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "WRAPPED_ETHER",
+        "outputs": [
+            {
+                "internalType": "contract IWrappedEther",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "account",
+                "type": "address"
+            }
+        ],
+        "name": "accountCompliant",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "compliant",
+                "type": "bool"
             }
         ],
         "stateMutability": "view",
@@ -882,46 +1007,6 @@
         "type": "function"
     },
     {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "to",
-                "type": "address"
-            },
-            {
-                "internalType": "uint256",
-                "name": "tokenId",
-                "type": "uint256"
-            },
-            {
-                "internalType": "string",
-                "name": "_tokenURI",
-                "type": "string"
-            },
-            {
-                "components": [
-                    {
-                        "internalType": "address",
-                        "name": "creator",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "enum TokenConfig.RegulationMode",
-                        "name": "regulationMode",
-                        "type": "uint8"
-                    }
-                ],
-                "internalType": "struct TokenConfig.Type",
-                "name": "tokenConfig",
-                "type": "tuple"
-            }
-        ],
-        "name": "mintFromAuctionHouse",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
         "inputs": [],
         "name": "name",
         "outputs": [
@@ -948,25 +1033,6 @@
                 "internalType": "address",
                 "name": "",
                 "type": "address"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "account",
-                "type": "address"
-            }
-        ],
-        "name": "recipientAuthorized",
-        "outputs": [
-            {
-                "internalType": "bool",
-                "name": "authorized",
-                "type": "bool"
             }
         ],
         "stateMutability": "view",
@@ -1017,6 +1083,46 @@
             }
         ],
         "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "to",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "tokenId",
+                "type": "uint256"
+            },
+            {
+                "internalType": "string",
+                "name": "_tokenURI",
+                "type": "string"
+            },
+            {
+                "components": [
+                    {
+                        "internalType": "address",
+                        "name": "creator",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "enum TokenConfig.RegulationMode",
+                        "name": "regulationMode",
+                        "type": "uint8"
+                    }
+                ],
+                "internalType": "struct TokenConfig.Type",
+                "name": "tokenConfig",
+                "type": "tuple"
+            }
+        ],
+        "name": "safeMintFromAuctionHouse",
+        "outputs": [],
+        "stateMutability": "nonpayable",
         "type": "function"
     },
     {
@@ -1179,6 +1285,25 @@
     {
         "inputs": [
             {
+                "internalType": "uint256",
+                "name": "tokenId",
+                "type": "uint256"
+            }
+        ],
+        "name": "tokenExists",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "exists",
+                "type": "bool"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
                 "internalType": "address",
                 "name": "owner",
                 "type": "address"
@@ -1214,25 +1339,6 @@
                 "internalType": "enum TokenConfig.RegulationMode",
                 "name": "regulationMode",
                 "type": "uint8"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "tokenId",
-                "type": "uint256"
-            }
-        ],
-        "name": "tokenReserved",
-        "outputs": [
-            {
-                "internalType": "bool",
-                "name": "reserved",
-                "type": "bool"
             }
         ],
         "stateMutability": "view",
@@ -1323,7 +1429,7 @@
         "outputs": [
             {
                 "internalType": "address",
-                "name": "owner",
+                "name": "",
                 "type": "address"
             }
         ],
