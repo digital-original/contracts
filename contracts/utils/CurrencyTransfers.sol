@@ -6,18 +6,39 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {ETHER} from "../utils/Constants.sol";
 import {IWrappedEther} from "../utils/IWrappedEther.sol";
 
-contract CurrencyTransfers {
+/**
+ * @title CurrencyTransfers
+ * @notice This contract provides utility functions for transferring Ether and ERC-20 tokens.
+ */
+abstract contract CurrencyTransfers {
+    /// @notice Gas limit for direct Ether transfers.
     uint256 public constant GAS_LIMIT_ETHER_TRANSFER = 2_300;
 
+    /// @notice The Wrapped Ether contract.
     IWrappedEther public immutable WRAPPED_ETHER;
 
+    /**
+     * @notice Initializes the Wrapped Ether address.
+     * @param wrappedEther The address of the Wrapped Ether contract.
+     */
     constructor(address wrappedEther) {
         if (wrappedEther == address(0)) revert CurrencyTransfersMisconfiguration(0);
 
         WRAPPED_ETHER = IWrappedEther(wrappedEther);
     }
 
+    /**
+     * @notice Sends a specified amount of a currency to a recipient.
+     * @dev If the currency is Ether, it attempts a direct transfer and wraps to WETH as a fallback.
+     * @param currency The address of the currency.
+     * @param to The recipient's address.
+     * @param value The amount of currency to send.
+     */
     function _sendCurrency(address currency, address to, uint256 value) internal {
+        if (value == 0) {
+            return;
+        }
+
         if (currency == ETHER) {
             _sendEtherAndWrapIfFail(to, value);
         } else {
@@ -25,6 +46,13 @@ contract CurrencyTransfers {
         }
     }
 
+    /**
+     * @notice Receives a specified amount of a currency from a sender.
+     * @dev Validates the `msg.value` for Ether transactions and ensures no Ether is sent for token transactions.
+     * @param currency The address of the currency.
+     * @param from The sender's address.
+     * @param value The amount of currency to receive.
+     */
     function _receiveCurrency(address currency, address from, uint256 value) internal {
         if (currency == ETHER) {
             // Ensure the correct amount of Ether is sent with the transaction
@@ -37,10 +65,22 @@ contract CurrencyTransfers {
                 revert CurrencyTransfersUnexpectedEther();
             }
 
+            if (value == 0) {
+                return;
+            }
+
             SafeERC20.safeTransferFrom(IERC20(currency), from, address(this), value);
         }
     }
 
+    /**
+     * @notice Sends a currency to multiple recipients in a batch.
+     * @dev Reverts if input arrays have different lengths or if any transfer details are invalid.
+     * @param currency The address of the currency to send.
+     * @param amount The total amount to be distributed.
+     * @param receivers An array of recipient addresses.
+     * @param values An array of amounts to send to each recipient.
+     */
     function _sendCurrencyBatch(
         address currency,
         uint256 amount,
@@ -72,7 +112,7 @@ contract CurrencyTransfers {
             sent += value;
 
             unchecked {
-                i++;
+                ++i;
             }
         }
 
@@ -81,6 +121,11 @@ contract CurrencyTransfers {
         }
     }
 
+    /**
+     * @notice Attempts to send Ether and wraps it into WETH if the direct transfer fails.
+     * @param to The recipient's address.
+     * @param value The amount of Ether to send.
+     */
     function _sendEtherAndWrapIfFail(address to, uint256 value) private {
         bool status;
 

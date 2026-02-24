@@ -5,16 +5,14 @@ import {TokenConfig} from "../../utils/TokenConfig.sol";
 
 /**
  * @title AuctionCreationPermit
- *
- * @notice EIP-712 struct for an auction creation permit, which authorizes the creation of a new auction with
- *         specified parameters.
+ * @notice EIP-712 struct for an auction creation permit, which authorizes
+ *         the creation of a new auction with specified parameters.
  */
 library AuctionCreationPermit {
     using TokenConfig for TokenConfig.Type;
 
     /**
      * @notice Represents an auction creation permit.
-     *
      * @param auctionId The ID of the auction to be created.
      * @param tokenId The ID of the token to be auctioned.
      * @param currency The token used for payment.
@@ -65,9 +63,7 @@ library AuctionCreationPermit {
 
     /**
      * @notice Hashes an auction creation permit using the EIP-712 standard.
-     *
      * @param permit The permit to hash.
-     *
      * @return The EIP-712 hash of the permit.
      */
     function hash(Type calldata permit) internal pure returns (bytes32) {
