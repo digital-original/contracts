@@ -4,7 +4,7 @@
     "license": "UNLICENSED",
     "scripts": {
         "test": "ENV_MODE=test hardhat test",
-        "compile": "ENV_MODE=test hardhat clean && hardhat compile",
+        "compile": "ENV_MODE=test hardhat clean && ENV_MODE=test hardhat compile",
         "fork": "hardhat node",
         "lint": "solhint 'contracts/**'",
         "format": "prettier --write .",
