@@ -19,7 +19,7 @@ export type ChainConfigYaml = {
 type ChainConfig = {
     chainId: number;
     url: string;
-    deployerPrivateKey: string;
+    deployerWalletAlias: string;
     main: string;
     wrappedEther: string;
 };

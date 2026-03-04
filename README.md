@@ -50,9 +50,18 @@ This will automatically run the `prepare` script, initializing your configuratio
 ### Configuration
 The project uses four YAML-based configuration files:
 1. `config.env.yaml`: API keys for Etherscan, CoinMarketCap, and Gas Reporter.
-2. `config.chain.yaml`: RPC URLs and deployer private keys per network.
+2. `config.chain.yaml`: RPC URLs and deployer wallet aliases per network.
 3. `config.collection.yaml`: Parameters for the NFT collection.
 4. `config.market.yaml`: Parameters for the marketplace.
+
+### Hardhat Configuration Variables
+Actual private keys are not stored in YAML files. Instead, they are managed via [Hardhat Configuration Variables](https://hardhat.org/hardhat-runner/docs/guides/configuration-variables).
+
+To set a private key for a specific wallet alias (e.g., `sepolia-deployer-wallet`), run:
+```bash
+npx hardhat vars set sepolia-deployer-wallet
+```
+You will be prompted to enter the private key value.
 
 ## Development Lifecycle
 

@@ -1,13 +1,13 @@
 sepolia:
     chainId: 11155111
     url: ''
-    deployerPrivateKey: ''
+    deployerWalletAlias: 'sepolia-deployer-wallet'
     main: ''
     wrappedEther: ''
 
 ethereum:
     chainId: 1
     url: ''
-    deployerPrivateKey: ''
+    deployerWalletAlias: 'ethereum-deployer-wallet'
     main: ''
     wrappedEther: ''
