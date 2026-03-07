@@ -16,6 +16,7 @@ type ExecuteAskArgs = {
     orderSigner: Signer;
     permitSigner: Signer;
     sender: Signer;
+    value?: bigint;
 };
 
 type ExecuteBidArgs = {
@@ -29,7 +30,7 @@ type ExecuteBidArgs = {
 
 export class MarketUtils {
     static async executeAsk(args: ExecuteAskArgs) {
-        const { market, order, permit, orderSigner, permitSigner, sender } = args;
+        const { market, order, permit, orderSigner, permitSigner, sender, value = 0n } = args;
 
         const domain = await this.buildDomain(market);
 
@@ -41,7 +42,9 @@ export class MarketUtils {
             permit,
         );
 
-        return market.connect(sender).executeAsk(order, permit, orderSignature, permitSignature);
+        return market
+            .connect(sender)
+            .executeAsk(order, permit, orderSignature, permitSignature, { value });
     }
 
     static async executeBid(args: ExecuteBidArgs) {

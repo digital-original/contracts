@@ -10,11 +10,9 @@ import {TokenConfig} from "../../utils/TokenConfig.sol";
  */
 library TokenMintingPermit {
     using TokenConfig for TokenConfig.Type;
-    using TokenMintingPermit for TokenMintingPermit.Type;
 
     /**
      * @notice Represents a token minting permit.
-     *
      * @param tokenId The ID of the token to be minted.
      * @param minter The address of the account that will mint the token.
      * @param currency The token used for payment.
@@ -59,9 +57,7 @@ library TokenMintingPermit {
 
     /**
      * @notice Hashes a token minting permit using the EIP-712 standard.
-     *
      * @param permit The permit to hash.
-     *
      * @return The EIP-712 hash of the permit.
      */
     function hash(Type calldata permit) internal pure returns (bytes32) {

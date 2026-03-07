@@ -1,16 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.20;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ETHER} from "../utils/Constants.sol";
 import {EIP712Domain} from "../utils/EIP712Domain.sol";
 import {EIP712Signature} from "../utils/EIP712Signature.sol";
 import {RoleSystem} from "../utils/role-system/RoleSystem.sol";
 import {CurrencyManager} from "../utils/currency-manager/CurrencyManager.sol";
+import {CurrencyTransfers} from "../utils/CurrencyTransfers.sol";
 import {Roles} from "../utils/Roles.sol";
 import {Authorization} from "../utils/Authorization.sol";
-import {SafeERC20BulkTransfer} from "../utils/SafeERC20BulkTransfer.sol";
 import {MarketStorage} from "./MarketStorage.sol";
 import {IMarket} from "./IMarket.sol";
 import {Order} from "./libraries/Order.sol";
@@ -18,32 +17,41 @@ import {OrderExecutionPermit} from "./libraries/OrderExecutionPermit.sol";
 
 /**
  * @title Market
- *
  * @notice Upgradeable secondary market contract that facilitates peer-to-peer trading of NFTs
  *         through off-chain orders. It supports both sell-side (ask) and buy-side (bid) orders,
  *         which are authorized via EIP-712 signatures.
  */
-contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authorization {
+contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authorization, CurrencyTransfers {
     using Order for Order.Type;
     using OrderExecutionPermit for OrderExecutionPermit.Type;
 
     /**
-     * @notice Contract constructor.
-     *
+     * @notice Initializes the implementation with the given immutable parameters.
      * @param proxy Proxy address used for EIP-712 verifying contract.
      * @param main Address that will be set as {RoleSystem.MAIN}.
+     * @param wrappedEther Address of the Wrapped Ether contract.
      */
-    constructor(address proxy, address main) EIP712Domain(proxy, "Market", "1") RoleSystem(main) {}
+    constructor(
+        address proxy,
+        address main,
+        address wrappedEther
+    ) EIP712Domain(proxy, "Market", "1") RoleSystem(main) CurrencyTransfers(wrappedEther) {}
 
     /**
-     * @inheritdoc IMarket
-     *
-     * @dev Flow:
-     *   1. Validates the order side, taker, currency, signatures, and time range.
-     *   2. Invalidates the order to prevent replay attacks.
-     *   3. Distributes the payment and fees.
-     *   4. Transfers the token from the seller to the buyer.
-     *   5. Emits {AskOrderExecuted}.
+     * @notice Executes a sell-side order (ask).
+     * @dev The `order` must be signed by the `maker` (seller), and the `permit` must be signed by
+     *      the market signer. The `msg.sender` is the `taker` (buyer).
+     *      `maker` is Ask side, `taker` is Bid side.
+     *      Flow:
+     *        1. Validates the order side, taker, currency, signatures, and time range.
+     *        2. Invalidates the order to prevent replay attacks.
+     *        3. Distributes the payment and fees.
+     *        4. Transfers the token from the seller to the buyer.
+     *        5. Emits {AskOrderExecuted}.
+     * @param order The ask order to execute. See {Order.Type}.
+     * @param permit The execution permit, containing revenue-sharing information. See {OrderExecutionPermit.Type}.
+     * @param orderSignature The EIP-712 signature of the `order`, signed by the `maker`.
+     * @param permitSignature The EIP-712 signature of the `permit`, signed by the market signer.
      */
     function executeAsk(
         Order.Type calldata order,
@@ -56,10 +64,15 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
         }
 
         if (permit.orderHash != order.hash()) {
-            revert MarketInvalidOrderHash();
+            revert MarketOrderHashMismatch();
+        }
+
+        if (order.price == 0) {
+            revert MarketZeroOrderPrice();
         }
 
         if (order.makerFee >= order.price) {
+            // maker is Ask side
             revert MarketInvalidAskSideFee();
         }
 
@@ -67,8 +80,8 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
             revert MarketUnauthorizedAccount();
         }
 
-        if (!currencyAllowed(order.currency)) {
-            revert MarketCurrencyInvalid();
+        if (!_currencyAllowed(order.currency)) {
+            revert MarketUnsupportedCurrency();
         }
 
         address maker = order.maker;
@@ -80,7 +93,7 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
         _invalidateOrder(maker, permit.orderHash);
 
         _distribute(
-            IERC20(order.currency),
+            order.currency,
             maker, // askSide - maker
             msg.sender, // bidSide - taker
             order.price,
@@ -108,14 +121,20 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
     }
 
     /**
-     * @inheritdoc IMarket
-     *
-     * @dev Flow:
-     *   1. Validates the order side, taker, currency, signatures, and time range.
-     *   2. Invalidates the order to prevent replay attacks.
-     *   3. Distributes the payment and fees.
-     *   4. Transfers the token from the seller to the buyer.
-     *   5. Emits {BidOrderExecuted}.
+     * @notice Executes a buy-side order (bid).
+     * @dev The `order` must be signed by the `maker` (buyer), and the `permit` must be signed by
+     *      the market signer. The `msg.sender` is the `taker` (seller).
+     *      `maker` is Bid side, `taker` is Ask side.
+     *      Flow:
+     *        1. Validates the order side, taker, currency, signatures, and time range.
+     *        2. Invalidates the order to prevent replay attacks.
+     *        3. Distributes the payment and fees.
+     *        4. Transfers the token from the seller to the buyer.
+     *        5. Emits {BidOrderExecuted}.
+     * @param order The bid order to execute. See {Order.Type}.
+     * @param permit The execution permit, containing revenue-sharing information. See {OrderExecutionPermit.Type}.
+     * @param orderSignature The EIP-712 signature of the `order`, signed by the `maker`.
+     * @param permitSignature The EIP-712 signature of the `permit`, signed by the market signer.
      */
     function executeBid(
         Order.Type calldata order,
@@ -128,10 +147,15 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
         }
 
         if (permit.orderHash != order.hash()) {
-            revert MarketInvalidOrderHash();
+            revert MarketOrderHashMismatch();
+        }
+
+        if (order.price == 0) {
+            revert MarketZeroOrderPrice();
         }
 
         if (permit.takerFee >= order.price) {
+            // taker is Ask side
             revert MarketInvalidAskSideFee();
         }
 
@@ -139,8 +163,8 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
             revert MarketUnauthorizedAccount();
         }
 
-        if (!currencyAllowed(order.currency)) {
-            revert MarketCurrencyInvalid();
+        if (!_currencyAllowed(order.currency) || order.currency == ETHER) {
+            revert MarketUnsupportedCurrency();
         }
 
         address maker = order.maker;
@@ -152,7 +176,7 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
         _invalidateOrder(maker, permit.orderHash);
 
         _distribute(
-            IERC20(order.currency),
+            order.currency,
             msg.sender, // askSide - taker
             maker, // bidSide - maker
             order.price,
@@ -180,10 +204,13 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
     }
 
     /**
-     * @inheritdoc IMarket
+     * @notice Invalidates an order, preventing its future execution.
+     * @dev Can be called by the `maker` of the order or a market admin.
+     * @param maker Address of the order's maker.
+     * @param orderHash The hash of the order to invalidate.
      */
     function invalidateOrder(address maker, bytes32 orderHash) external {
-        if (msg.sender == maker || hasRole(Roles.ADMIN_ROLE, msg.sender)) {
+        if (msg.sender == maker || _hasRole(Roles.ADMIN_ROLE, msg.sender)) {
             _invalidateOrder(maker, orderHash);
 
             emit OrderInvalidated(maker, orderHash);
@@ -193,7 +220,10 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
     }
 
     /**
-     * @inheritdoc IMarket
+     * @notice Checks if an order has been invalidated.
+     * @param maker Address of the order's maker.
+     * @param orderHash The hash of the order to check.
+     * @return invalidated True if the order has been invalidated.
      */
     function orderInvalidated(address maker, bytes32 orderHash) external view returns (bool invalidated) {
         MarketStorage.Layout storage $ = MarketStorage.layout();
@@ -203,8 +233,7 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
 
     /**
      * @notice Internal function to handle the distribution of funds for an order.
-     *
-     * @param currency The ERC-20 token used for the payment.
+     * @param currency The currency token used for the payment.
      * @param askSide The seller's address.
      * @param bidSide The buyer's address.
      * @param price The price of the order.
@@ -214,7 +243,7 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
      * @param rewards The corresponding rewards for each participant.
      */
     function _distribute(
-        IERC20 currency,
+        address currency,
         address askSide,
         address bidSide,
         uint256 price,
@@ -223,20 +252,18 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
         address[] calldata participants,
         uint256[] calldata rewards
     ) internal {
-        SafeERC20.safeTransferFrom(currency, bidSide, address(this), price + bidSideFee);
+        _receiveCurrency(currency, bidSide, price + bidSideFee);
 
-        SafeERC20.safeTransfer(currency, askSide, price - askSideFee);
+        _sendCurrency(currency, askSide, price - askSideFee);
 
-        SafeERC20.safeTransfer(currency, uniqueRoleOwner(Roles.FINANCIAL_ROLE), bidSideFee);
+        _sendCurrency(currency, _uniqueRoleOwner(Roles.FINANCIAL_ROLE), bidSideFee);
 
-        SafeERC20BulkTransfer.safeTransfer(currency, askSideFee, participants, rewards);
+        _sendCurrencyBatch(currency, askSideFee, participants, rewards);
     }
 
     /**
      * @notice Internal function to invalidate an order.
-     *
-     * @dev Reverts with {MarketOrderInvalidated} if the order is already invalidated.
-     *
+     * @dev Reverts if the order is already invalidated.
      * @param maker The address of the order's maker.
      * @param orderHash The hash of the order to invalidate.
      */
@@ -252,10 +279,8 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
 
     /**
      * @notice Internal function to verify an order's authorization.
-     *
      * @dev It checks the time validity of the order and recovers the signer's address from the
      *      signature to ensure it matches the `maker`.
-     *
      * @param orderHash The hash of the order.
      * @param maker The address of the order's maker.
      * @param startTime The start time of the order's validity.
@@ -273,14 +298,10 @@ contract Market is IMarket, EIP712Domain, RoleSystem, CurrencyManager, Authoriza
             revert MarketOrderOutsideOfTimeRange();
         }
 
-        address signer = EIP712Signature.recover(
-            DOMAIN_SEPARATOR,
-            orderHash,
-            orderSignature //
-        );
+        address signer = EIP712Signature.recover(DOMAIN_SEPARATOR, orderHash, orderSignature);
 
         if (maker != signer) {
-            revert MarketUnauthorizedOrder();
+            revert MarketInvalidOrderSignature();
         }
     }
 }

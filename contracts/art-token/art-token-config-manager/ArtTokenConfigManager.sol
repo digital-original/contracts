@@ -16,7 +16,10 @@ import {IArtTokenConfigManager} from "./IArtTokenConfigManager.sol";
  */
 abstract contract ArtTokenConfigManager is IArtTokenConfigManager, RoleSystem {
     /**
-     * @inheritdoc IArtTokenConfigManager
+     * @notice Updates the creator of a specific token.
+     * @dev Can only be called by an account with the `ADMIN_ROLE`.
+     * @param tokenId The ID of the token to update.
+     * @param creator The address of the new creator.
      */
     function updateTokenCreator(uint256 tokenId, address creator) external onlyRole(Roles.ADMIN_ROLE) {
         ArtTokenConfigManagerStorage.Layout storage $ = ArtTokenConfigManagerStorage.layout();
@@ -27,7 +30,10 @@ abstract contract ArtTokenConfigManager is IArtTokenConfigManager, RoleSystem {
     }
 
     /**
-     * @inheritdoc IArtTokenConfigManager
+     * @notice Updates the regulation mode of a specific token.
+     * @dev Can only be called by an account with the `ADMIN_ROLE`.
+     * @param tokenId The ID of the token to update.
+     * @param regulationMode The new regulation mode.
      */
     function updateTokenRegulationMode(
         uint256 tokenId,
@@ -41,17 +47,27 @@ abstract contract ArtTokenConfigManager is IArtTokenConfigManager, RoleSystem {
     }
 
     /**
-     * @inheritdoc IArtTokenConfigManager
+     * @notice Returns the creator of a specific token.
+     * @param tokenId The ID of the token to query.
+     * @return creator The address of the token's creator.
      */
     function tokenCreator(uint256 tokenId) external view returns (address creator) {
-        return ArtTokenConfigManagerStorage.layout().tokenConfig[tokenId].creator;
+        ArtTokenConfigManagerStorage.Layout storage $ = ArtTokenConfigManagerStorage.layout();
+
+        return $.tokenConfig[tokenId].creator;
     }
 
     /**
-     * @inheritdoc IArtTokenConfigManager
+     * @notice Returns the regulation mode of a specific token.
+     * @param tokenId The ID of the token to query.
+     * @return regulationMode The regulation mode of the token.
      */
-    function tokenRegulationMode(uint256 tokenId) external view returns (TokenConfig.RegulationMode regulationMode) {
-        return ArtTokenConfigManagerStorage.layout().tokenConfig[tokenId].regulationMode;
+    function tokenRegulationMode(
+        uint256 tokenId
+    ) external view returns (TokenConfig.RegulationMode regulationMode) {
+        ArtTokenConfigManagerStorage.Layout storage $ = ArtTokenConfigManagerStorage.layout();
+
+        return $.tokenConfig[tokenId].regulationMode;
     }
 
     /**
@@ -76,10 +92,12 @@ abstract contract ArtTokenConfigManager is IArtTokenConfigManager, RoleSystem {
      * @return creator The address of the token's creator.
      */
     function _tokenCreator(uint256 tokenId) internal view returns (address creator) {
-        creator = ArtTokenConfigManagerStorage.layout().tokenConfig[tokenId].creator;
+        ArtTokenConfigManagerStorage.Layout storage $ = ArtTokenConfigManagerStorage.layout();
+
+        creator = $.tokenConfig[tokenId].creator;
 
         if (creator == address(0)) {
-            return uniqueRoleOwner(Roles.FINANCIAL_ROLE);
+            return _uniqueRoleOwner(Roles.FINANCIAL_ROLE);
         }
     }
 
@@ -89,8 +107,12 @@ abstract contract ArtTokenConfigManager is IArtTokenConfigManager, RoleSystem {
      * @param tokenId The ID of the token to query.
      * @return regulationMode The regulation mode of the token.
      */
-    function _tokenRegulationMode(uint256 tokenId) internal view returns (TokenConfig.RegulationMode regulationMode) {
-        regulationMode = ArtTokenConfigManagerStorage.layout().tokenConfig[tokenId].regulationMode;
+    function _tokenRegulationMode(
+        uint256 tokenId
+    ) internal view returns (TokenConfig.RegulationMode regulationMode) {
+        ArtTokenConfigManagerStorage.Layout storage $ = ArtTokenConfigManagerStorage.layout();
+
+        regulationMode = $.tokenConfig[tokenId].regulationMode;
 
         if (regulationMode == TokenConfig.RegulationMode.None) {
             return TokenConfig.RegulationMode.Regulated;

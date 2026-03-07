@@ -10,6 +10,11 @@
                 "internalType": "address",
                 "name": "main",
                 "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "wrappedEther",
+                "type": "address"
             }
         ],
         "stateMutability": "nonpayable",
@@ -49,6 +54,52 @@
     },
     {
         "inputs": [],
+        "name": "CurrencyManagerZeroAddress",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "CurrencyTransfersIncorrectEtherValue",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "CurrencyTransfersIncorrectTotalAmount",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "CurrencyTransfersInvalidInputLengths",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint8",
+                "name": "argIndex",
+                "type": "uint8"
+            }
+        ],
+        "name": "CurrencyTransfersMisconfiguration",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "CurrencyTransfersUnexpectedEther",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "CurrencyTransfersZeroAddress",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "CurrencyTransfersZeroValue",
+        "type": "error"
+    },
+    {
+        "inputs": [],
         "name": "ECDSAInvalidSignature",
         "type": "error"
     },
@@ -77,9 +128,9 @@
     {
         "inputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint8",
                 "name": "argIndex",
-                "type": "uint256"
+                "type": "uint8"
             }
         ],
         "name": "EIP712DomainMisconfiguration",
@@ -97,17 +148,7 @@
     },
     {
         "inputs": [],
-        "name": "MarketCurrencyInvalid",
-        "type": "error"
-    },
-    {
-        "inputs": [],
         "name": "MarketInvalidAskSideFee",
-        "type": "error"
-    },
-    {
-        "inputs": [],
-        "name": "MarketInvalidOrderHash",
         "type": "error"
     },
     {
@@ -116,14 +157,24 @@
         "type": "error"
     },
     {
+        "inputs": [],
+        "name": "MarketInvalidOrderSignature",
+        "type": "error"
+    },
+    {
         "inputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint8",
                 "name": "argIndex",
-                "type": "uint256"
+                "type": "uint8"
             }
         ],
         "name": "MarketMisconfiguration",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "MarketOrderHashMismatch",
         "type": "error"
     },
     {
@@ -149,18 +200,55 @@
     },
     {
         "inputs": [],
-        "name": "MarketUnauthorizedOrder",
+        "name": "MarketUnsupportedCurrency",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "MarketZeroOrderPrice",
         "type": "error"
     },
     {
         "inputs": [
             {
-                "internalType": "uint256",
+                "internalType": "bytes32",
+                "name": "role",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "address",
+                "name": "account",
+                "type": "address"
+            }
+        ],
+        "name": "RoleSystemAlreadyHasRole",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint8",
                 "name": "argIndex",
-                "type": "uint256"
+                "type": "uint8"
             }
         ],
         "name": "RoleSystemMisconfiguration",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "role",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "address",
+                "name": "account",
+                "type": "address"
+            }
+        ],
+        "name": "RoleSystemMissingRole",
         "type": "error"
     },
     {
@@ -187,26 +275,6 @@
     {
         "inputs": [],
         "name": "RoleSystemZeroAddress",
-        "type": "error"
-    },
-    {
-        "inputs": [],
-        "name": "SafeERC20BulkTransferIncorrectTotalAmount",
-        "type": "error"
-    },
-    {
-        "inputs": [],
-        "name": "SafeERC20BulkTransferInvalidInputLengths",
-        "type": "error"
-    },
-    {
-        "inputs": [],
-        "name": "SafeERC20BulkTransferZeroAddress",
-        "type": "error"
-    },
-    {
-        "inputs": [],
-        "name": "SafeERC20BulkTransferZeroValue",
         "type": "error"
     },
     {
@@ -406,6 +474,12 @@
             {
                 "indexed": true,
                 "internalType": "address",
+                "name": "oldOwner",
+                "type": "address"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
                 "name": "newOwner",
                 "type": "address"
             }
@@ -441,10 +515,36 @@
     },
     {
         "inputs": [],
+        "name": "GAS_LIMIT_ETHER_TRANSFER",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
         "name": "MAIN",
         "outputs": [
             {
                 "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "WRAPPED_ETHER",
+        "outputs": [
+            {
+                "internalType": "contract IWrappedEther",
                 "name": "",
                 "type": "address"
             }
@@ -817,7 +917,7 @@
         "outputs": [
             {
                 "internalType": "address",
-                "name": "owner",
+                "name": "",
                 "type": "address"
             }
         ],

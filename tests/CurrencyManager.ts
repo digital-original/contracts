@@ -59,7 +59,7 @@ describe('CurrencyManager', function () {
 
             expect(currencyAllowedAfter).equal(false);
 
-            await expect(tx)
+            await expect(tx) //
                 .emit(currencyManager, 'CurrencyStatusUpdated')
                 .withArgs(usdcAddr, false);
         });

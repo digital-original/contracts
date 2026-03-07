@@ -21,36 +21,33 @@ task('verify-auction-house').setAction(async (taskArgs: Record<string, string>, 
     console.groupEnd();
     console.log('-'.repeat(process.stdout.columns));
 
-    // TransparentUpgradeableProxy
-    const proxy = config.collection.auctionHouse.proxy;
-    const impl = config.collection.auctionHouse.impl;
-    const proxyAdminOwner = config.main;
-
-    // ProxyAdmin
-    const proxyAdmin = config.collection.auctionHouse.admin;
-
-    // AuctionHouse
-    const main = config.main;
+    const { main, wrappedEther } = config;
+    const { proxy, impl, admin } = config.collection.auctionHouse;
     const artToken = config.collection.artToken.proxy;
     const minAuctionDuration = hoursToSeconds(config.collection.minAuctionDurationHours);
+    const proxyAdmin = admin;
+    const proxyAdminOwner = main;
 
     console.log(`Verify AuctionHouse...`);
     console.log(`\n`);
     console.group('Params:');
 
     console.group(`TransparentUpgradeableProxy:`);
-    console.log(`proxy: ${proxy}`);
+    console.log(`address: ${proxy}`);
     console.log(`impl: ${impl}`);
     console.log(`proxyAdminOwner: ${proxyAdminOwner}`);
     console.groupEnd();
 
     console.group(`ProxyAdmin:`);
-    console.log(`proxyAdmin: ${proxyAdmin}`);
+    console.log(`address: ${proxyAdmin}`);
     console.log(`proxyAdminOwner: ${proxyAdminOwner}`);
     console.groupEnd();
 
     console.group(`AuctionHouse Impl:`);
+    console.log(`address: ${impl}`);
+    console.log(`proxy: ${proxy}`);
     console.log(`main: ${main}`);
+    console.log(`wrappedEther: ${wrappedEther}`);
     console.log(`artToken: ${artToken}`);
     console.log(`minAuctionDuration: ${minAuctionDuration}`);
     console.groupEnd();
@@ -76,7 +73,7 @@ task('verify-auction-house').setAction(async (taskArgs: Record<string, string>, 
     await hardhat.run('verify:verify', {
         contract: 'contracts/auction-house/AuctionHouse.sol:AuctionHouse',
         address: impl,
-        constructorArguments: [proxy, main, artToken, minAuctionDuration],
+        constructorArguments: [proxy, main, wrappedEther, artToken, minAuctionDuration],
     });
     console.log('-'.repeat(process.stdout.columns));
 });
