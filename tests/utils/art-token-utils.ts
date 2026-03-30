@@ -14,11 +14,12 @@ type MintArgs = {
     permit: TokenMintingPermit.TypeStruct;
     permitSigner: Signer;
     sender: Signer;
+    value?: bigint;
 };
 
 export class ArtTokenUtils {
     static async mint(args: MintArgs) {
-        const { artToken, permit, permitSigner, sender } = args;
+        const { artToken, permit, permitSigner, sender, value = 0n } = args;
 
         const domain = await this.buildDomain(artToken);
 
@@ -30,7 +31,7 @@ export class ArtTokenUtils {
             { ...permit, tokenConfig: tokenConfigHash },
         );
 
-        return artToken.connect(sender).mint(permit, permitSignature);
+        return artToken.connect(sender).mint(permit, permitSignature, { value });
     }
 
     static async buildDomain(artToken: ArtToken): Promise<TypedDataDomain> {

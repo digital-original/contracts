@@ -1,3 +1,4 @@
+import { id } from 'ethers';
 import { TokenConfig } from '../../typechain-types/contracts/art-token/ArtToken';
 import { ONE_HUNDRED } from './general';
 import { REGULATION_MODE_REGULATED } from './token-config';
@@ -20,8 +21,8 @@ export const TOKEN_MINTING_PERMIT_TYPE = {
     ],
 };
 
-export const TOKEN_ID = 1;
-export const NON_EXISTENT_TOKEN_ID = 9999;
+export const TOKEN_ID = +id('TOKEN_ID').slice(0, 10);
+export const NON_EXISTENT_TOKEN_ID = +id('NON_EXISTENT_TOKEN_ID').slice(0, 10);
 export const TOKEN_URI = 'ipfs://QmbQ9c4KN5FcGreai5rjTRUs1N2FFMaY819JGZZMGDcSLQ';
 export const SECOND_TOKEN_URI = 'ipfs://QmbqKeWzBDUwKzVye3RxeD67N7rQrfgTaPTevucfbP3BST';
 

@@ -3,14 +3,12 @@ pragma solidity ^0.8.20;
 
 /**
  * @title OrderExecutionPermit
- *
  * @notice EIP-712 struct for an order execution permit, which authorizes the execution of a
  *         market order and specifies the taker fee and revenue-sharing details.
  */
 library OrderExecutionPermit {
     /**
      * @notice Represents an order execution permit.
-     *
      * @param orderHash The hash of the order to be executed.
      * @param taker The address of the account that is executing the order.
      * @param takerFee The fee that the `taker` is willing to pay for the execution.
@@ -43,9 +41,7 @@ library OrderExecutionPermit {
 
     /**
      * @notice Hashes an execution permit using the EIP-712 standard.
-     *
      * @param permit The execution permit to hash.
-     *
      * @return permitHash The EIP-712 hash of the permit.
      */
     function hash(Type calldata permit) internal pure returns (bytes32) {

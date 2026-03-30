@@ -1,4 +1,4 @@
-import { AddressLike, Numeric, Signer } from 'ethers';
+import { AddressLike, Signer } from 'ethers';
 import {
     UpgradedEvent,
     AdminChangedEvent,
@@ -11,6 +11,7 @@ type Params = {
     name: string;
     symbol: string;
     main: AddressLike;
+    wrappedEther: AddressLike;
     minAuctionDuration: number;
 };
 
@@ -22,13 +23,14 @@ export async function deployCollection(params: Params, deployer?: Signer) {
         name,
         symbol,
         main,
+        wrappedEther,
         minAuctionDuration,
     } = params;
 
     const { receipt } = await deploy(
         {
             name: 'CollectionDeployer',
-            constructorArgs: [name, symbol, main, minAuctionDuration],
+            constructorArgs: [name, symbol, main, wrappedEther, minAuctionDuration],
         },
         deployer,
     );
@@ -39,33 +41,33 @@ export async function deployCollection(params: Params, deployer?: Signer) {
 
     const ArtToken_Proxy_UpgradedEvent = <
         UpgradedEvent.LogDescription
-    >(<unknown>Proxy.interface.parseLog(<any>receipt.logs[0]));
+    >(<unknown>Proxy.interface.parseLog(<any>receipt.logs[1]));
 
     const ArtToken_ProxyAdmin_OwnershipTransferredEvent = <
         OwnershipTransferredEvent.LogDescription
-    >(<unknown>ProxyAdmin.interface.parseLog(<any>receipt.logs[1]));
+    >(<unknown>ProxyAdmin.interface.parseLog(<any>receipt.logs[2]));
 
     const ArtToken_Proxy_AdminChangedEvent = <
         AdminChangedEvent.LogDescription
-    >(<unknown>Proxy.interface.parseLog(<any>receipt.logs[2]));
+    >(<unknown>Proxy.interface.parseLog(<any>receipt.logs[3]));
 
     const AuctionHouse_Proxy_UpgradedEvent = <
         UpgradedEvent.LogDescription
-    >(<unknown>Proxy.interface.parseLog(<any>receipt.logs[3]));
+    >(<unknown>Proxy.interface.parseLog(<any>receipt.logs[4]));
 
     const AuctionHouse_ProxyAdmin_OwnershipTransferredEvent = <
         OwnershipTransferredEvent.LogDescription
-    >(<unknown>ProxyAdmin.interface.parseLog(<any>receipt.logs[4]));
+    >(<unknown>ProxyAdmin.interface.parseLog(<any>receipt.logs[5]));
 
     const AuctionHouse_Proxy_AdminChangedEvent = <
         AdminChangedEvent.LogDescription
-    >(<unknown>Proxy.interface.parseLog(<any>receipt.logs[5]));
+    >(<unknown>Proxy.interface.parseLog(<any>receipt.logs[6]));
 
-    // const ArtToken_Proxy_InitializedEvent = receipt.logs[6];
+    // const ArtToken_Proxy_InitializedEvent = receipt.logs[7];
 
     const Deployer_DeployedEvent = <
         DeployedEvent.LogDescription
-    >(<unknown>Deployer.interface.parseLog(<any>receipt.logs[7]));
+    >(<unknown>Deployer.interface.parseLog(<any>receipt.logs[8]));
 
     const artTokenAddr = Deployer_DeployedEvent.args.artToken;
     const artTokenImplAddr = ArtToken_Proxy_UpgradedEvent.args.implementation;

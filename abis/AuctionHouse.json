@@ -13,6 +13,11 @@
             },
             {
                 "internalType": "address",
+                "name": "wrappedEther",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
                 "name": "artToken",
                 "type": "address"
             },
@@ -49,12 +54,12 @@
     },
     {
         "inputs": [],
-        "name": "AuctionHouseAuctionEnded",
+        "name": "AuctionHouseAuctionAlreadyEnded",
         "type": "error"
     },
     {
         "inputs": [],
-        "name": "AuctionHouseAuctionExists",
+        "name": "AuctionHouseAuctionAlreadyExists",
         "type": "error"
     },
     {
@@ -64,53 +69,28 @@
     },
     {
         "inputs": [],
-        "name": "AuctionHouseAuctionNotExists",
-        "type": "error"
-    },
-    {
-        "inputs": [],
-        "name": "AuctionHouseBuyerExists",
-        "type": "error"
-    },
-    {
-        "inputs": [],
-        "name": "AuctionHouseBuyerNotExists",
-        "type": "error"
-    },
-    {
-        "inputs": [],
-        "name": "AuctionHouseInvalidCurrency",
-        "type": "error"
-    },
-    {
-        "inputs": [],
         "name": "AuctionHouseInvalidEndTime",
-        "type": "error"
-    },
-    {
-        "inputs": [],
-        "name": "AuctionHouseInvalidFee",
-        "type": "error"
-    },
-    {
-        "inputs": [],
-        "name": "AuctionHouseInvalidPrice",
-        "type": "error"
-    },
-    {
-        "inputs": [],
-        "name": "AuctionHouseInvalidStep",
         "type": "error"
     },
     {
         "inputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint8",
                 "name": "argIndex",
-                "type": "uint256"
+                "type": "uint8"
             }
         ],
         "name": "AuctionHouseMisconfiguration",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "AuctionHouseMissingBuyer",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "AuctionHouseNonexistentAuction",
         "type": "error"
     },
     {
@@ -126,12 +106,23 @@
     },
     {
         "inputs": [],
-        "name": "AuctionHouseTokenReserved",
+        "name": "AuctionHouseTokenAlreadyMinted",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "existingAuctionId",
+                "type": "uint256"
+            }
+        ],
+        "name": "AuctionHouseTokenAlreadyReserved",
         "type": "error"
     },
     {
         "inputs": [],
-        "name": "AuctionHouseTokenSold",
+        "name": "AuctionHouseTokenAlreadySold",
         "type": "error"
     },
     {
@@ -147,12 +138,78 @@
     },
     {
         "inputs": [],
+        "name": "AuctionHouseUnexpectedBuyer",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "AuctionHouseUnsupportedCurrency",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "AuctionHouseZeroPrice",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "AuctionHouseZeroStep",
+        "type": "error"
+    },
+    {
+        "inputs": [],
         "name": "AuthorizationDeadlineExpired",
         "type": "error"
     },
     {
         "inputs": [],
         "name": "AuthorizationUnauthorizedAction",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "CurrencyManagerZeroAddress",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "CurrencyTransfersIncorrectEtherValue",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "CurrencyTransfersIncorrectTotalAmount",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "CurrencyTransfersInvalidInputLengths",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint8",
+                "name": "argIndex",
+                "type": "uint8"
+            }
+        ],
+        "name": "CurrencyTransfersMisconfiguration",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "CurrencyTransfersUnexpectedEther",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "CurrencyTransfersZeroAddress",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "CurrencyTransfersZeroValue",
         "type": "error"
     },
     {
@@ -185,9 +242,9 @@
     {
         "inputs": [
             {
-                "internalType": "uint256",
+                "internalType": "uint8",
                 "name": "argIndex",
-                "type": "uint256"
+                "type": "uint8"
             }
         ],
         "name": "EIP712DomainMisconfiguration",
@@ -211,12 +268,44 @@
     {
         "inputs": [
             {
-                "internalType": "uint256",
+                "internalType": "bytes32",
+                "name": "role",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "address",
+                "name": "account",
+                "type": "address"
+            }
+        ],
+        "name": "RoleSystemAlreadyHasRole",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint8",
                 "name": "argIndex",
-                "type": "uint256"
+                "type": "uint8"
             }
         ],
         "name": "RoleSystemMisconfiguration",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "role",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "address",
+                "name": "account",
+                "type": "address"
+            }
+        ],
+        "name": "RoleSystemMissingRole",
         "type": "error"
     },
     {
@@ -246,26 +335,6 @@
         "type": "error"
     },
     {
-        "inputs": [],
-        "name": "SafeERC20BulkTransferIncorrectTotalAmount",
-        "type": "error"
-    },
-    {
-        "inputs": [],
-        "name": "SafeERC20BulkTransferInvalidInputLengths",
-        "type": "error"
-    },
-    {
-        "inputs": [],
-        "name": "SafeERC20BulkTransferZeroAddress",
-        "type": "error"
-    },
-    {
-        "inputs": [],
-        "name": "SafeERC20BulkTransferZeroValue",
-        "type": "error"
-    },
-    {
         "inputs": [
             {
                 "internalType": "address",
@@ -277,8 +346,14 @@
         "type": "error"
     },
     {
-        "inputs": [],
-        "name": "ShareDistributorParticipantsSharesMismatch",
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "participantsCount",
+                "type": "uint256"
+            }
+        ],
+        "name": "ShareUtilsInvalidParticipantsCount",
         "type": "error"
     },
     {
@@ -289,17 +364,27 @@
                 "type": "uint256"
             }
         ],
-        "name": "ShareDistributorSharesSumInvalid",
+        "name": "ShareUtilsInvalidSum",
         "type": "error"
     },
     {
         "inputs": [],
-        "name": "ShareDistributorZeroAddress",
+        "name": "ShareUtilsParticipantsSharesMismatch",
         "type": "error"
     },
     {
         "inputs": [],
-        "name": "ShareDistributorZeroShare",
+        "name": "ShareUtilsZeroAddress",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "ShareUtilsZeroShare",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "TokenConfigNotPopulated",
         "type": "error"
     },
     {
@@ -453,6 +538,12 @@
             {
                 "indexed": true,
                 "internalType": "address",
+                "name": "oldOwner",
+                "type": "address"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
                 "name": "newOwner",
                 "type": "address"
             }
@@ -501,6 +592,19 @@
     },
     {
         "inputs": [],
+        "name": "GAS_LIMIT_ETHER_TRANSFER",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
         "name": "MAIN",
         "outputs": [
             {
@@ -533,6 +637,19 @@
                 "internalType": "uint256",
                 "name": "",
                 "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "WRAPPED_ETHER",
+        "outputs": [
+            {
+                "internalType": "contract IWrappedEther",
+                "name": "",
+                "type": "address"
             }
         ],
         "stateMutability": "view",
@@ -896,7 +1013,7 @@
         "outputs": [
             {
                 "internalType": "address",
-                "name": "owner",
+                "name": "",
                 "type": "address"
             }
         ],

@@ -20,34 +20,31 @@ task('verify-market').setAction(async (taskArgs: Record<string, string>, hardhat
     console.groupEnd();
     console.log('-'.repeat(process.stdout.columns));
 
-    // TransparentUpgradeableProxy
-    const proxyAddr = config.market.market.proxy;
-    const implAddr = config.market.market.impl;
-    const proxyAdminOwnerAddr = config.main;
-
-    // ProxyAdmin
-    const proxyAdminAddr = config.market.market.admin;
-
-    // Market
-    const mainAddr = config.main;
+    const { main, wrappedEther } = config;
+    const { proxy, impl, admin } = config.market;
+    const proxyAdmin = admin;
+    const proxyAdminOwner = main;
 
     console.log(`Verify Market...`);
     console.log(`\n`);
     console.group('Params:');
 
     console.group(`TransparentUpgradeableProxy:`);
-    console.log(`proxy: ${proxyAddr}`);
-    console.log(`impl: ${implAddr}`);
-    console.log(`proxyAdminOwner: ${proxyAdminOwnerAddr}`);
+    console.log(`address: ${proxy}`);
+    console.log(`impl: ${impl}`);
+    console.log(`proxyAdminOwner: ${proxyAdminOwner}`);
     console.groupEnd();
 
     console.group(`ProxyAdmin:`);
-    console.log(`proxyAdmin: ${proxyAdminAddr}`);
-    console.log(`proxyAdminOwner: ${proxyAdminOwnerAddr}`);
+    console.log(`address: ${proxyAdmin}`);
+    console.log(`proxyAdminOwner: ${proxyAdminOwner}`);
     console.groupEnd();
 
     console.group(`Market:`);
-    console.log(`main: ${mainAddr}`);
+    console.log(`address: ${impl}`);
+    console.log(`proxy: ${proxy}`);
+    console.log(`main: ${main}`);
+    console.log(`wrappedEther: ${wrappedEther}`);
     console.groupEnd();
 
     console.groupEnd();
@@ -56,22 +53,22 @@ task('verify-market').setAction(async (taskArgs: Record<string, string>, hardhat
     await hardhat.run('verify:verify', {
         contract:
             '@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol:TransparentUpgradeableProxy',
-        address: proxyAddr,
-        constructorArguments: [implAddr, proxyAdminOwnerAddr, new Uint8Array(0)],
+        address: proxy,
+        constructorArguments: [impl, proxyAdminOwner, new Uint8Array(0)],
     });
     console.log(`\n`);
 
     await hardhat.run('verify:verify', {
         contract: '@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol:ProxyAdmin',
-        address: proxyAdminAddr,
-        constructorArguments: [proxyAdminOwnerAddr],
+        address: proxyAdmin,
+        constructorArguments: [proxyAdminOwner],
     });
     console.log(`\n`);
 
     await hardhat.run('verify:verify', {
         contract: 'contracts/market/Market.sol:Market',
-        address: implAddr,
-        constructorArguments: [proxyAddr, mainAddr],
+        address: impl,
+        constructorArguments: [proxy, main, wrappedEther],
     });
     console.log('-'.repeat(process.stdout.columns));
 });

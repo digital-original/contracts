@@ -21,7 +21,7 @@ task('deploy-auction-house-impl').setAction(async (taskArgs: Record<string, stri
     console.groupEnd();
     console.log('-'.repeat(process.stdout.columns));
 
-    const { main } = config;
+    const { main, wrappedEther } = config;
     const { minAuctionDurationHours, artToken, auctionHouse } = config.collection;
 
     const minAuctionDuration = hoursToSeconds(minAuctionDurationHours);
@@ -29,10 +29,10 @@ task('deploy-auction-house-impl').setAction(async (taskArgs: Record<string, stri
     console.log(`Deploying AuctionHouse Impl...`);
     console.log(`\n`);
     console.group('Params:');
+    console.log(`proxy: ${auctionHouse.proxy}`);
     console.log(`main: ${main}`);
+    console.log(`wrappedEther: ${wrappedEther}`);
     console.log(`artToken: ${artToken.proxy}`);
-    console.log(`auctionHouse: ${auctionHouse.proxy}`);
-    console.log(`minAuctionDurationHours: ${minAuctionDurationHours}`);
     console.log(`minAuctionDuration: ${minAuctionDuration}`);
     console.groupEnd();
     console.log(`\n`);
@@ -40,7 +40,13 @@ task('deploy-auction-house-impl').setAction(async (taskArgs: Record<string, stri
 
     const { receipt, contractAddr: auctionHouseImplAddr } = await deploy({
         name: 'AuctionHouse',
-        constructorArgs: [auctionHouse.proxy, main, artToken.proxy, minAuctionDuration],
+        constructorArgs: [
+            auctionHouse.proxy,
+            main,
+            wrappedEther,
+            artToken.proxy,
+            minAuctionDuration,
+        ],
     });
 
     console.log(`Transaction broadcasted`);

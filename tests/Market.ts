@@ -4,7 +4,7 @@ import { ArtToken, Market, USDC } from '../typechain-types';
 import { TokenMintingPermit } from '../typechain-types/contracts/art-token/ArtToken';
 import { Order, OrderExecutionPermit } from '../typechain-types/contracts/market/Market';
 import { TOKEN_CONFIG, TOKEN_FEE, TOKEN_ID, TOKEN_PRICE, TOKEN_URI } from './constants/art-token';
-import { HOUR } from './constants/general';
+import { ETHER_ADDR, HOUR } from './constants/general';
 import { ORDER_PRICE, ASK_SIDE_FEE, BID_SIDE_FEE, ASK_SIDE, BID_SIDE } from './constants/market';
 import { getSigners } from './utils/get-signers';
 import { getLatestBlockTimestamp } from './utils/get-latest-block-timestamp';
@@ -133,11 +133,11 @@ describe('Market', function () {
 
             expect(orderInvalidated).equal(true);
 
-            await expect(tx)
+            await expect(tx) //
                 .emit(usdc, 'Transfer')
                 .withArgs(takerAddr, marketAddr, ORDER_PRICE + BID_SIDE_FEE);
 
-            await expect(tx)
+            await expect(tx) //
                 .emit(usdc, 'Transfer')
                 .withArgs(marketAddr, financierAddr, BID_SIDE_FEE);
 
@@ -145,11 +145,11 @@ describe('Market', function () {
                 .emit(usdc, 'Transfer')
                 .withArgs(marketAddr, makerAddr, askSideReward);
 
-            await expect(tx)
+            await expect(tx) //
                 .emit(usdc, 'Transfer')
                 .withArgs(marketAddr, institutionAddr, institutionReward);
 
-            await expect(tx)
+            await expect(tx) //
                 .emit(usdc, 'Transfer')
                 .withArgs(marketAddr, financierAddr, platformReward);
 
@@ -157,7 +157,7 @@ describe('Market', function () {
                 .emit(artToken, 'Transfer')
                 .withArgs(makerAddr, takerAddr, TOKEN_ID);
 
-            await expect(tx)
+            await expect(tx) //
                 .emit(market, 'AskOrderExecuted')
                 .withArgs(
                     orderHash,
@@ -205,7 +205,9 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).emit(usdc, 'Transfer').withArgs(marketAddr, makerAddr, ORDER_PRICE); // Full price to maker
+            await expect(tx) //
+                .emit(usdc, 'Transfer')
+                .withArgs(marketAddr, makerAddr, ORDER_PRICE); // Full price to maker
         });
 
         it(`should execute the order with zero taker fee`, async () => {
@@ -359,7 +361,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).rejectedWith('MarketUnauthorizedOrder');
+            await expect(tx).rejectedWith('MarketInvalidOrderSignature');
         });
 
         it(`should fail if the permit order hash and the order hash do not match`, async () => {
@@ -395,7 +397,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).rejectedWith('MarketInvalidOrderHash');
+            await expect(tx).rejectedWith('MarketOrderHashMismatch');
         });
 
         it(`should fail if the permit signer is not the market signer`, async () => {
@@ -579,7 +581,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).rejectedWith('MarketCurrencyInvalid');
+            await expect(tx).rejectedWith('MarketUnsupportedCurrency');
         });
 
         it(`should fail if the sender is not the permitted taker`, async () => {
@@ -689,7 +691,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).rejectedWith('SafeERC20BulkTransferIncorrectTotalAmount');
+            await expect(tx).rejectedWith('CurrencyTransfersIncorrectTotalAmount');
         });
 
         it(`should fail if the sum of rewards is less than the ask side fee`, async () => {
@@ -725,7 +727,178 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).rejectedWith('SafeERC20BulkTransferIncorrectTotalAmount');
+            await expect(tx).rejectedWith('CurrencyTransfersIncorrectTotalAmount');
+        });
+
+        it(`should fail if unexpected ether is sent`, async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
+
+            const order: Order.TypeStruct = {
+                side: ASK_SIDE,
+                collection: artTokenAddr,
+                currency: usdcAddr,
+                maker: makerAddr,
+                tokenId: TOKEN_ID,
+                price: ORDER_PRICE,
+                makerFee: ASK_SIDE_FEE,
+                startTime: latestBlockTimestamp,
+                endTime: latestBlockTimestamp + HOUR,
+            };
+
+            const orderHash = MarketUtils.hashOrder(order);
+
+            const orderExecutionPermit: OrderExecutionPermit.TypeStruct = {
+                orderHash,
+                taker: takerAddr,
+                takerFee: BID_SIDE_FEE,
+                participants: [institutionAddr],
+                rewards: [ASK_SIDE_FEE],
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            const tx = MarketUtils.executeAsk({
+                market,
+                order,
+                permit: orderExecutionPermit,
+                orderSigner: maker,
+                permitSigner: marketSigner,
+                sender: taker,
+                value: 1n, // Unexpected ether
+            });
+
+            await expect(tx).rejectedWith('CurrencyTransfersUnexpectedEther');
+        });
+    });
+
+    describe(`method 'executeAsk' with Ether`, () => {
+        beforeEach(async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
+
+            const tokenMintingPermit: TokenMintingPermit.TypeStruct = {
+                tokenId: TOKEN_ID,
+                minter: makerAddr,
+                currency: usdcAddr,
+                price: TOKEN_PRICE,
+                fee: TOKEN_FEE,
+                tokenURI: TOKEN_URI,
+                tokenConfig: TOKEN_CONFIG,
+                participants: [institutionAddr],
+                rewards: [TOKEN_PRICE],
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            await usdc.connect(maker).mintAndApprove(artToken, MaxInt256);
+
+            await ArtTokenUtils.mint({
+                artToken,
+                permit: tokenMintingPermit,
+                permitSigner: marketSigner,
+                sender: maker,
+            });
+
+            await artToken.connect(maker).approve(marketAddr, TOKEN_ID);
+        });
+
+        it(`should transfer ether correctly`, async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
+
+            const askSideReward = ORDER_PRICE - ASK_SIDE_FEE;
+            const platformReward = 100n;
+            const institutionReward = ASK_SIDE_FEE - platformReward;
+
+            const order: Order.TypeStruct = {
+                side: ASK_SIDE,
+                collection: artTokenAddr,
+                currency: ETHER_ADDR,
+                maker: makerAddr,
+                tokenId: TOKEN_ID,
+                price: ORDER_PRICE,
+                makerFee: ASK_SIDE_FEE,
+                startTime: latestBlockTimestamp,
+                endTime: latestBlockTimestamp + HOUR,
+            };
+
+            const orderHash = MarketUtils.hashOrder(order);
+
+            const orderExecutionPermit: OrderExecutionPermit.TypeStruct = {
+                orderHash,
+                taker: takerAddr,
+                takerFee: BID_SIDE_FEE,
+                participants: [institutionAddr, financierAddr],
+                rewards: [institutionReward, platformReward],
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            const tx = await MarketUtils.executeAsk({
+                market,
+                order,
+                permit: orderExecutionPermit,
+                orderSigner: maker,
+                permitSigner: marketSigner,
+                sender: taker,
+                value: ORDER_PRICE + BID_SIDE_FEE,
+            });
+
+            await expect(tx).changeEtherBalance(marketAddr, 0n);
+
+            await expect(tx).changeEtherBalance(takerAddr, (ORDER_PRICE + BID_SIDE_FEE) * -1n);
+
+            await expect(tx).changeEtherBalance(makerAddr, askSideReward);
+
+            await expect(tx).changeEtherBalance(institutionAddr, institutionReward);
+
+            await expect(tx).changeEtherBalance(financierAddr, BID_SIDE_FEE + platformReward);
+        });
+
+        it(`should fail if incorrect amount of ether is sent`, async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
+
+            const order: Order.TypeStruct = {
+                side: ASK_SIDE,
+                collection: artTokenAddr,
+                currency: ETHER_ADDR,
+                maker: makerAddr,
+                tokenId: TOKEN_ID,
+                price: ORDER_PRICE,
+                makerFee: ASK_SIDE_FEE,
+                startTime: latestBlockTimestamp,
+                endTime: latestBlockTimestamp + HOUR,
+            };
+
+            const orderHash = MarketUtils.hashOrder(order);
+
+            const orderExecutionPermit: OrderExecutionPermit.TypeStruct = {
+                orderHash,
+                taker: takerAddr,
+                takerFee: BID_SIDE_FEE,
+                participants: [institutionAddr],
+                rewards: [ASK_SIDE_FEE],
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            const tx1 = MarketUtils.executeAsk({
+                market,
+                order,
+                permit: orderExecutionPermit,
+                orderSigner: maker,
+                permitSigner: marketSigner,
+                sender: taker,
+                value: ORDER_PRICE + BID_SIDE_FEE + 1n, // Too much ether
+            });
+
+            const tx2 = MarketUtils.executeAsk({
+                market,
+                order,
+                permit: orderExecutionPermit,
+                orderSigner: maker,
+                permitSigner: marketSigner,
+                sender: taker,
+                value: ORDER_PRICE + BID_SIDE_FEE - 1n, // Too little ether
+            });
+
+            await expect(tx1).rejectedWith('CurrencyTransfersIncorrectEtherValue');
+
+            await expect(tx2).rejectedWith('CurrencyTransfersIncorrectEtherValue');
         });
     });
 
@@ -808,11 +981,11 @@ describe('Market', function () {
 
             expect(orderInvalidated).equal(true);
 
-            await expect(tx)
+            await expect(tx) //
                 .emit(usdc, 'Transfer')
                 .withArgs(makerAddr, marketAddr, ORDER_PRICE + BID_SIDE_FEE);
 
-            await expect(tx)
+            await expect(tx) //
                 .emit(usdc, 'Transfer')
                 .withArgs(marketAddr, financierAddr, BID_SIDE_FEE);
 
@@ -820,11 +993,11 @@ describe('Market', function () {
                 .emit(usdc, 'Transfer')
                 .withArgs(marketAddr, takerAddr, askSideReward);
 
-            await expect(tx)
+            await expect(tx) //
                 .emit(usdc, 'Transfer')
                 .withArgs(marketAddr, institutionAddr, institutionReward);
 
-            await expect(tx)
+            await expect(tx) //
                 .emit(usdc, 'Transfer')
                 .withArgs(marketAddr, financierAddr, platformReward);
 
@@ -832,7 +1005,7 @@ describe('Market', function () {
                 .emit(artToken, 'Transfer')
                 .withArgs(takerAddr, makerAddr, TOKEN_ID);
 
-            await expect(tx)
+            await expect(tx) //
                 .emit(market, 'BidOrderExecuted')
                 .withArgs(
                     orderHash,
@@ -1036,7 +1209,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).rejectedWith('MarketUnauthorizedOrder');
+            await expect(tx).rejectedWith('MarketInvalidOrderSignature');
         });
 
         it(`should fail if the permit order hash and the order hash do not match`, async () => {
@@ -1072,7 +1245,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).rejectedWith('MarketInvalidOrderHash');
+            await expect(tx).rejectedWith('MarketOrderHashMismatch');
         });
 
         it(`should fail if the permit signer is not the market signer`, async () => {
@@ -1256,7 +1429,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).rejectedWith('MarketCurrencyInvalid');
+            await expect(tx).rejectedWith('MarketUnsupportedCurrency');
         });
 
         it(`should fail if the sender is not the permitted taker`, async () => {
@@ -1366,7 +1539,7 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).rejectedWith('SafeERC20BulkTransferIncorrectTotalAmount');
+            await expect(tx).rejectedWith('CurrencyTransfersIncorrectTotalAmount');
         });
 
         it(`should fail if the sum of rewards is less than the ask side fee`, async () => {
@@ -1402,7 +1575,45 @@ describe('Market', function () {
                 sender: taker,
             });
 
-            await expect(tx).rejectedWith('SafeERC20BulkTransferIncorrectTotalAmount');
+            await expect(tx).rejectedWith('CurrencyTransfersIncorrectTotalAmount');
+        });
+
+        it(`should fail if currency is ether`, async () => {
+            const latestBlockTimestamp = await getLatestBlockTimestamp();
+
+            const order: Order.TypeStruct = {
+                side: BID_SIDE,
+                collection: artTokenAddr,
+                currency: ETHER_ADDR,
+                maker: makerAddr,
+                tokenId: TOKEN_ID,
+                price: ORDER_PRICE,
+                makerFee: BID_SIDE_FEE,
+                startTime: latestBlockTimestamp,
+                endTime: latestBlockTimestamp + HOUR,
+            };
+
+            const orderHash = MarketUtils.hashOrder(order);
+
+            const orderExecutionPermit: OrderExecutionPermit.TypeStruct = {
+                orderHash,
+                taker: takerAddr,
+                takerFee: ASK_SIDE_FEE,
+                participants: [institutionAddr],
+                rewards: [ASK_SIDE_FEE],
+                deadline: latestBlockTimestamp + HOUR,
+            };
+
+            const tx = MarketUtils.executeBid({
+                market,
+                order,
+                permit: orderExecutionPermit,
+                orderSigner: maker,
+                permitSigner: marketSigner,
+                sender: taker,
+            });
+
+            await expect(tx).rejectedWith('MarketUnsupportedCurrency');
         });
     });
 

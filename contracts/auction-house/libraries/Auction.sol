@@ -8,7 +8,6 @@ pragma solidity ^0.8.20;
 library Auction {
     /**
      * @notice Represents an auction for a single token.
-     *
      * @param tokenId The ID of the token being auctioned.
      * @param price The current price of the auction, which is the highest bid or starting price.
      * @param fee The platform fee for the auction.

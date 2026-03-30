@@ -20,35 +20,32 @@ task('verify-art-token').setAction(async (taskArgs: Record<string, string>, hard
     console.groupEnd();
     console.log('-'.repeat(process.stdout.columns));
 
-    // TransparentUpgradeableProxy
-    const proxy = config.collection.artToken.proxy;
-    const impl = config.collection.artToken.impl;
-    const proxyAdminOwner = config.main;
-
-    // ProxyAdmin
-    const proxyAdmin = config.collection.artToken.admin;
-
-    // ArtToken
-    const main = config.main;
+    const { main, wrappedEther } = config;
+    const { proxy, impl, admin } = config.collection.artToken;
     const auctionHouse = config.collection.auctionHouse.proxy;
+    const proxyAdmin = admin;
+    const proxyAdminOwner = main;
 
     console.log(`Verify ArtToken...`);
     console.log(`\n`);
     console.group('Params:');
 
     console.group(`TransparentUpgradeableProxy:`);
-    console.log(`proxy: ${proxy}`);
+    console.log(`address: ${proxy}`);
     console.log(`impl: ${impl}`);
     console.log(`proxyAdminOwner: ${proxyAdminOwner}`);
     console.groupEnd();
 
     console.group(`ProxyAdmin:`);
-    console.log(`proxyAdmin: ${proxyAdmin}`);
+    console.log(`address: ${proxyAdmin}`);
     console.log(`proxyAdminOwner: ${proxyAdminOwner}`);
     console.groupEnd();
 
     console.group(`ArtToken Impl:`);
+    console.log(`address: ${impl}`);
+    console.log(`proxy: ${proxy}`);
     console.log(`main: ${main}`);
+    console.log(`wrappedEther: ${wrappedEther}`);
     console.log(`auctionHouse: ${auctionHouse}`);
     console.groupEnd();
 
@@ -73,7 +70,7 @@ task('verify-art-token').setAction(async (taskArgs: Record<string, string>, hard
     await hardhat.run('verify:verify', {
         contract: 'contracts/art-token/ArtToken.sol:ArtToken',
         address: impl,
-        constructorArguments: [proxy, main, auctionHouse],
+        constructorArguments: [proxy, main, wrappedEther, auctionHouse],
     });
     console.log('-'.repeat(process.stdout.columns));
 });

@@ -4,7 +4,7 @@
     "license": "UNLICENSED",
     "scripts": {
         "test": "ENV_MODE=test hardhat test",
-        "compile": "hardhat clean && hardhat compile",
+        "compile": "ENV_MODE=test hardhat clean && ENV_MODE=test hardhat compile",
         "fork": "hardhat node",
         "lint": "solhint 'contracts/**'",
         "format": "prettier --write .",
@@ -14,16 +14,19 @@
     },
     "dependencies": {
         "@nomicfoundation/hardhat-toolbox": "^6.1.0",
-        "@openzeppelin/contracts": "^5.0.2",
-        "@openzeppelin/contracts-upgradeable": "^5.0.2",
+        "@openzeppelin/contracts": "5.0.2",
+        "@openzeppelin/contracts-upgradeable": "5.0.2",
         "@types/js-yaml": "^4.0.9",
         "ethers": "^6.16.0",
-        "hardhat": "^2.28.0",
+        "hardhat": "^2.28.6",
         "husky": "^9.1.7",
         "js-yaml": "^4.1.1",
         "lint-staged": "^16.2.7",
-        "prettier": "^3.7.4",
+        "prettier": "^3.8.1",
         "prettier-plugin-solidity": "^2.2.1",
-        "solhint": "^6.0.2"
+        "solhint": "^6.0.3"
+    },
+    "engines": {
+        "node": "^24.6.0"
     }
 }
