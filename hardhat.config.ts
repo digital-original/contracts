@@ -30,8 +30,9 @@ const hardhatBaseConfig: HardhatUserConfig = {
                 settings: {
                     optimizer: {
                         enabled: true,
-                        runs: 1000000,
+                        runs: 100000,
                     },
+                    evmVersion: 'shanghai',
                 },
             },
         ],
@@ -54,6 +55,7 @@ const hardhatBaseConfig: HardhatUserConfig = {
 const hardhatTestConfig: HardhatUserConfig = {
     networks: {
         hardhat: {
+            hardfork: 'shanghai',
             allowUnlimitedContractSize: true,
         },
     },
@@ -99,6 +101,7 @@ function buildHardhatConfig(): HardhatUserConfig {
 
     if (envConfigYaml.fork.name && chainConfigYaml[envConfigYaml.fork.name].url) {
         hardhatNetworksConfig['hardhat'] = {
+            hardfork: 'shanghai',
             forking: { url: chainConfigYaml[envConfigYaml.fork.name].url },
         };
     }
