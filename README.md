@@ -1,7 +1,7 @@
 ![solidity](https://img.shields.io/badge/solidity-0.8.20-363636)
 ![openzeppelin](https://img.shields.io/badge/built%20with-OpenZeppelin-brightgreen)
 ![hardhat](https://img.shields.io/badge/built%20with-Hardhat-blueviolet)
-![tests](https://github.com/digital-original/contracts/actions/workflows/test.yml/badge.svg)
+![ci](https://github.com/digital-original/contracts/actions/workflows/ci.yml/badge.svg)
 ![license](https://img.shields.io/badge/license-GPLv3-blue)
 
 # Digital Original Smart Contracts
