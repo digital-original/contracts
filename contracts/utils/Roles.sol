@@ -19,4 +19,6 @@ library Roles {
 
     /// @notice Role allowed to perform admin actions.
     bytes32 internal constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+
+    bytes32 internal constant MINT_EXECUTOR_ROLE = keccak256("MINT_EXECUTOR_ROLE");
 }

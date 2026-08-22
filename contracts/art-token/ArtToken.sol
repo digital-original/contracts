@@ -87,7 +87,7 @@ contract ArtToken is
 
         permit.tokenConfig.requirePopulated();
 
-        if (permit.minter != msg.sender) {
+        if (permit.minter != msg.sender && !_hasRole(Roles.MINT_EXECUTOR_ROLE, msg.sender)) {
             revert ArtTokenUnauthorizedAccount(msg.sender);
         }
 
